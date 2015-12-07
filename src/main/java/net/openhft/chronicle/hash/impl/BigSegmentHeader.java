@@ -49,7 +49,7 @@ public final class BigSegmentHeader implements SegmentHeader {
     static final int MAX_WAIT = Integer.MAX_VALUE;
     static final int WAIT_PARTY = 1;
 
-    static final long SIZE_OFFSET = LOCK_OFFSET + 8L; // 32-bit
+    static final long ENTRIES_OFFSET = LOCK_OFFSET + 8L; // 32-bit
     static final long LOWEST_POSSIBLY_FREE_CHUNK_OFFSET = ENTRIES_OFFSET + 4L;
 
 
@@ -62,17 +62,17 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public long size(long address) {
-        return OS.memory().readInt(address + SIZE_OFFSET) & UNSIGNED_INT_MASK;
+    public long entries(long address) {
+        return OS.memory().readInt(address + ENTRIES_OFFSET) & UNSIGNED_INT_MASK;
     }
 
     @Override
-    public void size(long address, long size) {
-        if (size >= (1L << 32)) {
-            throw new IllegalStateException("segment size overflow: up to " + UNSIGNED_INT_MASK +
-                    " supported, " + size + " given");
+    public void entries(long address, long entries) {
+        if (entries >= (1L << 32)) {
+            throw new IllegalStateException("segment entries overflow: up to " + UNSIGNED_INT_MASK +
+                    " supported, " + entries + " given");
         }
-        OS.memory().writeInt(address + SIZE_OFFSET, (int) size);
+        OS.memory().writeInt(address + ENTRIES_OFFSET, (int) entries);
     }
 
     @Override

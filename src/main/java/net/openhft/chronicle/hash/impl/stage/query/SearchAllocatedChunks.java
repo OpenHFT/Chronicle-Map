@@ -27,22 +27,11 @@ public class SearchAllocatedChunks extends AllocatedChunks {
 
     @StageRef KeySearch<?> ks;
 
-    @Override
-    public void incrementSegmentEntriesIfNeeded() {
-        if (ks.searchState != PRESENT) {
-            // update the size before the store fence
-            s.entries(s.entries() + 1L);
-        }
-    }
-
     /**
-     * @return {@code true} is tier has changed
+     * @return {@code true} if tier has changed
      */
     public boolean initEntryAndKey(long entrySize) {
         initAllocatedChunks(hh.h().inChunks(entrySize));
-        // call incrementSegmentEntriesIfNeeded() before entry.writeNewEntry(), because the latter
-        // clears out searchState, and it performs the search again, but in inconsistent state
-        incrementSegmentEntriesIfNeeded();
         int tierBeforeAllocation = s.tier;
         long pos = alloc.alloc(allocatedChunks, -1, 0);
         entry.writeNewEntry(pos, ks.inputKey);

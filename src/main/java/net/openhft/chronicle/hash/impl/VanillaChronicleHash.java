@@ -558,17 +558,6 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    /**
-     * For testing
-     */
-    public final long[] segmentSizes() {
-        long[] sizes = new long[actualSegments];
-        for (int i = 0; i < actualSegments; i++) {
-            sizes[i] = BigSegmentHeader.INSTANCE.size(segmentHeaderAddress(i));
-        }
-        return sizes;
-    }
-
     public final long segmentHeaderAddress(int segmentIndex) {
         return bsAddress() + segmentHeadersOffset + ((long) segmentIndex) * segmentHeaderSize;
     }
@@ -599,10 +588,10 @@ public abstract class VanillaChronicleHash<K,
     @Override
     public final long longSize() {
         long result = 0L;
-        for (int i = 0; i < actualSegments; i++) {
-            long segmentHeaderAddress = segmentHeaderAddress(i);
-            result += BigSegmentHeader.INSTANCE.size(segmentHeaderAddress) -
-                    BigSegmentHeader.INSTANCE.deleted(segmentHeaderAddress);
+        for (int i = 0; i < segments(); i++) {
+            try (SC c = segmentContext(i)) {
+                result += c.size();
+            }
         }
         return result;
     }

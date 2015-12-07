@@ -66,12 +66,20 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         segmentHeader = BigSegmentHeader.INSTANCE;
     }
 
-    public long entries() {
-        return segmentHeader.size(segmentHeaderAddress);
+    public long tierEntries() {
+        if (tier == 0) {
+            return segmentHeader.entries(segmentHeaderAddress);
+        } else {
+            return TierCountersArea.entries(tierCountersAreaAddr());
+        }
     }
 
-    public void entries(long size) {
-        segmentHeader.size(segmentHeaderAddress, size);
+    public void tierEntries(long tierEntries) {
+        if (tier == 0) {
+            segmentHeader.entries(segmentHeaderAddress, tierEntries);
+        } else {
+            TierCountersArea.entries(tierCountersAreaAddr(), tierEntries);
+        }
     }
 
     long lowestPossiblyFreeChunk() {
@@ -91,16 +99,30 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         }
     }
 
-    public long deleted() {
-        return segmentHeader.deleted(segmentHeaderAddress);
+    public long tierDeleted() {
+        if (tier == 0) {
+            return segmentHeader.deleted(segmentHeaderAddress);
+        } else {
+            return TierCountersArea.deleted(tierCountersAreaAddr());
+        }
     }
 
-    public void deleted(long deleted) {
-        segmentHeader.deleted(segmentHeaderAddress, deleted);
+    public void tierDeleted(long tierDeleted) {
+        if (tier == 0) {
+            segmentHeader.deleted(segmentHeaderAddress, tierDeleted);
+        } else {
+            TierCountersArea.deleted(tierCountersAreaAddr(), tierDeleted);
+        }
     }
 
     public long size() {
-        return entries() - deleted();
+        goToFirstTier();
+        long size = tierEntries() - tierDeleted();
+        while (hasNextTier()) {
+            nextTier();
+            size += tierEntries() - tierDeleted();
+        }
+        return size;
     }
 
 
@@ -624,6 +646,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
             }
             return -1;
         } else {
+            tierEntries(tierEntries() + 1);
             // if bit at lowestPossiblyFreeChunk is clear, it was skipped because
             // more than 1 chunk was requested. Don't move lowestPossiblyFreeChunk
             // in this case. chunks == 1 clause is just a fast path.
@@ -647,9 +670,18 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Segment")
     public void free(long fromPos, int chunks) {
+        tierEntries(tierEntries() - 1);
         freeList.clearRange(fromPos, fromPos + chunks);
         if (fromPos < lowestPossiblyFreeChunk())
             lowestPossiblyFreeChunk(fromPos);
+    }
+
+    @Stage("Segment")
+    public void freeExtra(long pos, int oldChunks, int newChunks) {
+        long from = pos + newChunks;
+        freeList.clearRange(from, pos + oldChunks);
+        if (from < lowestPossiblyFreeChunk())
+            lowestPossiblyFreeChunk(from);
     }
 
     public void verifyTierCountersAreaData() {

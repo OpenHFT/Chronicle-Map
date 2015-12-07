@@ -19,8 +19,8 @@ package net.openhft.chronicle.hash.impl;
 import java.util.concurrent.TimeUnit;
 
 public interface SegmentHeader {
-    long size(long address);
-    void size(long address, long size);
+    long entries(long address);
+    void entries(long address, long size);
 
     long deleted(long address);
     void deleted(long address, long deleted);

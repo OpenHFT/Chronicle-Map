@@ -29,11 +29,15 @@ public enum TierCountersArea {
     ;
 
     private static Memory memory = OS.memory();
+    private static final long UNSIGNED_INT_MASK = 0xFFFFFFFFL;
+
     public static final long NEXT_TIER_INDEX_OFFSET = 0L;
     public static final long PREV_TIER_INDEX_OFFSET = NEXT_TIER_INDEX_OFFSET + 8L;
     public static final long LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET = PREV_TIER_INDEX_OFFSET + 8L;
     public static final long SEGMENT_INDEX_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET + 8L;
     public static final long TIER_OFFSET = SEGMENT_INDEX_OFFSET + 4L;
+    public static final long ENTRIES_OFFSET = TIER_OFFSET + 4L;
+    public static final long DELETED_OFFSET = ENTRIES_OFFSET + 4L;
 
     public static long nextTierIndex(long address) {
         return memory.readLong(address + NEXT_TIER_INDEX_OFFSET);
@@ -74,5 +78,29 @@ public enum TierCountersArea {
 
     public static void tier(long address, int tier) {
         memory.writeInt(address + TIER_OFFSET, tier);
+    }
+
+    public static long entries(long address) {
+        return memory.readInt(address + ENTRIES_OFFSET) & UNSIGNED_INT_MASK;
+    }
+
+    public static void entries(long address, long entries) {
+        if (entries >= (1L << 32)) {
+            throw new IllegalStateException("tier entries overflow: up to " + UNSIGNED_INT_MASK +
+                    " supported, " + entries + " given");
+        }
+        memory.writeInt(address + ENTRIES_OFFSET, (int) entries);
+    }
+
+    public static long deleted(long address) {
+        return memory.readInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
+    }
+
+    public static void deleted(long address, long deleted) {
+        if (deleted >= (1L << 32)) {
+            throw new IllegalStateException("tier deleted entries count overflow: up to " +
+                    UNSIGNED_INT_MASK + " supported, " + deleted + " given");
+        }
+        memory.writeInt(address + DELETED_OFFSET, (int) deleted);
     }
 }

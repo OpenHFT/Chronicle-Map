@@ -265,7 +265,12 @@ public class EntryCountMapTest {
 
     private void dumpMapStats(int segments, int minSize,
                               ChronicleMap<CharSequence, LongValue> map) {
-        long[] a = ((VanillaChronicleMap) map).segmentSizes();
+        long[] a = new long[map.segments()];
+        for (int i = 0; i < map.segments(); i++) {
+            try (MapSegmentContext<CharSequence, LongValue, ?> c = map.segmentContext(i)) {
+                a[i] = c.size();
+            }
+        }
         System.out.println("segs: " + segments + " min: " + minSize + " was " + map.size() + " "
                 + Arrays.toString(a)
                 + " sum: " + sum(a));

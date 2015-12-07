@@ -78,7 +78,7 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
             e.updatedReplicationStateOnPresentEntry();
             e.writeEntryDeleted();
             ru.updateChange();
-            s.deleted(s.deleted() + 1);
+            s.tierDeleted(s.tierDeleted() + 1);
         } else {
             throw new IllegalStateException("Entry is absent in the map when doRemove() is called");
         }
@@ -89,7 +89,7 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
         boolean wasDeleted = e.entryDeleted();
         super.doRemove();
         if (wasDeleted)
-            s.deleted(s.deleted() - 1L);
+            s.tierDeleted(s.tierDeleted() - 1L);
     }
 
     @Override

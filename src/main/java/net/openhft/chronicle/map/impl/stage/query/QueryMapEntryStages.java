@@ -48,7 +48,7 @@ public abstract class QueryMapEntryStages<K, V> extends MapEntryStages<K, V> {
         }
         if (s.realloc(pos, 0, newSizeInChunks)) {
             s.innerWriteLock.lock();
-            allocatedChunks.incrementSegmentEntriesIfNeeded();
+            s.tierEntries(s.tierEntries() + 1);
             if (newValueSizeIsDifferent) {
                 initValue(newValue);
             } else {

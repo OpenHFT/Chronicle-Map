@@ -67,6 +67,11 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     }
 
     @Override
+    public long tierEntriesForIteration() {
+        return entriesToTest == ALL ? s.tierEntries() : s.tierEntries() - s.tierDeleted();
+    }
+
+    @Override
     public void doReplaceValue(Data<V> newValue) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
@@ -83,7 +88,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         initEntriesToTest(PRESENT);
         s.innerUpdateLock.lock();
-        return innerForEachSegmentEntryWhile(predicate, s.size());
+        return innerForEachSegmentEntryWhile(predicate);
     }
 
     @Override
@@ -92,7 +97,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         initEntriesToTest(ALL);
         s.innerUpdateLock.lock();
-        return innerForEachSegmentEntryWhile(predicate, s.entries());
+        return innerForEachSegmentEntryWhile(predicate);
     }
 
     @Override
@@ -112,7 +117,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
             e.updatedReplicationStateOnPresentEntry();
             e.writeEntryDeleted();
             ru.updateChange();
-            s.deleted(s.deleted() + 1);
+            s.tierDeleted(s.tierDeleted() + 1);
         } finally {
             s.innerWriteLock.unlock();
         }
@@ -124,7 +129,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         boolean wasDeleted = e.entryDeleted();
         super.doRemove();
         if (wasDeleted)
-            s.deleted(s.deleted() - 1);
+            s.tierDeleted(s.tierDeleted() - 1);
     }
 
     @Override
@@ -133,7 +138,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         if (e.entryDeleted()) {
             try {
                 e.innerDefaultReplaceValue(value);
-                s.deleted(s.deleted() - 1);
+                s.tierDeleted(s.tierDeleted() - 1);
                 s.incrementModCount();
                 e.writeEntryPresent();
                 ru.updateChange();

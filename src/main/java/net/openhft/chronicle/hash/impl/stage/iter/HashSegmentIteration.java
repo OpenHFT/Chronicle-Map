@@ -47,6 +47,10 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         return this;
     }
 
+    public long tierEntriesForIteration() {
+        return s.tierEntries();
+    }
+
     public boolean entryRemovedOnThisIteration = false;
     
     abstract boolean entryRemovedOnThisIterationInit();
@@ -69,30 +73,22 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     public boolean forEachSegmentEntryWhile(Predicate<? super E> predicate) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         s.innerUpdateLock.lock();
-        return innerForEachSegmentEntryWhile(predicate, s.size());
+        return innerForEachSegmentEntryWhile(predicate);
     }
 
-    public <T> boolean innerForEachSegmentEntryWhile(
-            Predicate<? super T> predicate, long expectedEntriesToIterate) {
+    public <T> boolean innerForEachSegmentEntryWhile(Predicate<? super T> predicate) {
         try {
-            long leftEntries = expectedEntriesToIterate;
-            if (leftEntries == 0)
-                return true;
             s.goToLastTier();
             while (true) {
                 int currentTier = s.tier;
                 long currentTierBaseAddr = s.tierBaseAddr;
                 long currentTierIndex = s.tierIndex;
-                leftEntries = forEachTierWhile(predicate, leftEntries,
-                        currentTier, currentTierBaseAddr, currentTierIndex);
-                if (leftEntries < 0) // interrupted
+                boolean interrupted = forEachTierEntryWhile(
+                        predicate, currentTier, currentTierBaseAddr, currentTierIndex);
+                if (interrupted)
                     return false;
-                if (leftEntries == 0)
-                    return true;
                 if (currentTier == 0)
-                    throw new IllegalStateException("We iterated all tiers without interruption, " +
-                            "but according to segment counters there should be " + leftEntries +
-                            " more entries. Size diverged?");
+                    return true;
                 s.prevTier();
             }
         } finally {
@@ -102,9 +98,10 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         }
     }
 
-    private <T> long forEachTierWhile(
-            Predicate<? super T> predicate, long leftEntries,
+    private <T> boolean forEachTierEntryWhile(
+            Predicate<? super T> predicate,
             int currentTier, long currentTierBaseAddr, long tierIndex) {
+        long leftEntries = tierEntriesForIteration();
         boolean interrupted = false;
         long startPos = 0L;
         CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
@@ -160,7 +157,12 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             // becomes equal to start pos without making the whole loop, but only visiting a single
             // entry
         } while (currentHashLookupPos != startPos || steps == 0);
-        return interrupted ? ~leftEntries : leftEntries;
+        if (!interrupted && leftEntries > 0) {
+            throw new IllegalStateException("We a tier without interruption, " +
+                    "but according to tier counters there should be " + leftEntries +
+                    " more entries. Size diverged?");
+        }
+        return interrupted;
     }
 
     @Override

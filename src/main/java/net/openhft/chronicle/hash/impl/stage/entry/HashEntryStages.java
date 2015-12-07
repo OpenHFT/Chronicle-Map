@@ -180,7 +180,6 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
     
     public void innerRemoveEntryExceptHashLookupUpdate() {
         s.free(pos, entrySizeInChunks);
-        s.entries(s.entries() - 1L);
         s.incrementModCount();
     }
 }

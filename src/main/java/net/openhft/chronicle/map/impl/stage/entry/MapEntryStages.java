@@ -171,8 +171,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
                 relocation(newValue, newSizeOfEverythingBeforeValue);
                 return;
             } else if (newSizeInChunks < entrySizeInChunks) {
-                // Freeing extra chunks
-                s.free(pos + newSizeInChunks, entrySizeInChunks - newSizeInChunks);
+                s.freeExtra(pos, entrySizeInChunks, newSizeInChunks);
             }
             // new size != old size => size is not constant => size is actually written =>
             // to prevent (at least) this execution:
@@ -268,7 +267,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         // fast path
         if (!mh.m().constantlySizedEntry && mh.m().couldNotDetermineAlignmentBeforeAllocation &&
                 entrySizeInChunks < allocatedChunks.allocatedChunks)  {
-            s.free(pos + entrySizeInChunks, allocatedChunks.allocatedChunks - entrySizeInChunks);
+            s.freeExtra(pos, allocatedChunks.allocatedChunks, entrySizeInChunks);
         } else {
             initEntrySizeInChunks(allocatedChunks.allocatedChunks);
         }
