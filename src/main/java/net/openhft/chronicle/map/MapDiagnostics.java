@@ -14,12 +14,20 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package eg;
+package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.MapSegmentContext;
+import java.io.File;
+import java.io.IOException;
 
 public final class MapDiagnostics {
+
+    public static void main(String[] args) throws IOException {
+        String mapFile = args[0];
+        try (ChronicleMap map = ChronicleMap.of(Object.class, Object.class)
+                .createPersistedTo(new File(mapFile))) {
+            printMapStats(map);
+        }
+    }
 
     public static <K, V> void printMapStats(ChronicleMap<K, V> map) {
         for (int i = 0; i < map.segments(); i++) {

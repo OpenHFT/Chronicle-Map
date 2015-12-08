@@ -20,6 +20,7 @@ import com.google.common.io.ByteStreams;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.MapDiagnostics;
 import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 

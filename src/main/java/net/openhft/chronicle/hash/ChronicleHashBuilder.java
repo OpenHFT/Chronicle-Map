@@ -36,9 +36,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * This interface defines the meaning of configurations, common to {@link
- * ChronicleMapBuilder} and {@link ChronicleSetBuilder}, i.
- * e. <i>Chronicle hash container</i> configurations.
+ * This interface defines the meaning of configurations, common to {@link ChronicleMapBuilder} and
+ * {@link ChronicleSetBuilder}, i. e. <i>Chronicle hash container</i> configurations.
  *
  * <p>{@code ChronicleHashBuilder} is mutable. Configuration methods mutate the builder and return
  * <i>the builder itself</i> back to support chaining pattern, rather than the builder copies with
