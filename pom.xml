@@ -46,7 +46,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <type>pom</type>
-                <version>1.10.13</version>
+                <version>1.10.18</version>
                 <scope>import</scope>
             </dependency>
 
@@ -98,6 +98,7 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-algorithms</artifactId>
+            <version>1.1.5</version>
         </dependency>
 
         <!-- optional dependencies -->
