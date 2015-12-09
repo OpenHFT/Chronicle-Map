@@ -52,11 +52,7 @@ public final class BigSegmentHeader implements SegmentHeader {
     static final long ENTRIES_OFFSET = LOCK_OFFSET + 8L; // 32-bit
     static final long LOWEST_POSSIBLY_FREE_CHUNK_OFFSET = ENTRIES_OFFSET + 4L;
 
-
-    static final long EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET =
-            LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
-
-    static final long DELETED_OFFSET = EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET + 8L;
+    static final long DELETED_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
 
     private BigSegmentHeader() {
     }
@@ -189,31 +185,6 @@ public final class BigSegmentHeader implements SegmentHeader {
         }
     }
 
-    private static void writeExclusiveLockHolder(long address) {
-        OS.memory().writeLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET,
-                Thread.currentThread().getId());
-    }
-
-    private static void clearExclusiveLockHolder(long address) {
-        OS.memory().writeLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET, 0L);
-    }
-
-    /**
-     * For debugging and monitoring
-     */
-    static Thread exclusiveLockHolder(long address) {
-        long holderId = OS.memory().readLong(address + EXCLUSIVE_LOCK_HOLDER_THREAD_ID_OFFSET);
-        if (holderId == 0L)
-            return null;
-        Thread[] threads = new Thread[Thread.activeCount()];
-        Thread.enumerate(threads);
-        for (Thread thread : threads) {
-            if (thread.getId() == holderId)
-                return thread;
-        }
-        return null;
-    }
-
     @Override
     public void readLock(long address) {
         if (!tryReadLock(address, 2, TimeUnit.SECONDS)) {
@@ -313,7 +284,6 @@ public final class BigSegmentHeader implements SegmentHeader {
         if (!updateLocked(countWord) && waitWord(lockWord) == 0) {
             checkReadCountForIncrement(countWord);
             if (casCountWord(address, countWord, countWord + UPDATE_PARTY)) {
-                writeExclusiveLockHolder(address);
                 return true;
             }
         }
@@ -374,12 +344,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public boolean tryWriteLock(long address) {
-        if (casCountWord(address, 0, WRITE_LOCKED_COUNT_WORD)) {
-            writeExclusiveLockHolder(address);
-            return true;
-        } else {
-            return false;
-        }
+        return casCountWord(address, 0, WRITE_LOCKED_COUNT_WORD);
     }
 
     @Override
@@ -398,7 +363,6 @@ public final class BigSegmentHeader implements SegmentHeader {
                 checkWaitWordForDecrement(waitWord);
                 if (casLockWord(address, lockWord,
                         lockWord(WRITE_LOCKED_COUNT_WORD, waitWord - WAIT_PARTY))) {
-                    writeExclusiveLockHolder(address);
                     return true;
                 }
             }
@@ -490,7 +454,6 @@ public final class BigSegmentHeader implements SegmentHeader {
             int countWord = getCountWord(address);
             checkUpdateLocked(countWord);
             if (casCountWord(address, countWord, countWord - UPDATE_PARTY)) {
-                clearExclusiveLockHolder(address);
                 return;
             }
         }
@@ -502,7 +465,6 @@ public final class BigSegmentHeader implements SegmentHeader {
             int countWord = getCountWord(address);
             checkUpdateLocked(countWord);
             if (casCountWord(address, countWord, countWord ^ UPDATE_BIT)) {
-                clearExclusiveLockHolder(address);
                 return;
             }
         }
@@ -511,7 +473,6 @@ public final class BigSegmentHeader implements SegmentHeader {
     @Override
     public void writeUnlock(long address) {
         checkWriteLocked(getCountWord(address));
-        clearExclusiveLockHolder(address);
         putCountWord(address, 0);
     }
 
@@ -524,7 +485,6 @@ public final class BigSegmentHeader implements SegmentHeader {
     @Override
     public void downgradeWriteToReadLock(long address) {
         checkWriteLocked(getCountWord(address));
-        clearExclusiveLockHolder(address);
         putCountWord(address, READ_PARTY);
     }
 }
