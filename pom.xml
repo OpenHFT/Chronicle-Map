@@ -223,12 +223,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.2</version>
+                <version>2.10.3</version>
                 <configuration>
                     <links>
-                        <link>http://openhft.github.io/Java-Lang/apidocs/</link>
                         <link>http://openhft.github.io/Chronicle-Bytes/apidocs/</link>
+                        <link>http://openhft.github.io/Chronicle-Wire/apidocs/</link>
                         <link>http://openhft.github.io/Chronicle-Algorithms/apidocs/</link>
+                        <link>http://openhft.github.io/Chronicle-Values/apidocs/</link>
                     </links>
                     <excludePackageNames>
                         net.openhft.chronicle.hash.serialization.impl:net.openhft.xstream:net.openhft.chronicle.hash.impl:net.openhft.chronicle.map.impl
@@ -240,6 +241,7 @@
                         <exclude>net/openhft/chronicle/map/Replica.java</exclude>
                         <exclude>net/openhft/chronicle/map/ReplicatedChronicleMap.java</exclude>
                         <exclude>net/openhft/chronicle/set/DummyValueData.java</exclude>
+                        <exclude>**/Compiled*.java</exclude>
                     </sourceFileExcludes>
                     <failOnError>false</failOnError>
                     <additionalparam>-Xdoclint:none</additionalparam>
