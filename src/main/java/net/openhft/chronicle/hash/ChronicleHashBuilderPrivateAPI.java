@@ -30,6 +30,8 @@ public interface ChronicleHashBuilderPrivateAPI<K> {
 
     long entriesPerSegment();
 
+    long tierHashLookupCapacity();
+
     long actualChunksPerSegmentTier();
 
     int segmentHeaderSize();

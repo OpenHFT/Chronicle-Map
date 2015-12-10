@@ -24,6 +24,7 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
 import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
 import net.openhft.chronicle.hash.replication.*;
@@ -969,6 +970,17 @@ public final class ChronicleMapBuilder<K, V> implements
         if (minSegments > 0)
             segments = Math.max(minSegments, segments);
         return segments;
+    }
+
+    long tierHashLookupCapacity() {
+        long entriesPerSegment = entriesPerSegment();
+        long capacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
+        long maxEntriesPerTier = PoissonDistribution.inverseCumulativeProbability(
+                entriesPerSegment, nonTieredSegmentsPercentile);
+        while (maxEntriesPerTier > MAX_LOAD_FACTOR * capacity) {
+            capacity *= 2;
+        }
+        return capacity;
     }
 
     int segmentHeaderSize() {

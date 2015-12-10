@@ -26,7 +26,14 @@ public abstract class CompactOffHeapLinearHashTable {
     // to fit 64 bits per slot.
     public static final int MAX_TIER_CHUNKS = 1 << 30;
     public static final int MAX_TIER_ENTRIES = 1 << 29;
-    public static final double MAX_LOAD_FACTOR = .2/.3;
+    /** Normally, hashLookup capacity is chosen so that the lf varies from 1/3 to 2/3, at most */
+    public static final double MAX_UPPER_BOUND_LOAD_FACTOR = .2/.3;
+    /**
+     * If average key/value sizes are configured wrong, and Chronicle Hash bloats up (size grows
+     * beyond configured .entries()), hashLookup might become too full. Stop insertion and trigger
+     * segment tiering, when hashLookup load factor > 0.8, because collision chains become too long.
+     */
+    public static final double MAX_LOAD_FACTOR = 0.8;
 
 
     public static int valueBits(long actualChunksPerSegment) {
@@ -56,12 +63,10 @@ public abstract class CompactOffHeapLinearHashTable {
 
     public static long capacityFor(long entriesPerSegment) {
         if (entriesPerSegment < 0L)
-            throw new IllegalArgumentException("entriesPerSegment should be positive");
+            throw new AssertionError("entriesPerSegment should be positive");
         long capacity = Maths.nextPower2(entriesPerSegment, 64L);
-        if (((double) entriesPerSegment) / (double) capacity > MAX_LOAD_FACTOR) {
-            // hash lookup shouldn't be too dense
-            capacity <<= 1L;
-        }
+        if (entriesPerSegment > MAX_UPPER_BOUND_LOAD_FACTOR * capacity)
+            capacity *= 2;
         return capacity;
     }
 

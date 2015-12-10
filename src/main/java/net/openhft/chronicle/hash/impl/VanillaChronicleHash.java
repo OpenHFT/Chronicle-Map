@@ -194,7 +194,7 @@ public abstract class VanillaChronicleHash<K,
             throw new IllegalStateException("aligned64BitMemoryOperationsAtomic() == false, " +
                     "but hash lookup slot is " + tierHashLookupEntrySize);
         }
-        tierHashLookupCapacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
+        tierHashLookupCapacity = privateAPI.tierHashLookupCapacity();
         maxEntriesPerHashLookup = (long) (tierHashLookupCapacity * MAX_LOAD_FACTOR);
         tierHashLookupInnerSize = tierHashLookupCapacity * tierHashLookupEntrySize;
         tierHashLookupOuterSize = CACHE_LINES.align(tierHashLookupInnerSize, BYTES);

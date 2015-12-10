@@ -53,6 +53,11 @@ class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI
     }
 
     @Override
+    public long tierHashLookupCapacity() {
+        return b.tierHashLookupCapacity();
+    }
+
+    @Override
     public long actualChunksPerSegmentTier() {
         return b.actualChunksPerSegmentTier();
     }
