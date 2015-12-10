@@ -23,6 +23,8 @@ import net.openhft.chronicle.core.OS;
 
 import java.util.concurrent.TimeUnit;
 
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 public final class BigSegmentHeader implements SegmentHeader {
     public static final BigSegmentHeader INSTANCE = new BigSegmentHeader();
 
@@ -41,6 +43,13 @@ public final class BigSegmentHeader implements SegmentHeader {
     static final long ENTRIES_OFFSET = LOCK_OFFSET + 8L; // 32-bit
     static final long LOWEST_POSSIBLY_FREE_CHUNK_OFFSET = ENTRIES_OFFSET + 4L;
     static final long DELETED_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
+
+
+    private static final int TRY_LOCK_NANOS_THRESHOLD = 2_000_000;
+
+    private static long roundUpNanosToMillis(long nanos) {
+        return NANOSECONDS.toMillis(nanos + 900_000);
+    }
 
     private BigSegmentHeader() {
     }
@@ -108,10 +117,10 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     private boolean tryReadLock0(long address, long time, TimeUnit unit) {
         long timeInNanos = unit.toNanos(time);
-        if (timeInNanos < 2000000) {
+        if (timeInNanos < TRY_LOCK_NANOS_THRESHOLD) {
             return tryReadLockNanos(address, timeInNanos);
         } else {
-            return tryReadLockMillis(address, (timeInNanos + 900000) / 1000000);
+            return tryReadLockMillis(address, roundUpNanosToMillis(timeInNanos));
         }
     }
 
@@ -175,10 +184,10 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     private boolean tryUpdateLock0(long address, long time, TimeUnit unit) {
         long timeInNanos = unit.toNanos(time);
-        if (timeInNanos < 2000000) {
+        if (timeInNanos < TRY_LOCK_NANOS_THRESHOLD) {
             return tryUpdateLockNanos(address, timeInNanos);
         } else {
-            return tryUpdateLockMillis(address, (timeInNanos + 900000) / 1000000);
+            return tryUpdateLockMillis(address, roundUpNanosToMillis(timeInNanos));
         }
     }
 
@@ -231,12 +240,40 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     private boolean tryWriteLock0(long address, long time, TimeUnit unit) {
-        long end = System.nanoTime() + unit.toNanos(time);
+        long timeInNanos = unit.toNanos(time);
+        if (timeInNanos < TRY_LOCK_NANOS_THRESHOLD) {
+            return tryWriteLockNanos(address, timeInNanos);
+        } else {
+            return tryWriteLockMillis(address, roundUpNanosToMillis(timeInNanos));
+        }
+    }
+
+    private boolean tryWriteLockNanos(long address, long timeInNanos) {
+        long end = System.nanoTime() + timeInNanos;
         registerWait(address);
         do {
             if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
                 return true;
         } while (System.nanoTime() <= end);
+        deregisterWait(address);
+        return false;
+    }
+
+    /**
+     * Use a timer which is more insensitive to jumps in time like GCs and context switches.
+     */
+    private boolean tryWriteLockMillis(long address, long timeInMillis) {
+        long lastTime = System.currentTimeMillis();
+        registerWait(address);
+        do {
+            if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
+                return true;
+            long now = System.currentTimeMillis();
+            if (now != lastTime) {
+                lastTime = now;
+                timeInMillis--;
+            }
+        } while (timeInMillis >= 0);
         deregisterWait(address);
         return false;
     }
@@ -273,12 +310,40 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     private boolean tryUpgradeUpdateToWriteLock0(long address, long time, TimeUnit unit) {
-        long end = System.nanoTime() + unit.toNanos(time);
+        long timeInNanos = unit.toNanos(time);
+        if (timeInNanos < TRY_LOCK_NANOS_THRESHOLD) {
+            return tryUpgradeUpdateToWriteLockNanos(address, timeInNanos);
+        } else {
+            return tryUpgradeUpdateToWriteLockMillis(address, roundUpNanosToMillis(timeInNanos));
+        }
+    }
+
+    private boolean tryUpgradeUpdateToWriteLockNanos(long address, long timeInNanos) {
+        long end = System.nanoTime() + timeInNanos;
         registerWait(address);
         do {
             if (LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
                 return true;
         } while (System.nanoTime() <= end);
+        deregisterWait(address);
+        return false;
+    }
+
+    /**
+     * Use a timer which is more insensitive to jumps in time like GCs and context switches.
+     */
+    private boolean tryUpgradeUpdateToWriteLockMillis(long address, long timeInMillis) {
+        long lastTime = System.currentTimeMillis();
+        registerWait(address);
+        do {
+            if (LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
+                return true;
+            long now = System.currentTimeMillis();
+            if (now != lastTime) {
+                lastTime = now;
+                timeInMillis--;
+            }
+        } while (timeInMillis >= 0);
         deregisterWait(address);
         return false;
     }
