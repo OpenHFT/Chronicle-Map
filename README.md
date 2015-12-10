@@ -159,6 +159,7 @@ http://www.javadoc.io/doc/net.openhft/chronicle-map/2.3.9/).
 ### Download the library
 
 #### Maven Artifact Download
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map)
 ```xml
 <dependency>
   <groupId>net.openhft</groupId>
