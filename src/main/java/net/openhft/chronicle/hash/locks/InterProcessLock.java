@@ -62,8 +62,8 @@ public interface InterProcessLock extends Lock {
      * and lies dormant until the lock has been acquired. After another specified threshold
      * {@link RuntimeException} is thrown.
      *
-     * @throws IllegalInterProcessLockStateException if this method call observes illegal lock
-     * state, or some lock limitations reached (e. g. maximum read lock holders)
+     * @throws IllegalMonitorStateException if this method call observes illegal lock state, or some
+     * lock limitations reached (e. g. maximum read lock holders)
      * @throws RuntimeException if fails to acquire a lock for some finite time
      */
     @Override
@@ -103,8 +103,8 @@ public interface InterProcessLock extends Lock {
      * }}</pre>
      *
      * @return {@code true} if the lock was acquired and {@code false} otherwise
-     * @throws IllegalInterProcessLockStateException if this method call observes illegal lock
-     * state, or some lock limitations reached (e. g. maximum read lock holders)
+     * @throws IllegalMonitorStateException if this method call observes illegal lock state, or some
+     * lock limitations reached (e. g. maximum read lock holders)
      */
     @Override
     boolean tryLock();
@@ -112,8 +112,7 @@ public interface InterProcessLock extends Lock {
     /**
      * Releases the lock, if the lock is not held by the current thread, returns immediately.
      *
-     * @throws IllegalInterProcessLockStateException if this method call observes illegal lock
-     * state
+     * @throws IllegalMonitorStateException if this method call observes illegal lock state
      */
     @Override
     void unlock();

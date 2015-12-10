@@ -16,42 +16,30 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.algo.bytes.NativeAccess;
+import net.openhft.chronicle.algo.locks.VanillaReadWriteUpdateWithWaitsLockingStrategy;
 import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.hash.locks.IllegalInterProcessLockStateException;
 
 import java.util.concurrent.TimeUnit;
-
-import static java.nio.ByteOrder.LITTLE_ENDIAN;
-import static java.nio.ByteOrder.nativeOrder;
 
 public final class BigSegmentHeader implements SegmentHeader {
     public static final BigSegmentHeader INSTANCE = new BigSegmentHeader();
 
     private static final long UNSIGNED_INT_MASK = 0xFFFFFFFFL;
 
-    static final long LOCK_OFFSET = 0L; // 64-bit
-    static final long COUNT_WORD_OFFSET = LOCK_OFFSET;
-    static final long WAIT_WORD_OFFSET = LOCK_OFFSET + 4L;
-
-    static final int COUNT_WORD_SHIFT = nativeOrder() == LITTLE_ENDIAN ? 0 : 32;
-    static final int WAIT_WORD_SHIFT = 32 - COUNT_WORD_SHIFT;
-
-    static final int READ_BITS = 30;
-    static final int MAX_READ = (1 << READ_BITS) - 1;
-    static final int READ_MASK = MAX_READ;
-    static final int READ_PARTY = 1;
-
-    static final int UPDATE_BIT = 1 << READ_BITS;
-    static final int UPDATE_PARTY = READ_PARTY | UPDATE_BIT;
-    static final int WRITE_BIT = UPDATE_BIT << 1;
-    static final int WRITE_LOCKED_COUNT_WORD = UPDATE_PARTY | WRITE_BIT;
-
-    static final int MAX_WAIT = Integer.MAX_VALUE;
-    static final int WAIT_PARTY = 1;
+    static final long LOCK_OFFSET = 0L;
+    /**
+     * Make the LOCK constant and {@link #A} of final class types (instead of interfaces) as this
+     * hopefully help JVM with inlining
+     */
+    private static final VanillaReadWriteUpdateWithWaitsLockingStrategy LOCK =
+            (VanillaReadWriteUpdateWithWaitsLockingStrategy)
+            VanillaReadWriteUpdateWithWaitsLockingStrategy.instance();
+    private static final NativeAccess A = (NativeAccess) Access.nativeAccess();
 
     static final long ENTRIES_OFFSET = LOCK_OFFSET + 8L; // 32-bit
     static final long LOWEST_POSSIBLY_FREE_CHUNK_OFFSET = ENTRIES_OFFSET + 4L;
-
     static final long DELETED_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
 
     private BigSegmentHeader() {
@@ -96,95 +84,6 @@ public final class BigSegmentHeader implements SegmentHeader {
                 (int) lowestPossiblyFreeChunk);
     }
 
-    private static long getLockWord(long address) {
-        return OS.memory().readVolatileLong(null, address + LOCK_OFFSET);
-    }
-
-    private static boolean casLockWord(long address, long expected, long x) {
-        return OS.memory().compareAndSwapLong(null, address + LOCK_OFFSET, expected, x);
-    }
-
-    private static int countWord(long lockWord) {
-        return (int) (lockWord >> COUNT_WORD_SHIFT);
-    }
-
-    private static int waitWord(long lockWord) {
-        return (int) (lockWord >> WAIT_WORD_SHIFT);
-    }
-
-    private static long lockWord(int countWord, int waitWord) {
-        return ((((long) countWord) & UNSIGNED_INT_MASK) << COUNT_WORD_SHIFT) |
-                ((((long) waitWord) & UNSIGNED_INT_MASK) << WAIT_WORD_SHIFT);
-    }
-
-    private static int getCountWord(long address) {
-        return OS.memory().readVolatileInt(null, address + COUNT_WORD_OFFSET);
-    }
-
-    private static boolean casCountWord(long address, int expected, int x) {
-        return OS.memory().compareAndSwapInt(null, address + COUNT_WORD_OFFSET, expected, x);
-    }
-
-    private static void putCountWord(long address, int countWord) {
-        OS.memory().writeOrderedInt(null, address + COUNT_WORD_OFFSET, countWord);
-    }
-
-    private static boolean writeLocked(int countWord) {
-        return countWord == WRITE_LOCKED_COUNT_WORD;
-    }
-
-    private static void checkWriteLocked(int countWord) {
-        if (countWord != WRITE_LOCKED_COUNT_WORD)
-            throw new IllegalInterProcessLockStateException("Expected write lock");
-    }
-
-    private static boolean updateLocked(int countWord) {
-        return (countWord & UPDATE_BIT) != 0;
-    }
-
-    private static void checkUpdateLocked(int countWord) {
-        if (countWord < UPDATE_PARTY) // i. e. if update bit is not set, or write bit is set
-            throw new IllegalInterProcessLockStateException("Expected update lock");
-    }
-
-    private static int readCount(int countWord) {
-        return countWord & READ_MASK;
-    }
-
-    private static void checkReadLocked(int countWord) {
-        if (countWord <= 0) // i. e. if read count == 0 or write bit (actually sign bit) is set
-            throw new IllegalInterProcessLockStateException("Expected read lock");
-    }
-
-    private static void checkReadCountForIncrement(int countWord) {
-        if (readCount(countWord) == MAX_READ) {
-            throw new IllegalInterProcessLockStateException(
-                    "Lock count reached the limit of " + MAX_READ);
-        }
-    }
-
-    private static int getWaitWord(long address) {
-        return OS.memory().readVolatileInt(null, address + WAIT_WORD_OFFSET);
-    }
-
-    private static boolean casWaitWord(long address, int expected, int x) {
-        return OS.memory().compareAndSwapInt(null, address + WAIT_WORD_OFFSET, expected, x);
-    }
-
-    private static void checkWaitWordForIncrement(int waitWord) {
-        if (waitWord == MAX_WAIT) {
-            throw new IllegalInterProcessLockStateException(
-                    "Wait count reached the limit of " + MAX_WAIT);
-        }
-    }
-
-    private static void checkWaitWordForDecrement(int waitWord) {
-        if (waitWord == 0) {
-            throw new IllegalInterProcessLockStateException(
-                    "Wait count underflowed");
-        }
-    }
-
     @Override
     public void readLock(long address) {
         if (!tryReadLock(address, 2, TimeUnit.SECONDS)) {
@@ -199,14 +98,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public boolean tryReadLock(long address) {
-        long lockWord = getLockWord(address);
-        int countWord = countWord(lockWord);
-        if (!writeLocked(countWord) && waitWord(lockWord) == 0) {
-            checkReadCountForIncrement(countWord);
-            if (casCountWord(address, countWord, countWord + READ_PARTY))
-                return true;
-        }
-        return false;
+        return LOCK.tryReadLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
@@ -251,18 +143,12 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public boolean tryUpgradeReadToUpdateLock(long address) {
-        int countWord = getCountWord(address);
-        checkReadLocked(countWord);
-        return !updateLocked(countWord) &&
-                casCountWord(address, countWord, countWord - READ_PARTY + UPDATE_PARTY);
+        return LOCK.tryUpgradeReadToUpdateLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
     public boolean tryUpgradeReadToWriteLock(long address) {
-        int countWord = getCountWord(address);
-        checkReadLocked(countWord);
-        return countWord == READ_PARTY &&
-                casCountWord(address, READ_PARTY, WRITE_LOCKED_COUNT_WORD);
+        return LOCK.tryUpgradeReadToWriteLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
@@ -279,15 +165,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public boolean tryUpdateLock(long address) {
-        long lockWord = getLockWord(address);
-        int countWord = countWord(lockWord);
-        if (!updateLocked(countWord) && waitWord(lockWord) == 0) {
-            checkReadCountForIncrement(countWord);
-            if (casCountWord(address, countWord, countWord + UPDATE_PARTY)) {
-                return true;
-            }
-        }
-        return false;
+        return LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
@@ -344,7 +222,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public boolean tryWriteLock(long address) {
-        return casCountWord(address, 0, WRITE_LOCKED_COUNT_WORD);
+        return LOCK.tryWriteLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
@@ -356,37 +234,19 @@ public final class BigSegmentHeader implements SegmentHeader {
         long end = System.nanoTime() + unit.toNanos(time);
         registerWait(address);
         do {
-            long lockWord = getLockWord(address);
-            int countWord = countWord(lockWord);
-            if (countWord == 0) {
-                int waitWord = waitWord(lockWord);
-                checkWaitWordForDecrement(waitWord);
-                if (casLockWord(address, lockWord,
-                        lockWord(WRITE_LOCKED_COUNT_WORD, waitWord - WAIT_PARTY))) {
-                    return true;
-                }
-            }
+            if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
+                return true;
         } while (System.nanoTime() <= end);
         deregisterWait(address);
         return false;
     }
 
     private static void registerWait(long address) {
-        while (true) {
-            int waitWord = getWaitWord(address);
-            checkWaitWordForIncrement(waitWord);
-            if (casWaitWord(address, waitWord, waitWord + WAIT_PARTY))
-                return;
-        }
+        LOCK.registerWait(A, null, address + LOCK_OFFSET);
     }
 
     private static void deregisterWait(long address) {
-        while (true) {
-            int waitWord = getWaitWord(address);
-            checkWaitWordForDecrement(waitWord);
-            if (casWaitWord(address, waitWord, waitWord - WAIT_PARTY))
-                return;
-        }
+        LOCK.deregisterWait(A, null, address + LOCK_OFFSET);
     }
 
     @Override
@@ -403,14 +263,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public boolean tryUpgradeUpdateToWriteLock(long address) {
-        int countWord = getCountWord(address);
-        return checkExclusiveUpdateLocked(countWord) &&
-                casCountWord(address, countWord, WRITE_LOCKED_COUNT_WORD);
-    }
-
-    private static boolean checkExclusiveUpdateLocked(int countWord) {
-        checkUpdateLocked(countWord);
-        return countWord == UPDATE_PARTY;
+        return LOCK.tryUpgradeUpdateToWriteLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
@@ -423,16 +276,8 @@ public final class BigSegmentHeader implements SegmentHeader {
         long end = System.nanoTime() + unit.toNanos(time);
         registerWait(address);
         do {
-            long lockWord = getLockWord(address);
-            int countWord = countWord(lockWord);
-            if (checkExclusiveUpdateLocked(countWord)) {
-                int waitWord = waitWord(lockWord);
-                checkWaitWordForDecrement(waitWord);
-                if (casLockWord(address, lockWord,
-                        lockWord(WRITE_LOCKED_COUNT_WORD, waitWord - WAIT_PARTY))) {
-                    return true;
-                }
-            }
+            if (LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
+                return true;
         } while (System.nanoTime() <= end);
         deregisterWait(address);
         return false;
@@ -440,51 +285,31 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     @Override
     public void readUnlock(long address) {
-        while (true) {
-            int countWord = getCountWord(address);
-            checkReadLocked(countWord);
-            if (casCountWord(address, countWord, countWord - READ_PARTY))
-                return;
-        }
+        LOCK.readUnlock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
     public void updateUnlock(long address) {
-        while (true) {
-            int countWord = getCountWord(address);
-            checkUpdateLocked(countWord);
-            if (casCountWord(address, countWord, countWord - UPDATE_PARTY)) {
-                return;
-            }
-        }
+        LOCK.updateUnlock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
     public void downgradeUpdateToReadLock(long address) {
-        while (true) {
-            int countWord = getCountWord(address);
-            checkUpdateLocked(countWord);
-            if (casCountWord(address, countWord, countWord ^ UPDATE_BIT)) {
-                return;
-            }
-        }
+        LOCK.downgradeUpdateToReadLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
     public void writeUnlock(long address) {
-        checkWriteLocked(getCountWord(address));
-        putCountWord(address, 0);
+        LOCK.writeUnlock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
     public void downgradeWriteToUpdateLock(long address) {
-        checkWriteLocked(getCountWord(address));
-        putCountWord(address, UPDATE_PARTY);
+        LOCK.downgradeWriteToUpdateLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
     public void downgradeWriteToReadLock(long address) {
-        checkWriteLocked(getCountWord(address));
-        putCountWord(address, READ_PARTY);
+        LOCK.downgradeWriteToReadLock(A, null, address + LOCK_OFFSET);
     }
 }

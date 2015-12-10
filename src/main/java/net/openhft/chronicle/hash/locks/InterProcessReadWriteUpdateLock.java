@@ -89,7 +89,7 @@ public interface InterProcessReadWriteUpdateLock extends ReadWriteLock {
      *
      * <p>Any attempt to acquire this lock (including {@code tryLock()}, if the read lock is already
      * held by the current thread, but the update lock is not yet, is prevented by throwing {@link
-     * IllegalInterProcessLockStateException}.
+     * IllegalMonitorStateException}.
      *
      * @return the update-level lock
      */
@@ -103,7 +103,7 @@ public interface InterProcessReadWriteUpdateLock extends ReadWriteLock {
      *
      * <p>Any attempt to acquire this lock (including {@code tryLock()}, if the read lock is already
      * held by the current thread, but the update and write locks are not yet, is prevented by
-     * throwing {@link IllegalInterProcessLockStateException}.
+     * throwing {@link IllegalMonitorStateException}.
      *
      * @return the update-level lock
      */
