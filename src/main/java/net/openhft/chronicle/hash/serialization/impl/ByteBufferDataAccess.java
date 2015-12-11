@@ -120,7 +120,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         // no fields to read
         initTransients();
     }

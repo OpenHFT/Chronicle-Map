@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.IORuntimeException;
+import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
@@ -83,6 +83,7 @@ public enum DeflatorStringMarshaller implements BytesReader<CharSequence>,
         out.writeInt(position, (int) (out.writePosition() - position - 4));
     }
 
+    @NotNull
     @Override
     public CharSequence read(Bytes bytes, @Nullable CharSequence ignored) {
         long size = bytes.readStopBit();

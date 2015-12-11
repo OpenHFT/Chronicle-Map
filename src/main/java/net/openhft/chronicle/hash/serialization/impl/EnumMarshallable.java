@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.util.ReadResolvable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public interface EnumMarshallable<E extends Enum<E>> extends Marshallable, ReadResolvable<E> {
 
     @Override
-    default void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    default void readMarshallable(@NotNull WireIn wireIn) {
         // shouldn't read fields, anyway readResolved later
     }
 

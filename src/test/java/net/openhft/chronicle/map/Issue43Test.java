@@ -67,6 +67,7 @@ public class Issue43Test {
             }
         }
 
+        @NotNull
         @Override
         public ValueWrapper read(Bytes in, ValueWrapper using) {
             throw new UnsupportedOperationException("Not supported yet.");

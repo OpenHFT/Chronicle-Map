@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
@@ -125,7 +124,7 @@ public final class MapMarshaller<K, V>
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         keyReader = wireIn.read(() -> "keyReader").typedMarshallable();
         keyWriter = wireIn.read(() -> "keyWriter").typedMarshallable();
         valueReader = wireIn.read(() -> "valueReader").typedMarshallable();

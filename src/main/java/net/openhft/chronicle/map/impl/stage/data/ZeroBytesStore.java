@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map.impl.stage.data;
 
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.core.OS;
 import org.jetbrains.annotations.Nullable;
@@ -86,13 +85,13 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
 
     @Override
     public boolean compareAndSwapInt(long offset, int expected, int value)
-            throws BufferOverflowException, IllegalArgumentException, IORuntimeException {
+            throws BufferOverflowException, IllegalArgumentException {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public boolean compareAndSwapLong(long offset, long expected, long value)
-            throws BufferOverflowException, IllegalArgumentException, IORuntimeException {
+            throws BufferOverflowException, IllegalArgumentException {
         throw new UnsupportedOperationException();
     }
 

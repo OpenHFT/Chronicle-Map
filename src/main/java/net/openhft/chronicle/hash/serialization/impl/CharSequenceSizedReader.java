@@ -18,7 +18,6 @@ package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesUtil;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.StatefulCopyable;
 import net.openhft.chronicle.wire.WireIn;
@@ -75,7 +74,7 @@ public class CharSequenceSizedReader
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         // no fields to read
         initTransients();
     }

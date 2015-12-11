@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 
 /**
- * External version on {@link ReadBytesMarshallable}, could be used as lambda.
+ * External version on {@link ReadBytesMarshallable}.
  *
  * @param <T> type of objects deserialized
  * @see BytesWriter

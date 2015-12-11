@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.wire.WireIn;
@@ -84,7 +83,7 @@ public class ExternalizableDataAccess<T extends Externalizable> extends Serializ
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         tClass = wireIn.read(() -> "tClass").typeLiteral();
         initTransients();
     }

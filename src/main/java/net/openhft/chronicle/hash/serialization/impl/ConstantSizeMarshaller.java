@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -68,7 +67,7 @@ public final class ConstantSizeMarshaller implements SizeMarshaller {
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         constantSize = wireIn.read(() -> "constantSize").int64();
     }
 

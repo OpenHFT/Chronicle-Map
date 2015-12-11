@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +108,7 @@ public final class ListMarshaller<T>
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         elementReader = wireIn.read(() -> "elementReader").typedMarshallable();
         elementWriter = wireIn.read(() -> "elementWriter").typedMarshallable();
     }

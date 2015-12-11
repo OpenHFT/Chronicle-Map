@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.wire.WireIn;
@@ -49,7 +48,7 @@ public class SerializableReader<T extends Serializable>
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         // no fields to read
     }
 

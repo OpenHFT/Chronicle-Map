@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Byteable;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;

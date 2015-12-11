@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
@@ -104,7 +103,7 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
-    protected void readMarshallableFields(@NotNull WireIn wireIn) throws IORuntimeException {
+    protected void readMarshallableFields(@NotNull WireIn wireIn) {
         super.readMarshallableFields(wireIn);
 
         valueClass = wireIn.read(() -> "valueClass").typeLiteral();

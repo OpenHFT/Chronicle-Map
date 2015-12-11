@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Byteable;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
@@ -138,7 +137,7 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         valueType = wireIn.read(() -> "valueType").typeLiteral();
         initTransients();
     }

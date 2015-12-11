@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -84,7 +83,7 @@ public interface HashSplitting extends Serializable, Marshallable {
         }
 
         @Override
-        public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+        public void readMarshallable(@NotNull WireIn wire) {
             mask = wire.read(() -> "mask").int32();
             bits = wire.read(() -> "bits").int32();
         }
@@ -120,7 +119,7 @@ public interface HashSplitting extends Serializable, Marshallable {
         }
 
         @Override
-        public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+        public void readMarshallable(@NotNull WireIn wire) {
             segments = wire.read(() -> "segments").int32();
         }
 

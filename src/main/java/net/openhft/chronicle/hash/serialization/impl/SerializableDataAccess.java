@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
@@ -112,7 +111,7 @@ public class SerializableDataAccess<T extends Serializable> extends AbstractData
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         // no fields to read
         initTransients();
     }

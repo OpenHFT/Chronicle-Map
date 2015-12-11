@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
@@ -127,7 +126,7 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         super.readMarshallable(wireIn);
         reader = wireIn.read(() -> "reader").typedMarshallable();
         writer = wireIn.read(() -> "writer").typedMarshallable();

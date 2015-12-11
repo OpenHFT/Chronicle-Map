@@ -18,7 +18,6 @@ package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesMarshallable;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -44,7 +43,7 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wireIn) {
         super.readMarshallable(wireIn);
         initTransients();
     }

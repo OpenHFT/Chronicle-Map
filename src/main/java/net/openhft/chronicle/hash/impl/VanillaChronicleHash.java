@@ -19,7 +19,6 @@ package net.openhft.chronicle.hash.impl;
 import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.IORuntimeException;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
@@ -220,12 +219,12 @@ public abstract class VanillaChronicleHash<K,
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wire) throws IORuntimeException {
+    public void readMarshallable(@NotNull WireIn wire) {
         readMarshallableFields(wire);
         initTransients();
     }
 
-    protected void readMarshallableFields(@NotNull WireIn wireIn) throws IORuntimeException {
+    protected void readMarshallableFields(@NotNull WireIn wireIn) {
         // Previously assignment of these values was done in default field initializers, but
         // with Wire serialization VanillaChronicleMap instance is created with
         // unsafe.allocateInstance(), that doesn't guarantee (?) to initialize fields with default
