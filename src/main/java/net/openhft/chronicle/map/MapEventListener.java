@@ -146,23 +146,25 @@ public abstract class MapEventListener<K, V> implements Serializable {
      *
      * <p>This method is called when put is already happened.
      *
-     * @param key                   the key the given value is put for
-     * @param newValue              the value which is now associated with the given key
-     * @param replacedValue         the value which was replaced by {@code newValue}, {@code null}
-     *                              if the key was absent in the map before current {@code
-     *                              ChronicleMap}
-     * @param replicationEvent
-     * @param lastModifiedTimeStamp
-     * @param lastId
-     * @param timestamp
-     * @param identifier
+     * @param key               the key the given value is put for
+     * @param newValue          the value which is now associated with the given key
+     * @param replacedValue     the value which was replaced by {@code newValue}, {@code null} if
+     *                          the key was absent in the map before current {@code ChronicleMap}
+     * @param replicationEvent  {@code true} if its a replicaiton event
+     * @param timestamp         the time the event occurred
+     * @param replacedTimestamp the time stamp that has just been replaced
+     * @param identifier        the node identifier associated with this update
+     * @param replacedTimestamp the identifier that has just been replaced.
      */
     public void onPut(K key,
                       V newValue,
                       @Nullable V replacedValue,
                       boolean replicationEvent,
-                      boolean added, long lastModifiedTimeStamp, byte lastId, long timestamp,
-                      byte identifier, boolean hasValueChanged) {
+                      boolean added, long timestamp,
+                      long replacedTimestamp,
+                      byte identifier,
+                      byte replacedIdentifier,
+                      boolean hasValueChanged) {
 
     }
 
@@ -178,3 +180,4 @@ public abstract class MapEventListener<K, V> implements Serializable {
         // do nothing
     }
 }
+
