@@ -30,7 +30,6 @@ import net.openhft.chronicle.map.impl.CompiledMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledMapQueryContext;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.set.ChronicleSet;
-import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
@@ -174,41 +173,6 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     public Class<V> valueClass() {
         return valueClass;
-    }
-
-    static <T> T newInstance(Class<T> aClass, boolean isKey) {
-        try {
-            // TODO optimize -- save heap class / direct class in transient fields and call
-            // newInstance() on them directly
-            return Values.newHeapInstance(aClass);
-
-        } catch (Exception e) {
-            if (e.getCause() instanceof IllegalStateException)
-                throw e;
-
-            if (aClass.isInterface())
-                throw new IllegalStateException("It not possible to create a instance from " +
-                        "interface=" + aClass.getSimpleName() + " we recommend you create an " +
-                        "instance in the usual way.", e);
-
-            try {
-                return (T) aClass.newInstance();
-            } catch (Exception e1) {
-                throw new IllegalStateException("It has not been possible to create a instance " +
-                        "of class=" + aClass.getSimpleName() +
-                        ", Note : its more efficient if your chronicle map is configured with " +
-                        "interface key " +
-                        "and value types rather than classes, as this method is able to use " +
-                        "interfaces to generate off heap proxies that point straight at your " +
-                        "data. " +
-                        "In this case you have used a class and chronicle is unable to create an " +
-                        "instance of this class has it does not have a default constructor. " +
-                        "If your class is mutable, we " +
-                        "recommend you create and instance of your class=" +
-                        aClass.getSimpleName() +
-                        " in the usual way, rather than using this method.", e);
-            }
-        }
     }
 
     @NotNull
