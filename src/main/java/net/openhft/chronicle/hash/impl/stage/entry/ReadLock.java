@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -29,18 +30,21 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 
 @Staged
 public class ReadLock implements InterProcessLock {
-    
+
+    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef SegmentStages s;
     @StageRef HashEntryStages entry;
     @StageRef HashLookupPos hlp;
     
     @Override
     public boolean isHeldByCurrentThread() {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         return s.localLockState.read;
     }
 
     @Override
     public void lock() {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         if (s.localLockState == UNLOCKED) {
             if (s.readZero() && s.updateZero() && s.writeZero())
                 s.segmentHeader.readLock(s.segmentHeaderAddress);
@@ -51,6 +55,7 @@ public class ReadLock implements InterProcessLock {
 
     @Override
     public void lockInterruptibly() throws InterruptedException {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         if (s.localLockState == UNLOCKED) {
             if (s.readZero() && s.updateZero() && s.writeZero())
                 s.segmentHeader.readLockInterruptibly(s.segmentHeaderAddress);
@@ -61,6 +66,7 @@ public class ReadLock implements InterProcessLock {
 
     @Override
     public boolean tryLock() {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         if (s.localLockState == UNLOCKED) {
             if (!s.readZero() || !s.updateZero() || !s.writeZero() ||
                     s.segmentHeader.tryReadLock(s.segmentHeaderAddress)) {
@@ -77,6 +83,7 @@ public class ReadLock implements InterProcessLock {
 
     @Override
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         if (s.localLockState == UNLOCKED) {
             if (!s.readZero() || !s.updateZero() || !s.writeZero() ||
                     s.segmentHeader.tryReadLock(s.segmentHeaderAddress, time, unit)) {
@@ -93,6 +100,7 @@ public class ReadLock implements InterProcessLock {
 
     @Override
     public void unlock() {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         // TODO what should close here?
         hlp.closeHashLookupPos();
         entry.closePos();

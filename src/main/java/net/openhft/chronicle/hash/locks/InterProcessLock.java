@@ -110,7 +110,9 @@ public interface InterProcessLock extends Lock {
     boolean tryLock();
 
     /**
-     * Releases the lock, if the lock is not held by the current thread, returns immediately.
+     * Releases the lock (and all stronger-level lock, in the context of {@link
+     * InterProcessReadWriteUpdateLock}, if the lock is not held by the current thread, returns
+     * immediately.
      *
      * @throws IllegalMonitorStateException if this method call observes illegal lock state
      */

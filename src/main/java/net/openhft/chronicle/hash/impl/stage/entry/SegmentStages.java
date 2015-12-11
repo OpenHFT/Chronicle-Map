@@ -181,6 +181,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     @Override
     @Stage("Locks")
     public int changeAndGetTotalReadLockCount(int change) {
+        assert totalReadLockCount + change >= 0 : "read underflow";
         return totalReadLockCount += change;
     }
 
@@ -192,6 +193,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     @Override
     @Stage("Locks")
     public int changeAndGetTotalUpdateLockCount(int change) {
+        assert totalUpdateLockCount + change >= 0 : "update underflow";
         return totalUpdateLockCount += change;
     }
 
@@ -203,6 +205,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     @Override
     @Stage("Locks")
     public int changeAndGetTotalWriteLockCount(int change) {
+        assert totalWriteLockCount + change >= 0 : "write underflow";
         return totalWriteLockCount += change;
     }
 
@@ -301,17 +304,13 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
             case UNLOCKED:
                 return;
             case READ_LOCKED:
-                int newTotalReadLockCount = decrementRead();
-                if (newTotalReadLockCount == 0) {
+                if (decrementRead() == 0) {
                     if (updateZero() && writeZero())
                         segmentHeader.readUnlock(segmentHeaderAddress);
-                } else {
-                    assert newTotalReadLockCount > 0 : "read underflow";
                 }
                 return;
             case UPDATE_LOCKED:
-                int newTotalUpdateLockCount = decrementUpdate();
-                if (newTotalUpdateLockCount == 0) {
+                if (decrementUpdate() == 0) {
                     if (writeZero()) {
                         if (readZero()) {
                             segmentHeader.updateUnlock(segmentHeaderAddress);
@@ -319,13 +318,10 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
                             segmentHeader.downgradeUpdateToReadLock(segmentHeaderAddress);
                         }
                     }
-                } else {
-                    assert newTotalUpdateLockCount > 0 : "update underflow";
                 }
                 return;
             case WRITE_LOCKED:
-                int newTotalWriteLockCount = decrementWrite();
-                if (newTotalWriteLockCount == 0) {
+                if (decrementWrite() == 0) {
                     if (!updateZero()) {
                         segmentHeader.downgradeWriteToUpdateLock(segmentHeaderAddress);
                     } else {
@@ -335,8 +331,6 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
                             segmentHeader.writeUnlock(segmentHeaderAddress);
                         }
                     }
-                } else {
-                    assert newTotalWriteLockCount > 0 : "write underflow";
                 }
         }
     }

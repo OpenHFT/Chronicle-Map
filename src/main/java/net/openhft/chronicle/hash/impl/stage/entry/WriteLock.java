@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -29,15 +30,18 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.WRITE_LOCKED;
 @Staged
 public class WriteLock implements InterProcessLock {
 
+    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef SegmentStages s;
     
     @Override
     public boolean isHeldByCurrentThread() {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         return s.localLockState.write;
     }
 
     @Override
     public void lock() {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         switch (s.localLockState) {
             case UNLOCKED:
                 s.checkIterationContextNotLockedInThisThread();
@@ -88,6 +92,7 @@ public class WriteLock implements InterProcessLock {
 
     @Override
     public void lockInterruptibly() throws InterruptedException {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         switch (s.localLockState) {
             case UNLOCKED:
                 s.checkIterationContextNotLockedInThisThread();
@@ -121,6 +126,7 @@ public class WriteLock implements InterProcessLock {
 
     @Override
     public boolean tryLock() {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         switch (s.localLockState) {
             case UNLOCKED:
                 s.checkIterationContextNotLockedInThisThread();
@@ -176,6 +182,7 @@ public class WriteLock implements InterProcessLock {
 
     @Override
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         switch (s.localLockState) {
             case UNLOCKED:
                 s.checkIterationContextNotLockedInThisThread();
@@ -233,20 +240,17 @@ public class WriteLock implements InterProcessLock {
 
     @Override
     public void unlock() {
+        checkOnEachPublicOperation.checkOnEachLockOperation();
         switch (s.localLockState) {
             case UNLOCKED:
             case READ_LOCKED:
             case UPDATE_LOCKED:
                 return;
             case WRITE_LOCKED:
-                int newTotalWriteLockCount = s.decrementWrite();
-                if (newTotalWriteLockCount == 0) {
+                if (s.decrementWrite() == 0)
                     s.segmentHeader.downgradeWriteToUpdateLock(s.segmentHeaderAddress);
-                } else {
-                    assert newTotalWriteLockCount > 0 : "write underflow";
-                }
+                s.incrementUpdate();
+                s.setLocalLockState(UPDATE_LOCKED);
         }
-        s.incrementUpdate();
-        s.setLocalLockState(UPDATE_LOCKED);
     }
 }
