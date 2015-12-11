@@ -113,8 +113,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     public transient TimeUnit cleanupTimeoutUnit;
     
     public transient MapRemoteOperations<K, V, R> remoteOperations;
-    transient CompiledReplicatedMapQueryContext<K, V, R> remoteOpContext;
-    transient CompiledReplicatedMapIterationContext<K, V, R> remoteItContext;
 
     transient BitSetFrame mainSegmentsModIterFrameForUpdates;
     transient BitSetFrame mainSegmentsModIterFrameForIteration;
@@ -476,28 +474,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     public CompiledReplicatedMapQueryContext<K, V, R> mapContext() {
         return q().getContext(CompiledReplicatedMapQueryContext.class,
                 ci -> new CompiledReplicatedMapQueryContext<>(ci, this));
-    }
-
-    /**
-     * Assumed to be called from a single thread - the replication thread. Not to waste time
-     * for going into replication thread's threadLocal map, cache the context in Map's field
-     */
-    private CompiledReplicatedMapQueryContext<K, V, R> remoteOpContext() {
-        if (remoteOpContext == null) {
-            remoteOpContext = (CompiledReplicatedMapQueryContext<K, V, R>) q();
-        }
-        assert !remoteOpContext.usedInit();
-        remoteOpContext.initUsed(true);
-        return remoteOpContext;
-    }
-
-    private CompiledReplicatedMapIterationContext<K, V, R> remoteItContext() {
-        if (remoteItContext == null) {
-            remoteItContext = (CompiledReplicatedMapIterationContext<K, V, R>) i();
-        }
-        assert !remoteItContext.usedInit();
-        remoteItContext.initUsed(true);
-        return remoteItContext;
     }
 
     /**
