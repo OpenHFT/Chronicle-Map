@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
@@ -901,7 +900,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     // because locking might take time > 1 ms. but making current time a param
                     // of acquireWithoutLock would complicate code much, requiring putting
                     // lookupUsing() back into ReplicatedChMap, and other methods
-                    entry.writeLong(currentTime());
+                    final long timestamp = currentTime();
+                    final long replacedTimestamp = entry.readLong(entry.position());
+                    entry.writeLong(timestamp);
+                    byte replacedIdentifier = entry.readByte(entry.position());
                     entry.writeByte(localIdentifier);
                     // deleted flag
                     entry.writeBoolean(false);
@@ -931,7 +933,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     } else {
                         throw defaultValueOrPrepareBytesShouldBeSpecified();
                     }
-                    putValue(pos, offset, entry, valueSizePos, entryEndAddr, isDeleted,
+                    boolean hasValueChanged = putValue(pos, offset, entry, valueSizePos,
+                            entryEndAddr, isDeleted,
                             segmentState,
                             metaElemWriter, elemWriter, elem, metaElemWriter.size(elemWriter, elem),
                             hashLookup, sizeOfEverythingBeforeValue);
@@ -952,7 +955,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     }
                     if (eventListener != null) {
                         V valueInstance = toValue.toInstance(copies, v, valueSize);
-                        eventListener.onPut(keyInstance, valueInstance, null, false, true);
+                        eventListener.onPut(keyInstance, valueInstance, null, false, true,
+                                hasValueChanged, localIdentifier, replacedIdentifier, timestamp,
+                                replacedTimestamp);
                     }
                     entryCreated(lock);
                     return v;
@@ -1109,7 +1114,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     boolean isDeleted = entry.readBoolean();
 
                     entry.positionAddr(timeStampPosAddr);
+                    final long replacedTimestamp = entry.readLong(entry.position());
                     entry.writeLong(timeStamp);
+
+                    byte replacedIdentifier = entry.readByte(entry.position());
                     entry.writeByte(identifier);
                     // deleted flag
                     entry.writeBoolean(false);
@@ -1123,6 +1131,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     long prevValueSize = valueSizeMarshaller.readSize(entry);
                     long sizeOfEverythingBeforeValue = entry.position();
                     alignment.alignPositionAddr(entry);
+                    boolean hasValueChanged = false;
                     try {
                         if (!isDeleted && prevValueSize == valueSize &&
                                 metaValueInterop.startsWith(valueInterop, entry, value)) {
@@ -1132,7 +1141,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         long entryEndAddr = valueAddr + prevValueSize;
 
                         // putValue may relocate entry and change offset
-                        putValue(pos, offset, entry, valueSizePos, entryEndAddr, isDeleted,
+                        hasValueChanged = putValue(pos, offset, entry, valueSizePos,
+                                entryEndAddr, isDeleted,
                                 segmentState,
                                 metaValueInterop, valueInterop, value, valueSize, hashLookup,
                                 sizeOfEverythingBeforeValue);
@@ -1147,7 +1157,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         if (eventListener != null) {
                             eventListener.onPut(toKey.toInstance(copies, key, keySize),
                                     toValue.toInstance(copies, value, valueSize), null, false,
-                                    isDeleted);
+                                    isDeleted, hasValueChanged, identifier, replacedIdentifier, timeStamp, replacedTimestamp);
                         }
 
                         // for DRY (reusing replaceValueAndNotifyPut() method),
@@ -1171,10 +1181,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 MVBI metaValueInterop =
                         getValueInterops.getMetaValueInterop(copies, valueInterop, value);
                 long valueSize = metaValueInterop.size(valueInterop, value);
-                putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
+                final long l = putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
                         metaValueInterop, valueInterop, value, entry, false);
                 entry.position(segmentState.valueSizePos - ADDITIONAL_ENTRY_BYTES);
+                final long replacedTimestamp = entry.readLong(entry.position());
                 entry.writeLong(timeStamp);
+                byte replacedIdentifier = entry.readByte(entry.position());
                 entry.writeByte(identifier);
                 entry.writeBoolean(false);
 
@@ -1185,7 +1197,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                             segmentState.valueSizePos, true, false);
                 if (eventListener != null)
                     eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                            toValue.toInstance(copies, value, valueSize), null, false, true);
+                            toValue.toInstance(copies, value, valueSize), null, false, true,
+                            l < 0, identifier, replacedIdentifier, timeStamp, replacedTimestamp);
 
                 return UpdateResult.INSERT;
             } finally {
@@ -1203,7 +1216,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 InstanceOrBytesToInstance<KB, K> toKey,
                 GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
                 InstanceOrBytesToInstance<? super VB, V> toValue, long hash2,
-                boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused) {
+                boolean replaceIfPresent, ReadValue<RV> readValue, boolean resultUnused,
+                final byte identifier, final byte replacedIdentifier,
+                final long timestamp, final long replacedTimestamp) {
             return putWithoutLock(copies, segmentState, metaKeyInterop, keyInterop, key, keySize,
                     toKey, getValueInterops, value, toValue, hash2, replaceIfPresent, readValue,
                     resultUnused, localIdentifier, currentTime(), false);
@@ -1249,7 +1264,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                 if (replaceIfPresent || isDeleted) {
                     entry.positionAddr(timeStampPosAddr);
+                    long replacedTimestamp = entry.readLong(entry.position());
                     entry.writeLong(timestamp);
+                    final byte replacedIdentifier = entry.readByte(entry.position());
                     entry.writeByte(identifier);
                     // deleted flag
                     entry.writeBoolean(false);
@@ -1258,7 +1275,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                             key, keySize, toKey,
                             getValueInterops, value, toValue,
                             entry, pos, offset, hashLookup, readValue,
-                            resultUnused, isDeleted, remote);
+                            resultUnused, isDeleted, remote, identifier,
+                            replacedIdentifier, timestamp, replacedTimestamp);
                     // for DRY (reusing replaceValueAndNotifyPut() method),
                     // size is updated AFTER callbacks are called.
                     // however this shouldn't be an issue because exclusive segment lock
@@ -1287,10 +1305,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             MVBI metaValueInterop =
                     getValueInterops.getMetaValueInterop(copies, valueInterop, value);
             long valueSize = metaValueInterop.size(valueInterop, value);
-            putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
+            final long l = putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
                     metaValueInterop, valueInterop, value, entry, false);
+            boolean hasValueChanged = (l < 0);
             entry.position(segmentState.valueSizePos - ADDITIONAL_ENTRY_BYTES);
+            final long replacedTimestamp = entry.readLong(entry.position());
             entry.writeLong(timestamp);
+            final byte replacedIdentifier = entry.readByte(entry.position());
             entry.writeByte(identifier);
             entry.writeBoolean(false);
 
@@ -1301,7 +1322,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         segmentState.valueSizePos, true, remote);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), null, remote, true);
+                        toValue.toInstance(copies, value, valueSize), null, remote, true,
+                        hasValueChanged, identifier, replacedIdentifier, timestamp,
+                        replacedTimestamp);
 
             return resultUnused ? null : readValue.readNull();
         }
@@ -1787,9 +1810,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
             long timeStamp = segment.timeStamp(pos);
 
-            assert timeStamp > currentTime() - TimeUnit.SECONDS.toMillis(1) &&
-                    timeStamp <= currentTime() : "timeStamp=" + timeStamp + ", " +
-                    "currentTime=" + currentTime();
+            // this is not true for bootstraping of replicaiton events
+            // assert timeStamp > currentTime() - TimeUnit.SECONDS.toMillis(1) &&
+            //         timeStamp <= currentTime() : "timeStamp=" + timeStamp + ", " +
+            //       "currentTime=" + currentTime();
             return timeStamp;
         }
 

@@ -55,7 +55,9 @@ public class EventListenerWithTCPSocketReplicationTest {
 
                 @Override
                 public void onPut(Integer key, CharSequence value, CharSequence replacedValue,
-                                  boolean replicationEvent, boolean added) {
+                                  boolean replicationEvent, boolean added, boolean hasValueChanged,
+                                  byte identifier, byte replacedIdentifier, long timeStamp,
+                                  long replacedTimeStamp) {
                     putWasCalled.getAndSet(true);
                     keyRef.set(key);
                     valueRef.set(value);

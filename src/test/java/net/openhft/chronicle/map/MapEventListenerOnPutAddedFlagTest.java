@@ -31,7 +31,9 @@ public class MapEventListenerOnPutAddedFlagTest {
 
         @Override
         public void onPut(Object key, Object newValue, @Nullable Object replacedValue,
-                          boolean replicationEvent, boolean added) {
+                          boolean replicationEvent, boolean added, boolean hasValueChanged,
+                          byte identifier, byte replacedIdentifier, long timeStamp,
+                          long replacedTimeStamp) {
             Assert.assertEquals(expected, added);
         }
     }

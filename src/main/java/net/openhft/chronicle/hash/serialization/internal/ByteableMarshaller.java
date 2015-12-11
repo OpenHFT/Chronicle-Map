@@ -192,6 +192,13 @@ public abstract class ByteableMarshaller<E extends Byteable>
             super(tClass);
             initSize();
         }
+
+
+        @Override
+        public boolean isEqual(Object write, Bytes bytes, E e, long size) {
+            // todo
+            return false;
+        }
     }
 
     private static class WithCustomFactory<E extends Byteable> extends ByteableMarshaller<E> {
@@ -201,7 +208,7 @@ public abstract class ByteableMarshaller<E extends Byteable>
         private final ObjectFactory<E> factory;
 
         WithCustomFactory(@NotNull Class<E> tClass,
-                                            @NotNull ObjectFactory<E> factory) {
+                          @NotNull ObjectFactory<E> factory) {
             super(tClass);
             this.factory = factory;
             initSize();
@@ -211,6 +218,13 @@ public abstract class ByteableMarshaller<E extends Byteable>
         @Override
         E getInstance() throws Exception {
             return factory.create();
+        }
+
+
+        @Override
+        public boolean isEqual(Object write, Bytes bytes, E e, long size) {
+            // todo
+            return false;
         }
     }
 }

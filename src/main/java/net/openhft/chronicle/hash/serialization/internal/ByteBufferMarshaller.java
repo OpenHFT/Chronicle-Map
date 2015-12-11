@@ -31,22 +31,22 @@ public enum ByteBufferMarshaller implements BytesInterop<ByteBuffer>, BytesReade
     @Override
     public boolean startsWith(Bytes bytes, ByteBuffer bb) {
         int inputRemaining = bb.remaining();
-        if(bytes.capacity() - bytes.position() < (long) inputRemaining)
+        if (bytes.capacity() - bytes.position() < (long) inputRemaining)
             return false;
 
         long pos = bytes.position();
         int inputPos = bb.position();
 
         int i;
-        for(i = 0; i < inputRemaining - 7; i += 8) {
+        for (i = 0; i < inputRemaining - 7; i += 8) {
             if (bytes.readLong(pos + (long) i) != bb.getLong(inputPos + i))
                 return false;
         }
-        for(; i < inputRemaining - 3; i += 4) {
+        for (; i < inputRemaining - 3; i += 4) {
             if (bytes.readInt(pos + (long) i) != bb.getInt(inputPos + i))
                 return false;
         }
-        for(; i < inputRemaining; i++) {
+        for (; i < inputRemaining; i++) {
             if (bytes.readByte(pos + (long) i) != bb.get(inputPos + i))
                 return false;
         }

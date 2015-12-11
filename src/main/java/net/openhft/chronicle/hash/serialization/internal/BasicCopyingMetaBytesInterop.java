@@ -64,6 +64,14 @@ public abstract class BasicCopyingMetaBytesInterop<E, W> implements MetaBytesInt
     }
 
     @Override
+    public boolean isEqual(W write, Bytes bytes, E e, long size) {
+        if (buffer.buffer.remaining() != size)
+            return false;
+
+        return bytes.compare(bytes.position(), buffer.buffer, buffer.buffer.position(), size);
+    }
+
+    @Override
     public void write(W writer, Bytes bytes, E e) {
         bytes.write(buffer.buffer, buffer.buffer.position(), buffer.buffer.remaining());
     }

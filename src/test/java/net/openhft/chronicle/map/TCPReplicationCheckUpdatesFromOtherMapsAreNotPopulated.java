@@ -118,7 +118,7 @@ public class TCPReplicationCheckUpdatesFromOtherMapsAreNotPopulated {
      * @throws InterruptedException
      */
     @Test
-    public void test3() throws IOException, InterruptedException {
+    public void test() throws IOException, InterruptedException {
 
 
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) map1;
@@ -134,7 +134,6 @@ public class TCPReplicationCheckUpdatesFromOtherMapsAreNotPopulated {
         Thread.sleep(1000);
         Assert.assertTrue(map2.size() == 1);
         Assert.assertEquals("test2", map2.get(1));
-
 
     }
 

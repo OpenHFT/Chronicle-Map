@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,10 +63,43 @@ public abstract class MapEventListener<K, V> implements Serializable {
         return new LoggingMapEventListener(prefix);
     }
 
+    /**
+     * This method is called whenever a new value is put for the key in the map during calls of such
+     * methods as {@link ChronicleMap#put put}, {@link ChronicleMap#putIfAbsent putIfAbsent}, {@link
+     * ChronicleMap#replace(Object, Object, Object) replace}, etc. When a new value is {@linkplain
+     * ChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during {@link
+     * ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called as
+     * well.
+     *
+     * <p>This method is called when put is already happened.
+     *
+     * @param key                the key the given value is put for
+     * @param newValue           the value which is now associated with the given key
+     * @param replacedValue      the value which was replaced by {@code newValue}, {@code null} if
+     *                           the key was absent in the map before current {@code ChronicleMap}
+     * @param hasValueChanged    {@code true} if the {@code newValue } equals {@code replacedValue
+     *                           }
+     * @param identifier         the identifer used for replicaiton or zero if not definded
+     * @param replacedIdentifier the replaced identifer used for replicaiton or zero if not
+     *                           definded
+     * @param timeStamp          the  timestamp used for replicaiton or zero if not definded
+     * @param replacedTimeStamp  the replaced timestamp used for replicaiton or zero if not
+     *                           definded
+     */
+    public void onPut(K key,
+                      V newValue,
+                      @Nullable V replacedValue,
+                      boolean replicationEvent,
+                      boolean added,
+                      boolean hasValueChanged,
+                      byte identifier,
+                      byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
+
+    }
+
     private static class LoggingMapEventListener extends MapEventListener {
         private static final long serialVersionUID = 0L;
         public final static Logger LOGGER = LoggerFactory.getLogger(LoggingMapEventListener.class);
-
         private final String prefix;
 
         private LoggingMapEventListener(String prefix) {
@@ -81,8 +113,8 @@ public abstract class MapEventListener<K, V> implements Serializable {
 
         @Override
         public void onPut(Object key, Object value, Object replacedValue, boolean
-                replicationEvent,
-                          @NotNull boolean updateResult) {
+                replicationEvent, boolean updateResult, boolean hasValueChanged, byte identifier,
+                          byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
             LOGGER.info("{} put {} => {}", prefix, key, value);
         }
 
@@ -114,18 +146,24 @@ public abstract class MapEventListener<K, V> implements Serializable {
      *
      * <p>This method is called when put is already happened.
      *
-     * @param key              the key the given value is put for
-     * @param newValue         the value which is now associated with the given key
-     * @param replacedValue    the value which was replaced by {@code newValue}, {@code null} if the
-     *                         key was absent in the map before current {@code ChronicleMap}
+     * @param key                   the key the given value is put for
+     * @param newValue              the value which is now associated with the given key
+     * @param replacedValue         the value which was replaced by {@code newValue}, {@code null}
+     *                              if the key was absent in the map before current {@code
+     *                              ChronicleMap}
      * @param replicationEvent
+     * @param lastModifiedTimeStamp
+     * @param lastId
+     * @param timestamp
+     * @param identifier
      */
     public void onPut(K key,
                       V newValue,
                       @Nullable V replacedValue,
                       boolean replicationEvent,
-                      boolean added) {
-        // do nothing
+                      boolean added, long lastModifiedTimeStamp, byte lastId, long timestamp,
+                      byte identifier, boolean hasValueChanged) {
+
     }
 
     /**

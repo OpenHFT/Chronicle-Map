@@ -52,6 +52,12 @@ public final class DelegatingMetaBytesInterop<E, I extends BytesInterop<E>>
         interop.write(bytes, e);
     }
 
+    @Override
+    public boolean isEqual(I interop, Bytes bytes, E e, long size) {
+        // todo
+        return false;
+    }
+
     private Object readResolve() {
         return INSTANCE;
     }
