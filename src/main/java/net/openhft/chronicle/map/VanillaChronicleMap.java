@@ -2577,7 +2577,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 }
                 return removeEntry(copies, searchState, key, keySize, toKey, toValue,
                         readValue, resultUnused, hashLookup, entry, pos, valueSizePos,
-                        valueSize, false, true, expectedValue != null);
+                        valueSize, false, true, expectedValue != null, (byte) 0, 0,
+                        (byte) 0, 0);
             }
             // key is not found
             if (expectedValue == null) {
@@ -2594,7 +2595,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 ReadValue<RV> readValue, boolean resultUnused,
                 MultiMap hashLookup, MultiStoreBytes entry, long pos,
                 long valueSizePos, long valueSize, boolean remote, boolean removeFromMultiMap,
-                boolean booleanResult) {
+                boolean booleanResult, byte identifier, long timestamp, byte replacedIdentifier, long replacedTimestamp) {
             // get the removed value, if needed
             RV removedValue = null;
             if ((!booleanResult && !resultUnused) || eventListener != null) {
@@ -2621,7 +2622,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 V removedValueForEventListener =
                         toValue.toInstance(copies, removedValue, valueSize);
                 eventListener.onRemove(toKey.toInstance(copies, key, keySize),
-                        removedValueForEventListener, remote);
+                        removedValueForEventListener, remote, identifier, replacedIdentifier,
+                        timestamp, replacedTimestamp);
             }
 
             return booleanResult ? Boolean.TRUE : removedValue;
@@ -3037,11 +3039,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             long position = entry.position();
             final long segmentHash = segmentHash(Hasher.hash(entry, position, position + keySize));
 
-            removePresent(segment, pos, entry, keySize, segmentHash, true);
+            removePresent(segment, pos, entry, keySize, segmentHash, true, (byte) 0,
+                    (byte) 0,
+                    0, 0);
         }
 
         final void removePresent(Segment segment, long pos, NativeBytes entry, long keySize,
-                                 long segmentHash, boolean removeFromMultiMap) {
+                                 long segmentHash, boolean removeFromMultiMap, final byte identifier,
+                                 final byte replacedIdentifier, final long timestamp, final long replacedTimeStamp) {
             entry.skip(keySize);
             segment.manageReplicationBytes(entry, true, true);
             long valueSizePos = entry.position();
@@ -3060,7 +3065,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (bytesEventListener != null)
                 bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, false);
             if (eventListener != null)
-                eventListener.onRemove(returnedEntry.getKey(), returnedEntry.getValue(), false);
+                eventListener.onRemove(returnedEntry.getKey(), returnedEntry.getValue(), false,
+                        identifier,
+                        replacedIdentifier, timestamp, replacedTimeStamp);
         }
     }
 

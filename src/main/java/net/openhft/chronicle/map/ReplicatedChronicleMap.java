@@ -1448,7 +1448,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         continue;
                     // key is found
                     entry.skip(keySize);
-
+                    long replacedTimestamp = 0;
+                    byte replacedIdentifier = 0;
                     long timestampPos = entry.position();
                     if (shouldIgnore(entry, timestamp, identifier)) {
                         // the following assert should be enabled, but TimeBasedReplicationTest
@@ -1465,7 +1466,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         if (expectedValue != null)
                             return Boolean.FALSE;
                         entry.position(timestampPos);
+                        replacedTimestamp = entry.readLong(entry.position());
                         entry.writeLong(timestamp);
+
+                        replacedIdentifier = entry.readByte(entry.position());
                         entry.writeByte(identifier);
                         onRemoveMaybeRemote(pos, remote);
                         break returnNothing;
@@ -1494,7 +1498,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                     return removeEntry(copies, searchState, key, keySize, toKey, toValue, readValue,
                             resultUnused, hashLookup, entry, pos, valueSizePos,
-                            valueSize, remote, false, booleanResult);
+                            valueSize, remote, false, booleanResult, identifier, timestamp, replacedIdentifier, replacedTimestamp);
                 }
                 // key is not found
                 if (remote) {
@@ -1692,9 +1696,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             final long keySize = keySizeMarshaller.readSize(entry);
             long keyPosition = entry.position();
             entry.skip(keySize);
-            long timestamp = entry.readLong();
+            long replacedTimeStamp = entry.readLong();
+            byte replacedIdentifier = entry.readByte(entry.position());
             entry.position(keyPosition);
-            if (timestamp > ((TimestampTrackingEntry) returnedEntry).timestamp) {
+            final long timestamp = ((TimestampTrackingEntry) returnedEntry).timestamp;
+
+            if (replacedTimeStamp > timestamp) {
                 // The entry was updated after being returned from iterator.next()
                 // Check that it is still the entry with the same key
                 K key = returnedEntry.getKey();
@@ -1717,7 +1724,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 }
             }
 
-            removePresent(segment, pos, entry, keySize, 0L, false);
+            removePresent(segment, pos, entry, keySize, 0L, false, (byte) 0, replacedIdentifier,
+                    timestamp, replacedTimeStamp);
         }
     }
 

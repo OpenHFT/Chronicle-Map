@@ -97,6 +97,7 @@ public abstract class MapEventListener<K, V> implements Serializable {
 
     }
 
+
     private static class LoggingMapEventListener extends MapEventListener {
         private static final long serialVersionUID = 0L;
         public final static Logger LOGGER = LoggerFactory.getLogger(LoggingMapEventListener.class);
@@ -119,7 +120,7 @@ public abstract class MapEventListener<K, V> implements Serializable {
         }
 
         @Override
-        public void onRemove(Object key, Object value, boolean replicationEvent) {
+        public void onRemove(Object key, Object value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
             LOGGER.info("{} remove {} was {}", prefix, key, value);
         }
     }
@@ -137,46 +138,21 @@ public abstract class MapEventListener<K, V> implements Serializable {
     }
 
     /**
-     * This method is called whenever a new value is put for the key in the map during calls of such
-     * methods as {@link ChronicleMap#put put}, {@link ChronicleMap#putIfAbsent putIfAbsent}, {@link
-     * ChronicleMap#replace(Object, Object, Object) replace}, etc. When a new value is {@linkplain
-     * ChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during {@link
-     * ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called as
-     * well.
-     *
-     * <p>This method is called when put is already happened.
-     *
-     * @param key               the key the given value is put for
-     * @param newValue          the value which is now associated with the given key
-     * @param replacedValue     the value which was replaced by {@code newValue}, {@code null} if
-     *                          the key was absent in the map before current {@code ChronicleMap}
-     * @param replicationEvent  {@code true} if its a replicaiton event
-     * @param timestamp         the time the event occurred
-     * @param replacedTimestamp the time stamp that has just been replaced
-     * @param identifier        the node identifier associated with this update
-     * @param replacedTimestamp the identifier that has just been replaced.
-     */
-    public void onPut(K key,
-                      V newValue,
-                      @Nullable V replacedValue,
-                      boolean replicationEvent,
-                      boolean added, long timestamp,
-                      long replacedTimestamp,
-                      byte identifier,
-                      byte replacedIdentifier,
-                      boolean hasValueChanged) {
-
-    }
-
-    /**
      * This is called when an entry is removed. Misses, i. e. when {@code map.remove(key)} is
      * called, but key is already absent in the map, are not notified.
      *
-     * @param key              the key removed from the map
-     * @param value            the value which was associated with the given key
-     * @param replicationEvent
+     * @param key                the key removed from the map
+     * @param value              the value which was associated with the given key
+     * @param replicationEvent   {@code true} if its a replication event
+     * @param identifier         the identifer used for replicaiton or zero if not definded
+     * @param replacedIdentifier the replaced identifer used for replicaiton or zero if not
+     *                           definded
+     * @param timestamp          the  timestamp used for replicaiton or zero if not definded
+     * @param replacedTimeStamp  the replaced timestamp used for replicaiton or zero if not
+     *                           definded
      */
-    public void onRemove(K key, V value, boolean replicationEvent) {
+    public void onRemove(K key, V value, boolean replicationEvent, byte identifier,
+                         byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
         // do nothing
     }
 }
