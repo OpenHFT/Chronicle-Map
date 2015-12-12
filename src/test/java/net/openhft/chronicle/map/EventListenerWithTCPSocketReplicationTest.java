@@ -65,7 +65,7 @@ public class EventListenerWithTCPSocketReplicationTest {
                 }
 
                 @Override
-                public void onRemove(Integer key, CharSequence value, boolean replicationEvent) {
+                public void onRemove(Integer key, CharSequence value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
                     wasRemoved.set(true);
                     valueRemoved.set(value);
                 }
