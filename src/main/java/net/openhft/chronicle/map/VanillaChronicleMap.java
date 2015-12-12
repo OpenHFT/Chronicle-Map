@@ -233,15 +233,15 @@ public class VanillaChronicleMap<K, V, R>
         return valueSize;
     }
 
-    void alignReadPosition(Bytes entry) {
+    public void alignReadPosition(Bytes entry) {
         long positionAddr = entry.address(entry.readPosition());
         long skip = alignAddr(positionAddr, alignment) - positionAddr;
         if (skip > 0)
             entry.readSkip(skip);
     }
 
-    public static long alignAddr(long addr, int alignment) {
-        return (addr + alignment - 1) & ~(alignment - 1);
+    public static long alignAddr(long addr, long alignment) {
+        return (addr + alignment - 1) & ~(alignment - 1L);
     }
 
     private ChainingInterface q() {

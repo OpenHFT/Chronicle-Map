@@ -73,11 +73,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         Bytes segmentBytes = s.segmentBytesForRead();
         segmentBytes.readPosition(valueSizeOffset);
         valueSize = mh.m().readValueSize(segmentBytes);
-        long currentPosition = segmentBytes.readPosition();
-        long currentAddr = segmentBytes.address(currentPosition);
-        long skip = alignAddr(currentAddr, mh.m().alignment) - currentAddr;
-        if (skip > 0)
-            segmentBytes.readSkip(skip);
+        mh.m().alignReadPosition(segmentBytes);
         valueOffset = segmentBytes.readPosition();
     }
 
