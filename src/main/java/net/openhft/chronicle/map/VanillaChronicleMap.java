@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
-import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -2170,6 +2169,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 SearchState searchState = segmentState.searchState;
                 hashLookup.startSearch(hash2, searchState);
                 MultiStoreBytes entry = segmentState.tmpBytes;
+                boolean hasValueChanged = false;
                 for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
                     long offset = offsetFromPos(pos);
                     reuse(entry, offset);
@@ -2194,10 +2194,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     } else {
                         long valueAddr = entry.positionAddr();
                         long entryEndAddr = valueAddr + prevValueSize;
+                        hasValueChanged = prevValueSize != valueSize ||
+                                !metaValueInterop.startsWith(valueInterop, entry, value);
 
                         // putValue may relocate entry and change offset
-                        hasValueChanged = putValue(pos, offset, entry, valueSizePos, entryEndAddr,
-                                false, segmentState,
                         putValue(pos, entry, valueSizePos, entryEndAddr, false, segmentState,
                                 metaValueInterop, valueInterop, value, valueSize, hashLookup,
                                 sizeOfEverythingBeforeValue);
@@ -2210,7 +2210,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     if (bytesEventListener != null)
                         bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false);
                     if (eventListener != null) {
-                        boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
+
                         eventListener.onPut(toKey.toInstance(copies, key, keySize),
                                 toValue.toInstance(copies, value, valueSize), null, false,
                                 false, hasValueChanged,
