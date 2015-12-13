@@ -54,9 +54,4 @@ final class PrepareValueBytesAsWriter<K>
         write(bytes, k);
     }
 
-    @Override
-    public boolean isEqual(PrepareValueBytesAsWriter<K> write, Bytes bytes, K k, long size) {
-        // todo
-        return false;
-    }
 }
