@@ -137,9 +137,5 @@ class DirectBytesBuffer
             super(DirectBytesBuffer.this);
         }
 
-        @Override
-        public boolean isEqual(BytesWriter<E> write, Bytes bytes, E e, long size) {
-            return false;
-        }
     }
 }

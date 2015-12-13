@@ -24,16 +24,4 @@ public interface MetaBytesWriter<E, W> extends Serializable {
     long size(W writer, E e);
 
     void write(W writer, Bytes bytes, E e);
-
-
-    /**
-     * returns true if the {@code bytes} equals {@code e}
-     *
-     * @param write
-     * @param bytes
-     * @param e
-     * @param size
-     * @return
-     */
-    boolean isEqual(W write, Bytes bytes, E e, long size);
 }

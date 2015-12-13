@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashErrorListener;
-import net.openhft.chronicle.hash.hashing.Hasher;
 import net.openhft.chronicle.hash.serialization.BytesInterop;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -872,11 +871,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     @NotNull
     @Override
     public final Set<Entry<K, V>> entrySet() {
-        return (entrySet != null) ? entrySet : (entrySet = newEntrySet());
-    }
-
-    Set<Entry<K, V>> newEntrySet() {
-        return new EntrySet();
+        return (entrySet != null) ? entrySet : (entrySet = new EntrySet());
     }
 
     /**
@@ -1377,14 +1372,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             bytes.write(value, value.position(), value.remaining());
         }
 
-        @Override
-        public boolean isEqual(Void write, Bytes bytes, Bytes bytes2, long size) {
-
-            if (size != bytes2.remaining())
-                return false;
-
-            return bytes.compare(bytes.position(), bytes2, bytes2.position(), bytes2.remaining());
-        }
     }
 
     public static final class SegmentState implements StatefulCopyable<SegmentState>,
@@ -1410,6 +1397,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         long valueSizePos;
         private boolean used;
         private SegmentState next;
+
+        byte identifier = 0;
+        long timestamp = 0;
 
         private SegmentState(int depth) {
             if (depth > (1 << 10))
@@ -1469,13 +1459,22 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         ReadLocked<K, KI, MKI, V, VI, MVI> readLocked(VanillaChronicleMap.Segment segment) {
             readLocked.initSegment(segment);
+            initIdentifierAndTimestamp(segment);
             return readLocked;
+        }
+
+        private void initIdentifierAndTimestamp(VanillaChronicleMap.Segment segment) {
+            VanillaChronicleMap map = segment.map();
+            identifier = map instanceof ReplicatedChronicleMap ?
+                    ((ReplicatedChronicleMap) map).identifier() : 0;
+            timestamp = 0;
         }
 
         <K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         WriteLocked<K, KI, MKI, V, VI, MVI> nativeWriteLocked(VanillaChronicleMap.Segment segment) {
             nativeWriteLocked.initSegment(segment);
+            initIdentifierAndTimestamp(segment);
             return nativeWriteLocked;
         }
 
@@ -1483,6 +1482,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         WriteLocked<K, KI, MKI, V, VI, MVI> heapWriteLocked(VanillaChronicleMap.Segment segment) {
             heapWriteLocked.initSegment(segment);
+            initIdentifierAndTimestamp(segment);
             return heapWriteLocked;
         }
     }
@@ -1642,7 +1642,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 MultiStoreBytes entry = segment.reuse(segmentState.tmpBytes, offset);
                 long keySize = map.keySizeMarshaller.readSize(entry);
                 entry.skip(keySize);
-                segment.manageReplicationBytes(entry, true, false);
+                segment.manageReplicationBytes(segmentState, entry, true, false);
                 map.onPut(segment, pos);
             }
             super.close();
@@ -1694,7 +1694,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 MultiStoreBytes entry = segment.reuse(segmentState.tmpBytes, offset);
                 long keySize = map.keySizeMarshaller.readSize(entry);
                 entry.skip(keySize);
-                segment.manageReplicationBytes(entry, true, false);
+                segment.manageReplicationBytes(segmentState, entry, true, false);
                 long valueSizePos = entry.position();
                 long valueSize = map.valueSizeMarshaller.readSize(entry);
                 long sizeOfEverythingBeforeValue = entry.position();
@@ -1705,7 +1705,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 MVI metaValueInterop = map.metaValueInteropProvider
                         .get(copies, map.originalMetaValueInterop, valueInterop, value);
                 long newValueSize = metaValueInterop.size(valueInterop, value);
-                segment.putValue(pos, offset, entry, valueSizePos, entryEndAddr, removed,
+                // doesn't call listeners?
+                segment.putValue(pos, entry, valueSizePos, entryEndAddr, removed,
                         segmentState,
                         metaValueInterop, valueInterop, value, newValueSize, segment.hashLookup(),
                         sizeOfEverythingBeforeValue);
@@ -2100,12 +2101,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 throw defaultValueOrPrepareBytesShouldBeSpecified();
             }
 
-
-            boolean hasValueChanged = valueSize < 0;
-
-            if (valueSize < 0)
-                valueSize = valueSize * -1;
-
             entry.positionAddr(entry.positionAddr() - valueSize);
             RV v = readValue.readValue(copies, entry, usingValue, valueSize);
 
@@ -2116,10 +2111,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true, false);
             }
             if (eventListener != null) {
+                byte replacedIdentifier = (byte) 0;
+                long replacedTimeStamp = 0;
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, v, valueSize), null, false, true, hasValueChanged,
-                        (byte) 0,
-                        (byte) 0, 0, 0);
+                        toValue.toInstance(copies, v, valueSize), null, false, true, true,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimeStamp);
             }
 
             return v;
@@ -2189,41 +2186,42 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     long sizeOfEverythingBeforeValue = entry.position();
                     alignment.alignPositionAddr(entry);
 
-                    boolean hasValueChanged = false;
-                    try {
-                        if (prevValueSize == valueSize &&
-                                metaValueInterop.startsWith(valueInterop, entry, value)) {
-                            return UpdateResult.UNCHANGED;
-                        }
+                    UpdateResult updateResult;
+                    if (prevValueSize == valueSize &&
+                            metaValueInterop.startsWith(valueInterop, entry, value)) {
+                        updateResult = UpdateResult.UNCHANGED;
+                    } else {
                         long valueAddr = entry.positionAddr();
                         long entryEndAddr = valueAddr + prevValueSize;
 
                         // putValue may relocate entry and change offset
-                        putValue(pos, offset, entry, valueSizePos, entryEndAddr, false, segmentState,
+                        putValue(pos, entry, valueSizePos, entryEndAddr, false, segmentState,
                                 metaValueInterop, valueInterop, value, valueSize, hashLookup,
                                 sizeOfEverythingBeforeValue);
 
-                        return UpdateResult.UPDATE;
-                    } finally {
-                        // put callbacks
-                        onPutMaybeRemote(segmentState.pos, false);
-                        if (bytesEventListener != null)
-                            bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false);
-                        if (eventListener != null) {
-                            eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                                    toValue.toInstance(copies, value, valueSize), null, false,
-                                    false, hasValueChanged, (byte) 0, (byte) 0, 0,
-                                    0);
-                        }
+                        updateResult = UpdateResult.UPDATE;
                     }
+
+                    // put callbacks
+                    onPutMaybeRemote(segmentState.pos, false);
+                    if (bytesEventListener != null)
+                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false);
+                    if (eventListener != null) {
+                        boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
+                        eventListener.onPut(toKey.toInstance(copies, key, keySize),
+                                toValue.toInstance(copies, value, valueSize), null, false,
+                                false, hasValueChanged,
+                                segmentState.identifier, (byte) 0,
+                                segmentState.timestamp, 0);
+                    }
+
+                    return updateResult;
                 }
                 // key is not found
                 VBI valueInterop = getValueInterops.getValueInterop(copies);
                 MVBI metaValueInterop =
                         getValueInterops.getMetaValueInterop(copies, valueInterop, value);
-                long valueSize = metaValueInterop.size(valueInterop, value);
-                long l = putEntry(segmentState, metaKeyInterop, keyInterop, key,
-                        keySize,
+                long valueSize = putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
                         metaValueInterop, valueInterop, value, entry, false);
 
                 // put callbacks
@@ -2231,10 +2229,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 if (bytesEventListener != null)
                     bytesEventListener.onPut(entry, 0L, metaDataBytes,
                             segmentState.valueSizePos, true, false);
-                if (eventListener != null)
+                if (eventListener != null) {
+                    byte replacedIdentifier = 0;
+                    long replacedTimeStamp = 0;
                     eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                            toValue.toInstance(copies, value, valueSize), null, false, true, l <
-                                    0, (byte) 0, (byte) 0, 0, 0);
+                            toValue.toInstance(copies, value, valueSize), null, false, true, true,
+                            segmentState.identifier, replacedIdentifier,
+                            segmentState.timestamp, replacedTimeStamp);
+                }
 
                 return UpdateResult.INSERT;
             } finally {
@@ -2263,8 +2265,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 return putWithoutLock(copies, segmentState,
                         metaKeyInterop, keyInterop, key, keySize, toKey,
                         getValueInterops, value, toValue,
-                        hash2, replaceIfPresent, readValue, resultUnused, (byte) 0, (byte) 0, 0,
-                        0);
+                        hash2, replaceIfPresent, readValue, resultUnused);
             } finally {
                 segmentState.close();
                 writeUnlock();
@@ -2280,8 +2281,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
                 InstanceOrBytesToInstance<? super VB, V> toValue,
                 long hash2, boolean replaceIfPresent,
-                ReadValue<RV> readValue, boolean resultUnused, final byte identifier,
-                final byte replacedIdentifier, final long timestamp, final long replacedTimestamp) {
+                ReadValue<RV> readValue, boolean resultUnused) {
 
             SearchState searchState = segmentState.searchState;
             hashLookup.startSearch(hash2, searchState);
@@ -2297,8 +2297,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     return replaceValueAndNotifyPut(copies, segmentState,
                             key, keySize, toKey,
                             getValueInterops, value, toValue,
-                            entry, pos, offset, hashLookup, readValue, resultUnused,
-                            false, false, identifier, replacedIdentifier, timestamp, replacedTimestamp);
+                            entry, pos, hashLookup, readValue, resultUnused,
+                            false, false, (byte) 0, 0);
                 } else {
                     long valueSize = readValueSize(entry);
                     return resultUnused ? null :
@@ -2309,8 +2309,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             VBI valueInterop = getValueInterops.getValueInterop(copies);
             MVBI metaValueInterop =
                     getValueInterops.getMetaValueInterop(copies, valueInterop, value);
-            long valueSize = metaValueInterop.size(valueInterop, value);
-            long l = putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
+            long valueSize = putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
                     metaValueInterop, valueInterop, value, entry, false);
 
             // put callbacks
@@ -2320,8 +2319,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         segmentState.valueSizePos, true, false);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), null, false, true, l < 0,
-                        identifier, (byte) 0, 0, 0);
+                        toValue.toInstance(copies, value, valueSize), null, false, true, true,
+                        segmentState.identifier, (byte) 0, segmentState.timestamp, 0);
 
             return resultUnused ? null : readValue.readNull();
         }
@@ -2332,9 +2331,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 KB key, long keySize, InstanceOrBytesToInstance<KB, K> toKey,
                 GetValueInterops<VB, VBI, MVBI> getValueInterops, VB value,
                 InstanceOrBytesToInstance<? super VB, V> toValue,
-                MultiStoreBytes entry, long pos, long offset, MultiMap searchedHashLookup,
+                MultiStoreBytes entry, long pos, MultiMap searchedHashLookup,
                 ReadValue<RV> readValue, boolean resultUnused,
-                boolean entryIsDeleted, boolean remote, final byte identifier, byte replacedIdentifier, final long timestamp, final long replacedTimestamp) {
+                boolean entryIsDeleted, boolean remote,
+                byte replacedIdentifier, long replacedTimestamp) {
             VBI valueInterop = getValueInterops.getValueInterop(copies);
             MVBI metaValueInterop = getValueInterops.getMetaValueInterop(
                     copies, valueInterop, value);
@@ -2359,11 +2359,24 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     prevValueInstance = readValue(copies, entry, null, prevValueSize);
             }
 
-            // putValue may relocate entry and change offset
-            boolean hasValueChanged = putValue(pos, offset, entry, valueSizePos, entryEndAddr,
-                    entryIsDeleted, segmentState,
-                    metaValueInterop, valueInterop, value, valueSize, searchedHashLookup,
-                    sizeOfEverythingBeforeValue);
+            entry.positionAddr(valueAddr);
+            boolean doPutValue;
+            boolean hasValueChanged = false;
+            if (eventListener != null) {
+                hasValueChanged = prevValueSize != valueSize ||
+                        !metaValueInterop.startsWith(valueInterop, entry, value);
+                doPutValue = hasValueChanged;
+            } else {
+                doPutValue = true;
+            }
+
+            if (doPutValue) {
+                // putValue may relocate entry and change offset
+                putValue(pos, entry, valueSizePos, entryEndAddr,
+                        entryIsDeleted, segmentState,
+                        metaValueInterop, valueInterop, value, valueSize, searchedHashLookup,
+                        sizeOfEverythingBeforeValue);
+            }
 
             // put callbacks
             onPutMaybeRemote(segmentState.pos, remote);
@@ -2372,8 +2385,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (eventListener != null) {
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
-                        entryIsDeleted, hasValueChanged, identifier, replacedIdentifier,
-                        timestamp, replacedTimestamp);
+                        entryIsDeleted, hasValueChanged,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
             }
 
             return resultUnused ? null : prevValue;
@@ -2391,8 +2405,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          * Returns value size, writes the entry (key, value, sizes) to the entry, after this method
          * call entry positioned after value bytes written (i. e. at the end of entry), sets entry
          * position (in segment) and value size position in the given segmentState
-         *
-         * @return the size or negivtive size if the value has changed.
          */
         final <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>, E, EW>
         long putEntry(SegmentState segmentState,
@@ -2408,18 +2420,15 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             clearMetaData(offset);
             reuse(entry, offset);
 
-
             keySizeMarshaller.writeSize(entry, keySize);
             metaKeyInterop.write(keyInterop, entry, key);
 
-            manageReplicationBytes(entry, writeDefaultInitialReplicationValues, false);
+            manageReplicationBytes(
+                    segmentState, entry, writeDefaultInitialReplicationValues, false);
 
             segmentState.valueSizePos = entry.position();
-            final long size = valueSizeMarshaller.readSize(entry);
-            entry.position(segmentState.valueSizePos);
             valueSizeMarshaller.writeSize(entry, valueSize);
             alignment.alignPositionAddr(entry);
-            boolean hasValueChanged = !metaElemWriter.isEqual(elemWriter, entry, elem, size);
             metaElemWriter.write(elemWriter, entry, elem);
 
             freeExtraAllocatedChunks(pos, allocatedChunks, entry);
@@ -2427,7 +2436,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             hashLookup.putAfterFailedSearch(segmentState.searchState, pos);
             incrementSize();
 
-            return hasValueChanged ? -valueSize : valueSize;
+            return valueSize;
         }
 
         final void freeExtraAllocatedChunks(long pos, int allocatedChunks, Bytes entry) {
@@ -2438,8 +2447,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
         }
 
-        void manageReplicationBytes(Bytes entry, boolean writeDefaultInitialReplicationValues,
-                                    boolean remove) {
+        void manageReplicationBytes(
+                SegmentState segmentState, Bytes entry,
+                boolean writeDefaultInitialReplicationValues, boolean remove) {
             // do nothing
         }
 
@@ -2575,9 +2585,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     if (!metaValueInterop.startsWith(valueInterop, entry, expectedValue))
                         return Boolean.FALSE;
                 }
-                return removeEntry(copies, searchState, key, keySize, toKey, toValue,
+                return removeEntry(copies, segmentState, key, keySize, toKey, toValue,
                         readValue, resultUnused, hashLookup, entry, pos, valueSizePos,
-                        valueSize, false, true, expectedValue != null, (byte) 0, 0,
+                        valueSize, false, true, expectedValue != null,
                         (byte) 0, 0);
             }
             // key is not found
@@ -2588,14 +2598,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
         }
 
-        final <KB, RV, VB extends RV> Object removeEntry(
-                ThreadLocalCopies copies, SearchState searchState,
+        final <KB, RV> Object removeEntry(
+                ThreadLocalCopies copies, SegmentState segmentState,
                 KB key, long keySize, InstanceOrBytesToInstance<KB, K> toKey,
                 InstanceOrBytesToInstance<RV, V> toValue,
                 ReadValue<RV> readValue, boolean resultUnused,
                 MultiMap hashLookup, MultiStoreBytes entry, long pos,
                 long valueSizePos, long valueSize, boolean remote, boolean removeFromMultiMap,
-                boolean booleanResult, byte identifier, long timestamp, byte replacedIdentifier, long replacedTimestamp) {
+                boolean booleanResult, byte replacedIdentifier, long replacedTimestamp) {
             // get the removed value, if needed
             RV removedValue = null;
             if ((!booleanResult && !resultUnused) || eventListener != null) {
@@ -2606,7 +2616,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
             // update segment state
             if (removeFromMultiMap) {
-                hashLookup.removePrevPos(searchState);
+                hashLookup.removePrevPos(segmentState.searchState);
                 long entrySizeInBytes = entry.positionAddr() + valueSize - entry.startAddr();
                 free(pos, inChunks(entrySizeInBytes));
             } else {
@@ -2622,8 +2632,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 V removedValueForEventListener =
                         toValue.toInstance(copies, removedValue, valueSize);
                 eventListener.onRemove(toKey.toInstance(copies, key, keySize),
-                        removedValueForEventListener, remote, identifier, replacedIdentifier,
-                        timestamp, replacedTimestamp);
+                        removedValueForEventListener, remote,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
             }
 
             return booleanResult ? Boolean.TRUE : removedValue;
@@ -2704,7 +2715,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                     return onKeyPresentOnReplace(copies, segmentState, key, keySize, toKey,
                             getExpectedValueInterops, expectedValue, getNewValueInterops, newValue,
-                            readValue, toValue, pos, offset, entry, hashLookup);
+                            readValue, toValue, pos, entry, hashLookup, (byte) 0, 0);
                 }
                 // key is not found
                 return expectedValue == null ? readValue.readNull() : Boolean.FALSE;
@@ -2721,12 +2732,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 GetValueInterops<VB, VBI, MVBI> getExpectedValueInterops, VB expectedValue,
                 GetValueInterops<VB, VBI, MVBI> getNewValueInterops, VB newValue,
                 ReadValue<RV> readValue, InstanceOrBytesToInstance<? super RV, V> toValue,
-                long pos, long offset, MultiStoreBytes entry, MultiMap searchedHashLookup) {
+                long pos, MultiStoreBytes entry, MultiMap searchedHashLookup,
+                byte replacedIdentifier, long replacedTimestamp) {
             long valueSizePos = entry.position();
             long valueSize = valueSizeMarshaller.readSize(entry);
             long sizeOfEverythingBeforeValue = entry.position();
             alignment.alignPositionAddr(entry);
-            long entryEndAddr = entry.positionAddr() + valueSize;
+            long valueAddr = entry.positionAddr();
+            long entryEndAddr = valueAddr + valueSize;
             RV prevValue;
 
             if (expectedValue != null) {
@@ -2748,10 +2761,22 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             MVBI metaValueInterop = getNewValueInterops.getMetaValueInterop(
                     copies, valueInterop, newValue);
             long newValueSize = metaValueInterop.size(valueInterop, newValue);
-            boolean entryIsDeleted = false; // couldn't replace deleted entry
-            boolean hasValueChanged = putValue(pos, offset, entry, valueSizePos, entryEndAddr, entryIsDeleted, segmentState,
-                    metaValueInterop, valueInterop, newValue, newValueSize, searchedHashLookup,
-                    sizeOfEverythingBeforeValue);
+            entry.positionAddr(valueAddr);
+            boolean doPutValue;
+            boolean hasValueChanged = false;
+            if (eventListener != null) {
+                hasValueChanged = valueSize != newValueSize ||
+                        !metaValueInterop.startsWith(valueInterop, entry, newValue);
+                doPutValue = hasValueChanged;
+            } else {
+                doPutValue = true;
+            }
+            if (doPutValue) {
+                boolean entryIsDeleted = false; // couldn't replace deleted entry
+                putValue(pos, entry, valueSizePos, entryEndAddr, entryIsDeleted, segmentState,
+                        metaValueInterop, valueInterop, newValue, newValueSize, searchedHashLookup,
+                        sizeOfEverythingBeforeValue);
+            }
 
             // put callbacks
             onPut(this, segmentState.pos);
@@ -2763,7 +2788,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, newValue, newValueSize),
                         toValue.toInstance(copies, prevValue, valueSize), false, true,
-                        hasValueChanged, (byte) 0, (byte) 0, 0, 0);
+                        hasValueChanged,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
 
             return expectedValue == null ? prevValue : Boolean.TRUE;
         }
@@ -2773,21 +2800,17 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
          * enough space for new value in location already allocated for this entry.
          *
          * @param pos          index of the first chunk occupied by the entry
-         * @param offset       relative offset of the entry in Segment bytes (before, i. e.
-         *                     including metaData)
          * @param entry        relative pointer in Segment bytes
          * @param valueSizePos relative position of value size in entry
          * @param entryEndAddr absolute address of the entry end
-         * @return true if the value has change
          */
-        final <E, EW> boolean putValue(
-                long pos, long offset, MultiStoreBytes entry, long valueSizePos, long entryEndAddr,
+        final <E, EW> void putValue(
+                long pos, MultiStoreBytes entry, long valueSizePos, long entryEndAddr,
                 boolean entryIsDeleted,
                 SegmentState segmentState,
                 MetaBytesWriter<E, ? super EW> metaElemWriter, EW elemWriter, E newElem,
                 long newElemSize,
                 MultiMap searchedHashLookup, long sizeOfEverythingBeforeValue) {
-            final boolean hasValueChanged;
             long entryStartAddr = entry.address();
             long valueSizeAddr = entryStartAddr + valueSizePos;
             long newValueAddr = alignment.alignAddr(
@@ -2825,20 +2848,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     NativeBytes.UNSAFE.copyMemory(entryStartAddr,
                             newEntryStartAddr, valueSizeAddr - entryStartAddr);
                     entry.position(valueSizePos);
-                    final long originalSize = valueSizeMarshaller.readSize(entry);
-                    entry.position(valueSizePos);
                     valueSizeMarshaller.writeSize(entry, newElemSize);
                     alignment.alignPositionAddr(entry);
-
-                    hasValueChanged = !metaElemWriter.isEqual(elemWriter, entry, newElem,
-                            originalSize);
-                    if (hasValueChanged)
-                        metaElemWriter.write(elemWriter, entry, newElem);
-
                     freeExtraAllocatedChunks(newPos, allocatedChunks, entry);
-
                     segmentState.pos = newPos;
-                    return hasValueChanged;
+                    return;
                     // END OF RELOCATION
                 } else if (newSizeInChunks < oldSizeInChunks) {
                     // Freeing extra chunks
@@ -2851,15 +2865,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
             // Common code for all cases
             entry.position(valueSizePos);
-            final long originalSize = valueSizeMarshaller.readSize(entry);
-            entry.position(valueSizePos);
             valueSizeMarshaller.writeSize(entry, newElemSize);
             alignment.alignPositionAddr(entry);
-
-            hasValueChanged = !metaElemWriter.isEqual(elemWriter, entry, newElem, originalSize);
             metaElemWriter.write(elemWriter, entry, newElem);
             segmentState.pos = pos;
-            return hasValueChanged;
         }
 
         private void clear() {
@@ -2907,7 +2916,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     reuse(entry, offset);
                     long keySize = keySizeMarshaller.readSize(entry);
                     entry.skip(keySize);
-                    manageReplicationBytes(entry, false, false);
+                    manageReplicationBytes(segmentState, entry, false, false);
                     long valueSize = valueSizeMarshaller.readSize(entry);
                     long sizeInBytes = entrySize(keySize, valueSize);
                     int entrySizeInChunks = inChunks(sizeInBytes);
@@ -3000,74 +3009,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             int segIndex = returnedSeg;
             if (segIndex < 0)
                 throw new IllegalStateException();
-            final Segment segment = segments[segIndex];
-            final long pos = returnedPos;
-            try {
-                segment.writeLock();
-                if (segment.hashLookup().getPositions().isClear(pos)) {
-                    // The case:
-                    // 1. iterator.next() - thread 1
-                    // 2. map.put() which cause relocation of the key, returned in above - thread 2
-                    // OR map.remove() which remove this key - thread 2
-                    // 3. iterator.remove() - thread 1
-                    segment.writeUnlock(); // not re-entrant.
-                    VanillaChronicleMap.this.remove(returnedEntry.getKey());
-                    segment.writeLock();
-                } else {
-                    removePresent(segment, pos);
-                }
-                returnedSeg = -1;
-                returnedEntry = null;
-            } finally {
-                segment.writeUnlock();
-            }
-        }
-
-        void removePresent(Segment segment, long pos) {
-            // TODO handle the case:
-            // iterator.next() -- thread 1
-            // map.put() which cause relocation of the key, returned above -- thread 2
-            // map.put() which place a new key on the `pos` in current segment -- thread 3
-            // iterator.remove() -- thread 1
-            // The simple solution is to compare bytes in the map with the serialized bytes
-            // of returnedEntry.getKey(), but it seems rather wasteful to workaround so rare
-            // case.
-            final long offset = segment.offsetFromPos(pos);
-            final NativeBytes entry = segment.reuse(this.entry, offset);
-
-            final long keySize = keySizeMarshaller.readSize(entry);
-            long position = entry.position();
-            final long segmentHash = segmentHash(Hasher.hash(entry, position, position + keySize));
-
-            removePresent(segment, pos, entry, keySize, segmentHash, true, (byte) 0,
-                    (byte) 0,
-                    0, 0);
-        }
-
-        final void removePresent(Segment segment, long pos, NativeBytes entry, long keySize,
-                                 long segmentHash, boolean removeFromMultiMap, final byte identifier,
-                                 final byte replacedIdentifier, final long timestamp, final long replacedTimeStamp) {
-            entry.skip(keySize);
-            segment.manageReplicationBytes(entry, true, true);
-            long valueSizePos = entry.position();
-            long valueSize = readValueSize(entry);
-            final long entryEndAddr = entry.positionAddr() + valueSize;
-            if (removeFromMultiMap) {
-                segment.hashLookup().remove(segmentHash, pos);
-                segment.free(pos, segment.inChunks(entryEndAddr - entry.address()));
-            } else {
-                segment.hashLookup().removePosition(pos);
-            }
-            segment.decrementSize();
-
-            // remove callbacks
-            onRemove(segment, pos);
-            if (bytesEventListener != null)
-                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, false);
-            if (eventListener != null)
-                eventListener.onRemove(returnedEntry.getKey(), returnedEntry.getValue(), false,
-                        identifier,
-                        replacedIdentifier, timestamp, replacedTimeStamp);
+            VanillaChronicleMap.this.remove(returnedEntry.getKey());
+            returnedSeg = -1;
+            returnedEntry = null;
         }
     }
 

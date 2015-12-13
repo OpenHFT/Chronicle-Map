@@ -194,11 +194,6 @@ public abstract class ByteableMarshaller<E extends Byteable>
         }
 
 
-        @Override
-        public boolean isEqual(Object write, Bytes bytes, E e, long size) {
-            // todo
-            return false;
-        }
     }
 
     private static class WithCustomFactory<E extends Byteable> extends ByteableMarshaller<E> {
@@ -221,10 +216,5 @@ public abstract class ByteableMarshaller<E extends Byteable>
         }
 
 
-        @Override
-        public boolean isEqual(Object write, Bytes bytes, E e, long size) {
-            // todo
-            return false;
-        }
     }
 }
