@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -145,7 +146,7 @@ public class TCPSocketReplicationTest {
         map1.remove(1);
 
         map2.put(1, "EXAMPLE-1");
-      map2.remove(1);
+        map2.remove(1);
 
         // allow time for the recompilation to resolve
         waitTillEqual(5000);
@@ -201,6 +202,7 @@ public class TCPSocketReplicationTest {
     }
 
     // TODO test this with larger sizes.
+    @Ignore("JIRA - HCOLL-411")
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         System.out.print("SoakTesting ");
