@@ -928,6 +928,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     } else {
                         throw defaultValueOrPrepareBytesShouldBeSpecified();
                     }
+
+                    final long size = metaElemWriter.size(elemWriter, elem);
+
                     putValue(pos, entry, valueSizePos,
                             entryEndAddr, isDeleted,
                             segmentState,
