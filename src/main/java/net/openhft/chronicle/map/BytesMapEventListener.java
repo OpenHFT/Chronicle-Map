@@ -48,7 +48,7 @@ public abstract class BytesMapEventListener implements Serializable {
     }
 
     public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added,
-                      boolean replicationEvent) {
+                      boolean replicationEvent, boolean hasValueChanged) {
         // do nothing
     }
 

@@ -2108,7 +2108,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null) {
                 long keyPos = metaDataBytes;
-                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true, false);
+                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true,
+                        false, true);
             }
             if (eventListener != null) {
                 byte replacedIdentifier = (byte) 0;
@@ -2208,7 +2209,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     // put callbacks
                     onPutMaybeRemote(segmentState.pos, false);
                     if (bytesEventListener != null)
-                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false);
+                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false, hasValueChanged);
                     if (eventListener != null) {
 
                         eventListener.onPut(toKey.toInstance(copies, key, keySize),
@@ -2231,7 +2232,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 onPut(this, segmentState.pos);
                 if (bytesEventListener != null)
                     bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                            segmentState.valueSizePos, true, false);
+                            segmentState.valueSizePos, true, false, hasValueChanged);
                 if (eventListener != null) {
                     byte replacedIdentifier = 0;
                     long replacedTimeStamp = 0;
@@ -2308,18 +2309,30 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             readValue.readValue(copies, entry, null, valueSize);
                 }
             }
+
+
             // key is not found
             VBI valueInterop = getValueInterops.getValueInterop(copies);
             MVBI metaValueInterop =
                     getValueInterops.getMetaValueInterop(copies, valueInterop, value);
+
+
             long valueSize = putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
                     metaValueInterop, valueInterop, value, entry, false);
+
+
+            boolean hasValueChanged = false;
+            if (eventListener != null || bytesEventListener != null) {
+                // todo roman to check this
+                hasValueChanged =
+                        !metaValueInterop.startsWith(valueInterop, entry, value);
+            }
 
             // put callbacks
             onPut(this, segmentState.pos);
             if (bytesEventListener != null)
                 bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                        segmentState.valueSizePos, true, false);
+                        segmentState.valueSizePos, true, false, hasValueChanged);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, value, valueSize), null, false, true, true,
@@ -2384,7 +2397,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // put callbacks
             onPutMaybeRemote(segmentState.pos, remote);
             if (bytesEventListener != null)
-                bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote);
+                bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote, hasValueChanged);
             if (eventListener != null) {
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
@@ -2785,7 +2798,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null) {
                 long keyPos = metaDataBytes;
-                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true, false);
+                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true, false, hasValueChanged);
             }
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),

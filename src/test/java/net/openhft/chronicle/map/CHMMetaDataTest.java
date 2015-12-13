@@ -74,7 +74,7 @@ public class CHMMetaDataTest {
         }
 
         @Override
-        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent) {
+        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged) {
             if (added)
                 assertEquals(0, entry.readLong(metaDataPos));
             entry.writeLong(metaDataPos, timeStamps.incrementAndGet());

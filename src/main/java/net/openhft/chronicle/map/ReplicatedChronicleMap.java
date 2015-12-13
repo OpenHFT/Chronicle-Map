@@ -931,7 +931,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     putValue(pos, entry, valueSizePos,
                             entryEndAddr, isDeleted,
                             segmentState,
-                            metaElemWriter, elemWriter, elem, metaElemWriter.size(elemWriter, elem),
+                            metaElemWriter, elemWriter, elem, size,
                             hashLookup, sizeOfEverythingBeforeValue);
                     pos = segmentState.pos;
 
@@ -946,7 +946,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     // put callbacks
                     onPut(this, pos);
                     if (bytesEventListener != null) {
-                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valuePos, true, false);
+                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valuePos, true, false,
+                                true);
                     }
                     if (eventListener != null) {
                         V valueInstance = toValue.toInstance(copies, v, valueSize);
@@ -1150,9 +1151,11 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                     // put callbacks
                     onPutMaybeRemote(segmentState.pos, false);
-                    if (bytesEventListener != null)
+                    if (bytesEventListener != null) {
+                        boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
                         bytesEventListener.onPut(
-                                entry, 0L, metaDataBytes, valueSizePos, false, false);
+                                entry, 0L, metaDataBytes, valueSizePos, false, false, hasValueChanged);
+                    }
                     if (eventListener != null) {
                         boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
                         eventListener.onPut(toKey.toInstance(copies, key, keySize),
@@ -1194,7 +1197,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 onPutMaybeRemote(segmentState.pos, false);
                 if (bytesEventListener != null)
                     bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                            segmentState.valueSizePos, true, false);
+                            segmentState.valueSizePos, true, false, true);
                 if (eventListener != null) {
                     byte replacedIdentifier = 0;
                     long replacedTimestamp = 0;
@@ -1319,7 +1322,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             onPutMaybeRemote(segmentState.pos, remote);
             if (bytesEventListener != null)
                 bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                        segmentState.valueSizePos, true, remote);
+                        segmentState.valueSizePos, true, remote, true);
             if (eventListener != null) {
                 byte replacedIdentifier = 0;
                 long replacedTimestamp = 0;
