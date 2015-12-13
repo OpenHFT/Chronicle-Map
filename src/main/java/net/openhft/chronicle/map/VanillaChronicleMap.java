@@ -2199,7 +2199,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         long entryEndAddr = valueAddr + prevValueSize;
 
                         // putValue may relocate entry and change offset
-                        putValue(pos, offset, entry, valueSizePos, entryEndAddr, false, segmentState,
+                        hasValueChanged = putValue(pos, offset, entry, valueSizePos, entryEndAddr,
+                                false, segmentState,
                                 metaValueInterop, valueInterop, value, valueSize, hashLookup,
                                 sizeOfEverythingBeforeValue);
 
