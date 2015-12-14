@@ -2398,7 +2398,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // put callbacks
             onPutMaybeRemote(segmentState.pos, remote);
             if (bytesEventListener != null)
-                bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote, hasValueChanged);
+                bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote,
+                        hasValueChanged,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
             if (eventListener != null) {
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
@@ -2644,7 +2647,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // remove callbacks
             onRemoveMaybeRemote(pos, remote);
             if (bytesEventListener != null)
-                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, remote);
+                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, remote,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
             if (eventListener != null) {
                 V removedValueForEventListener =
                         toValue.toInstance(copies, removedValue, valueSize);
@@ -2799,7 +2804,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null) {
                 long keyPos = metaDataBytes;
-                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true, false, hasValueChanged);
+                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true,
+                        false, hasValueChanged,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
+
             }
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
