@@ -52,7 +52,7 @@ public abstract class BasicCopyingMetaBytesInterop<E, W> implements MetaBytesInt
 
     @Override
     public boolean startsWith(W writer, Bytes bytes, E e) {
-        return bytes.startsWith(buffer.buffer);
+        return BytesBytesInterop.INSTANCE.startsWith(bytes, buffer.buffer);
     }
 
     @Override
