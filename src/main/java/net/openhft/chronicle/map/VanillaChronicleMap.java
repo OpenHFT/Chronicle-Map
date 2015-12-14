@@ -2174,7 +2174,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 SearchState searchState = segmentState.searchState;
                 hashLookup.startSearch(hash2, searchState);
                 MultiStoreBytes entry = segmentState.tmpBytes;
-                boolean hasValueChanged = false;
                 for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
                     long offset = offsetFromPos(pos);
                     reuse(entry, offset);
