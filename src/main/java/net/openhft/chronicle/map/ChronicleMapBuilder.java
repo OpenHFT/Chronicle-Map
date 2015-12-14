@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1439,12 +1438,10 @@ public final class ChronicleMapBuilder<K, V> implements
 
             int headerSize = (int) headerBytes.writePosition();
             headerBuffer.limit(headerSize);
-            try (FileLock ignored = fileChannel.lock(0, headerSize, false)) {
-                while (headerBuffer.remaining() > 0) {
-                    fileChannel.write(headerBuffer, headerBuffer.position());
-                }
-                map.initBeforeMapping(fileChannel, headerSize);
+            while (headerBuffer.remaining() > 0) {
+                fileChannel.write(headerBuffer, headerBuffer.position());
             }
+            map.initBeforeMapping(fileChannel, headerSize);
             map.createMappedStoreAndSegments(file, raf);
         }
 

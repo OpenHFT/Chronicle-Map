@@ -41,7 +41,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -816,12 +815,12 @@ public abstract class VanillaChronicleHash<K,
         long minFileSize = mappingOffsetInFile + mapSize;
         FileChannel fileChannel = raf.getChannel();
         if (fileChannel.size() < minFileSize) {
-            // handle a possible race condition between processes.
-            try (FileLock ignored = fileChannel.lock()) {
-                if (fileChannel.size() < minFileSize) {
-                    raf.setLength(minFileSize);
-                }
-            }
+            // In MappedFile#acquireByteStore(), this is wrapped with fileLock(), to avoid race
+            // condition between processes. This map() method is called either when a new tier is
+            // allocated (in this case concurrent access is mutually excluded by
+            // globalMutableStateLock), or on map creation, when race condition should be excluded
+            // by self-bootstrapping header spec
+            raf.setLength(minFileSize);
         }
         long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
         OS.Unmapper unmapper = new OS.Unmapper(address, mapSize, DUMMY_REFERENCE_COUNTED);
