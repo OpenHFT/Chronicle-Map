@@ -2108,8 +2108,12 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null) {
                 long keyPos = metaDataBytes;
+                byte replacedIdentifier = (byte) 0;
+                long replacedTimeStamp = 0;
                 bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true,
-                        false, true);
+                        false, true,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimeStamp);
             }
             if (eventListener != null) {
                 byte replacedIdentifier = (byte) 0;
@@ -2209,7 +2213,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     // put callbacks
                     onPutMaybeRemote(segmentState.pos, false);
                     if (bytesEventListener != null)
-                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false, hasValueChanged);
+                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false,
+                                false, hasValueChanged,
+                                segmentState.identifier, (byte) 0,
+                                segmentState.timestamp, 0
+                        );
                     if (eventListener != null) {
 
                         eventListener.onPut(toKey.toInstance(copies, key, keySize),
@@ -2230,9 +2238,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                 // put callbacks
                 onPut(this, segmentState.pos);
-                if (bytesEventListener != null)
+                if (bytesEventListener != null) {
+                    byte replacedIdentifier = 0;
+                    long replacedTimeStamp = 0;
                     bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                            segmentState.valueSizePos, true, false, hasValueChanged);
+                            segmentState.valueSizePos, true, false, true,
+                            segmentState.identifier, replacedIdentifier,
+                            segmentState.timestamp, replacedTimeStamp);
+                }
                 if (eventListener != null) {
                     byte replacedIdentifier = 0;
                     long replacedTimeStamp = 0;
@@ -2332,7 +2345,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null)
                 bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                        segmentState.valueSizePos, true, false, hasValueChanged);
+                        segmentState.valueSizePos, true, false, hasValueChanged,
+                        segmentState.identifier, (byte) 0, segmentState.timestamp, 0);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, value, valueSize), null, false, true, true,
@@ -2397,7 +2411,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // put callbacks
             onPutMaybeRemote(segmentState.pos, remote);
             if (bytesEventListener != null)
-                bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote, hasValueChanged);
+                bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, remote,
+                        hasValueChanged,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
             if (eventListener != null) {
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, value, valueSize), prevValueInstance, remote,
@@ -2643,7 +2660,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             // remove callbacks
             onRemoveMaybeRemote(pos, remote);
             if (bytesEventListener != null)
-                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, remote);
+                bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, remote,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
             if (eventListener != null) {
                 V removedValueForEventListener =
                         toValue.toInstance(copies, removedValue, valueSize);
@@ -2798,7 +2817,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             onPut(this, segmentState.pos);
             if (bytesEventListener != null) {
                 long keyPos = metaDataBytes;
-                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true, false, hasValueChanged);
+                bytesEventListener.onPut(entry, 0L, keyPos, segmentState.valueSizePos, true,
+                        false, hasValueChanged,
+                        segmentState.identifier, replacedIdentifier,
+                        segmentState.timestamp, replacedTimestamp);
             }
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),

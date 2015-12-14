@@ -74,15 +74,16 @@ public class CHMMetaDataTest {
         }
 
         @Override
-        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged) {
+        public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added, boolean replicationEvent, boolean hasValueChanged, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
             if (added)
                 assertEquals(0, entry.readLong(metaDataPos));
             entry.writeLong(metaDataPos, timeStamps.incrementAndGet());
         }
 
         @Override
-        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent) {
+        public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
             System.out.println("Removed entry with ts of " + entry.readLong(metaDataPos));
         }
+
     }
 }

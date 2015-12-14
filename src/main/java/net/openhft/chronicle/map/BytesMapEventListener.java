@@ -22,23 +22,20 @@ import net.openhft.lang.io.Bytes;
 import java.io.Serializable;
 
 /**
- * <ul>
- *     <li>Methods must not update {@code entry} state ({@linkplain Bytes#position(long) position},
- *     {@linkplain Bytes#limit() limit}).</li>
- *     <li>Methods must not update entry bytes, except in metadata area</li>
- *     <li>From {@code metaDataPos} offset metadata area starts in the given {@code entry}, listener
- *     should be itself aware of it's length (see {@link ChronicleMapBuilder#metaDataBytes(int)}).</li>
- *     <li>From {@code keyPos} offset key area in the given {@code entry}, serialized key size
- *     (using {@linkplain ChronicleMapBuilder#keySizeMarshaller(SizeMarshaller)}), directly followed
- *     by the serialized key itself.</li>
- *     <li>From {@code valuePos} offset value area in the given {@code entry}, serialized value size
- *     (using {@linkplain ChronicleMapBuilder#keySizeMarshaller(SizeMarshaller)}), then (optionally)
- *     alignment (see {@link ChronicleMapBuilder#entryAndValueAlignment(Alignment)}
- *     ), followed by the serialized value itself.</li>
- * </ul>
+ * <ul> <li>Methods must not update {@code entry} state ({@linkplain Bytes#position(long) position},
+ * {@linkplain Bytes#limit() limit}).</li> <li>Methods must not update entry bytes, except in
+ * metadata area</li> <li>From {@code metaDataPos} offset metadata area starts in the given {@code
+ * entry}, listener should be itself aware of it's length (see {@link
+ * ChronicleMapBuilder#metaDataBytes(int)}).</li> <li>From {@code keyPos} offset key area in the
+ * given {@code entry}, serialized key size (using {@linkplain ChronicleMapBuilder#keySizeMarshaller(SizeMarshaller)}),
+ * directly followed by the serialized key itself.</li> <li>From {@code valuePos} offset value area
+ * in the given {@code entry}, serialized value size (using {@linkplain
+ * ChronicleMapBuilder#keySizeMarshaller(SizeMarshaller)}), then (optionally) alignment (see {@link
+ * ChronicleMapBuilder#entryAndValueAlignment(Alignment)} ), followed by the serialized value
+ * itself.</li> </ul>
  *
- * <p>There are helper methods {@link ChronicleMap#readKey(Bytes, long)} and
- * {@link ChronicleMap#readValue(Bytes, long)} that help to deal with this.
+ * <p>There are helper methods {@link ChronicleMap#readKey(Bytes, long)} and {@link
+ * ChronicleMap#readValue(Bytes, long)} that help to deal with this.
  */
 public abstract class BytesMapEventListener implements Serializable {
     private static final long serialVersionUID = 0L;
@@ -48,12 +45,14 @@ public abstract class BytesMapEventListener implements Serializable {
     }
 
     public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added,
-                      boolean replicationEvent, boolean hasValueChanged) {
+                      boolean replicationEvent, boolean hasValueChanged, byte identifier,
+                      byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
         // do nothing
     }
 
     public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos,
-                         boolean replicationEvent) {
+                         boolean replicationEvent, byte identifier,
+                         byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
         // do nothing
     }
 }
