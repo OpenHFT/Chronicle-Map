@@ -1476,9 +1476,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     // key is found
                     entry.skip(keySize);
                     long timestampPos = entry.position();
-                    long replacedTimestamp = entry.readLong();
-                    byte replacedIdentifier = entry.readByte();
-                    entry.position(timestampPos);
+                    long replacedTimestamp = entry.readLong(timestampPos);
+                    byte replacedIdentifier = entry.readByte(timestampPos + 8);
                     if (shouldIgnore(entry, timestamp, identifier)) {
                         // the following assert should be enabled, but TimeBasedReplicationTest
                         // intentionally violates the explained invariant, => assertion fails.

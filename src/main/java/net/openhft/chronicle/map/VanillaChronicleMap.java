@@ -2376,10 +2376,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     prevValueInstance = readValue(copies, entry, null, prevValueSize);
             }
 
-            entry.positionAddr(valueAddr);
             boolean doPutValue;
             boolean hasValueChanged = false;
             if (eventListener != null) {
+                entry.positionAddr(valueAddr);
                 hasValueChanged = prevValueSize != valueSize ||
                         !metaValueInterop.startsWith(valueInterop, entry, value);
                 doPutValue = hasValueChanged;
@@ -2783,10 +2783,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             MVBI metaValueInterop = getNewValueInterops.getMetaValueInterop(
                     copies, valueInterop, newValue);
             long newValueSize = metaValueInterop.size(valueInterop, newValue);
-            entry.positionAddr(valueAddr);
             boolean doPutValue;
             boolean hasValueChanged = false;
             if (eventListener != null) {
+                entry.positionAddr(valueAddr);
                 hasValueChanged = valueSize != newValueSize ||
                         !metaValueInterop.startsWith(valueInterop, entry, newValue);
                 doPutValue = hasValueChanged;
@@ -2856,11 +2856,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     if (realloc(pos, oldSizeInChunks, newSizeInChunks))
                         break newValueDoesNotFit;
                     // RELOCATION
-                    free(pos, oldSizeInChunks);
                     onRelocation(this, pos);
                     int allocatedChunks =
                             inChunks(innerEntrySize(sizeOfEverythingBeforeValue, newElemSize));
                     long newPos = alloc(allocatedChunks);
+                    // free after new alloc, to avoid overlapping allocation => undef. behaviour
+                    // on unsafe.copyMemory
+                    free(pos, oldSizeInChunks);
                     // putValue() is called from put() and replace()
                     // after successful search by key
                     searchedHashLookup.replacePrevPos(segmentState.searchState, newPos,
