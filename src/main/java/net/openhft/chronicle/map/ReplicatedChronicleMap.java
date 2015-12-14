@@ -929,12 +929,12 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         throw defaultValueOrPrepareBytesShouldBeSpecified();
                     }
 
-                    final long size = metaElemWriter.size(elemWriter, elem);
+                    final long elemSize = metaElemWriter.size(elemWriter, elem);
 
                     putValue(pos, entry, valueSizePos,
                             entryEndAddr, isDeleted,
                             segmentState,
-                            metaElemWriter, elemWriter, elem, size,
+                            metaElemWriter, elemWriter, elem, elemSize,
                             hashLookup, sizeOfEverythingBeforeValue);
                     pos = segmentState.pos;
 
@@ -943,6 +943,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                     entry.position(valueSizePos);
                     long valueSize = readValueSize(entry);
+                    assert valueSize == elemSize;
                     long valuePos = entry.position();
                     RV v = readValue.readValue(copies, entry, usingValue, valueSize);
 
@@ -1153,14 +1154,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     }
 
                     // put callbacks
+                    boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
                     onPutMaybeRemote(segmentState.pos, false);
                     if (bytesEventListener != null) {
-                        boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
-                        bytesEventListener.onPut(
-                                entry, 0L, metaDataBytes, valueSizePos, false, false, hasValueChanged);
+                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false,
+                                false, hasValueChanged);
                     }
                     if (eventListener != null) {
-                        boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
                         eventListener.onPut(toKey.toInstance(copies, key, keySize),
                                 toValue.toInstance(copies, value, valueSize), null, false,
                                 isDeleted, hasValueChanged, identifier, replacedIdentifier,

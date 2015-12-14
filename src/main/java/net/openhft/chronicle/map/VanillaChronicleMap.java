@@ -2170,7 +2170,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 SearchState searchState = segmentState.searchState;
                 hashLookup.startSearch(hash2, searchState);
                 MultiStoreBytes entry = segmentState.tmpBytes;
-                boolean hasValueChanged = false;
                 for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
                     long offset = offsetFromPos(pos);
                     reuse(entry, offset);
@@ -2195,8 +2194,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     } else {
                         long valueAddr = entry.positionAddr();
                         long entryEndAddr = valueAddr + prevValueSize;
-                        hasValueChanged = prevValueSize != valueSize ||
-                                !metaValueInterop.startsWith(valueInterop, entry, value);
 
                         // putValue may relocate entry and change offset
                         putValue(pos, entry, valueSizePos, entryEndAddr, false, segmentState,
@@ -2207,11 +2204,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     }
 
                     // put callbacks
+                    boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
                     onPutMaybeRemote(segmentState.pos, false);
-                    if (bytesEventListener != null)
-                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false, false, hasValueChanged);
+                    if (bytesEventListener != null) {
+                        bytesEventListener.onPut(entry, 0L, metaDataBytes, valueSizePos, false,
+                                false, hasValueChanged);
+                    }
                     if (eventListener != null) {
-
                         eventListener.onPut(toKey.toInstance(copies, key, keySize),
                                 toValue.toInstance(copies, value, valueSize), null, false,
                                 false, hasValueChanged,
@@ -2232,7 +2231,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 onPut(this, segmentState.pos);
                 if (bytesEventListener != null)
                     bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                            segmentState.valueSizePos, true, false, hasValueChanged);
+                            segmentState.valueSizePos, true, false, true);
                 if (eventListener != null) {
                     byte replacedIdentifier = 0;
                     long replacedTimeStamp = 0;
@@ -2310,29 +2309,19 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 }
             }
 
-
             // key is not found
             VBI valueInterop = getValueInterops.getValueInterop(copies);
             MVBI metaValueInterop =
                     getValueInterops.getMetaValueInterop(copies, valueInterop, value);
 
-
             long valueSize = putEntry(segmentState, metaKeyInterop, keyInterop, key, keySize,
                     metaValueInterop, valueInterop, value, entry, false);
-
-
-            boolean hasValueChanged = false;
-            if (eventListener != null || bytesEventListener != null) {
-                // todo roman to check this
-                hasValueChanged =
-                        !metaValueInterop.startsWith(valueInterop, entry, value);
-            }
 
             // put callbacks
             onPut(this, segmentState.pos);
             if (bytesEventListener != null)
                 bytesEventListener.onPut(entry, 0L, metaDataBytes,
-                        segmentState.valueSizePos, true, false, hasValueChanged);
+                        segmentState.valueSizePos, true, false, true);
             if (eventListener != null)
                 eventListener.onPut(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, value, valueSize), null, false, true, true,
