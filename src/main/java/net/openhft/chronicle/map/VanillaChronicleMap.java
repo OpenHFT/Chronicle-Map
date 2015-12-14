@@ -2878,6 +2878,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     entry.position(valueSizePos);
                     valueSizeMarshaller.writeSize(entry, newElemSize);
                     alignment.alignPositionAddr(entry);
+                    metaElemWriter.write(elemWriter, entry, newElem);
                     freeExtraAllocatedChunks(newPos, allocatedChunks, entry);
                     segmentState.pos = newPos;
                     return;

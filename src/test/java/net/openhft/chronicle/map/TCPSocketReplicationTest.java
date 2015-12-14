@@ -202,7 +202,6 @@ public class TCPSocketReplicationTest {
     }
 
     // TODO test this with larger sizes.
-    @Ignore("JIRA - HCOLL-411")
     @Test
     public void testSoakTestWithRandomData() throws IOException, InterruptedException {
         System.out.print("SoakTesting ");
