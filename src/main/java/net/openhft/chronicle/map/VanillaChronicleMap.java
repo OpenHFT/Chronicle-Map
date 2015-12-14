@@ -1354,7 +1354,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         @Override
         public boolean startsWith(Void interop, Bytes bytes, Bytes value) {
-            return bytes.startsWith(value);
+            return BytesBytesInterop.INSTANCE.startsWith(bytes, value);
         }
 
         @Override
