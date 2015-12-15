@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
@@ -43,6 +44,16 @@ import java.util.concurrent.TimeUnit;
  * <i>the builder itself</i> back to support chaining pattern, rather than the builder copies with
  * the corresponding configuration changed. To make an independent configuration, {@linkplain
  * #clone} the builder.
+ *
+ * <p>{@code ChronicleHashBuilder} focuses on configurations, it could be used to create several
+ * containers of the same key-value domain. In this case {@code ChronicleHashBuilder} play like a
+ * factory (design pattern), rather than builder. The {@code ChronicleHashBuilder} could be
+ * "converted" to an {@link ChronicleHashInstanceBuilder} using {@link #instance()} method.
+ * {@code ChronicleHashInstanceBuilder} is a classic disposable builder, allowing to configure
+ * parameters, supposed to be unique for each created Chronicle Hash.
+ *
+ * <p>{@code ChronicleHashBuilder} instances are not safe for concurrent use from multiple threads,
+ * if at least one of the threads mutates the {@code ChronicleHashBuilder}'s state.
  *
  * <p><a name="low-level-config"></a>There are some "low-level" configurations in this builder,
  * that require deep understanding of the Chronicle implementation design to be properly used.
@@ -472,7 +483,10 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     /**
      * Shortcut for {@link #keyMarshallers(SizedReader, SizedWriter)
      * keyMarshallers(sizedMarshaller, sizedMarshaller)}.
-     * @param sizedMarshaller
+     *
+     * @param sizedMarshaller implementation of both {@link SizedReader} and {@link SizedWriter}
+     *                        interfaces
+     * @return this builder back
      */
     <M extends SizedReader<K> & SizedWriter<? super K>> B keyMarshaller(@NotNull M sizedMarshaller);
 
@@ -485,8 +499,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * type is always constant and {@code ChronicleHashBuilder} implementation knows about it, this
      * configuration takes no effect, because a special {@link SizeMarshaller} implementation, which
      * doesn't actually do any marshalling, and just returns the known constant size on {@link
-     * SizeMarshaller#readSize(net.openhft.chronicle.bytes.Bytes)} calls, is used instead of any {@code
-     * SizeMarshaller} configured using this method.
+     * SizeMarshaller#readSize(Bytes)} calls, is used instead of any {@code SizeMarshaller}
+     * configured using this method.
      *
      * @param keySizeMarshaller the new marshaller, used to serialize actual key sizes to off-heap
      *                          memory
@@ -527,8 +541,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>By default, hash containers, created by this builder doesn't replicate their data.
      *
      * <p>This method call overrides all previous replication configurations of this builder, made
-     * either by this method or {@link #replication(byte, TcpTransportAndNetworkConfig)} shortcut
-     * method.
+     * either by this method or {@link #replication(byte, TcpTransportAndNetworkConfig)}, or
+     * {@link #replication(byte)} shortcut methods.
      *
      * @param replication the replication config
      * @return this builder back
@@ -538,7 +552,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B replication(SingleChronicleHashReplication replication);
 
     /**
-     * Shortcut for {@code replication(SimpleReplication.builder() .tcpTransportAndNetwork(tcpTransportAndNetwork).createWithId(identifier))}.
+     * Shortcut for {@code replication(SingleChronicleHashReplication.builder()
+     * .tcpTransportAndNetwork(tcpTransportAndNetwork).createWithId(identifier))}.
      *
      * @param identifier             the network-wide identifier of the containers, created by this
      *                               builder
@@ -549,28 +564,49 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      */
     B replication(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork);
 
+    /**
+     * Shortcut for {@link #replication(SingleChronicleHashReplication)
+     * replication(SingleChronicleHashReplication.builder().createWithId(identifier)}.
+     *
+     * <p>This method is used to configure a replicated Chronicle Hash, that shouldn't communicate
+     * to other nodes. For example, if several processes access the same persisted Chronicle Hash,
+     * only one of them should communicate to other nodes and replicate entries.
+     *
+     * @param identifier the network-wide identifier for containers, created by this builder. This
+     * identifier is used when calling e. g. put() of the created container, to write the entry
+     * origin identifier (along with timestamp) into the entry memory. This change may be replicated
+     * to other nodes by a concurrent (or later) process, mapping to the same file.
+     * @return this builder back
+     */
     B replication(byte identifier);
 
+    /**
+     * Returns a new {@code ChronicleHashInstanceBuilder}, which inherits configuration from this
+     * builder (in it's <i>current</i> state) and could be used to specify individual configurations
+     * for a Chronicle Hash container. Changes to this {@code ChronicleHashBuilder}, made after
+     * an instance is create, doesn't affect that instance, i. e. the returned instance is
+     * independent from the {@code ChronicleHashBuilder}, used to create it.
+     *
+     * @return a new Chronicle Hash instance builder
+     */
     ChronicleHashInstanceBuilder<H> instance();
 
     /**
-     * Creates a new hash container, storing it's data in off-heap memory, not mapped to any file.
-     * On {@link ChronicleHash#close()} called on the returned container, or after the container
-     * object is collected during GC, or on JVM shutdown the off-heap memory used by the returned
-     * container is freed.
-     *
-     * <p>This method is a shortcut for {@code instance().create()}.
+     * Creates a new hash container from this builder, storing it's data in off-heap memory, not
+     * mapped to any file. On {@link ChronicleHash#close()} called on the returned container, or
+     * after the container object is collected during GC, or on JVM shutdown the off-heap memory
+     * used by the returned container is freed.
      *
      * @return a new off-heap hash container
      * @see #createPersistedTo(File)
-     * @see #instance()
      */
     H create();
 
     /**
-     * Opens a hash container residing the specified file, or creates a new one if the file not yet
-     * exists and maps its off-heap memory to the file. All changes to the map are persisted to disk
-     * (this is an operating system guarantee) independently from JVM process lifecycle.
+     * Opens a hash container residing the specified file, or creates a new one from this builder,
+     * if the file doesn't yet exist and maps its off-heap memory to the file. All changes to the
+     * map are persisted to disk (this is an operating system guarantee) independently from JVM
+     * process lifecycle.
      *
      * <p>Multiple containers could give access to the same data simultaneously, either inside a
      * single JVM or across processes. Access is synchronized correctly across all instances, i. e.

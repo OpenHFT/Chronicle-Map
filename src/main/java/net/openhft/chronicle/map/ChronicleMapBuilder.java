@@ -66,13 +66,13 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  * pattern: <pre>{@code
  * ChronicleMap<Key, Value> map = ChronicleMapOnHeapUpdatableBuilder
  *     .of(Key.class, Value.class)
- *     .entries(100500)
  *     // ... other configurations
  *     .create();}</pre>
  * it could be prepared and used to create many similar maps: <pre>{@code
  * ChronicleMapBuilder<Key, Value> builder = ChronicleMapBuilder
  *     .of(Key.class, Value.class)
- *     .entries(100500);
+ *     .entries(..)
+ *     // ... other configurations
  *
  * ChronicleMap<Key, Value> map1 = builder.create();
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
@@ -85,19 +85,20 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide
  * {@code ChronicleMap} implementations with completely different properties.
  *
- * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
- * doesn't support resizing. That is why you <i>must</i> configure {@linkplain #entries(long) number
- * of entries} you are going to insert into the created map <i>at most</i>. See {@link
+ * <p>In addition to the key and value types, you <i>must</i> configure {@linkplain #entries(long)
+ * number of entries} you are going to insert into the created map <i>at most</i>. See {@link
  * #entries(long)} method documentation for more information on this.
  *
  * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
- * e. it is not a boxed primitive, value interface, or {@link Byteable}, you <i>must</i> provide the
- * {@code ChronicleHashBuilder} with some information about you keys or values: if they are
- * constantly-sized, call {@link #constantKeySizeBySample(Object)}, otherwise {@link
- * ChronicleHashBuilder#averageKeySize(double)} method, accordingly for values.
+ * e. it is not a boxed primitive, {@linkplain net.openhft.chronicle.values.Values value interface},
+ * or {@link Byteable}, you <i>must</i> provide the {@code ChronicleHashBuilder} with some
+ * information about you keys or values: if they are constantly-sized, call {@link
+ * #constantKeySizeBySample(Object)}, otherwise {@link #averageKey(Object)} or {@link
+ * #averageKeySize(double)} method, and accordingly for values.
  *
  * @param <K> key type of the maps, produced by this builder
  * @param <V> value type of the maps, produced by this builder
+ * @see ChronicleHashBuilder
  * @see ChronicleMap
  * @see ChronicleSetBuilder
  */
