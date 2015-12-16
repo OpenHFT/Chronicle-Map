@@ -957,6 +957,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     if (eventListener != null) {
                         V valueInstance = toValue.toInstance(copies, v, valueSize);
                         writeUnlock();
+                        // TODO unlocking is dangerous, because this method is a part of
+                        // acquireUsingLocked()
                         try {
                             eventListener.onPut(keyInstance, valueInstance, null, false, true,
                                     true, localIdentifier, replacedIdentifier, timestamp,
@@ -1159,6 +1161,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         updateResult = isDeleted ? UpdateResult.INSERT : UpdateResult.UPDATE;
                     }
 
+                    replaceValueDeletedCallback(segmentState, hashLookup, pos, isDeleted);
+
                     // put callbacks
                     boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
                     onPutMaybeRemote(segmentState.pos, false);
@@ -1181,21 +1185,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                                     timeStamp, replacedTimestamp);
                         } finally {
                             writeLock();
-                        }
-                    }
-
-                    // for DRY (reusing replaceValueAndNotifyPut() method),
-                    // size is updated AFTER callbacks are called.
-                    // however this shouldn't be an issue because exclusive segment lock
-                    // is still held
-                    if (isDeleted) {
-                        incrementSize();
-                        // if they are NOT equal, it means the entry was relocated in putValue(),
-                        // hence position is already set
-                        if (pos == segmentState.pos) {
-                            hashLookup.putPosition(segmentState.pos);
-                        } else {
-                            assert hashLookup.getPositions().isSet(segmentState.pos);
                         }
                     }
 
@@ -1315,20 +1304,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                             entry, pos, hashLookup, readValue,
                             resultUnused, isDeleted, remote,
                             replacedIdentifier, replacedTimestamp);
-                    // for DRY (reusing replaceValueAndNotifyPut() method),
-                    // size is updated AFTER callbacks are called.
-                    // however this shouldn't be an issue because exclusive segment lock
-                    // is still held
-                    if (isDeleted) {
-                        incrementSize();
-                        // if they are NOT equal, it means the entry was relocated in putValue(),
-                        // hence position is already set
-                        if (pos == segmentState.pos) {
-                            hashLookup.putPosition(segmentState.pos);
-                        } else {
-                            assert hashLookup.getPositions().isSet(segmentState.pos);
-                        }
-                    }
+
                     if (resultUnused)
                         return null;
                     return isDeleted ? readValue.readNull() : prevValue;
@@ -1377,6 +1353,21 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             }
 
             return resultUnused ? null : readValue.readNull();
+        }
+
+        @Override
+        void replaceValueDeletedCallback(
+                SegmentState segmentState, MultiMap hashLookup, long pos, boolean isDeleted) {
+            if (isDeleted) {
+                incrementSize();
+                // if they are NOT equal, it means the entry was relocated in putValue(),
+                // hence position is already set
+                if (pos == segmentState.pos) {
+                    hashLookup.putPosition(segmentState.pos);
+                } else {
+                    assert hashLookup.getPositions().isSet(segmentState.pos);
+                }
+            }
         }
 
         /**
@@ -1643,11 +1634,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                             getExpectedValueInterops, expectedValue, getNewValueInterops, newValue,
                             readValue, toValue, pos, entry, hashLookup,
                             replacedIdentifier, replacedTimestamp);
-                    if (result != Boolean.FALSE) {
-                        entry.position(timestampPos);
-                        entry.writeLong(timestamp);
-                        entry.writeByte(identifier);
-                    }
                     return result;
                 }
                 // key is not found
@@ -1658,6 +1644,13 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             }
         }
 
+        @Override
+        void updateReplicationBytesOnKeyPresentOnReplace(
+                Bytes entry, long timestampPos, long timestamp, byte identifier) {
+            entry.position(timestampPos);
+            entry.writeLong(timestamp);
+            entry.writeByte(identifier);
+        }
 
         public void dirtyEntries(final long timeStamp,
                                  final EntryModifiableCallback callback,

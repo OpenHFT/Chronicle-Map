@@ -1976,11 +1976,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     "replicated map");
         }
 
-      /*  @Override
-        public void writeLock() {
-            writeLock();
-        }*/
-
         final MultiStoreBytes reuse(MultiStoreBytes entry, long offset) {
             entry.setBytesOffset(bytes, offset);
             entry.position(metaDataBytes);
@@ -2127,6 +2122,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 final K key1 = toKey.toInstance(copies, key, keySize);
                 final V newValue = toValue.toInstance(copies, v, valueSize);
                 writeUnlock();
+                // TODO unlocking here is dangerous, because this method is a part of
+                // acquireUsingLocked(), after which lock assumed to be valid
                 try {
                     eventListener.onPut(key1,
                             newValue, null, false, true, true,
@@ -2431,6 +2428,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         sizeOfEverythingBeforeValue);
             }
 
+            replaceValueDeletedCallback(segmentState, searchedHashLookup, pos, entryIsDeleted);
+
             // put callbacks
             onPutMaybeRemote(segmentState.pos, remote);
             if (bytesEventListener != null)
@@ -2455,6 +2454,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
 
             return resultUnused ? null : prevValue;
+        }
+
+        void replaceValueDeletedCallback(
+                SegmentState segmentState, MultiMap hashLookup, long pos, boolean isDeleted) {
+            if (isDeleted)
+                throw new AssertionError();
+            // do nothing
         }
 
         final void onPutMaybeRemote(long pos, boolean remote) {
@@ -2701,6 +2707,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 final K key1 = toKey.toInstance(copies, key, keySize);
                 writeUnlock();
 
+                // TODO this is called from WriteContext.removeEntry(), losing exclusive lock
+                // could be dangerous
                 try {
                     eventListener.onRemove(key1,
                             removedValueForEventListener, remote,
@@ -2852,6 +2860,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         sizeOfEverythingBeforeValue);
             }
 
+            updateReplicationBytesOnKeyPresentOnReplace(entry,
+                    valueSizePos - ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES,
+                    segmentState.timestamp, segmentState.identifier);
+
             // put callbacks
             onPut(this, segmentState.pos);
             if (bytesEventListener != null) {
@@ -2880,6 +2892,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
 
             return expectedValue == null ? prevValue : Boolean.TRUE;
+        }
+
+        void updateReplicationBytesOnKeyPresentOnReplace(
+                Bytes entry, long timestampPos, long timestamp, byte identifier) {
+            // do nothing
         }
 
         /**
