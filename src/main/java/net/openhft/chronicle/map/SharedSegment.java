@@ -22,10 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 /**
- * Allow access to the Segments that user used to make up the shared map, these methods should be used with
- * exceptional caution and were initially introduce to facilitate remote map replication.
+ * Allow access to the Segments that user used to make up the shared map, these methods should be
+ * used with exceptional caution and were initially introduce to facilitate remote map replication.
  */
-interface SharedSegment<K, V> {
+public interface SharedSegment<K, V> {
 
     /**
      * if passed segmentState is null, null is returned instead of readLock
@@ -44,4 +44,5 @@ interface SharedSegment<K, V> {
 
     long timeStamp(long pos);
 
+    <T> T writeLock();
 }

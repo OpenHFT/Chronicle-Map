@@ -952,13 +952,18 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     if (bytesEventListener != null) {
                         bytesEventListener.onPut(entry, 0L, metaDataBytes, valuePos, true, false,
                                 true, localIdentifier, replacedIdentifier, timestamp,
-                                replacedTimestamp);
+                                replacedTimestamp, this);
                     }
                     if (eventListener != null) {
                         V valueInstance = toValue.toInstance(copies, v, valueSize);
-                        eventListener.onPut(keyInstance, valueInstance, null, false, true,
-                                true, localIdentifier, replacedIdentifier, timestamp,
-                                replacedTimestamp);
+                        writeUnlock();
+                        try {
+                            eventListener.onPut(keyInstance, valueInstance, null, false, true,
+                                    true, localIdentifier, replacedIdentifier, timestamp,
+                                    replacedTimestamp);
+                        } finally {
+                            writeLock();
+                        }
                     }
                     entryCreated(lock);
                     return v;
@@ -1162,13 +1167,21 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                                 entry, 0L, metaDataBytes, valueSizePos, false, false,
                                 hasValueChanged,
                                 identifier, replacedIdentifier,
-                                timeStamp, replacedTimestamp);
+                                timeStamp, replacedTimestamp, this);
                     }
                     if (eventListener != null) {
-                        eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                                toValue.toInstance(copies, value, valueSize), null, false,
-                                isDeleted, hasValueChanged, identifier, replacedIdentifier,
-                                timeStamp, replacedTimestamp);
+                        final K key1 = toKey.toInstance(copies, key, keySize);
+                        final V newValue = toValue.toInstance(copies, value, valueSize);
+
+                        writeUnlock();
+                        try {
+                            eventListener.onPut(key1,
+                                    newValue, null, false,
+                                    isDeleted, hasValueChanged, identifier, replacedIdentifier,
+                                    timeStamp, replacedTimestamp);
+                        } finally {
+                            writeLock();
+                        }
                     }
 
                     // for DRY (reusing replaceValueAndNotifyPut() method),
@@ -1208,14 +1221,21 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                     bytesEventListener.onPut(entry, 0L, metaDataBytes,
                             segmentState.valueSizePos, true, false, true, identifier,
-                            replacedIdentifier, timeStamp, replacedTimestamp);
+                            replacedIdentifier, timeStamp, replacedTimestamp, this);
                 }
                 if (eventListener != null) {
                     byte replacedIdentifier = 0;
                     long replacedTimestamp = 0;
-                    eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                            toValue.toInstance(copies, value, valueSize), null, false, true,
-                            true, identifier, replacedIdentifier, timeStamp, replacedTimestamp);
+                    final K key1 = toKey.toInstance(copies, key, keySize);
+                    final V newValue = toValue.toInstance(copies, value, valueSize);
+                    writeUnlock();
+                    try {
+                        eventListener.onPut(key1,
+                                newValue, null, false, true,
+                                true, identifier, replacedIdentifier, timeStamp, replacedTimestamp);
+                    } finally {
+                        writeLock();
+                    }
                 }
 
                 return UpdateResult.INSERT;
@@ -1338,15 +1358,22 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 bytesEventListener.onPut(entry, 0L, metaDataBytes,
                         segmentState.valueSizePos, true, remote, true, identifier,
                         replacedIdentifier, timestamp,
-                        replacedTimestamp);
+                        replacedTimestamp, this);
             }
             if (eventListener != null) {
                 byte replacedIdentifier = 0;
                 long replacedTimestamp = 0;
-                eventListener.onPut(toKey.toInstance(copies, key, keySize),
-                        toValue.toInstance(copies, value, valueSize), null, remote, true,
-                        true, identifier, replacedIdentifier, timestamp,
-                        replacedTimestamp);
+                final K key1 = toKey.toInstance(copies, key, keySize);
+                final V newValue = toValue.toInstance(copies, value, valueSize);
+                writeUnlock();
+                try {
+                    eventListener.onPut(key1,
+                            newValue, null, remote, true,
+                            true, identifier, replacedIdentifier, timestamp,
+                            replacedTimestamp);
+                } finally {
+                    writeLock();
+                }
             }
 
             return resultUnused ? null : readValue.readNull();

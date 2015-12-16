@@ -46,13 +46,14 @@ public abstract class BytesMapEventListener implements Serializable {
 
     public void onPut(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean added,
                       boolean replicationEvent, boolean hasValueChanged, byte identifier,
-                      byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
+                      byte replacedIdentifier, long timeStamp, long replacedTimeStamp,
+                      SharedSegment segment) {
         // do nothing
     }
 
     public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos,
                          boolean replicationEvent, byte identifier,
-                         byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
+                         byte replacedIdentifier, long timeStamp, long replacedTimeStamp, SharedSegment segment) {
         // do nothing
     }
 }
