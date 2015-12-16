@@ -1865,7 +1865,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 boolean success = false;
 
                 try {
-                    success = segmentHeader.tryRWWriteLock(LOCK_OFFSET, lockTimeOutNS);
+                    success = segmentHeader.tryRWReadLock(LOCK_OFFSET, lockTimeOutNS);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
@@ -1944,7 +1944,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         public final void readUnlock() {
             try {
 //                segmentHeader.unlockRWReadLock(LOCK_OFFSET);
-                segmentHeader.unlockRWWriteLock(LOCK_OFFSET);
+                segmentHeader.unlockRWReadLock(LOCK_OFFSET);
 //                lock.readLock().unlock();
             } catch (IllegalMonitorStateException e) {
                 errorListener.errorOnUnlock(e);

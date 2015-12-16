@@ -488,6 +488,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         final NativeBytes k = wrap(entry.address() + keyPosition, keySize);
                         final NativeBytes v = wrap(entry.address() + valuePosition, valueSize);
 
+                        assert k.remaining() > 0 : "keySize:" + keySize;
+                        assert v.remaining() > 0 : "valueSize:" + valueSize;
+
                         return callback.onEntry(k, v,
                                 timestamp,
                                 identifier,
