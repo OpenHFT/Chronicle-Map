@@ -418,7 +418,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             isDeleted = true;
             MapAbsentEntry mapAbsentEntry = (MapAbsentEntry) entry;
             key = mapAbsentEntry.absentKey();
-            value = ((MapRemoteQueryContext) mapAbsentEntry.context()).dummyZeroValue();
+            value = ((CompiledReplicatedMapIterationContext) mapAbsentEntry.context()).dummyValue();
         }
 
         destination.writeLong(bootstrapTime);

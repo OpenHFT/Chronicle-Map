@@ -17,10 +17,12 @@
 package net.openhft.chronicle.map.impl.stage.iter;
 
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.replication.ReplicableEntryDelegating;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
+import net.openhft.chronicle.map.impl.stage.map.DefaultValue;
 import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceValueHolder;
 import net.openhft.chronicle.set.SetAbsentEntry;
 import net.openhft.sg.StageRef;
@@ -31,8 +33,10 @@ import org.jetbrains.annotations.NotNull;
 public class ReplicatedMapAbsentDelegatingForIteration<K, V>
         implements MapAbsentEntry<K, V>, SetAbsentEntry<K>, ReplicableEntryDelegating {
 
+    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef ReplicatedMapSegmentIteration<K, V, ?> delegate;
     @StageRef ReplicatedMapEntryStages<K, V> e;
+    @StageRef DefaultValue<V> defaultValue;
 
     @NotNull
     @Override
@@ -53,13 +57,14 @@ public class ReplicatedMapAbsentDelegatingForIteration<K, V>
     @NotNull
     @Override
     public Data<V> defaultValue() {
-        return delegate.defaultValue();
+        return defaultValue.defaultValue();
     }
 
     @NotNull
     @Override
     public Data<K> absentKey() {
-        return delegate.absentKey();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        return e.entryKey;
     }
 
     @Override

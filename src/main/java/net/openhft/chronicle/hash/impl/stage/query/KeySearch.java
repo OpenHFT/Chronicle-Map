@@ -37,7 +37,7 @@ public abstract class KeySearch<K> {
 
     public Data<K> inputKey = null;
 
-    abstract boolean inputKeyInit();
+    public abstract boolean inputKeyInit();
 
     public void initInputKey(Data<K> inputKey) {
         this.inputKey = inputKey;

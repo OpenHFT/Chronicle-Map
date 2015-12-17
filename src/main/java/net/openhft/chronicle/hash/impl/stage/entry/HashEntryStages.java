@@ -159,7 +159,7 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
         return checksumStrategy.extraEntryBytes() + entryEnd() - keySizeOffset;
     }
 
-    @StageRef EntryKeyBytesData<K> entryKey;
+    @StageRef public EntryKeyBytesData<K> entryKey;
 
     @NotNull
     @Override

@@ -17,6 +17,8 @@
 package net.openhft.chronicle.map.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 @Staged
 public class ReplicatedMapAbsentDelegating<K, V> implements Absent<K, V> {
 
+    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef KeySearch<K> ks;
     @StageRef ReplicatedMapAbsent<K, V> delegate;
 
     @NotNull
@@ -51,6 +55,7 @@ public class ReplicatedMapAbsentDelegating<K, V> implements Absent<K, V> {
     @NotNull
     @Override
     public Data<K> absentKey() {
-        return delegate.absentKey();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        return ks.inputKey;
     }
 }

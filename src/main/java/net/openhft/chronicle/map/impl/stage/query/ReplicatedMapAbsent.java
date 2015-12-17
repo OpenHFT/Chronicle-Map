@@ -22,6 +22,7 @@ import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
+import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
@@ -31,6 +32,13 @@ public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
     @StageRef MapQuery<K, V, ?> q;
     @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef ReplicationUpdate<K> ru;
+
+    @NotNull
+    @Override
+    public Data<K> absentKey() {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        return e.entryKey;
+    }
 
     @Override
     public void doInsert(Data<V> value) {

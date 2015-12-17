@@ -19,7 +19,6 @@ package net.openhft.chronicle.map.impl.stage.iter;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.impl.ReplicatedIterationContext;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
@@ -27,7 +26,6 @@ import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.chronicle.set.DummyValueData;
-import net.openhft.chronicle.set.SetAbsentEntry;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
@@ -40,7 +38,7 @@ import static net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIter
 @Staged
 public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentIteration<K, V, R>
         implements ReplicatedIterationContext<K, V, R>, ReplicableEntry,
-        ReplicatedHashSegmentContext<K, MapEntry<K, V>>, MapAbsentEntry<K, V>, SetAbsentEntry<K> {
+        ReplicatedHashSegmentContext<K, MapEntry<K, V>> {
 
     @StageRef VanillaChronicleMapHolder<K, V, R> mh;
     @StageRef ReplicatedMapEntryStages<K, V> e;
@@ -132,7 +130,6 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
             s.tierDeleted(s.tierDeleted() - 1);
     }
 
-    @Override
     public void doInsert(Data<V> value) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (e.entryDeleted()) {
@@ -152,7 +149,6 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         }
     }
 
-    @Override
     public void doInsert() {
         if (mh.set() == null)
             throw new IllegalStateException("Called SetAbsentEntry.doInsert() from Map context");

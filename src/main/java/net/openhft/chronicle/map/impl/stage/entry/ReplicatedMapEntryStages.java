@@ -31,7 +31,7 @@ import static net.openhft.chronicle.map.ReplicatedChronicleMap.ADDITIONAL_ENTRY_
 
 @Staged
 public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V>
-        implements MapReplicableEntry<K, V>, MapAbsentEntry<K, V> {
+        implements MapReplicableEntry<K, V> {
     
     @StageRef ReplicatedChronicleMapHolder<?, ?, ?> mh;
     @StageRef ReplicationUpdate ru;
@@ -158,12 +158,5 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
     @Override
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
         return super.sizeOfEverythingBeforeValue(keySize, valueSize) + ADDITIONAL_ENTRY_BYTES;
-    }
-
-    @NotNull
-    @Override
-    public Data<K> absentKey() {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
-        return ks.inputKey;
     }
 }
