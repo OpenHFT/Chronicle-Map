@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.algo.bitset.*;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Maths;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.hash.impl.TierCountersArea;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
@@ -29,6 +30,7 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.values.Values;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -401,62 +403,58 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
      */
     @Override
     public void writeExternalEntry(
-            @NotNull Bytes entry, @NotNull Bytes destination, int chronicleId, long bootstrapTime) {
+            ReplicableEntry entry, Bytes payload, @NotNull Bytes destination,
+            int chronicleId, long bootstrapTime) {
 
-        final long keySize = keySizeMarshaller.readSize(entry);
-
-        final long keyPosition = entry.readPosition();
-        entry.readSkip(keySize);
-        final long timeStamp = entry.readLong();
-
-        final byte identifier = entry.readByte();
-
-        final boolean isDeleted = entry.readBoolean();
-        long valueSize;
-        if (!isDeleted) {
-            valueSize = valueSizeMarshaller.readSize(entry);
+        Data key;
+        Data value;
+        boolean isDeleted;
+        if (entry instanceof MapEntry) {
+            isDeleted = false;
+            MapEntry mapEntry = (MapEntry) entry;
+            key = mapEntry.key();
+            value = mapEntry.value();
         } else {
-            valueSize = Math.max(0, valueSizeMarshaller.minStorableSize());
+            isDeleted = true;
+            MapAbsentEntry mapAbsentEntry = (MapAbsentEntry) entry;
+            key = mapAbsentEntry.absentKey();
+            value = ((MapRemoteQueryContext) mapAbsentEntry.context()).dummyZeroValue();
         }
 
-        final long valuePosition = entry.readPosition();
         destination.writeLong(bootstrapTime);
-        keySizeMarshaller.writeSize(destination, keySize);
-        valueSizeMarshaller.writeSize(destination, valueSize);
-        destination.writeStopBit(timeStamp);
+        keySizeMarshaller.writeSize(destination, key.size());
+        valueSizeMarshaller.writeSize(destination, value.size());
+        destination.writeStopBit(entry.originTimestamp());
 
-        if (identifier == 0)
+        if (entry.originIdentifier() == 0)
             throw new IllegalStateException("Identifier can't be 0");
-        destination.writeByte(identifier);
+        destination.writeByte(entry.originIdentifier());
         destination.writeBoolean(isDeleted);
 
-        // write the key
-        destination.write(entry, keyPosition, keySize);
+        key.writeTo(destination, destination.writePosition());
+        destination.writeSkip(key.size());
 
         boolean debugEnabled = LOG.isDebugEnabled();
         String message = null;
         if (debugEnabled) {
             if (isDeleted) {
                 LOG.debug("WRITING ENTRY TO DEST -  into local-id={}, remove(key={})",
-                        identifier(), entry.toString().trim());
+                        identifier(), key);
             } else {
                 message = String.format(
                         "WRITING ENTRY TO DEST  -  into local-id=%d, put(key=%s,",
-                        identifier(), entry.toString().trim());
+                        identifier(), key);
             }
         }
 
         if (isDeleted)
             return;
 
-        // skipping the alignment, as alignment wont work when we send the data over the wire.
-        long valueAddr = entry.address(valuePosition);
-        long skip = alignAddr(valueAddr, alignment) - valueAddr;
-        // writes the value
-        destination.write(entry, valuePosition + skip, valueSize);
+        value.writeTo(destination, destination.writePosition());
+        destination.writeSkip(value.size());
 
         if (debugEnabled) {
-            LOG.debug(message + "value=" + entry.toString().trim() + ")");
+            LOG.debug(message + "value=" + value + ")");
         }
     }
     
@@ -750,14 +748,11 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                         final long segmentPos = position & posMask;
                         context.readExistingEntry(segmentPos);
 
-
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
-                        context.segmentBytes()
-                                .readLimit(context.valueOffset() + context.valueSize());
-                        context.segmentBytes().readPosition(context.keySizeOffset());
                         boolean success = entryCallback.onEntry(
-                                context.segmentBytes(), chronicleId, bootStrapTimeStamp());
+                                (ReplicableEntry) context.entryForIteration(), null,
+                                chronicleId, bootStrapTimeStamp());
                         entryCallback.onAfterEntry();
 
                         if (success)

@@ -121,14 +121,14 @@ final class ChannelProvider implements Closeable {
          * @param chronicleChannel used in cluster into identify the canonical map or queue
          */
         @Override
-        public void writeExternalEntry(@NotNull Bytes entry,
+        public void writeExternalEntry(ReplicableEntry entry, Bytes payload,
                                        @NotNull Bytes destination,
                                        int chronicleChannel, long bootstrapTime) {
             channelDataReadLock();
             try {
                 destination.writeStopBit(chronicleChannel);
-                channelEntryExternalizables[chronicleChannel]
-                        .writeExternalEntry(entry, destination, chronicleChannel, bootstrapTime);
+                channelEntryExternalizables[chronicleChannel].writeExternalEntry(
+                        entry, payload, destination, chronicleChannel, bootstrapTime);
             } finally {
                 channelDataLock.readLock().unlock();
             }
@@ -481,7 +481,7 @@ final class ChannelProvider implements Closeable {
             @Override
             public ModificationIterator acquireModificationIterator(
                     final byte remoteIdentifier) {
-                final ModificationIterator result = systemModificationIterator.get(remoteIdentifier);
+                ModificationIterator result = systemModificationIterator.get(remoteIdentifier);
 
                 if (result != null)
                     return result;
@@ -498,10 +498,10 @@ final class ChannelProvider implements Closeable {
 
                     @Override
                     public boolean nextEntry(@NotNull EntryCallback callback, int na) {
-                        final Bytes bytes = payloads.poll();
-                        if (bytes == null)
+                        final Bytes payload = payloads.poll();
+                        if (payload == null)
                             return false;
-                        callback.onEntry(bytes, 0, System.currentTimeMillis());
+                        callback.onEntry(null, payload, 0, 0);
                         return true;
                     }
 
@@ -511,7 +511,8 @@ final class ChannelProvider implements Closeable {
                     }
 
                     @Override
-                    public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
+                    public void setModificationNotifier(
+                            @NotNull ModificationNotifier modificationNotifier) {
                         modificationNotifier0 = modificationNotifier;
                     }
 
@@ -559,9 +560,10 @@ final class ChannelProvider implements Closeable {
             }
 
             @Override
-            public void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
-                                           int na, long bootstrapTime) {
-                destination.write(entry, entry.readPosition(), entry.readRemaining());
+            public void writeExternalEntry(
+                    ReplicableEntry entry, @NotNull Bytes payload, @NotNull Bytes destination,
+                    int na, long bootstrapTime) {
+                destination.write(payload, payload.readPosition(), payload.readRemaining());
             }
 
             @Override

@@ -156,7 +156,7 @@ public interface Replica extends Closeable {
          *                    match the maps local
          * @param chronicleId is the channel id used to identify the canonical map or queue
          */
-        void writeExternalEntry(@NotNull Bytes entry, @NotNull Bytes destination,
+        void writeExternalEntry(ReplicableEntry entry, Bytes payload, @NotNull Bytes destination,
                                 int chronicleId, long bootstrapTime);
 
         /**
@@ -189,17 +189,17 @@ public interface Replica extends Closeable {
          * in the ModificationIterator the entry may have been updated.
          */
         public abstract boolean onEntry(
-                final Bytes entry, final int chronicleId, long bootstrapTime);
+                ReplicableEntry entry, Bytes payload, int chronicleId, long bootstrapTime);
 
         /**
-         * Called just after {@link  #onEntry(Bytes, int, long)}.
+         * Called just after {@link  #onEntry(ReplicableEntry, Bytes, int, long)}.
          * No-op by default.
          */
         public void onAfterEntry() {
         }
 
         /**
-         * Called just before {@link #onEntry(Bytes, int, long)}.
+         * Called just before {@link #onEntry(ReplicableEntry, Bytes, int, long)}.
          * No-op by default.
          */
         public void onBeforeEntry() {

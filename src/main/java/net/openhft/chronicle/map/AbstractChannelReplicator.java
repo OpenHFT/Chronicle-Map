@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.*;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -465,7 +464,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
         @Override
         public boolean onEntry(
-                @NotNull final Bytes entry, final int chronicleId, final long bootstrapTime) {
+                ReplicableEntry entry, Bytes payload, int chronicleId, long bootstrapTime) {
 
             long pos0 = entryIn.writePosition();
             // used to denote that this is not a heartbeat
@@ -478,7 +477,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             long start = entryIn.writePosition();
 
-            externalizable.writeExternalEntry(entry, entryIn, chronicleId, bootstrapTime);
+            externalizable.writeExternalEntry(entry, payload, entryIn, chronicleId, bootstrapTime);
 
             if (entryIn.writePosition() == start) {
                 entryIn.writePosition(pos0);
