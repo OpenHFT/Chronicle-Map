@@ -128,16 +128,6 @@ public interface Replica extends Closeable {
     interface EntryExternalizable {
 
         /**
-         * The size of entry in bytes
-         *
-         * @param entry       an entry in the map
-         * @param chronicleId is the channel id used to identify the canonical map or queue
-         * @return the size of the entry
-         */
-        int sizeOfEntry(@NotNull Bytes entry, int chronicleId);
-
-
-        /**
          * check that the identifier in the entry is from this node
          *
          * @param entry       an entry in the map
@@ -145,7 +135,6 @@ public interface Replica extends Closeable {
          * @return the size of the entry
          */
         boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleId);
-
 
         /**
          * The map implements this method to save its contents.
@@ -168,8 +157,6 @@ public interface Replica extends Closeable {
          * @param source       bytes to read an entry from
          */
         void readExternalEntry(@NotNull Bytes source);
-
-
     }
 
     /**
@@ -205,7 +192,6 @@ public interface Replica extends Closeable {
         public void onBeforeEntry() {
         }
 
-
         /**
          * its possible that the entry should now be ignored, for example although rare its
          * identifier may have recently been changed by another thread, so its no longer applicable
@@ -218,7 +204,5 @@ public interface Replica extends Closeable {
          */
         public abstract boolean shouldBeIgnored(final ReplicableEntry entry, final int chronicleId);
     }
-
-
 }
 

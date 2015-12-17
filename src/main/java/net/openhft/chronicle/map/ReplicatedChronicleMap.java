@@ -362,39 +362,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         return entry.originIdentifier() == identifier();
     }
 
-    @Override
-    public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
-
-        long start = entry.readPosition();
-        try {
-            final long keySize = keySizeMarshaller.readSize(entry);
-
-            entry.readSkip(keySize + 8); // we skip 8 for the timestamp
-
-            final byte identifier = entry.readByte();
-            if (identifier != identifier()) {
-                // although unlikely, this may occur if the entry has been updated
-                return 0;
-            }
-
-            entry.readSkip(1); // is Deleted
-            long valueSize = valueSizeMarshaller.readSize(entry);
-
-            long currentPosition = entry.readPosition();
-            long currentAddr = entry.address(currentPosition);
-            long skip = alignAddr(currentAddr, alignment) - currentAddr;
-            long result = currentPosition + skip + valueSize - start;
-
-            // entries can be larger than Integer.MAX_VALUE as we are restricted to the size we can
-            // make a byte buffer
-            assert result < Integer.MAX_VALUE;
-
-            return (int) result + SIZE_OF_BOOTSTRAP_TIME_STAMP;
-        } finally {
-            entry.readPosition(start);
-        }
-    }
-
 
     /**
      * This method does not set a segment lock, A segment lock should be obtained before calling

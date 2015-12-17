@@ -88,17 +88,6 @@ final class ChannelProvider implements Closeable {
 
     private static final byte BOOTSTRAP_MESSAGE = 'B';
     final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
-        @Override
-        public int sizeOfEntry(@NotNull Bytes entry, int chronicleChannel) {
-            channelDataReadLock();
-            try {
-
-                return channelEntryExternalizables[chronicleChannel]
-                        .sizeOfEntry(entry, chronicleChannel);
-            } finally {
-                channelDataLock.readLock().unlock();
-            }
-        }
 
         @Override
         public boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleChannel) {
@@ -549,10 +538,6 @@ final class ChannelProvider implements Closeable {
             }
         };
         final EntryExternalizable asEntryExternalizable = new EntryExternalizable() {
-            @Override
-            public int sizeOfEntry(@NotNull Bytes entry, int chronicleId) {
-                return (int) entry.readRemaining();
-            }
 
             @Override
             public boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleId) {
