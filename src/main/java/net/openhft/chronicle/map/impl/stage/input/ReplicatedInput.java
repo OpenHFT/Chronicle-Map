@@ -19,14 +19,11 @@ package net.openhft.chronicle.map.impl.stage.input;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
-import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
-import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.replication.RemoteOperationContext;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputKeyBytesData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputValueBytesData;
-import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.query.ReplicatedMapQuery;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
@@ -41,13 +38,10 @@ public abstract class ReplicatedInput<K, V, R>
     
     @StageRef ReplicatedChronicleMapHolder<K, V, R> mh;
     @StageRef ReplicationUpdate<K> ru;
-    @StageRef LogHolder lh;
     @StageRef ReplicatedInputKeyBytesData<K> replicatedInputKeyBytesValue;
     @StageRef ReplicatedInputValueBytesData<V> replicatedInputValueBytesValue;
-    @StageRef KeySearch<?> ks;
     @StageRef ReplicatedMapQuery<K, V, ?> q;
     @StageRef SegmentStages s;
-    @StageRef ReplicatedMapEntryStages<K, V> e;
     @StageRef DummyValueZeroData<V> dummyValue;
 
     @Override
@@ -77,17 +71,18 @@ public abstract class ReplicatedInput<K, V, R>
     public void initReplicationInput(Bytes replicatedInputBytes) {
         initReplicatedInputBytes(replicatedInputBytes);
         bootstrapTimestamp = replicatedInputBytes.readLong();
-        riKeySize = mh.m().keySizeMarshaller.readSize(replicatedInputBytes);
-        riValueSize = mh.m().valueSizeMarshaller.readSize(replicatedInputBytes);
-
         riTimestamp = replicatedInputBytes.readStopBit();
         riId = replicatedInputBytes.readByte();
         ru.initReplicationUpdate(riTimestamp, riId);
 
         isDeleted = replicatedInputBytes.readBoolean();
-
+        riKeySize = mh.m().keySizeMarshaller.readSize(replicatedInputBytes);
         riKeyOffset = replicatedInputBytes.readPosition();
-        riValueOffset = riKeyOffset + riKeySize;
+        if (!isDeleted) {
+            replicatedInputBytes.readSkip(riKeySize);
+            riValueSize = mh.m().valueSizeMarshaller.readSize(replicatedInputBytes);
+            riValueOffset = replicatedInputBytes.readPosition();
+        }
     }
 
     public void processReplicatedEvent() {

@@ -372,34 +372,25 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             ReplicableEntry entry, Bytes payload, @NotNull Bytes destination,
             int chronicleId, long bootstrapTime) {
 
-        Data key;
-        Data value;
-        long valueSize;
-        boolean isDeleted;
-        if (entry instanceof MapEntry) {
-            isDeleted = false;
-            MapEntry mapEntry = (MapEntry) entry;
-            key = mapEntry.key();
-            value = mapEntry.value();
-            valueSize = value.size();
-        } else {
-            isDeleted = true;
-            MapAbsentEntry mapAbsentEntry = (MapAbsentEntry) entry;
-            key = mapAbsentEntry.absentKey();
-            value = null;
-            valueSize = Math.max(0, valueSizeMarshaller.minStorableSize());
-        }
-
         destination.writeLong(bootstrapTime);
-        keySizeMarshaller.writeSize(destination, key.size());
-        valueSizeMarshaller.writeSize(destination, valueSize);
         destination.writeStopBit(entry.originTimestamp());
-
         if (entry.originIdentifier() == 0)
             throw new IllegalStateException("Identifier can't be 0");
         destination.writeByte(entry.originIdentifier());
+
+        Data key;
+        boolean isDeleted;
+        if (entry instanceof MapEntry) {
+            isDeleted = false;
+            key = ((MapEntry) entry).key();
+        } else {
+            isDeleted = true;
+            key = ((MapAbsentEntry) entry).absentKey();
+        }
+
         destination.writeBoolean(isDeleted);
 
+        keySizeMarshaller.writeSize(destination, key.size());
         key.writeTo(destination, destination.writePosition());
         destination.writeSkip(key.size());
 
@@ -419,6 +410,8 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         if (isDeleted)
             return;
 
+        Data value = ((MapEntry) entry).value();
+        valueSizeMarshaller.writeSize(destination, value.size());
         value.writeTo(destination, destination.writePosition());
         destination.writeSkip(value.size());
 
