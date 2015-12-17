@@ -22,7 +22,7 @@ package net.openhft.chronicle.hash;
  * but Java 8 doesn't allow to override {@code Object}'s methods by default implementations
  * in interfaces.
  */
-public abstract class AbstractData<V> implements Data<V> {
+public abstract class AbstractData<T> implements Data<T> {
 
     /**
      * Constructor for use by subclasses. 
