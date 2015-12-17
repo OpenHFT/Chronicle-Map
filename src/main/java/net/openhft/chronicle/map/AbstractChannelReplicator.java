@@ -458,11 +458,6 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
 
         @Override
-        public boolean shouldBeIgnored(final ReplicableEntry entry, final int chronicleId) {
-            return !externalizable.identifierCheck(entry, chronicleId);
-        }
-
-        @Override
         public boolean onEntry(
                 ReplicableEntry entry, Bytes payload, int chronicleId, long bootstrapTime) {
 

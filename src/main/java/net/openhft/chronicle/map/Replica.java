@@ -191,18 +191,6 @@ public interface Replica extends Closeable {
          */
         public void onBeforeEntry() {
         }
-
-        /**
-         * its possible that the entry should now be ignored, for example although rare its
-         * identifier may have recently been changed by another thread, so its no longer applicable
-         * to send
-         *
-         * @param entry       the entry you will receive, this does not have to be locked, as
-         *                    locking is already provided from the caller.
-         * @param chronicleId only assigned when clustering
-         * @return {@code true} if this entry should be ignored
-         */
-        public abstract boolean shouldBeIgnored(final ReplicableEntry entry, final int chronicleId);
     }
 }
 
