@@ -30,7 +30,6 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
-import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.chronicle.values.Values;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -408,22 +407,25 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
         Data key;
         Data value;
+        long valueSize;
         boolean isDeleted;
         if (entry instanceof MapEntry) {
             isDeleted = false;
             MapEntry mapEntry = (MapEntry) entry;
             key = mapEntry.key();
             value = mapEntry.value();
+            valueSize = value.size();
         } else {
             isDeleted = true;
             MapAbsentEntry mapAbsentEntry = (MapAbsentEntry) entry;
             key = mapAbsentEntry.absentKey();
-            value = ((CompiledReplicatedMapIterationContext) mapAbsentEntry.context()).dummyValue();
+            value = null;
+            valueSize = Math.max(0, valueSizeMarshaller.minStorableSize());
         }
 
         destination.writeLong(bootstrapTime);
         keySizeMarshaller.writeSize(destination, key.size());
-        valueSizeMarshaller.writeSize(destination, value.size());
+        valueSizeMarshaller.writeSize(destination, valueSize);
         destination.writeStopBit(entry.originTimestamp());
 
         if (entry.originIdentifier() == 0)
