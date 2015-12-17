@@ -286,6 +286,22 @@ class Int24Int24MultiMap implements MultiMap {
         }
     }
 
+    public long size() {
+        long pos = 0;
+        int size = 0;
+        for (int count = capacity; count > 0; count--) {
+            long entry = bytes.readInt48(pos);
+            pos = step(pos);
+            if (entry != UNSET_ENTRY)
+                size++;
+        }
+        return size;
+    }
+
+    @Override
+    public long capacity() {
+        return capacity;
+    }
     @Override
     public DirectBitSet getPositions() {
         return positions;

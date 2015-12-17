@@ -1748,7 +1748,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final Bytes segmentHeader;
         final Bytes bytes;
         final long entriesOffset;
-        private final int index;
+        private final int index, maxSize;
         private final SingleThreadedDirectBitSet freeList;
         long startWriteLock = 0;
         private MultiMap hashLookup;
@@ -1761,9 +1761,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             this.segmentHeader = segmentHeader;
             this.bytes = bytes;
             this.index = index;
-
             long start = bytes.startAddr();
             hashLookup = createMultiMap(start);
+            maxSize = (int) (hashLookup.capacity() * 9 / 10);
             start += CACHE_LINES.align(sizeOfMultiMap() + sizeOfMultiMapBitSet(), BYTES)
                     * multiMapsPerSegment();
             final NativeBytes bsBytes = new NativeBytes(ms.objectSerializer(),
@@ -1979,6 +1979,14 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         final MultiStoreBytes reuse(MultiStoreBytes entry, long offset) {
             entry.setBytesOffset(bytes, offset);
             entry.position(metaDataBytes);
+            return entry;
+        }
+
+        final MultiStoreBytes reuse2(MultiStoreBytes entry, long offset) {
+            entry.setBytesOffset(bytes, offset);
+            entry.position(metaDataBytes);
+            if (bytes.readLong(offset) == 0)
+                Thread.yield();
             return entry;
         }
 
@@ -2205,7 +2213,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     if (prevValueSize == valueSize &&
                             metaValueInterop.startsWith(valueInterop, entry, value)) {
                         updateResult = UpdateResult.UNCHANGED;
+
                     } else {
+                        checkPreincrementSize();
+
                         long valueAddr = entry.positionAddr();
                         long entryEndAddr = valueAddr + prevValueSize;
 
@@ -2282,6 +2293,21 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 segmentState.close();
                 writeUnlock();
             }
+        }
+
+        protected void checkPreincrementSize() {
+            long size = size();
+            if (size > maxSize())
+                throw new IllegalStateException("Segment contains " + size + " with maxSize: " + maxSize() + ", capacity: " + capacity());
+            System.out.println("size: " + size + " of " + maxSize());
+        }
+
+        private long maxSize() {
+            return maxSize;
+        }
+
+        private long capacity() {
+            return entriesPerSegment;
         }
 
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,
@@ -2421,6 +2447,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
 
             if (doPutValue) {
+                if (entryIsDeleted)
+                    checkPreincrementSize();
+
                 // putValue may relocate entry and change offset
                 putValue(pos, entry, valueSizePos, entryEndAddr,
                         entryIsDeleted, segmentState,
@@ -2490,6 +2519,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             clearMetaData(offset);
             reuse(entry, offset);
 
+            long position = entry.position();
+            String addr = Long.toHexString(entry.address() + position);
             keySizeMarshaller.writeSize(entry, keySize);
             metaKeyInterop.write(keyInterop, entry, key);
 
@@ -2506,6 +2537,11 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             hashLookup.putAfterFailedSearch(segmentState.searchState, pos);
             incrementSize();
 
+            long pos2 = entry.position();
+            entry.position(position);
+            System.out.println("write: " + addr + "\n"
+                    + entry.toHexString(32));
+            entry.position(pos2);
             return valueSize;
         }
 
@@ -2854,6 +2890,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 doPutValue = true;
             }
             if (doPutValue) {
+                checkPreincrementSize();
                 boolean entryIsDeleted = false; // couldn't replace deleted entry
                 putValue(pos, entry, valueSizePos, entryEndAddr, entryIsDeleted, segmentState,
                         metaValueInterop, valueInterop, newValue, newValueSize, searchedHashLookup,

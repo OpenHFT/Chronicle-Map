@@ -285,6 +285,23 @@ class IntIntMultiMap implements MultiMap {
         }
     }
 
+    public long size() {
+        long pos = 0;
+        long size = 0;
+        for (long count = capacity; count > 0; count--) {
+            long entry = bytes.readLong(pos);
+            pos = step(pos);
+            if (entry != UNSET_ENTRY)
+                size++;
+        }
+        return size;
+    }
+
+    @Override
+    public long capacity() {
+        return capacity;
+    }
+
     @Override
     public DirectBitSet getPositions() {
         return positions;

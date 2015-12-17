@@ -32,15 +32,15 @@ class ShortShortMultiMap implements MultiMap {
 
     static final long MAX_CAPACITY = (1L << 16);
 
-    private static final long ENTRY_SIZE = 4L;
+    private static final int ENTRY_SIZE = 4;
     private static final int ENTRY_SIZE_SHIFT = 2;
     private static final int UNSET_KEY = 0;
     private static final long MASK = 0xFFFFL;
     private static final long HASH_INSTEAD_OF_UNSET_KEY = MASK;
     private static final int UNSET_ENTRY = 0;
     private final int capacity;
-    private final long capacityMask;
-    private final long capacityMask2;
+    private final int capacityMask;
+    private final int capacityMask2;
     private final Bytes bytes;
     private ATSDirectBitSet positions;
 
@@ -49,8 +49,8 @@ class ShortShortMultiMap implements MultiMap {
         long capacity = multiMapCapacity(minCapacity);
         assert isPowerOf2(capacity);
         this.capacity = (int) capacity;
-        capacityMask = capacity - 1L;
-        capacityMask2 = capacityMask * ENTRY_SIZE;
+        capacityMask = (int) (capacity - 1L);
+        capacityMask2 = (int) (capacityMask * ENTRY_SIZE);
         bytes = DirectStore.allocateLazy(capacity * ENTRY_SIZE).bytes();
         positions = newPositions(capacity);
         clear();
@@ -61,8 +61,8 @@ class ShortShortMultiMap implements MultiMap {
         assert isPowerOf2(capacity);
         assert (capacity / 2L) <= MAX_CAPACITY;
         this.capacity = (int) capacity;
-        capacityMask = capacity - 1L;
-        capacityMask2 = capacityMask * ENTRY_SIZE;
+        capacityMask = (int) (capacity - 1L);
+        capacityMask2 = (int) (capacityMask * ENTRY_SIZE);
         this.bytes = multiMapBytes;
         positions = new ATSDirectBitSet(multiMapBitSetBytes);
     }
@@ -90,7 +90,7 @@ class ShortShortMultiMap implements MultiMap {
         return (key &= MASK) != UNSET_KEY ? key : HASH_INSTEAD_OF_UNSET_KEY;
     }
 
-    private long step(long pos) {
+    private int step(int pos) {
         return (pos + ENTRY_SIZE) & capacityMask2;
     }
 
@@ -98,8 +98,8 @@ class ShortShortMultiMap implements MultiMap {
         return (pos - ENTRY_SIZE) & capacityMask2;
     }
 
-    private long pos(long key) {
-        return (key & capacityMask) << ENTRY_SIZE_SHIFT;
+    private int pos(long key) {
+        return ((int) key & capacityMask) << ENTRY_SIZE_SHIFT;
     }
 
     private static int entry(long key, long value) {
@@ -124,7 +124,7 @@ class ShortShortMultiMap implements MultiMap {
     public void put(long key, long value) {
         key = maskUnsetKey(key);
         checkValueForPut(value);
-        for (long pos = pos(key); ; pos = step(pos)) {
+        for (int pos = pos(key); ; pos = step(pos)) {
             int entry = bytes.readInt(pos);
             if (entry == UNSET_ENTRY) {
                 bytes.writeInt(pos, entry(key, value));
@@ -146,7 +146,7 @@ class ShortShortMultiMap implements MultiMap {
         checkValueForRemove(value);
         long posToRemove;
         int limit = capacity;
-        for (long pos = pos(key); ; pos = step(pos)) {
+        for (int pos = pos(key); ; pos = step(pos)) {
             int entry = bytes.readInt(pos);
             if (key(entry) == key && value(entry) == value) {
                 posToRemove = pos;
@@ -164,7 +164,7 @@ class ShortShortMultiMap implements MultiMap {
         key = maskUnsetKey(key);
         checkValueForRemove(oldValue);
         checkValueForPut(newValue);
-        for (long pos = pos(key); ; pos = step(pos)) {
+        for (int pos = pos(key); ; pos = step(pos)) {
             int entry = bytes.readInt(pos);
             if (key(entry) == key && value(entry) == oldValue) {
                 positions.clear(oldValue);
@@ -176,7 +176,7 @@ class ShortShortMultiMap implements MultiMap {
     }
 
     private void removePos(long posToRemove) {
-        long posToShift = posToRemove;
+        int posToShift = (int) posToRemove;
         while (true) {
             posToShift = step(posToShift);
             int entryToShift = bytes.readInt(posToShift);
@@ -207,9 +207,26 @@ class ShortShortMultiMap implements MultiMap {
         searchStateToReuse.putAfterFailedSearch = false;
     }
 
+    public long size() {
+        int pos = 0;
+        int size = 0;
+        for (int count = capacity; count > 0; count--) {
+            int entry = bytes.readInt(pos);
+            pos = step(pos);
+            if (entry != UNSET_ENTRY)
+                size++;
+        }
+        return size;
+    }
+
+    @Override
+    public long capacity() {
+        return capacity;
+    }
+
     @Override
     public long nextPos(SearchState searchState) {
-        long pos = searchState.searchPos;
+        int pos = (int) searchState.searchPos;
         for(int count = capacity; count > 0; count--) {
             int entry = bytes.readInt(pos);
             if (entry == UNSET_ENTRY) {

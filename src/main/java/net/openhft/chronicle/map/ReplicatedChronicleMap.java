@@ -468,6 +468,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     public boolean onEntry(@NotNull final Bytes entry, final int chronicleId, final long bootStrapTimeStamp) {
 
                         final long keySize = keySizeMarshaller.readSize(entry);
+                        if (keySize == 0)
+                            System.out.println("read: " + Long.toHexString(entry.address()) + "\n" + entry.toHexString(32));
                         final long keyPosition = entry.position();
                         entry.skip(keySize);
 
@@ -488,8 +490,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         final NativeBytes k = wrap(entry.address() + keyPosition, keySize);
                         final NativeBytes v = wrap(entry.address() + valuePosition, valueSize);
 
-                        assert k.remaining() > 0 : "keySize:" + keySize;
-                        assert v.remaining() > 0 : "valueSize:" + valueSize;
+                        assert k.remaining() > 0 : "keySize:" + keySize + " bytes: " + entry.toDebugString(128);
+                        assert v.remaining() > 0 : "valueSize:" + valueSize + " bytes: " + entry.toDebugString(128);
 
                         return callback.onEntry(k, v,
                                 timestamp,
@@ -875,6 +877,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 long hash2, boolean create, MutableLockedEntry lock) {
             MultiStoreBytes entry = segmentState.tmpBytes;
             MultiMap hashLookup = hashLookup();
+            System.out.println("Before put size: " + hashLookup.size());
             SearchState searchState = segmentState.searchState;
             hashLookup.startSearch(hash2, searchState);
             for (long pos; (pos = hashLookup.nextPos(searchState)) >= 0L; ) {
@@ -932,6 +935,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         throw defaultValueOrPrepareBytesShouldBeSpecified();
                     }
 
+                    checkPreincrementSize();
                     final long elemSize = metaElemWriter.size(elemWriter, elem);
 
                     putValue(pos, entry, valueSizePos,
@@ -1109,6 +1113,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             segmentState.timestamp = timeStamp;
             try {
                 MultiMap hashLookup = hashLookup();
+                System.out.println("Before update size: " + hashLookup.size() + " of " + hashLookup.capacity());
+
                 SearchState searchState = segmentState.searchState;
                 hashLookup.startSearch(hash2, searchState);
                 MultiStoreBytes entry = segmentState.tmpBytes;
@@ -1147,6 +1153,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     long sizeOfEverythingBeforeValue = entry.position();
                     alignment.alignPositionAddr(entry);
                     UpdateResult updateResult;
+
                     if (!isDeleted && prevValueSize == valueSize &&
                             metaValueInterop.startsWith(valueInterop, entry, value)) {
                         updateResult = UpdateResult.UNCHANGED;
@@ -1194,6 +1201,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     return updateResult;
                 }
                 // key is not found
+                checkPreincrementSize();
+
                 VBI valueInterop = getValueInterops.getValueInterop(copies);
                 MVBI metaValueInterop =
                         getValueInterops.getMetaValueInterop(copies, valueInterop, value);
@@ -1266,6 +1275,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             segmentState.identifier = identifier;
             segmentState.timestamp = timestamp;
             MultiMap hashLookup = hashLookup();
+            System.out.println("Before put size: " + hashLookup.size());
             SearchState searchState = segmentState.searchState;
             hashLookup.startSearch(hash2, searchState);
             MultiStoreBytes entry = segmentState.tmpBytes;
@@ -1853,12 +1863,19 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     (position >= 0L && changes.nextSetBit(0L) != NOT_FOUND);
         }
 
+        volatile Thread thread = null;
+
         /**
          * @param entryCallback call this to get an entry, this class will take care of the locking
          * @return true if an entry was processed
          */
         @Override
         public boolean nextEntry(@NotNull final EntryCallback entryCallback, final int chronicleId) {
+            Thread t = Thread.currentThread();
+            if (thread == null)
+                thread = t;
+            else if (thread != t)
+                throw new AssertionError("Used by " + thread + " and " + t);
             long position = this.position;
             while (true) {
                 long oldPosition = position;
@@ -1884,8 +1901,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         entryCallback.onBeforeEntry();
 
                         final long segmentPos = position & posMask;
-                        final Bytes entry =
-                                segment.reuse(tmpBytes, segment.offsetFromPos(segmentPos));
+                        long offset = segment.offsetFromPos(segmentPos);
+                        final Bytes entry = segment.reuse2(tmpBytes, offset);
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
