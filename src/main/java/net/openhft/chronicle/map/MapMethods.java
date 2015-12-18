@@ -41,7 +41,7 @@ public interface MapMethods<K, V, R> {
      * {@link ChronicleMap#getOrDefault} methods.
      *
      * @implNote the default implementation is equivalent to <pre>{@code
-     * MapEntry<?, V> entry = q.entry();
+     * MapEntry<K, V> entry = q.entry();
      * if (entry != null)
      *     returnValue.returnValue(entry.value());
      * }</pre>
@@ -87,7 +87,7 @@ public interface MapMethods<K, V, R> {
      *
      * @implNote the default implementation is equivalent to <pre>{@code
      * if (q.readLock().tryLock()) {
-     *     MapEntry<?, V> entry = q.entry();
+     *     MapEntry<K, V> entry = q.entry();
      *     if (entry != null) {
      *         returnValue.returnValue(entry.value());
      *         return;
@@ -96,7 +96,7 @@ public interface MapMethods<K, V, R> {
      *     q.readLock().unlock();
      * }
      * q.updateLock().lock();
-     * MapEntry<?, V> entry = q.entry();
+     * MapEntry<K, V> entry = q.entry();
      * if (entry != null) {
      *     returnValue.returnValue(entry.value());
      *     return;
@@ -118,7 +118,7 @@ public interface MapMethods<K, V, R> {
      *
      * @implNote the default implementation is equivalent to <pre>{@code
      * if (q.readLock().tryLock()) {
-     *     MapEntry<?, V> entry = q.entry();
+     *     MapEntry<K, V> entry = q.entry();
      *     if (entry != null) {
      *         returnValue.returnValue(entry.value());
      *         return;
@@ -127,7 +127,7 @@ public interface MapMethods<K, V, R> {
      *     q.readLock().unlock();
      * }
      * q.updateLock().lock();
-     * MapEntry<?, V> entry = q.entry();
+     * MapEntry<K, V> entry = q.entry();
      * if (entry != null) {
      *     returnValue.returnValue(entry.value());
      *     return;
@@ -135,8 +135,8 @@ public interface MapMethods<K, V, R> {
      * // Key is absent
      * q.insert(q.absentEntry(), q.defaultValue(q.absentEntry()));
      * // Meaningful to return the default as newly-inserted, not the default entry itself.
-     * // map.acquireUsing() is most useful for data-value generated values, for which it makes
-     * // big difference -- what bytes to refer. Consider map.acquireUsing(...).incrementValue();
+     * // map.acquireUsing() is most useful for value interfaces, for which it makes big
+     * // difference -- what bytes to refer. Consider map.acquireUsing(...).incrementValue();
      * returnValue.returnValue(q.entry().value());
      * }</pre>
      */
@@ -146,8 +146,8 @@ public interface MapMethods<K, V, R> {
         // Key is absent
         q.insert(q.absentEntry(), q.defaultValue(q.absentEntry()));
         // meaningful to return the default as newly-inserted, not the default entry itself.
-        // map.acquireUsing() is most useful for data-value generated values, for which it makes
-        // big difference -- what bytes to refer. consider map.acquireUsing(...).incrementValue();
+        // map.acquireUsing() is most useful for value interfaces, for which it makes big
+        // difference -- what bytes to refer. consider map.acquireUsing(...).incrementValue();
         // The same reasoning is applied in all same occurrences in this class file
         returnValue.returnValue(q.entry().value());
     }
@@ -157,7 +157,7 @@ public interface MapMethods<K, V, R> {
      *
      * @implNote the default implementation is equivalent to <pre>{@code
      * if (q.readLock().tryLock()) {
-     *     MapEntry<?, V> entry = q.entry();
+     *     MapEntry<K, V> entry = q.entry();
      *     if (entry != null) {
      *         returnValue.returnValue(entry.value());
      *         return;
@@ -166,7 +166,7 @@ public interface MapMethods<K, V, R> {
      *     q.readLock().unlock();
      * }
      * q.updateLock().lock();
-     * MapEntry<?, V> entry = q.entry();
+     * MapEntry<K, V> entry = q.entry();
      * if (entry != null) {
      *     returnValue.returnValue(entry.value());
      *     return;
