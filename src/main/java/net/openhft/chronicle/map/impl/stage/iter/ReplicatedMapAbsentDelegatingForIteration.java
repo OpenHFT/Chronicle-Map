@@ -23,7 +23,7 @@ import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.map.DefaultValue;
-import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceValueHolder;
+import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceDataHolderAccess;
 import net.openhft.chronicle.set.SetAbsentEntry;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -40,7 +40,7 @@ public class ReplicatedMapAbsentDelegatingForIteration<K, V>
 
     @NotNull
     @Override
-    public WrappedValueInstanceValueHolder<K, V, ?> context() {
+    public WrappedValueInstanceDataHolderAccess<K, V, ?> context() {
         return delegate.context();
     }
 

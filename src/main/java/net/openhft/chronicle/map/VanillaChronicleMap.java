@@ -17,10 +17,12 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
+import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
@@ -288,6 +290,16 @@ public class VanillaChronicleMap<K, V, R>
     public QueryContextInterface<K, V, R> queryContext(Data<K> key) {
         QueryContextInterface<K, V, R> q = mapContext();
         q.initInputKey(key);
+        return q;
+    }
+
+    @NotNull
+    @Override
+    public ExternalMapQueryContext<K, V, ?> queryContext(
+            BytesStore keyBytes, long offset, long size) {
+        Objects.requireNonNull(keyBytes);
+        QueryContextInterface<K, V, R> q = mapContext();
+        q.initInputKey(q.getInputKeyBytesAsData(keyBytes, offset, size));
         return q;
     }
 

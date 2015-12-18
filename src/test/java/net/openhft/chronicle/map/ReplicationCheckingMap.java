@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
@@ -275,6 +276,13 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @NotNull
     @Override
     public ExternalMapQueryContext<K, V, ?> queryContext(net.openhft.chronicle.hash.Data<K> key) {
+        throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public ExternalMapQueryContext<K, V, ?> queryContext(
+            BytesStore keyBytes, long offset, long size) {
         throw new UnsupportedOperationException();
     }
 

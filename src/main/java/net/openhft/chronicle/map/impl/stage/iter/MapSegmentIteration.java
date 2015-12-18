@@ -18,11 +18,10 @@ package net.openhft.chronicle.map.impl.stage.iter;
 
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.iter.HashSegmentIteration;
-import net.openhft.chronicle.map.MapContext;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.impl.IterationContext;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
-import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceValueHolder;
+import net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceDataHolderAccess;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<
         implements MapEntry<K, V>, IterationContext<K, V, R> {
     
     @StageRef MapEntryStages<K, V> entry;
-    @StageRef WrappedValueInstanceValueHolder<K, V, ?> wrappedValueInstanceValueHolder;
+    @StageRef WrappedValueInstanceDataHolderAccess<K, V, ?> wrappedValueInstanceDataHolderAccess;
 
     @Override
     public void doReplaceValue(Data<V> newValue) {
@@ -46,7 +45,7 @@ public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<
 
     @NotNull
     @Override
-    public WrappedValueInstanceValueHolder<K, V, ?> context() {
-        return wrappedValueInstanceValueHolder;
+    public WrappedValueInstanceDataHolderAccess<K, V, ?> context() {
+        return wrappedValueInstanceDataHolderAccess;
     }
 }

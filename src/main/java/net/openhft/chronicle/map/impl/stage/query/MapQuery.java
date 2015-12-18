@@ -16,7 +16,9 @@
 
 package net.openhft.chronicle.map.impl.stage.query;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.stage.data.bytes.InputKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.query.HashQuery;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.impl.stage.query.SearchAllocatedChunks;
@@ -47,6 +49,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     @StageRef SearchAllocatedChunks allocatedChunks;
     @StageRef KeySearch<K> ks;
     @StageRef public AcquireHandle<K, V> acquireHandle;
+    @StageRef InputKeyBytesData<K> inputKeyBytesData;
     
     @StageRef public DefaultReturnValue<V> defaultReturnValue;
     @StageRef public UsingReturnValue<V> usingReturnValue;
@@ -116,5 +119,11 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     public MapQuery<K, V, R> context() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return this;
+    }
+
+    @Override
+    public Data<K> getInputKeyBytesAsData(BytesStore bytesStore, long offset, long size) {
+        inputKeyBytesData.initInputKeyBytesStore(bytesStore, offset, size);
+        return inputKeyBytesData;
     }
 }

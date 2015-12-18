@@ -16,7 +16,9 @@
 
 package net.openhft.chronicle.set;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.VanillaChronicleMap;
 import org.jetbrains.annotations.NotNull;
@@ -129,22 +131,32 @@ class SetFromMap<E> extends AbstractSet<E>
         return m.keyClass();
     }
 
+    // TODO test queryContext methods
+
     @NotNull
     @Override
     public ExternalSetQueryContext<E, ?> queryContext(E key) {
-        //TODO
-        throw new UnsupportedOperationException();
+        //noinspection unchecked
+        return (ExternalSetQueryContext<E, ?>) m.queryContext(key);
     }
 
     @NotNull
     @Override
     public ExternalSetQueryContext<E, ?> queryContext(Data<E> key) {
-        //TODO
-        throw new UnsupportedOperationException();
+        //noinspection unchecked
+        return (ExternalSetQueryContext<E, ?>) m.queryContext(key);
+    }
+
+    @NotNull
+    @Override
+    public ExternalSetQueryContext<E, ?> queryContext(BytesStore keyBytes, long offset, long size) {
+        //noinspection unchecked
+        return (ExternalSetQueryContext<E, ?>) m.queryContext(keyBytes, offset, size);
     }
 
     @Override
     public SetSegmentContext<E, ?> segmentContext(int segmentIndex) {
+        // TODO
         throw new UnsupportedOperationException();
     }
 
@@ -153,14 +165,18 @@ class SetFromMap<E> extends AbstractSet<E>
         return m.segments();
     }
 
+    // TODO test forEach methods
+
     @Override
     public boolean forEachEntryWhile(Predicate<? super SetEntry<E>> predicate) {
-        throw new UnsupportedOperationException();
+        Objects.requireNonNull(predicate);
+        return m.forEachEntryWhile(e -> predicate.test(((SetEntry<E>) e)));
     }
 
     @Override
     public void forEachEntry(Consumer<? super SetEntry<E>> action) {
-        throw new UnsupportedOperationException();
+        Objects.requireNonNull(action);
+        m.forEachEntry(e -> action.accept(((SetEntry<E>) e)));
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map.impl;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -26,6 +27,8 @@ import net.openhft.chronicle.map.impl.ret.UsableReturnValue;
 public interface QueryContextInterface<K, V, R> extends ExternalMapQueryContext<K, V, R> {
     
     void initInputKey(Data<K> inputKey);
+
+    Data<K> getInputKeyBytesAsData(BytesStore bytesStore, long offset, long size);
     
     DataAccess<K> inputKeyDataAccess();
     

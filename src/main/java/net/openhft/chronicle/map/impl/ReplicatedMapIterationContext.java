@@ -27,6 +27,7 @@ import net.openhft.chronicle.hash.impl.stage.iter.IterationSegmentStages;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
+import net.openhft.chronicle.map.impl.stage.data.bytes.WrappedValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceDataHolder;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.iter.IterationCheckOnEachPublicOperation;
@@ -57,7 +58,8 @@ import net.openhft.sg.Staged;
         KeySearch.class,
         HashLookupSearch.class,
 
-        WrappedValueInstanceValueHolder.class,
+        WrappedValueInstanceDataHolderAccess.class,
+        WrappedValueBytesDataAccess.class,
         ReplicatedMapEntryStages.class,
         ValueBytesInterop.class,
         MapEntryOperationsDelegation.class,
@@ -75,6 +77,7 @@ import net.openhft.sg.Staged;
         EntryValueBytesData.class,
 
         WrappedValueInstanceDataHolder.class,
+        WrappedValueBytesData.class,
 
         DummyValueZeroData.class,
 

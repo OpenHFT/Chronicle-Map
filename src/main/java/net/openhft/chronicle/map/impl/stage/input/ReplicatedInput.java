@@ -20,6 +20,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.replication.RemoteOperationContext;
+import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputKeyBytesData;
@@ -33,9 +34,9 @@ import net.openhft.sg.Staged;
 
 
 @Staged
-public abstract class ReplicatedInput<K, V, R>
-        implements RemoteOperationContext<K>, MapRemoteQueryContext<K, V, R> {
-    
+public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext<K>,
+        MapRemoteQueryContext<K, V, R>, Replica.QueryContext<K, V> {
+
     @StageRef ReplicatedChronicleMapHolder<K, V, R> mh;
     @StageRef ReplicationUpdate<K> ru;
     @StageRef ReplicatedInputKeyBytesData<K> replicatedInputKeyBytesValue;
@@ -90,11 +91,26 @@ public abstract class ReplicatedInput<K, V, R>
         mh.m().setLastModificationTime(riId, bootstrapTimestamp);
 
         q.initInputKey(replicatedInputKeyBytesValue);
-        s.innerUpdateLock.lock();
         if (isDeleted) {
+            s.innerUpdateLock.lock();
             mh.m().remoteOperations.remove(this);
         } else {
+            s.innerWriteLock.lock();
             mh.m().remoteOperations.put(this, replicatedInputValueBytesValue);
         }
+    }
+
+    @Override
+    public void remotePut(Data<V> newValue, byte remoteIdentifier, long timestamp) {
+        mh.m().setLastModificationTime(remoteIdentifier, timestamp);
+        s.innerUpdateLock.lock();
+        mh.m().remoteOperations.put(this, newValue);
+    }
+
+    @Override
+    public void remoteRemove(byte remoteIdentifier, long timestamp) {
+        mh.m().setLastModificationTime(remoteIdentifier, timestamp);
+        s.innerWriteLock.lock();
+        mh.m().remoteOperations.remove(this);
     }
 }

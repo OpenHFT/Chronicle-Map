@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.HashContext;
 import net.openhft.chronicle.hash.Data;
@@ -58,4 +59,18 @@ public interface MapContext<K, V, R>
      * @return the value as {@code Data}
      */
     Data<V> wrapValueAsData(V value);
+
+    /**
+     * Wraps the given value bytes as a {@code Data}. Useful when you need to pass a value
+     * to some method accepting {@code Data}, for example, {@link MapEntryOperations#replaceValue(
+     * MapEntry, Data)}, without allocating manual deserialization and {@code ThreadLocals}.
+     *
+     * <p>The returned {@code Data} object shouldn't outlive this {@code MapContext}.
+     *
+     * @param valueBytes the value bytes to wrap
+     * @param offset offset within the given valueBytes, the actual value bytes start from
+     * @param size length of the value bytes sequence
+     * @return the value bytes as {@code Data}
+     */
+    Data<V> wrapValueBytesAsData(BytesStore valueBytes, long offset, long size);
 }

@@ -25,17 +25,16 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 @Staged
-public abstract class WrappedValueInstanceValueHolder<K, V, R>
+public abstract class WrappedValueInstanceDataHolderAccess<K, V, R>
         implements MapContext<K, V, R>, SetContext<K, R> {
 
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef
-    WrappedValueInstanceDataHolder<V> wrappedValueInstanceValueHolder;
+    @StageRef WrappedValueInstanceDataHolder<V> wrappedValueInstanceDataHolder;
 
     @Override
     public Data<V> wrapValueAsData(V value) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        WrappedValueInstanceDataHolder<V> wrapped = this.wrappedValueInstanceValueHolder;
+        WrappedValueInstanceDataHolder<V> wrapped = this.wrappedValueInstanceDataHolder;
         wrapped = wrapped.getUnusedWrappedValueHolder();
         wrapped.initValue(value);
         return wrapped.wrappedData;

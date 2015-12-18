@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapMethods;
 import net.openhft.chronicle.map.MapQueryContext;
@@ -79,6 +80,18 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * @return the context to perform operations with the key
      */
     @NotNull EQC queryContext(Data<K> key);
+
+    /**
+     * Returns the context to perform arbitrary operations with the given key, provided in the
+     * serialized form. See {@link #queryContext(Object)} and {@link #queryContext(Data)} for more
+     * information on contexts semantics and usage patterns.
+     *
+     * @param keyBytes the bytes store with the key bytes to query
+     * @param offset actual offset of the key bytes within the given BytesStore
+     * @param size length of the key bytes sequence
+     * @return the context to perform operations with the key
+     */
+    @NotNull EQC queryContext(BytesStore keyBytes, long offset, long size);
 
     /**
      * Returns the context of the segment with the given index. Segments are indexed from 0 to

@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,6 +27,13 @@ import java.io.Closeable;
  * @author Rob Austin.
  */
 public interface Replica extends Closeable {
+
+    interface QueryContext<K, V> {
+
+        void remotePut(Data<V> newValue, byte remoteIdentifier, long timestamp);
+
+        void remoteRemove(byte remoteIdentifier, long timestamp);
+    }
 
     /**
      * Provides the unique Identifier associated with this map instance. <p> An identifier is used

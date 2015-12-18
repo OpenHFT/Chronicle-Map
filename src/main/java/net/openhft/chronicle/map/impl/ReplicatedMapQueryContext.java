@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map.impl;
 
 import net.openhft.chronicle.hash.impl.stage.data.bytes.EntryKeyBytesData;
+import net.openhft.chronicle.hash.impl.stage.data.bytes.InputKeyBytesData;
 import net.openhft.chronicle.hash.impl.stage.entry.*;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
 import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
@@ -29,6 +30,7 @@ import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputKeyBytesData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputValueBytesData;
+import net.openhft.chronicle.map.impl.stage.data.bytes.WrappedValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceDataHolder;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.chronicle.map.impl.stage.input.ReplicatedInput;
@@ -62,7 +64,8 @@ import net.openhft.sg.Staged;
 
         ReplicatedMapEntryStages.class,
         MapEntryOperationsDelegation.class,
-        WrappedValueInstanceValueHolder.class,
+        WrappedValueInstanceDataHolderAccess.class,
+        WrappedValueBytesDataAccess.class,
         ReplicatedMapQuery.class,
         ReplicatedMapAbsent.class,
         DefaultValue.class,
@@ -80,7 +83,10 @@ nested = {
         EntryKeyBytesData.class,
         EntryValueBytesData.class,
 
+        InputKeyBytesData.class,
+
         WrappedValueInstanceDataHolder.class,
+        WrappedValueBytesData.class,
         AcquireHandle.class,
         DefaultReturnValue.class,
         UsingReturnValue.class,
