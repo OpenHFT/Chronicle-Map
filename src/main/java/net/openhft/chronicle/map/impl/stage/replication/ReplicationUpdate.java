@@ -32,12 +32,12 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
     @StageRef ReplicatedChronicleMapHolder<?, ?, ?> mh;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
 
-    @Stage("ReplicationUpdate") public long innerRemoteTimestamp;
     @Stage("ReplicationUpdate") public byte innerRemoteIdentifier = (byte) 0;
+    @Stage("ReplicationUpdate") public long innerRemoteTimestamp;
 
     public abstract boolean replicationUpdateInit();
 
-    public void initReplicationUpdate(long timestamp, byte identifier) {
+    public void initReplicationUpdate(byte identifier, long timestamp) {
         innerRemoteTimestamp = timestamp;
         if (identifier == 0)
             throw new IllegalStateException("identifier can't be 0");

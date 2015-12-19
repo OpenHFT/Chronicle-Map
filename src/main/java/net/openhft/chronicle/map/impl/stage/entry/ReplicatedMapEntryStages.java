@@ -18,14 +18,12 @@ package net.openhft.chronicle.map.impl.stage.entry;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.chronicle.map.replication.MapReplicableEntry;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
-import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.map.ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
 
@@ -42,7 +40,7 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
         replicationBytesOffset = keyEnd();
     }
 
-    void updateReplicationState(long timestamp, byte identifier) {
+    void updateReplicationState(byte identifier, long timestamp) {
         initDelayedUpdateChecksum(true);
         Bytes segmentBytes = s.segmentBytesForWrite();
         segmentBytes.writePosition(replicationBytesOffset);
@@ -103,7 +101,7 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
     public void updateOrigin(byte newIdentifier, long newTimestamp) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         s.innerWriteLock.lock();
-        updateReplicationState(newTimestamp, newIdentifier);
+        updateReplicationState(newIdentifier, newTimestamp);
     }
 
     @Override
@@ -136,14 +134,14 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
             } else {
                 timestamp = mh.m().timeProvider.currentTime();
             }
-            updateReplicationState(timestamp, mh.m().identifier());
+            updateReplicationState(mh.m().identifier(), timestamp);
         }
     }
 
     public void updatedReplicationStateOnAbsentEntry() {
         if (!ru.replicationUpdateInit()) {
             s.innerWriteLock.lock();
-            updateReplicationState(mh.m().timeProvider.currentTime(), mh.m().identifier());
+            updateReplicationState(mh.m().identifier(), mh.m().timeProvider.currentTime());
         }
     }
 

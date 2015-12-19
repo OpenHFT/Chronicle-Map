@@ -74,7 +74,7 @@ public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext
         bootstrapTimestamp = replicatedInputBytes.readLong();
         riTimestamp = replicatedInputBytes.readStopBit();
         riId = replicatedInputBytes.readByte();
-        ru.initReplicationUpdate(riTimestamp, riId);
+        ru.initReplicationUpdate(riId, riTimestamp);
 
         isDeleted = replicatedInputBytes.readBoolean();
         riKeySize = mh.m().keySizeMarshaller.readSize(replicatedInputBytes);
@@ -102,6 +102,7 @@ public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext
 
     @Override
     public void remotePut(Data<V> newValue, byte remoteIdentifier, long timestamp) {
+        ru.initReplicationUpdate(remoteIdentifier, timestamp);
         mh.m().setLastModificationTime(remoteIdentifier, timestamp);
         s.innerUpdateLock.lock();
         mh.m().remoteOperations.put(this, newValue);
@@ -109,6 +110,7 @@ public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext
 
     @Override
     public void remoteRemove(byte remoteIdentifier, long timestamp) {
+        ru.initReplicationUpdate(remoteIdentifier, timestamp);
         mh.m().setLastModificationTime(remoteIdentifier, timestamp);
         s.innerWriteLock.lock();
         mh.m().remoteOperations.remove(this);
