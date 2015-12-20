@@ -2299,7 +2299,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             long size = size();
             if (size > maxSize())
                 throw new IllegalStateException("Segment contains " + size + " with maxSize: " + maxSize() + ", capacity: " + capacity());
-            System.out.println("size: " + size + " of " + maxSize());
+            if (LOG.isDebugEnabled())
+                LOG.debug("size: " + size + " of " + maxSize());
         }
 
         private long maxSize() {
@@ -2539,8 +2540,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
             long pos2 = entry.position();
             entry.position(position);
-            System.out.println("write: " + addr + "\n"
-                    + entry.toHexString(32));
+            if (LOG.isDebugEnabled())
+                LOG.debug("write: " + addr + "\n" + entry.toHexString(32));
             entry.position(pos2);
             return valueSize;
         }

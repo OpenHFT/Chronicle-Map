@@ -19,7 +19,6 @@ public class MapFullTest {
     private final int segments;
     private final long maxEntries;
 
-
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
 
