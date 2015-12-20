@@ -95,7 +95,7 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
     @Override
     public void doReplaceValue(Data<V> newValue) {
         super.doReplaceValue(newValue);
-        ru.updateChange();
         e.updatedReplicationStateOnPresentEntry();
+        ru.updateChange();
     }
 }

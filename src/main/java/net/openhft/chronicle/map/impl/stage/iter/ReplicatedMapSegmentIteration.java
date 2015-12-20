@@ -74,8 +74,8 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             entry.innerDefaultReplaceValue(newValue);
-            ru.updateChange();
             e.updatedReplicationStateOnPresentEntry();
+            ru.updateChange();
         } finally {
             s.innerWriteLock.unlock();
         }
@@ -138,8 +138,8 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
                 e.innerDefaultReplaceValue(value);
                 s.incrementModCount();
                 e.writeEntryPresent();
-                ru.updateChange();
                 e.updatedReplicationStateOnPresentEntry();
+                ru.updateChange();
             } finally {
                 s.innerWriteLock.unlock();
             }
