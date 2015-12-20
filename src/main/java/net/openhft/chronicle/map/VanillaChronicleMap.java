@@ -3133,9 +3133,9 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     throw new NoSuchElementException();
                 final Segment segment = segments[segIndex];
                 ThreadLocalCopies copies = SegmentState.getCopies(null);
-                try (SegmentState segmentState = SegmentState.get(copies)) {
-                    segment.readLock(null);
 
+                segment.readLock(null);
+                try (SegmentState segmentState = SegmentState.get(copies)) {
                     if (segment.hashLookup().getPositions().isClear(pos)) {
                         // the pos was removed after the previous advance
                         advance(segIndex, pos);
