@@ -19,16 +19,14 @@ package net.openhft.chronicle.map.impl.stage.input;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
+import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.replication.RemoteOperationContext;
 import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
-import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputKeyBytesData;
-import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputValueBytesData;
 import net.openhft.chronicle.map.impl.stage.query.ReplicatedMapQuery;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
-import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
@@ -37,66 +35,44 @@ import net.openhft.sg.Staged;
 public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext<K>,
         MapRemoteQueryContext<K, V, R>, Replica.QueryContext<K, V> {
 
+    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef ReplicatedChronicleMapHolder<K, V, R> mh;
     @StageRef ReplicationUpdate<K> ru;
-    @StageRef ReplicatedInputKeyBytesData<K> replicatedInputKeyBytesValue;
-    @StageRef ReplicatedInputValueBytesData<V> replicatedInputValueBytesValue;
     @StageRef ReplicatedMapQuery<K, V, ?> q;
     @StageRef SegmentStages s;
     @StageRef DummyValueZeroData<V> dummyValue;
 
     @Override
     public Data<V> dummyZeroValue() {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
         return dummyValue;
     }
 
-    public Bytes replicatedInputBytes = null;
+    public void processReplicatedEvent(Bytes replicatedInputBytes) {
+        long bootstrapTimestamp = replicatedInputBytes.readLong();
 
-    public void initReplicatedInputBytes(Bytes replicatedInputBytes) {
-        this.replicatedInputBytes = replicatedInputBytes;
-    }
+        long timestamp = replicatedInputBytes.readStopBit();
+        byte identifier = replicatedInputBytes.readByte();
+        ru.initReplicationUpdate(identifier, timestamp);
 
-    // ri for "replication input"
-    @Stage("ReplicationInput") public long bootstrapTimestamp;
-    @Stage("ReplicationInput") public long riKeySize = -1;
-    @Stage("ReplicationInput") public long riValueSize;
+        boolean isDeleted = replicatedInputBytes.readBoolean();
+        long keySize = mh.m().keySizeMarshaller.readSize(replicatedInputBytes);
+        long keyOffset = replicatedInputBytes.readPosition();
 
-    @Stage("ReplicationInput") public long riKeyOffset;
-    @Stage("ReplicationInput") public long riValueOffset;
+        mh.m().setLastModificationTime(identifier, bootstrapTimestamp);
 
-    @Stage("ReplicationInput") public long riTimestamp;
-    @Stage("ReplicationInput") public byte riId;
-    @Stage("ReplicationInput") public boolean isDeleted;
-
-
-    public void initReplicationInput(Bytes replicatedInputBytes) {
-        initReplicatedInputBytes(replicatedInputBytes);
-        bootstrapTimestamp = replicatedInputBytes.readLong();
-        riTimestamp = replicatedInputBytes.readStopBit();
-        riId = replicatedInputBytes.readByte();
-        ru.initReplicationUpdate(riId, riTimestamp);
-
-        isDeleted = replicatedInputBytes.readBoolean();
-        riKeySize = mh.m().keySizeMarshaller.readSize(replicatedInputBytes);
-        riKeyOffset = replicatedInputBytes.readPosition();
-        if (!isDeleted) {
-            replicatedInputBytes.readSkip(riKeySize);
-            riValueSize = mh.m().valueSizeMarshaller.readSize(replicatedInputBytes);
-            riValueOffset = replicatedInputBytes.readPosition();
-        }
-    }
-
-    public void processReplicatedEvent() {
-
-        mh.m().setLastModificationTime(riId, bootstrapTimestamp);
-
-        q.initInputKey(replicatedInputKeyBytesValue);
+        q.initInputKey(q.getInputKeyBytesAsData(replicatedInputBytes, keyOffset, keySize));
         if (isDeleted) {
             s.innerUpdateLock.lock();
             mh.m().remoteOperations.remove(this);
         } else {
+            replicatedInputBytes.readSkip(keySize);
+            long valueSize = mh.m().valueSizeMarshaller.readSize(replicatedInputBytes);
+            long valueOffset = replicatedInputBytes.readPosition();
+            Data<V> value = q.wrapValueBytesAsData(replicatedInputBytes, valueOffset, valueSize);
+
             s.innerWriteLock.lock();
-            mh.m().remoteOperations.put(this, replicatedInputValueBytesValue);
+            mh.m().remoteOperations.put(this, value);
         }
     }
 

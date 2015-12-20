@@ -443,8 +443,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     @Override
     public void readExternalEntry(@NotNull Bytes source) {
         try (CompiledReplicatedMapQueryContext<K, V, R> remoteOpContext = mapContext()) {
-            remoteOpContext.initReplicationInput(source);
-            remoteOpContext.processReplicatedEvent();
+            remoteOpContext.processReplicatedEvent(source);
         }
     }
 

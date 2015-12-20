@@ -28,8 +28,6 @@ import net.openhft.chronicle.hash.impl.stage.query.QuerySegmentStages;
 import net.openhft.chronicle.hash.impl.stage.query.SearchAllocatedChunks;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
-import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputKeyBytesData;
-import net.openhft.chronicle.map.impl.stage.data.bytes.ReplicatedInputValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.WrappedValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceDataHolder;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
@@ -92,9 +90,6 @@ nested = {
         UsingReturnValue.class,
 
         ReplicatedMapAbsentDelegating.class,
-
-        ReplicatedInputKeyBytesData.class,
-        ReplicatedInputValueBytesData.class,
 
         DummyValueZeroData.class,
 
