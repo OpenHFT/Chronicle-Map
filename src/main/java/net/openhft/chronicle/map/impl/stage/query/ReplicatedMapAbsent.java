@@ -52,9 +52,9 @@ public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
                 ks.setSearchState(PRESENT);
                 q.initPresenceOfEntry(EntryPresence.PRESENT);
             } else {
+                s.tierDeleted(s.tierDeleted() - 1);
                 e.innerDefaultReplaceValue(value);
                 e.updatedReplicationStateOnPresentEntry();
-                s.tierDeleted(s.tierDeleted() - 1);
             }
             s.incrementModCount();
             e.writeEntryPresent();

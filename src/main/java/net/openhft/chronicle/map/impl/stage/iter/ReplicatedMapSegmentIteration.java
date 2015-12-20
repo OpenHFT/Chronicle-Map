@@ -134,8 +134,8 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (e.entryDeleted()) {
             try {
-                e.innerDefaultReplaceValue(value);
                 s.tierDeleted(s.tierDeleted() - 1);
+                e.innerDefaultReplaceValue(value);
                 s.incrementModCount();
                 e.writeEntryPresent();
                 ru.updateChange();
