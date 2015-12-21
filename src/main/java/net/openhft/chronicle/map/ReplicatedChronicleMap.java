@@ -1157,6 +1157,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     if (!isDeleted && prevValueSize == valueSize &&
                             metaValueInterop.startsWith(valueInterop, entry, value)) {
                         updateResult = UpdateResult.UNCHANGED;
+                        segmentState.pos = pos;
                     } else {
                         long valueAddr = entry.positionAddr();
                         long entryEndAddr = valueAddr + prevValueSize;
@@ -1175,6 +1176,9 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
 
                     // put callbacks
                     boolean hasValueChanged = updateResult != UpdateResult.UNCHANGED;
+
+
+                    System.out.println("put pos=" + pos + ", key=" + key);
                     onPutMaybeRemote(segmentState.pos, false);
                     if (bytesEventListener != null) {
                         bytesEventListener.onPut(
@@ -1812,7 +1816,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         }
 
         public void onPut(long pos, SharedSegment segment) {
-            changes.set(combine(segment.getIndex(), pos));
+
+            final long combine = combine(segment.getIndex(), pos);
+            System.out.println("combine=" + combine + ",pos=" + pos);
+            changes.set(combine);
 
             // todo improve this - use the timestamp from the entry its self
             bootStrapTimeStamp.compareAndSet(0, timestamp(pos, segment));
@@ -1877,6 +1884,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             else if (thread != t)
                 throw new AssertionError("Used by " + thread + " and " + t);
             long position = this.position;
+
             while (true) {
                 long oldPosition = position;
                 position = changes.nextSetBit(oldPosition + 1L);
@@ -1903,6 +1911,8 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         final long segmentPos = position & posMask;
                         long offset = segment.offsetFromPos(segmentPos);
                         final Bytes entry = segment.reuse2(tmpBytes, offset);
+
+                        System.out.println("changes.get(" + position + ")");
 
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
