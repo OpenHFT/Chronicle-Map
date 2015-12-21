@@ -1818,7 +1818,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         public void onPut(long pos, SharedSegment segment) {
 
             final long combine = combine(segment.getIndex(), pos);
-            System.out.println("combine=" + combine + ",pos=" + pos);
+
             changes.set(combine);
 
             // todo improve this - use the timestamp from the entry its self
