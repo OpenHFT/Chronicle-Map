@@ -52,6 +52,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static java.lang.Double.isNaN;
 import static java.lang.Math.round;
 import static net.openhft.chronicle.bytes.NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity;
+import static net.openhft.chronicle.core.Maths.divideRoundUp;
 import static net.openhft.chronicle.core.Maths.isPowerOf2;
 import static net.openhft.chronicle.core.Maths.nextPower2;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
@@ -765,8 +766,13 @@ public final class ChronicleMapBuilder<K, V> implements
         } else {
             int actualSegments = actualSegments();
             double averageEntriesPerSegment = entries() * 1.0 / actualSegments;
-            entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
-                    averageEntriesPerSegment, nonTieredSegmentsPercentile);
+            if (actualSegments > 1) {
+                entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
+                        averageEntriesPerSegment, nonTieredSegmentsPercentile);
+            } else {
+                // if there is only 1 segment, there is no source of variance in segments filling
+                entriesPerSegment = ((long) averageEntriesPerSegment) + 1;
+            }
         }
         boolean actualChunksDefined = actualChunksPerSegmentTier > 0;
         if (!actualChunksDefined) {
@@ -962,10 +968,10 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private long segmentsGivenEntriesPerSegmentFixed(long entriesPerSegment) {
         double precision = 1.0 / averageChunksPerEntry();
-        double entriesPerSegmentShouldBe =
-                PoissonDistribution.meanByCumulativeProbabilityAndValue(
+        long entriesPerSegmentShouldBe =
+                (long) PoissonDistribution.meanByCumulativeProbabilityAndValue(
                         nonTieredSegmentsPercentile, entriesPerSegment, precision);
-        long segments = ((long) (entries() / entriesPerSegmentShouldBe)) + 1;
+        long segments = divideRoundUp(entries(), entriesPerSegmentShouldBe);
         checkSegments(segments);
         if (minSegments > 0)
             segments = Math.max(minSegments, segments);
@@ -975,10 +981,13 @@ public final class ChronicleMapBuilder<K, V> implements
     long tierHashLookupCapacity() {
         long entriesPerSegment = entriesPerSegment();
         long capacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
-        long maxEntriesPerTier = PoissonDistribution.inverseCumulativeProbability(
-                entriesPerSegment, nonTieredSegmentsPercentile);
-        while (maxEntriesPerTier > MAX_LOAD_FACTOR * capacity) {
-            capacity *= 2;
+        if (actualSegments() > 1) {
+            // if there is only 1 segment, there is no source of variance in segments filling
+            long maxEntriesPerTier = PoissonDistribution.inverseCumulativeProbability(
+                    entriesPerSegment, nonTieredSegmentsPercentile);
+            while (maxEntriesPerTier > MAX_LOAD_FACTOR * capacity) {
+                capacity *= 2;
+            }
         }
         return capacity;
     }
