@@ -129,6 +129,21 @@ public final class ChronicleMapBuilder<K, V> implements
         return !isNaN(config);
     }
 
+    private static long toLong(double v) {
+        long l = round(v);
+        if (l != v)
+            throw new IllegalArgumentException("Integer argument expected, given " + v);
+        return l;
+    }
+
+    private static long roundUp(double v) {
+        return round(Math.ceil(v));
+    }
+
+    private static long roundDown(double v) {
+        return (long) v;
+    }
+
     private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
 
     // not final because of cloning
@@ -524,7 +539,7 @@ public final class ChronicleMapBuilder<K, V> implements
         int alignment = valueAlignment();
         int worstAlignment;
         if (worstAlignmentComputationRequiresValueSize(alignment)) {
-            long constantSizeBeforeAlignment = round(size);
+            long constantSizeBeforeAlignment = toLong(size);
             if (constantlySizedValues()) {
                 // see tierEntrySpaceInnerOffset()
                 long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
@@ -586,7 +601,7 @@ public final class ChronicleMapBuilder<K, V> implements
         SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
         if (averageSize == round(averageSize))
             return sizeMarshaller.storingLength(round(averageSize));
-        long lower = (long) averageSize;
+        long lower = roundDown(averageSize);
         long upper = lower + 1;
         int lowerStoringLength = sizeMarshaller.storingLength(lower);
         int upperStoringLength = sizeMarshaller.storingLength(upper);
@@ -635,7 +650,7 @@ public final class ChronicleMapBuilder<K, V> implements
             return actualChunkSize;
         double averageEntrySize = entrySizeInfo().averageEntrySize;
         if (constantlySizedEntries())
-            return round(averageEntrySize);
+            return toLong(averageEntrySize);
         int maxChunkSize = 1 << 30;
         for (long chunkSize = 4; chunkSize <= maxChunkSize; chunkSize *= 2L) {
             if (maxDefaultChunksPerAverageEntry(replicated) * chunkSize > averageEntrySize)
@@ -771,7 +786,7 @@ public final class ChronicleMapBuilder<K, V> implements
                         averageEntriesPerSegment, nonTieredSegmentsPercentile);
             } else {
                 // if there is only 1 segment, there is no source of variance in segments filling
-                entriesPerSegment = ((long) averageEntriesPerSegment) + 1;
+                entriesPerSegment = roundUp(averageEntriesPerSegment);
             }
         }
         boolean actualChunksDefined = actualChunksPerSegmentTier > 0;
@@ -827,7 +842,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private long chunksPerSegmentTier(long entriesPerSegment) {
-        return round(entriesPerSegment * averageChunksPerEntry());
+        return roundUp(entriesPerSegment * averageChunksPerEntry());
     }
 
     @Override
@@ -932,7 +947,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private long tryHashLookupSlotSize(int hashLookupSlotSize) {
         long entriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(
                 hashLookupSlotSize);
-        long entrySpaceSize = round(entriesPerSegment * entrySizeInfo().averageEntrySize);
+        long entrySpaceSize = roundUp(entriesPerSegment * entrySizeInfo().averageEntrySize);
         // Not to lose too much on linux because of "poor distribution" entry over-allocation.
         // This condition should likely filter cases when we target very small hash lookup
         // size + entry size is small.
@@ -969,8 +984,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private long segmentsGivenEntriesPerSegmentFixed(long entriesPerSegment) {
         double precision = 1.0 / averageChunksPerEntry();
         long entriesPerSegmentShouldBe =
-                (long) PoissonDistribution.meanByCumulativeProbabilityAndValue(
-                        nonTieredSegmentsPercentile, entriesPerSegment, precision);
+                roundDown(PoissonDistribution.meanByCumulativeProbabilityAndValue(
+                        nonTieredSegmentsPercentile, entriesPerSegment, precision));
         long segments = divideRoundUp(entries(), entriesPerSegmentShouldBe);
         checkSegments(segments);
         if (minSegments > 0)
@@ -1097,7 +1112,7 @@ public final class ChronicleMapBuilder<K, V> implements
             return 0;
         int actualSegments = actualSegments();
         // maxBloatFactor is scale, so we do (- 1.0) to compute _extra_ tiers
-        return ((long) (maxBloatFactor - 1.0) * actualSegments)
+        return round((maxBloatFactor - 1.0) * actualSegments)
                 // but to mitigate slight misconfiguration, and uneven distribution of entries
                 // between segments, add 1.0 x actualSegments
                 + actualSegments;
