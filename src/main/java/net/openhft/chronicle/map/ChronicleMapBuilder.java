@@ -147,10 +147,10 @@ public final class ChronicleMapBuilder<K, V> implements
     private long entriesPerSegment = -1L;
     private long actualChunksPerSegmentTier = -1L;
     private double averageKeySize = UNDEFINED_DOUBLE_CONFIG;
-    private K averageKey;
+    K averageKey;
     private K sampleKey;
     private double averageValueSize = UNDEFINED_DOUBLE_CONFIG;
-    private V averageValue;
+    V averageValue;
     private V sampleValue;
     private int actualChunkSize = 0;
     private int worstAlignment = -1;

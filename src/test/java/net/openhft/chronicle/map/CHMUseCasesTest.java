@@ -243,9 +243,9 @@ public class CHMUseCasesTest {
 
     private <X, Y> ChronicleMap<X, Y> newInstance(ChronicleMapBuilder<X, Y> builder) throws
             IOException {
-        if (!builder.constantlySizedKeys())
+        if (!builder.constantlySizedKeys() && builder.averageKey == null)
             builder.averageKeySize(20);
-        if (!builder.constantlySizedValues())
+        if (!builder.constantlySizedValues() && builder.averageValue == null)
             builder.averageValueSize(20);
         switch (typeOfMap) {
 
@@ -2597,6 +2597,8 @@ public class CHMUseCasesTest {
     public void testMapStringIntegerValueWithoutListMarshallers() throws IOException {
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
+                .averageKey("2")
+                .averageValue(mapOf("two", 2))
                 .entries(2);
         try (ChronicleMap<String, Map<String, Integer>> map = newInstance(builder)) {
             map.put("1", Collections.<String, Integer>emptyMap());
