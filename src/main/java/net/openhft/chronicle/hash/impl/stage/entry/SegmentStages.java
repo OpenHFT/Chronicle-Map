@@ -350,7 +350,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     public void checkNestedContextsQueryDifferentKeys(
             LocksInterface innermostContextOnThisSegment) {
-        // TODO Spoon doesn't replace RHS instanceof occurances
+        // TODO Spoon doesn't replace RHS instanceof occurrences
         if (innermostContextOnThisSegment.getClass() == this.getClass()) {
             Data key = ((KeySearch) innermostContextOnThisSegment).inputKey;
             if (Objects.equals(key, ((KeySearch) (Object) this).inputKey)) {
@@ -364,10 +364,12 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     private void unlinkFromSegmentContextsChain() {
         LocksInterface prevContext = rootContextLockedOnThisSegment;
         while (true) {
-            assert prevContext.nextNode() != null;
-            if (prevContext.nextNode() == this)
+            LocksInterface nextNode = prevContext.nextNode();
+            // nextNode could be null, if this context failed initLocks() in
+            // checkNestedContextsQueryDifferentKeys()
+            if (nextNode == this || nextNode == null)
                 break;
-            prevContext = prevContext.nextNode();
+            prevContext = nextNode;
         }
         // i. e. structured unlocking
         verifyInnermostContext();
