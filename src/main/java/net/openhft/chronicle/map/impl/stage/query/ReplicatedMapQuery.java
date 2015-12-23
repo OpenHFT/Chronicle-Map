@@ -88,6 +88,7 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
     public void doRemoveCompletely() {
         boolean wasDeleted = e.entryDeleted();
         super.doRemove();
+        ru.dropChange();
         if (wasDeleted)
             s.tierDeleted(s.tierDeleted() - 1L);
     }

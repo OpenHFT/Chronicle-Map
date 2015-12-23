@@ -126,6 +126,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     public void doRemoveCompletely() {
         boolean wasDeleted = e.entryDeleted();
         super.doRemove();
+        ru.dropChange();
         if (wasDeleted)
             s.tierDeleted(s.tierDeleted() - 1);
     }
