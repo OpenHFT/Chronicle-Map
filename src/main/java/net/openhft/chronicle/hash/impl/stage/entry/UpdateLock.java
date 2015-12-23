@@ -172,18 +172,19 @@ public class UpdateLock implements InterProcessLock {
     @Override
     public void unlock() {
         checkOnEachPublicOperation.checkOnEachLockOperation();
-        entry.closeDelayedUpdateChecksum();
         switch (s.localLockState) {
             case UNLOCKED:
             case READ_LOCKED:
                 return;
             case UPDATE_LOCKED:
+                entry.closeDelayedUpdateChecksum();
                 if (s.decrementUpdate() == 0) {
                     if (s.writeZero())
                         s.segmentHeader.downgradeUpdateToReadLock(s.segmentHeaderAddress);
                 }
                 break;
             case WRITE_LOCKED:
+                entry.closeDelayedUpdateChecksum();
                 if (s.decrementWrite() == 0) {
                     if (!s.updateZero()) {
                         s.segmentHeader.downgradeWriteToUpdateLock(s.segmentHeaderAddress);

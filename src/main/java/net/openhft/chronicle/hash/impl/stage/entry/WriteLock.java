@@ -32,6 +32,7 @@ public class WriteLock implements InterProcessLock {
 
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef SegmentStages s;
+    @StageRef HashEntryStages<?> entry;
     
     @Override
     public boolean isHeldByCurrentThread() {
@@ -247,6 +248,7 @@ public class WriteLock implements InterProcessLock {
             case UPDATE_LOCKED:
                 return;
             case WRITE_LOCKED:
+                entry.closeDelayedUpdateChecksum();
                 if (s.decrementWrite() == 0)
                     s.segmentHeader.downgradeWriteToUpdateLock(s.segmentHeaderAddress);
                 s.incrementUpdate();
