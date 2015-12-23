@@ -2516,7 +2516,7 @@ public class CHMUseCasesTest {
                 new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, Map<String, String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
-                .entries(2)
+                .entries(3)
                 .valueMarshaller(valueMarshaller);
 
 
