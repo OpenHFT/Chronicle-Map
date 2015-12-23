@@ -2213,7 +2213,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     if (prevValueSize == valueSize &&
                             metaValueInterop.startsWith(valueInterop, entry, value)) {
                         updateResult = UpdateResult.UNCHANGED;
-
+                        segmentState.pos = pos;
                     } else {
                         checkPreincrementSize();
 
@@ -2456,6 +2456,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         entryIsDeleted, segmentState,
                         metaValueInterop, valueInterop, value, valueSize, searchedHashLookup,
                         sizeOfEverythingBeforeValue);
+            } else {
+                segmentState.pos = pos;
             }
 
             replaceValueDeletedCallback(segmentState, searchedHashLookup, pos, entryIsDeleted);
@@ -2896,6 +2898,8 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 putValue(pos, entry, valueSizePos, entryEndAddr, entryIsDeleted, segmentState,
                         metaValueInterop, valueInterop, newValue, newValueSize, searchedHashLookup,
                         sizeOfEverythingBeforeValue);
+            } else {
+                segmentState.pos = pos;
             }
 
             updateReplicationBytesOnKeyPresentOnReplace(entry,
