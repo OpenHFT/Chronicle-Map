@@ -22,11 +22,9 @@ import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.query.HashQuery.EntryPresence;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
-import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.set.DummyValueData;
-import net.openhft.chronicle.set.SetAbsentEntry;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
@@ -89,6 +87,7 @@ public abstract class MapAbsent<K, V> implements Absent<K, V> {
     public void doInsert() {
         if (mh.set() == null)
             throw new IllegalStateException("Called SetAbsentEntry.doInsert() from Map context");
+        //noinspection unchecked
         doInsert((Data<V>) DummyValueData.INSTANCE);
     }
 }

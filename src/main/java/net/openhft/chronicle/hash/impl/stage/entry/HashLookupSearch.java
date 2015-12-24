@@ -19,6 +19,7 @@ package net.openhft.chronicle.hash.impl.stage.entry;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
+import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -32,6 +33,7 @@ public abstract class HashLookupSearch {
     @StageRef public VanillaChronicleHashHolder<?> hh;
     @StageRef HashLookupPos hlp;
     @StageRef KeySearch<?> ks;
+    @StageRef MapEntryStages<?, ?> e;
     
     @Stage("SearchKey") long searchKey = UNSET_KEY;
     @Stage("SearchKey") public long searchStartPos;
@@ -78,17 +80,22 @@ public abstract class HashLookupSearch {
         hlp.setHashLookupPos(hl().remove(addr(), hlp.hashLookupPos));
     }
 
-    public void putNewVolatile(long value) {
+    public void putNewVolatile(long entryPos) {
         // Correctness check + make putNewVolatile() dependant on keySearch, this, in turn,
         // is needed for hlp.hashLookupPos re-initialization after nextTier().
         // Not an assert statement, because ks.searchStatePresent() should run regardless assertions
         // enabled or not.
+        boolean keySearchReInit = !ks.keySearchInit();
         if (ks.searchStatePresent())
             throw new AssertionError();
+        if (keySearchReInit) {
+            // if key search was re-init, entry was re-init too during the search
+            e.readExistingEntry(entryPos);
+        }
 
-        hl().checkValueForPut(value);
+        hl().checkValueForPut(entryPos);
         long currentEntry = hl().readEntry(addr(), hlp.hashLookupPos);
-        hl().writeEntryVolatile(addr(), hlp.hashLookupPos, currentEntry, searchKey, value);
+        hl().writeEntryVolatile(addr(), hlp.hashLookupPos, currentEntry, searchKey, entryPos);
     }
     
     public boolean checkSlotContainsExpectedKeyAndValue(long value) {

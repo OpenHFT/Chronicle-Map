@@ -51,7 +51,7 @@ public abstract class KeySearch<K> {
 
     @Stage("KeySearch") protected SearchState searchState = null;
 
-    abstract boolean keySearchInit();
+    public abstract boolean keySearchInit();
 
     @Stage("KeySearch")
     public void setSearchState(SearchState newSearchState) {
