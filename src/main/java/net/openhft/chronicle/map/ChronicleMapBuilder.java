@@ -193,7 +193,7 @@ public final class ChronicleMapBuilder<K, V> implements
      */
     long cleanupTimeout = 1;
     TimeUnit cleanupTimeoutUnit = TimeUnit.MINUTES;
-    private boolean cleanupRemovedEntries = true;
+    boolean cleanupRemovedEntries = true;
 
     DefaultValueProvider<K, V> defaultValueProvider = DefaultSpi.defaultValueProvider();
 

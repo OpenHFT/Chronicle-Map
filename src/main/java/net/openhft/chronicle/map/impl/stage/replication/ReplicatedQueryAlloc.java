@@ -44,6 +44,8 @@ public class ReplicatedQueryAlloc extends QueryAlloc {
      */
     public boolean forcedOldDeletedEntriesCleanup(long prevPos) {
         ReplicatedChronicleMap<?, ?, ?> map = mh.m();
+        if (!map.cleanupRemovedEntries)
+            return false;
         try (MapSegmentContext<?, ?, ?> sc = map.segmentContext(s.segmentIndex)) {
             cleanupAction.removedCompletely = 0;
             cleanupAction.posToSkip = prevPos;

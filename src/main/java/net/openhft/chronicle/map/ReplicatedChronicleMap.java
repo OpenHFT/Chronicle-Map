@@ -110,6 +110,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private transient long startOfModificationIterators;
     private transient boolean bootstrapOnlyLocalEntries;
 
+    public transient boolean cleanupRemovedEntries;
     public transient long cleanupTimeout;
     public transient TimeUnit cleanupTimeoutUnit;
     
@@ -168,6 +169,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         super.initTransientsFromBuilder(builder);
         this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
         this.timeProvider = builder.timeProvider();
+        cleanupRemovedEntries = builder.cleanupRemovedEntries;
         cleanupTimeout = builder.cleanupTimeout;
         cleanupTimeoutUnit = builder.cleanupTimeoutUnit;
     }
