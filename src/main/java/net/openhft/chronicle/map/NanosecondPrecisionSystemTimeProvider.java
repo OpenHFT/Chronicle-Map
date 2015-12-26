@@ -20,12 +20,15 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 
 import java.io.ObjectStreamException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class NanosecondPrecisionSystemTimeProvider extends TimeProvider {
     private static final long serialVersionUID = 0L;
+
+    private static final AtomicLong lastTimeHolder = new AtomicLong();
 
     private static final NanosecondPrecisionSystemTimeProvider INSTANCE =
             new NanosecondPrecisionSystemTimeProvider();
@@ -38,7 +41,14 @@ final class NanosecondPrecisionSystemTimeProvider extends TimeProvider {
 
     @Override
     public long currentTime() {
-        return MILLISECONDS.toNanos(System.currentTimeMillis());
+        long now = MILLISECONDS.toNanos(System.currentTimeMillis());
+        while (true) {
+            long lastTime = lastTimeHolder.get();
+            if (now <= lastTime)
+                return lastTime;
+            if (lastTimeHolder.compareAndSet(lastTime, now))
+                return now;
+        }
     }
 
     @Override
