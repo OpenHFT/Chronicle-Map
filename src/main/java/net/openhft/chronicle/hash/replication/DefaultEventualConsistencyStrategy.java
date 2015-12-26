@@ -71,9 +71,9 @@ public final class DefaultEventualConsistencyStrategy {
         // lost. (This is almost a theoretical situation.) In this case, give advantage to fresh
         // entry updates to the "new" node. Entries with the same id and timestamp, bootstrapped
         // "back" from other nodes in the system, are discarded on this new node (this is the
-        // of the condition originIdentifier == thisReplica.identifier()). But those new updates
+        // of the condition originIdentifier == currentNodeIdentifier). But those new updates
         // should win on other nodes.
-        return originIdentifier == ((Replica) context.hash()).identifier() ? DISCARD : ACCEPT;
+        return originIdentifier == context.currentNodeIdentifier() ? DISCARD : ACCEPT;
     }
     
     private DefaultEventualConsistencyStrategy() {}

@@ -77,4 +77,9 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return innerRemoteIdentifier;
     }
+
+    @Override
+    public byte currentNodeIdentifier() {
+        return mh.m().identifier();
+    }
 }

@@ -29,4 +29,6 @@ public interface RemoteOperationContext<K> extends HashContext<K> {
     byte remoteIdentifier();
     
     long remoteTimestamp();
+
+    byte currentNodeIdentifier();
 }
