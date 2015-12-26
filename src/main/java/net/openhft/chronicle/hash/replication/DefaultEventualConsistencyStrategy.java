@@ -18,8 +18,12 @@ package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
+
+import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.ACCEPT;
+import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.DISCARD;
 
 /**
  * Specifies the default eventual consistency strategy for {@link ChronicleHashBuilder#replication(
@@ -47,10 +51,29 @@ public final class DefaultEventualConsistencyStrategy {
             ReplicableEntry entry, RemoteOperationContext<?> context) {
         long remoteTimestamp = context.remoteTimestamp();
         long originTimestamp = entry.originTimestamp();
-        boolean shouldAccept = remoteTimestamp > originTimestamp ||
-                (remoteTimestamp == originTimestamp &&
-                        context.remoteIdentifier() < entry.originIdentifier());
-        return shouldAccept ? AcceptanceDecision.ACCEPT : AcceptanceDecision.DISCARD;
+        // Last write wins
+        if (remoteTimestamp > originTimestamp)
+            return ACCEPT;
+        if (remoteTimestamp < originTimestamp)
+            return DISCARD;
+        // remoteTimestamp == originTimestamp below
+        byte remoteIdentifier = context.remoteIdentifier();
+        byte originIdentifier = entry.originIdentifier();
+        // Lower identifier wins
+        if (remoteIdentifier < originIdentifier)
+            return ACCEPT;
+        if (remoteIdentifier > originIdentifier)
+            return DISCARD;
+        // remoteTimestamp == originTimestamp && remoteIdentifier == originIdentifier below
+        // This could be, only if a node with the origin identifier was lost, a new Chronicle Hash
+        // instance was started up, but with timeProvider which for some reason is very late, so
+        // that it provides the same time, as the "old" node with this identifier, before it was
+        // lost. (This is almost a theoretical situation.) In this case, give advantage to fresh
+        // entry updates to the "new" node. Entries with the same id and timestamp, bootstrapped
+        // "back" from other nodes in the system, are discarded on this new node (this is the
+        // of the condition originIdentifier == thisReplica.identifier()). But those new updates
+        // should win on other nodes.
+        return originIdentifier == ((Replica) context.hash()).identifier() ? DISCARD : ACCEPT;
     }
     
     private DefaultEventualConsistencyStrategy() {}
