@@ -185,20 +185,6 @@ public interface Replica extends Closeable {
          */
         public abstract boolean onEntry(
                 ReplicableEntry entry, Bytes payload, int chronicleId, long bootstrapTime);
-
-        /**
-         * Called just after {@link  #onEntry(ReplicableEntry, Bytes, int, long)}.
-         * No-op by default.
-         */
-        public void onAfterEntry() {
-        }
-
-        /**
-         * Called just before {@link #onEntry(ReplicableEntry, Bytes, int, long)}.
-         * No-op by default.
-         */
-        public void onBeforeEntry() {
-        }
     }
 }
 

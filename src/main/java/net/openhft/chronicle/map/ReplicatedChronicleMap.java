@@ -706,8 +706,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
                     if (changesForUpdatesGet(position)) {
 
-                        entryCallback.onBeforeEntry();
-
                         final long segmentPos = position & posMask;
                         context.readExistingEntry(segmentPos);
 
@@ -716,7 +714,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                         boolean success = entryCallback.onEntry(
                                 (ReplicableEntry) context.entryForIteration(), null,
                                 chronicleId, bootStrapTimeStamp());
-                        entryCallback.onAfterEntry();
 
                         if (success)
                             changesForUpdatesClear(position);
