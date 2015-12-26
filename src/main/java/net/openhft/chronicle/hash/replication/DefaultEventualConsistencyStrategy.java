@@ -49,7 +49,7 @@ public final class DefaultEventualConsistencyStrategy {
         long originTimestamp = entry.originTimestamp();
         boolean shouldAccept = remoteTimestamp > originTimestamp ||
                 (remoteTimestamp == originTimestamp &&
-                        context.remoteIdentifier() <= entry.originIdentifier());
+                        context.remoteIdentifier() < entry.originIdentifier());
         return shouldAccept ? AcceptanceDecision.ACCEPT : AcceptanceDecision.DISCARD;
     }
     

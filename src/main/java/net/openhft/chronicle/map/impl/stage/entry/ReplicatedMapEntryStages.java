@@ -128,12 +128,7 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
     public void updatedReplicationStateOnPresentEntry() {
         if (!ru.replicationUpdateInit()) {
             s.innerWriteLock.lock();
-            long timestamp;
-            if (identifier() != mh.m().identifier()) {
-                timestamp = Math.max(timestamp() + 1, mh.m().timeProvider.currentTime());
-            } else {
-                timestamp = mh.m().timeProvider.currentTime();
-            }
+            long timestamp = Math.max(timestamp() + 1, mh.m().timeProvider.currentTime());
             updateReplicationState(mh.m().identifier(), timestamp);
         }
     }

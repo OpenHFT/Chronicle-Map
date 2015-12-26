@@ -21,31 +21,31 @@ import net.openhft.chronicle.hash.replication.TimeProvider;
 import java.io.ObjectStreamException;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.MICROSECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class MicrosecondPrecisionSystemTimeProvider extends TimeProvider {
+final class NanosecondPrecisionSystemTimeProvider extends TimeProvider {
     private static final long serialVersionUID = 0L;
 
-    private static final MicrosecondPrecisionSystemTimeProvider INSTANCE =
-            new MicrosecondPrecisionSystemTimeProvider();
+    private static final NanosecondPrecisionSystemTimeProvider INSTANCE =
+            new NanosecondPrecisionSystemTimeProvider();
 
-    public static MicrosecondPrecisionSystemTimeProvider instance() {
+    public static NanosecondPrecisionSystemTimeProvider instance() {
         return INSTANCE;
     }
 
-    private MicrosecondPrecisionSystemTimeProvider() {}
+    private NanosecondPrecisionSystemTimeProvider() {}
 
     @Override
     public long currentTime() {
-        return MILLISECONDS.toMicros(System.currentTimeMillis());
+        return MILLISECONDS.toNanos(System.currentTimeMillis());
     }
 
     @Override
     public long systemTimeIntervalBetween(
-            long earlierTimeMicros, long laterTimeMicros, TimeUnit systemTimeIntervalUnit) {
-        long intervalMicros = laterTimeMicros - earlierTimeMicros;
-        return systemTimeIntervalUnit.convert(intervalMicros, MICROSECONDS);
+            long earlierTimeNanos, long laterTimeNanos, TimeUnit systemTimeIntervalUnit) {
+        long intervalNanos = laterTimeNanos - earlierTimeNanos;
+        return systemTimeIntervalUnit.convert(intervalNanos, NANOSECONDS);
     }
 
     @Override

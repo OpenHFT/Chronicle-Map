@@ -396,7 +396,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * replication consensus protocol (conflicting data updates resolution).
      *
      * <p>Default time provider uses system time ({@link System#currentTimeMillis()}) in
-     * <i>microsecond</i> precision.
+     * <i>nanosecond</i> precision.
      *
      * @param timeProvider a new time provider for replication needs
      * @return this builder back

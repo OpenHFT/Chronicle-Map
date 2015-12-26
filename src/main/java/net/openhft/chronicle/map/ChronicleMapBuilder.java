@@ -184,7 +184,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean removeReturnsNull = false;
 
     // replication
-    private TimeProvider timeProvider = MicrosecondPrecisionSystemTimeProvider.instance();
+    private TimeProvider timeProvider = NanosecondPrecisionSystemTimeProvider.instance();
     /**
      * Default timeout is 1 minute. Even loopback tests converge often in the course of seconds,
      * let alone WAN replication over many nodes might take tens of seconds.
