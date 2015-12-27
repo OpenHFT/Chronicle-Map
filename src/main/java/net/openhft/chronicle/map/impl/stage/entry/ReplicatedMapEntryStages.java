@@ -25,6 +25,7 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 import static net.openhft.chronicle.map.ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
 
 @Staged
@@ -128,7 +129,7 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
     public void updatedReplicationStateOnPresentEntry() {
         if (!ru.replicationUpdateInit()) {
             s.innerWriteLock.lock();
-            long timestamp = Math.max(timestamp() + 1, mh.m().timeProvider.currentTime());
+            long timestamp = Math.max(timestamp() + 1, currentTime());
             updateReplicationState(mh.m().identifier(), timestamp);
         }
     }
@@ -136,7 +137,7 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
     public void updatedReplicationStateOnAbsentEntry() {
         if (!ru.replicationUpdateInit()) {
             s.innerWriteLock.lock();
-            updateReplicationState(mh.m().identifier(), mh.m().timeProvider.currentTime());
+            updateReplicationState(mh.m().identifier(), currentTime());
         }
     }
 

@@ -27,7 +27,10 @@ import net.openhft.chronicle.hash.HashContext;
 public interface RemoteOperationContext<K> extends HashContext<K> {
     
     byte remoteIdentifier();
-    
+
+    /**
+     * @see ReplicableEntry#originTimestamp()
+     */
     long remoteTimestamp();
 
     byte currentNodeIdentifier();

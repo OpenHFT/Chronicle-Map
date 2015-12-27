@@ -22,7 +22,6 @@ import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
@@ -197,12 +196,6 @@ public final class ChronicleSetBuilder<K>
     @Override
     public int hashCode() {
         return toString().hashCode();
-    }
-
-    @Override
-    public ChronicleSetBuilder<K> timeProvider(TimeProvider timeProvider) {
-        chronicleMapBuilder.timeProvider(timeProvider);
-        return this;
     }
 
     @Override

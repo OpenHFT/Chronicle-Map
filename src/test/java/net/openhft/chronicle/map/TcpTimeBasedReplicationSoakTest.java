@@ -16,21 +16,17 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.set.Builder;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rob Austin.
@@ -41,47 +37,17 @@ public class TcpTimeBasedReplicationSoakTest {
     private ChronicleMap<Integer, CharSequence> map1;
     private ChronicleMap<Integer, CharSequence> map2;
     static int s_port = 8010;
-    private TimeProvider timeProvider;
     int t = 0;
 
     @Before
     public void setup() throws IOException {
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
-        timeProvider = new TimeProvider() {
-            List<Long> moments = new ArrayList<>();
-            Random rnd = new Random(4);
-
-            {
-                moments.add(System.currentTimeMillis());
-            }
-
-            @Override
-            public long currentTime() {
-
-                if (rnd.nextBoolean()) {
-                    moments.add(System.currentTimeMillis());
-                    return t++;
-                } else {
-                    return t;
-                }
-            }
-
-            @Override
-            public long systemTimeIntervalBetween(
-                    long earlierTime, long laterTime, TimeUnit systemTimeIntervalUnit) {
-                long earlierMillis = moments.get((int) earlierTime);
-                long laterMillis = moments.get((int) laterTime);
-                long intervalMillis = laterMillis - earlierMillis;
-                return systemTimeIntervalUnit.convert(intervalMillis, TimeUnit.MILLISECONDS);
-            }
-        };
 
         ChronicleMapBuilder<Integer, CharSequence> builder = ChronicleMapBuilder
                 .of(Integer.class, CharSequence.class)
                 .averageValue("test-1000000")
-                .entries(Builder.SIZE)
-                .timeProvider(timeProvider);
+                .entries(Builder.SIZE);
         {
             TcpTransportAndNetworkConfig tcpConfig1 =
                     TcpTransportAndNetworkConfig.of(s_port, endpoint);
@@ -178,10 +144,6 @@ public class TcpTimeBasedReplicationSoakTest {
 
 
         }
-    }
-
-    private void late(TimeProvider timeProvider) {
-        Mockito.when(timeProvider.currentTime()).thenReturn(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(5));
     }
 }
 

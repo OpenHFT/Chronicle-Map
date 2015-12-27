@@ -16,7 +16,7 @@ the following rules, they might be changed in any way, or removed.
  break due to ambiguity in method resolution.
  - Only non-abstract (concrete or default) methods could be added to the classes and interfaces that
  are subject for subclassing by the library users, such as `MapMethods`, `MapEntryOperations`,
- `SizedReader`, `TimeProvider`.
+ `SizedReader`.
 
 ### Behaviour
 

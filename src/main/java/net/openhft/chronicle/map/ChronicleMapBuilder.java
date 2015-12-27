@@ -183,8 +183,6 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean putReturnsNull = false;
     private boolean removeReturnsNull = false;
 
-    // replication
-    private TimeProvider timeProvider = NanosecondPrecisionSystemTimeProvider.instance();
     /**
      * Default timeout is 1 minute. Even loopback tests converge often in the course of seconds,
      * let alone WAN replication over many nodes might take tens of seconds.
@@ -1134,7 +1132,6 @@ public final class ChronicleMapBuilder<K, V> implements
                 ", entries=" + entries() +
                 ", putReturnsNull=" + putReturnsNull() +
                 ", removeReturnsNull=" + removeReturnsNull() +
-                ", timeProvider=" + timeProvider() +
                 ", keyBuilder=" + keyBuilder +
                 ", valueBuilder=" + valueBuilder +
                 '}';
@@ -1149,12 +1146,6 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public int hashCode() {
         return toString().hashCode();
-    }
-
-    @Override
-    public ChronicleMapBuilder<K, V> timeProvider(TimeProvider timeProvider) {
-        this.timeProvider = timeProvider;
-        return this;
     }
 
     @Override
@@ -1173,10 +1164,6 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMapBuilder<K, V> cleanupRemovedEntries(boolean cleanupRemovedEntries) {
         this.cleanupRemovedEntries = cleanupRemovedEntries;
         return this;
-    }
-
-    TimeProvider timeProvider() {
-        return timeProvider;
     }
 
     @Override

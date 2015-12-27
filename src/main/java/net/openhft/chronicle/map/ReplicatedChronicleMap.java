@@ -26,7 +26,6 @@ import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
@@ -48,6 +47,7 @@ import static net.openhft.chronicle.algo.MemoryUnit.*;
 import static net.openhft.chronicle.algo.bitset.BitSetFrame.NOT_FOUND;
 import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
+import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 
 /**
  * <h2>A Replicating Multi Master HashMap</h2> <p>Each remote hash map, mirrors its changes over to
@@ -97,7 +97,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private static final long LAST_UPDATED_HEADER_SIZE = 128L * 8L;
     private static final int SIZE_OF_BOOTSTRAP_TIME_STAMP = 8;
 
-    public transient TimeProvider timeProvider;
     /**
      * Default value is 0, that corresponds to "unset" identifier value (valid ids are positive)
      */
@@ -168,7 +167,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
         super.initTransientsFromBuilder(builder);
         this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
-        this.timeProvider = builder.timeProvider();
         cleanupRemovedEntries = builder.cleanupRemovedEntries;
         cleanupTimeout = builder.cleanupTimeout;
         cleanupTimeoutUnit = builder.cleanupTimeoutUnit;
@@ -490,7 +488,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         // if it is set as ZERO then the onPut() will set it to the current time, once the
         // consumer has cycled through the bit set the timestamp will be set back to zero.
         private AtomicLong bootStrapTimeStamp = new AtomicLong();
-        private long lastBootStrapTimeStamp = timeProvider.currentTime();
+        private long lastBootStrapTimeStamp = currentTime();
 
         // records the current position of the cursor in the bitset
         // TODO volatile?
@@ -551,9 +549,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             } else {
                 raiseExtraTierChange(tierIndex, bitIndex);
             }
-//            assert timestamp > timeProvider.currentTime() - TimeUnit.SECONDS.toMillis(1) &&
-//                    timestamp <= timeProvider.currentTime() : "timeStamp=" + timestamp + ", " +
-//                    "currentTime=" + timeProvider.currentTime();
             // todo improve this - use the timestamp from the entry its self
             bootStrapTimeStamp.compareAndSet(0, timestamp);
             if (modificationNotifier != null)

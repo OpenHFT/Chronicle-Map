@@ -21,7 +21,6 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.hash.replication.TimeProvider;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -390,19 +389,6 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see #entriesPerSegment(long)
      */
     B actualSegments(int actualSegments);
-
-    /**
-     * Configures a time provider, used by hash containers, created by this builder, for needs of
-     * replication consensus protocol (conflicting data updates resolution).
-     *
-     * <p>Default time provider uses system time ({@link System#currentTimeMillis()}) in
-     * <i>nanosecond</i> precision, also it returns non-decreasing time.
-     *
-     * @param timeProvider a new time provider for replication needs
-     * @return this builder back
-     * @see #replication(SingleChronicleHashReplication)
-     */
-    B timeProvider(TimeProvider timeProvider);
 
     /**
      * Configures timeout after which entries, marked as removed in the Chronicle Hash, constructed

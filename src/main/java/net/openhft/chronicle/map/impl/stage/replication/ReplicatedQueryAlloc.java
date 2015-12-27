@@ -30,6 +30,9 @@ import net.openhft.sg.Staged;
 
 import java.util.function.Consumer;
 
+import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
+import static net.openhft.chronicle.hash.replication.TimeProvider.systemTimeIntervalBetween;
+
 @Staged
 public class ReplicatedQueryAlloc extends QueryAlloc {
 
@@ -64,15 +67,17 @@ public class ReplicatedQueryAlloc extends QueryAlloc {
         @Override
         public void accept(ReplicableEntry e) {
             ReplicatedChronicleMap<?, ?, ?> map = mh.m();
-            if (e instanceof MapAbsentEntry && iterationContext.pos() != posToSkip) {
-                long deleteTimeout = map.timeProvider.currentTime() - e.originTimestamp();
-                map.timeProvider.systemTimeIntervalBetween(e.originTimestamp(),
-                        map.timeProvider.currentTime(), map.cleanupTimeoutUnit);
-                if (deleteTimeout > map.cleanupTimeout && !e.isChanged()) {
-                    e.doRemoveCompletely();
-                    removedCompletely++;
-                }
-            }
+            if (!(e instanceof MapAbsentEntry) || iterationContext.pos() == posToSkip)
+                return;
+            long currentTime = currentTime();
+            if (e.originTimestamp() > currentTime)
+                return; // presumably unsynchronized clocks
+            long deleteTimeout = systemTimeIntervalBetween(
+                    e.originTimestamp(), currentTime, map.cleanupTimeoutUnit);
+            if (deleteTimeout <= map.cleanupTimeout || e.isChanged())
+                return;
+            e.doRemoveCompletely();
+            removedCompletely++;
         }
     }
 

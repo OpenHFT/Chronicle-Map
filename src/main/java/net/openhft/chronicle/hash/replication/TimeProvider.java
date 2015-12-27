@@ -19,52 +19,64 @@ package net.openhft.chronicle.hash.replication;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 
-import java.io.Serializable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
- * TimeProvider abstracts time measurement for {@link ChronicleHash} replication needs. {@code
- * TimeProvider} is specified to be used in a replicated {@code ChronicleHash} via {@link
- * ChronicleHashBuilder#timeProvider(TimeProvider)} method. The simplest (including default)
- * providers rely on system time ({@link System#currentTimeMillis()}), but more complex ones could
- * use some atomic counters, or different sources of time.
+ * {@code TimeProvider} encapsulates time measurement for {@link ChronicleHash} replication needs.
+ * It is used to obtain timestamps of entry updates, and to determine, when deleted entries become
+ * eligible for complete purge from the Chronicle Hash data structure.
  *
- * <p>Possible reasons to implement a custom time provider:
- * <ul>
- *     <li>To synchronize time between replicated nodes, when precision of the system time is
- *     not sufficient (it could diverge on remote servers).</li>
- *     <li>Optimization, if {@code System.currentTimeMillis()} is considered too slow</li>
- *     <li>If time machinery in replicated {@code ChronicleHash} system is completely hijacked,
- *     and used to store some {@code long} value with non-time meaning (see {@link
- *     ReplicableEntry#originTimestamp()}, {@link ReplicableEntry#updateOrigin(byte, long)},
- *     {@link RemoteOperationContext#remoteTimestamp()}).</li>
- * </ul>
- *
- * <p>Subclasses should be immutable, because {@link ChronicleHashBuilder} doesn't make defensive
- * copies.
- *
- * @see ChronicleHashBuilder#timeProvider(TimeProvider)
+ * @see ReplicableEntry#originTimestamp()
+ * @see RemoteOperationContext#remoteTimestamp()
+ * @see ChronicleHashBuilder#removedEntryCleanupTimeout(long, TimeUnit)
  */
-public abstract class TimeProvider implements Serializable {
-    private static final long serialVersionUID = 0L;
+public final class TimeProvider {
+
+    private TimeProvider() {}
+
+    private static final AtomicLong lastTimeHolder = new AtomicLong();
 
     /**
-     * Returns the current time in this provider's context.
+     * Returns a non-decreasing number, assumed to be used as a "timestamp".
+     *
+     * <p>Approximate system time interval between two calls of this method is retrievable via
+     * {@link #systemTimeIntervalBetween(long, long, TimeUnit)}, applied to the returned values
+     * from those {@code currentTime()} calls.
+     *
+     * <p>Safe and scalable for concurrent use from multiple threads.
+     *
+     * @return the current timestamp
      */
-    public abstract long currentTime();
+    public static long currentTime() {
+        long now = MILLISECONDS.toNanos(System.currentTimeMillis());
+        while (true) {
+            long lastTime = lastTimeHolder.get();
+            if (now <= lastTime)
+                return lastTime;
+            if (lastTimeHolder.compareAndSet(lastTime, now))
+                return now;
+        }
+    }
 
     /**
      * Returns system time interval (i. e. wall time interval) between two time values, taken using
-     * this {@code TimeProvider}'s {@link #currentTime()} method, with the highest possible
-     * precision, in the given time units.
+     * {@link #currentTime()} method, with the highest possible precision, in the given time units.
      *
      * @param earlierTime {@link #currentTime()} result, taken at some moment in the past (earlier)
      * @param laterTime {@link #currentTime()} result, taken at some moment in the past, but later
-     * than {@code earlierTime} was taken
+     * than {@code earlierTime} was taken ("later" means there is a happens-before relationship
+     * between the two subject {@code currentTime()} calls)
      * @param systemTimeIntervalUnit the time units to return system time interval in
      * @return wall time interval between the specified moments in the given time unit
      */
-    public abstract long systemTimeIntervalBetween(
-            long earlierTime, long laterTime, TimeUnit systemTimeIntervalUnit);
+    public static long systemTimeIntervalBetween(
+            long earlierTime, long laterTime, TimeUnit systemTimeIntervalUnit) {
+        long intervalNanos = laterTime - earlierTime;
+        return systemTimeIntervalUnit.convert(intervalNanos, NANOSECONDS);
+    }
 
 }

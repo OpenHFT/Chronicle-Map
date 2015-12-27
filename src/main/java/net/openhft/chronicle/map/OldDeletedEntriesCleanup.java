@@ -19,7 +19,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.chronicle.hash.replication.TimeProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +27,9 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
+
+import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
+import static net.openhft.chronicle.hash.replication.TimeProvider.systemTimeIntervalBetween;
 
 class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<ReplicableEntry> {
     private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanup.class);
@@ -52,10 +54,9 @@ class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<Replica
         while (!shutdown) {
             int segmentIndex = map.globalMutableState().getCurrentCleanupSegmentIndex();
             int nextSegmentIndex;
-            TimeProvider timeProvider = map.timeProvider;
             try (MapSegmentContext<?, ?, ?> context = map.segmentContext(segmentIndex)) {
                 if (segmentIndex == 0)
-                    prevSegment0ScanStart = timeProvider.currentTime();
+                    prevSegment0ScanStart = currentTime();
                 removedCompletely = 0;
                 if (((ReplicatedHashSegmentContext<?, ?>) context)
                         .forEachSegmentReplicableEntryWhile(this)) {
@@ -70,9 +71,9 @@ class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<Replica
                 }
             }
             if (nextSegmentIndex == 0) {
-                long currentTime = timeProvider.currentTime();
+                long currentTime = currentTime();
                 TimeUnit cleanupTimeoutUnit = map.cleanupTimeoutUnit;
-                long mapScanTime = timeProvider.systemTimeIntervalBetween(
+                long mapScanTime = systemTimeIntervalBetween(
                         prevSegment0ScanStart, currentTime, cleanupTimeoutUnit);
                 LOG.debug("Old deleted entries scan time: {} {}", mapScanTime, cleanupTimeoutUnit);
                 long cleanupTimeout = map.cleanupTimeout;
@@ -93,8 +94,8 @@ class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<Replica
         if (shutdown)
             return false;
         if (e instanceof MapAbsentEntry) {
-            long deleteTimeout = map.timeProvider.systemTimeIntervalBetween(
-                    e.originTimestamp(), map.timeProvider.currentTime(), map.cleanupTimeoutUnit);
+            long deleteTimeout = systemTimeIntervalBetween(
+                    e.originTimestamp(), currentTime(), map.cleanupTimeoutUnit);
             if (deleteTimeout > map.cleanupTimeout && !e.isChanged()) {
                 e.doRemoveCompletely();
                 removedCompletely++;

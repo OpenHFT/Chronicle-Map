@@ -51,20 +51,12 @@ public interface ReplicableEntry {
     byte originIdentifier();
 
     /**
-     * The timestamp, associated with this entry. Originally, and by default, this timestamp means
-     * the time of the last.
+     * The timestamp of the last update to this entry.
      *
      * <p>When the entry is replicated, this timestamp comes to remote nodes as {@link
      * RemoteOperationContext#remoteTimestamp()}.
      *
-     * <p>On {@code ChronicleHash} local operations with entries, like {@link ChronicleMap#put(
-     * Object, Object)}, this timestamp is overwritten using {@linkplain
-     * ChronicleHashBuilder#timeProvider(TimeProvider) the configured time provider}. On remote
-     * operations, proxied through {@link MapRemoteOperations} or {@link SetRemoteOperations},
-     * you are free to overwrite this timestamp by any value, using {@link #updateOrigin(byte, long)
-     * } method.
-     *
-     * @return the timestamp, associated with this entry
+     * @return the timestamp of the last update to this entry
      * @see TimeProvider
      */
     long originTimestamp();

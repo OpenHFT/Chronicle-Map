@@ -66,7 +66,7 @@ public final class DefaultEventualConsistencyStrategy {
             return DISCARD;
         // remoteTimestamp == originTimestamp && remoteIdentifier == originIdentifier below
         // This could be, only if a node with the origin identifier was lost, a new Chronicle Hash
-        // instance was started up, but with timeProvider which for some reason is very late, so
+        // instance was started up, but with system time which for some reason is very late, so
         // that it provides the same time, as the "old" node with this identifier, before it was
         // lost. (This is almost a theoretical situation.) In this case, give advantage to fresh
         // entry updates to the "new" node. Entries with the same id and timestamp, bootstrapped
