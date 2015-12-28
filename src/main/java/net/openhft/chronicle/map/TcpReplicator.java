@@ -59,8 +59,6 @@ import static net.openhft.chronicle.hash.impl.util.BuildVersion.version;
  */
 final class TcpReplicator extends AbstractChannelReplicator implements Closeable {
 
-    public static final long TIMESTAMP_FACTOR = 10000;
-    private static final int STATELESS_CLIENT = -127;
     private static final byte HEARTBEAT = 0;
     private static final byte NOT_SET = 0;//(byte) HEARTBEAT.ordinal();
     private static final Logger LOG = LoggerFactory.getLogger(TcpReplicator.class.getName());
@@ -605,12 +603,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
         if (attached.remoteIdentifier == Byte.MIN_VALUE) {
             final byte remoteIdentifier = reader.identifierFromBuffer();
-
-            if (remoteIdentifier == STATELESS_CLIENT) {
-                attached.handShakingComplete = true;
-                attached.hasRemoteHeartbeatInterval = false;
-                return;
-            }
 
             if (remoteIdentifier == Byte.MIN_VALUE)
                 return;

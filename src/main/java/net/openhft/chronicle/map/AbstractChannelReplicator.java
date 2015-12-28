@@ -57,8 +57,9 @@ abstract class AbstractChannelReplicator implements Closeable {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractChannelReplicator.class);
 
-    // currently this is not safe to use as it wont work with the stateless client
-    static boolean useJavaNIOSelectionKeys = Boolean.valueOf(System.getProperty("useJavaNIOSelectionKeys"));
+    // this was not safe to use as it wont work with the stateless client
+    static boolean useJavaNIOSelectionKeys =
+            Boolean.valueOf(System.getProperty("useJavaNIOSelectionKeys"));
 
     final SelectedSelectionKeySet selectedKeys = new SelectedSelectionKeySet();
 
