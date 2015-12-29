@@ -652,7 +652,8 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
             attached.remoteModificationIterator.setModificationNotifier(attached);
 
-            writer.writeRemoteBootstrapTimestamp(replica.lastModificationTime(remoteIdentifier));
+            writer.writeRemoteBootstrapTimestamp(
+                    replica.remoteNodeCouldBootstrapFrom(remoteIdentifier));
 
             writer.writeServerVersion();
 
@@ -1253,7 +1254,6 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
      */
     class TcpSocketChannelEntryReader {
         public static final int HEADROOM = 1024;
-        public static final int SIZE_OF_BOOTSTRAP_TIMESTAMP = 8;
         public long lastHeartBeatReceived = System.currentTimeMillis();
         ByteBuffer socketIn;
         Bytes entryOut;
@@ -1332,8 +1332,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
 
                         // if the buffer is too small to read this payload we will have to grow the
                         // size of the buffer
-                        long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1 +
-                                SIZE_OF_BOOTSTRAP_TIMESTAMP;
+                        long requiredSize = sizeInBytes + SIZE_OF_SIZE + 1;
                         if (entryOut.capacity() < requiredSize) {
                             attached.entryReader.resizeBuffer(requiredSize + HEADROOM);
                         }
@@ -1354,7 +1353,7 @@ final class TcpReplicator extends AbstractChannelReplicator implements Closeable
                     final long limit = entryOut.readLimit();
                     entryOut.readLimit(nextEntryPos);
 
-                    externalizable.readExternalEntry(entryOut);
+                    externalizable.readExternalEntry(entryOut, attached.remoteIdentifier);
 
                     entryOut.readLimit(limit);
 

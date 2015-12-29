@@ -59,13 +59,13 @@ public class TCPSocketReplicationBootStrapTest {
                 map2aBuilder.createPersistedTo(persistenceFile);
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
 
-        long lastModificationTime;
+        long bootstrapFrom;
 
         // lets make sure that the message has got to map 1
         do {
-            lastModificationTime = map1.lastModificationTime((byte) 2);
+            bootstrapFrom = map1.remoteNodeCouldBootstrapFrom((byte) 2);
             Thread.yield();
-        } while (lastModificationTime == 0);
+        } while (bootstrapFrom == 0);
 
         final File map2File = map2a.file();
         map2a.close();
@@ -126,13 +126,13 @@ public class TCPSocketReplicationBootStrapTest {
 
         map2a.put(10, "EXAMPLE-10");  // this will be the last time that map1 go an update from map2
 
-        long lastModificationTime;
+        long bootstrapFrom;
 
         // lets make sure that the message has got to map 1
         do {
-            lastModificationTime = map1.lastModificationTime((byte) 2);
+            bootstrapFrom = map1.remoteNodeCouldBootstrapFrom((byte) 2);
             Thread.yield();
-        } while (lastModificationTime == 0);
+        } while (bootstrapFrom == 0);
 
         map2a.close();
 

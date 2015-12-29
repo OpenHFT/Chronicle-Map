@@ -435,7 +435,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
     }
 
-    static class EntryCallback extends Replica.EntryCallback {
+    static class EntryCallback implements Replica.EntryCallback {
 
         private final Replica.EntryExternalizable externalizable;
 
@@ -459,10 +459,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         }
 
         @Override
-        public boolean onEntry(
-                ReplicableEntry entry, Bytes payload, int chronicleId, long bootstrapTime) {
-
-            long pos0 = entryIn.writePosition();
+        public void onEntry(ReplicableEntry entry, Bytes payload, int chronicleId) {
             // used to denote that this is not a heartbeat
             entryIn.writeByte(STATEFUL_UPDATE);
 
@@ -473,12 +470,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
             long start = entryIn.writePosition();
 
-            externalizable.writeExternalEntry(entry, payload, entryIn, chronicleId, bootstrapTime);
-
-            if (entryIn.writePosition() == start) {
-                entryIn.writePosition(pos0);
-                return false;
-            }
+            externalizable.writeExternalEntry(entry, payload, entryIn, chronicleId);
 
             // write the length of the entry, just before the start, so when we read it back
             // we read the length of the entry first and hence know how many preceding writer
@@ -493,7 +485,6 @@ abstract class AbstractChannelReplicator implements Closeable {
                 LOG.debug("sending entry of entrySize=" + (int) bytesWritten);
 
             entryIn.writeInt(sizeLocation, (int) bytesWritten);
-            return true;
         }
     }
 

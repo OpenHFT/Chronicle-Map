@@ -73,9 +73,10 @@ public interface Replica extends Closeable {
      * @return a timestamp of the last modification to an entry, or 0 if there are no entries.
      * @see #identifier()
      */
-    long lastModificationTime(byte remoteIdentifier);
+    long remoteNodeCouldBootstrapFrom(byte remoteIdentifier);
 
-    void setLastModificationTime(byte identifier, long timestamp);
+    void setRemoteNodeCouldBootstrapFrom(
+            byte remoteIdentifier, long bootstrapTimestamp);
 
     /**
      * notifies when there is a changed to the modification iterator
@@ -146,15 +147,14 @@ public interface Replica extends Closeable {
 
         /**
          * The map implements this method to save its contents.
-         *
-         * @param entry       the byte location of the entry to be stored
+         *  @param entry       the byte location of the entry to be stored
          * @param destination a buffer the entry will be written to, the segment may reject this
          *                    operation and add zeroBytes, if the identifier in the entry did not
          *                    match the maps local
          * @param chronicleId is the channel id used to identify the canonical map or queue
          */
         void writeExternalEntry(ReplicableEntry entry, Bytes payload, @NotNull Bytes destination,
-                                int chronicleId, long bootstrapTime);
+                                int chronicleId);
 
         /**
          * The map implements this method to restore its contents. This method must read the values
@@ -163,15 +163,17 @@ public interface Replica extends Closeable {
          * replication event, this event could originate from either a remote {@code put(K key, V
          *value)} or {@code remove(Object key)}
          * @param source       bytes to read an entry from
+         * @param remoteNodeIdentifier the identifier of the remove node, from which this event came
+         *                             (NOT origin id of the entry)
          */
-        void readExternalEntry(@NotNull Bytes source);
+        void readExternalEntry(@NotNull Bytes source, byte remoteNodeIdentifier);
     }
 
     /**
      * Implemented typically by a replicator, This interface provides the event, which will get
      * called whenever a put() or remove() has occurred to the map
      */
-    abstract class EntryCallback {
+    interface EntryCallback {
 
         /**
          * Called whenever a put() or remove() has occurred to a replicating map.
@@ -179,12 +181,8 @@ public interface Replica extends Closeable {
          * @param entry       the entry you will receive, this does not have to be locked, as
          *                    locking is already provided from the caller.
          * @param chronicleId only assigned when clustering
-         * @return {@code false} if this entry should be ignored because the identifier of the
-         * source node is not from one of our changes, WARNING even though we check the identifier
-         * in the ModificationIterator the entry may have been updated.
          */
-        public abstract boolean onEntry(
-                ReplicableEntry entry, Bytes payload, int chronicleId, long bootstrapTime);
+        void onEntry(ReplicableEntry entry, Bytes payload, int chronicleId);
     }
 }
 

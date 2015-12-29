@@ -112,19 +112,19 @@ final class ChannelProvider implements Closeable {
         @Override
         public void writeExternalEntry(ReplicableEntry entry, Bytes payload,
                                        @NotNull Bytes destination,
-                                       int chronicleChannel, long bootstrapTime) {
+                                       int chronicleChannel) {
             channelDataReadLock();
             try {
                 destination.writeStopBit(chronicleChannel);
                 channelEntryExternalizables[chronicleChannel].writeExternalEntry(
-                        entry, payload, destination, chronicleChannel, bootstrapTime);
+                        entry, payload, destination, chronicleChannel);
             } finally {
                 channelDataLock.readLock().unlock();
             }
         }
 
         @Override
-        public void readExternalEntry(@NotNull Bytes source) {
+        public void readExternalEntry(@NotNull Bytes source, byte remoteNodeIdentifier) {
             channelDataReadLock();
             try {
                 final int chronicleId = (int) source.readStopBit();
@@ -132,7 +132,7 @@ final class ChannelProvider implements Closeable {
                     // this channel is has not currently been created so it updates will be ignored
                     if (channelEntryExternalizables[chronicleId] != null)
                         channelEntryExternalizables[chronicleId]
-                                .readExternalEntry(source);
+                                .readExternalEntry(source, remoteNodeIdentifier);
                 } else
                     LOG.info("skipped entry with chronicleId=" + chronicleId + ", ");
             } finally {
@@ -241,15 +241,15 @@ final class ChannelProvider implements Closeable {
          * gets the earliest modification time for all of the chronicles
          */
         @Override
-        public long lastModificationTime(byte remoteIdentifier) {
+        public long remoteNodeCouldBootstrapFrom(byte remoteIdentifier) {
             channelDataReadLock();
             try {
                 long t = 0;
                 // not including the SystemQueue at index 0
                 for (int i = 1, len = chronicleChannelList.size(); i < len; i++) {
                     Replica channel = chronicleChannelList.get(i);
-                    t = (t == 0) ? channel.lastModificationTime(remoteIdentifier) :
-                            min(t, channel.lastModificationTime(remoteIdentifier));
+                    t = (t == 0) ? channel.remoteNodeCouldBootstrapFrom(remoteIdentifier) :
+                            min(t, channel.remoteNodeCouldBootstrapFrom(remoteIdentifier));
                 }
                 return t;
             } finally {
@@ -258,12 +258,13 @@ final class ChannelProvider implements Closeable {
         }
 
         @Override
-        public void setLastModificationTime(byte identifier, long timestamp) {
+        public void setRemoteNodeCouldBootstrapFrom(byte remoteIdentifier, long bootstrapTimestamp) {
             channelDataReadLock();
             try {
                 // not including the SystemQueue at index 0
                 for (int i = 1, len = chronicleChannelList.size(); i < len; i++) {
-                    chronicleChannelList.get(i).setLastModificationTime(identifier, timestamp);
+                    chronicleChannelList.get(i)
+                            .setRemoteNodeCouldBootstrapFrom(remoteIdentifier, bootstrapTimestamp);
                 }
 
             } finally {
@@ -359,27 +360,27 @@ final class ChannelProvider implements Closeable {
     private void onBootstrapMessage(Bytes bytes) {
         final byte remoteIdentifier = bytes.readByte();
         final int chronicleChannel = bytes.readUnsignedShort();
-        final long lastModificationTime = bytes.readLong();
+        final long bootstrapFrom = bytes.readLong();
 
         if (LOG.isDebugEnabled())
             LOG.debug("received bootstrap message received for localIdentifier=" + this.localIdentifier + ", " +
                     "remoteIdentifier=" + remoteIdentifier + ",chronicleChannel=" + chronicleChannel + "," +
-                    "lastModificationTime=" + lastModificationTime);
+                    "remoteNodeCouldBootstrapFrom=" + bootstrapFrom);
 
         // this could be null if one node has a chronicle channel before the other
         if (chronicleChannels[chronicleChannel] != null) {
             chronicleChannels[chronicleChannel].acquireModificationIterator(remoteIdentifier)
-                    .dirtyEntries(lastModificationTime);
+                    .dirtyEntries(bootstrapFrom);
         }
     }
 
     private static Bytes toBootstrapMessage(
-            int chronicleChannel, final long lastModificationTime, final byte localIdentifier) {
+            int chronicleChannel, final long bootstrapFrom, final byte localIdentifier) {
         final Bytes writeBuffer = Bytes.wrapForWrite(new byte[1 + 1 + 2 + 8]);
         writeBuffer.writeByte(BOOTSTRAP_MESSAGE);
         writeBuffer.writeByte(localIdentifier);
         writeBuffer.writeUnsignedShort(chronicleChannel);
-        writeBuffer.writeLong(lastModificationTime);
+        writeBuffer.writeLong(bootstrapFrom);
         return writeBuffer;
     }
 
@@ -409,15 +410,15 @@ final class ChannelProvider implements Closeable {
             for (int i = (int) systemModificationIteratorBitSet.nextSetBit(0); i > 0;
                  i = (int) systemModificationIteratorBitSet.nextSetBit(i + 1)) {
                 byte remoteIdentifier = (byte) i;
-                final long lastModificationTime = replica.lastModificationTime(remoteIdentifier);
+                final long bootstrapFrom = replica.remoteNodeCouldBootstrapFrom(remoteIdentifier);
                 final Bytes message =
-                        toBootstrapMessage(chronicleChannel, lastModificationTime, localIdentifier);
+                        toBootstrapMessage(chronicleChannel, bootstrapFrom, localIdentifier);
                 systemModificationIterator.get(remoteIdentifier).addPayload(message);
 
                 if (LOG.isDebugEnabled())
                     LOG.debug("sending bootstrap message received for localIdentifier=" + localIdentifier + ", " +
                             "remoteIdentifier=" + remoteIdentifier + ",chronicleChannel=" + chronicleChannel + "," +
-                            "lastModificationTime=" + lastModificationTime);
+                            "remoteNodeCouldBootstrapFrom=" + bootstrapFrom);
             }
         } finally {
             channelDataLock.writeLock().unlock();
@@ -490,7 +491,7 @@ final class ChannelProvider implements Closeable {
                         final Bytes payload = payloads.poll();
                         if (payload == null)
                             return false;
-                        callback.onEntry(null, payload, 0, 0);
+                        callback.onEntry(null, payload, 0);
                         return true;
                     }
 
@@ -523,12 +524,12 @@ final class ChannelProvider implements Closeable {
             }
 
             @Override
-            public long lastModificationTime(byte remoteIdentifier) {
+            public long remoteNodeCouldBootstrapFrom(byte remoteIdentifier) {
                 return 0;
             }
 
             @Override
-            public void setLastModificationTime(byte identifier, long timestamp) {
+            public void setRemoteNodeCouldBootstrapFrom(byte remoteIdentifier, long bootstrapTimestamp) {
                 // do nothing
             }
 
@@ -547,13 +548,13 @@ final class ChannelProvider implements Closeable {
             @Override
             public void writeExternalEntry(
                     ReplicableEntry entry, @NotNull Bytes payload, @NotNull Bytes destination,
-                    int na, long bootstrapTime) {
+                    int na) {
                 destination.write(payload, payload.readPosition(), payload.readRemaining());
             }
 
             @Override
             public void readExternalEntry(
-                    @NotNull Bytes source) {
+                    @NotNull Bytes source, byte remoteNodeIdentifier) {
                 messageHandler.onMessage(source);
             }
         };

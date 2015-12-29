@@ -330,23 +330,22 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private long segmentSize() {
-        long ss = tierHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE +
+        long segmentSize = tierHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE +
                 tierFreeListOuterSize + tierEntrySpaceOuterSize;
-        if ((ss & 63L) != 0)
+        if ((segmentSize & 63L) != 0)
             throw new AssertionError();
-        return breakL1CacheAssociativityContention(ss);
+        return breakL1CacheAssociativityContention(segmentSize);
     }
 
-    private long breakL1CacheAssociativityContention(long segmentSize) {
+    protected final long breakL1CacheAssociativityContention(long sizeInBytes) {
         // Conventional alignment to break is 4096 (given Intel's 32KB 8-way L1 cache),
         // for any case break 2 times smaller alignment
         int alignmentToBreak = 2048;
         int eachNthSegmentFallIntoTheSameSet =
-                max(1, alignmentToBreak >> numberOfTrailingZeros(segmentSize));
-        if (eachNthSegmentFallIntoTheSameSet < actualSegments) {
-            segmentSize |= CACHE_LINES.toBytes(1L); // make segment size "odd" (in cache lines)
-        }
-        return segmentSize;
+                max(1, alignmentToBreak >> numberOfTrailingZeros(sizeInBytes));
+        if (eachNthSegmentFallIntoTheSameSet < actualSegments)
+            sizeInBytes |= CACHE_LINES.toBytes(1L); // make segment size "odd" (in cache lines)
+        return sizeInBytes;
     }
 
     private long computeNumberOfTiersInBulk() {

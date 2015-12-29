@@ -41,7 +41,8 @@ import static java.nio.channels.SelectionKey.OP_WRITE;
  * receive the data before it becomes available on TCP/IP. In order to not miss data, UdpReplicator
  * should be used in conjunction with the TCP Replicator.
  */
-class UdpChannelReplicator extends AbstractChannelReplicator implements Replica.ModificationNotifier, Closeable {
+class UdpChannelReplicator extends AbstractChannelReplicator
+        implements Replica.ModificationNotifier, Closeable {
 
     private static final Logger LOG =
             LoggerFactory.getLogger(UdpChannelReplicator.class.getName());

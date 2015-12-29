@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReplicateProxyMapUpdatedViaSharedMemoryTest {
 
+    @Ignore("HCOLL-417")
     @Test(timeout = 10000)
     public void testReplicateProxyMapUpdatedViaSharedMemory() throws IOException, InterruptedException {
 

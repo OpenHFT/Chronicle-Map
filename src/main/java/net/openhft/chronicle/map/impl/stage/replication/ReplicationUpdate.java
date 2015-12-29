@@ -49,7 +49,7 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
     }
 
     public void moveChange(long oldTierIndex, long oldPos, long newPos) {
-        mh.m().moveChange(oldTierIndex, oldPos, s.tierIndex, newPos, e.timestamp());
+        mh.m().moveChange(oldTierIndex, oldPos, s.tierIndex, newPos);
     }
     
     public void updateChange() {
@@ -59,7 +59,7 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
     }
 
     public void raiseChange() {
-        mh.m().raiseChange(s.tierIndex, e.pos, e.timestamp());
+        mh.m().raiseChange(s.tierIndex, e.pos);
     }
 
     public boolean changed() {

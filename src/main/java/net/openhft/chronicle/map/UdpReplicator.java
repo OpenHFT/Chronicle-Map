@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 
+import static net.openhft.chronicle.map.ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID;
+
 /**
  * The UdpReplicator attempts to read the data ( but it does not enforce or grantee delivery ),
  * typically, you should use the UdpReplicator if you have a large number of nodes, and you wish to
@@ -48,7 +50,7 @@ final class UdpReplicator extends UdpChannelReplicator
         super(replicationConfig, replica.identifier());
 
         Replica.ModificationIterator modificationIterator = replica.acquireModificationIterator(
-                ChronicleMapBuilder.UDP_REPLICATION_MODIFICATION_ITERATOR_ID);
+                UDP_REPLICATION_MODIFICATION_ITERATOR_ID);
         modificationIterator.setModificationNotifier(this);
         setReader(new UdpSocketChannelEntryReader(replicationConfig.udpBufferSize(), entryExternalizable));
 
@@ -111,7 +113,7 @@ final class UdpReplicator extends UdpChannelReplicator
             if (entryOut.readRemaining() != size)
                 return;
 
-            externalizable.readExternalEntry(entryOut);
+            externalizable.readExternalEntry(entryOut, UDP_REPLICATION_MODIFICATION_ITERATOR_ID);
         }
     }
 
