@@ -72,21 +72,37 @@ public interface ReplicableEntry {
     void updateOrigin(byte newIdentifier, long newTimestamp);
 
     /**
-     * Suppress the entry, if it was scheduled to be replicated over to remote Chronicle nodes.
+     * Suppress the entry, if it was scheduled to be replicated over to all remote Chronicle nodes.
      */
     void dropChanged();
 
     /**
-     * Propagate the entry, schedule it to be replicated over to remote Chronicle nodes.
+     * Propagate the entry, schedule it to be replicated over to all remote Chronicle nodes.
      */
     void raiseChanged();
+
+    /**
+     * Propagate the entry, schedule it to be replicated over to the remote Chronicle nodes with
+     * the specified identifier.
+     *
+     * @param remoteIdentifier the identifier of the node to replicate this entry to
+     */
+    void raiseChangedFor(byte remoteIdentifier);
+
+    /**
+     * Propagate the entry, schedule it to be replicated over to all remote Chronicle nodes, except
+     * the node with the specified identifier.
+     *
+     * @param remoteIdentifier the identifier of the node not to replicate this entry to
+     */
+    void raiseChangedForAllExcept(byte remoteIdentifier);
 
     /**
      * Check is the entry is scheduled to be replicated to the remote Chronicle nodes, to which
      * the connection is currently established.
      *
-     * @return {@code true} is the entry is "dirty" locally, i. e. should be replicated to remote
-     * Chronicle nodes, {@code false} otherwise
+     * @return {@code true} is the entry is "dirty" locally, i. e. should be replicated to any of
+     * remote Chronicle nodes, {@code false} otherwise
      */
     boolean isChanged();
 

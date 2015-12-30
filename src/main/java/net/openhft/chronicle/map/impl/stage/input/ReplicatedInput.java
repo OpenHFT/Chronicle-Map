@@ -48,10 +48,10 @@ public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext
         return dummyValue;
     }
 
-    public void processReplicatedEvent(Bytes replicatedInputBytes) {
+    public void processReplicatedEvent(byte remoteNodeIdentifier, Bytes replicatedInputBytes) {
         long timestamp = replicatedInputBytes.readStopBit();
         byte identifier = replicatedInputBytes.readByte();
-        ru.initReplicationUpdate(identifier, timestamp);
+        ru.initReplicationUpdate(identifier, timestamp, remoteNodeIdentifier);
 
         boolean isDeleted = replicatedInputBytes.readBoolean();
         long keySize = mh.m().keySizeMarshaller.readSize(replicatedInputBytes);
@@ -73,15 +73,18 @@ public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext
     }
 
     @Override
-    public void remotePut(Data<V> newValue, byte remoteIdentifier, long timestamp) {
-        ru.initReplicationUpdate(remoteIdentifier, timestamp);
+    public void remotePut(
+            Data<V> newValue,
+            byte remoteEntryIdentifier, long remoteEntryTimestamp, byte remoteNodeIdentifier) {
+        ru.initReplicationUpdate(remoteEntryIdentifier, remoteEntryTimestamp, remoteNodeIdentifier);
         s.innerUpdateLock.lock();
         mh.m().remoteOperations.put(this, newValue);
     }
 
     @Override
-    public void remoteRemove(byte remoteIdentifier, long timestamp) {
-        ru.initReplicationUpdate(remoteIdentifier, timestamp);
+    public void remoteRemove(
+            byte remoteEntryIdentifier, long remoteEntryTimestamp, byte remoteNodeIdentifier) {
+        ru.initReplicationUpdate(remoteEntryIdentifier, remoteEntryTimestamp, remoteNodeIdentifier);
         s.innerWriteLock.lock();
         mh.m().remoteOperations.remove(this);
     }

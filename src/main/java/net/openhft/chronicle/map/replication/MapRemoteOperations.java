@@ -72,54 +72,6 @@ public interface MapRemoteOperations<K, V, R> {
      * Handle remote {@code remove} call and {@code remove} replication event, i. e. when the entry
      * with the query key ({@code q.queriedKey()}) was removed on some {@code ChronicleMap} node.
      *
-     * @implNote the default implementation applies the remove event using {@link
-     * DefaultEventualConsistencyStrategy} "latest wins" strategy: <pre>{@code
-     * MapReplicableEntry<K, V> entry = q.entry();
-     * if (entry != null) {
-     *     if (DefaultEventualConsistencyStrategy.decideOnRemoteModification(entry, q) == ACCEPT) {
-     *         q.remove(entry);
-     *         ReplicableEntry replicableAbsentEntry = (ReplicableEntry) q.absentEntry();
-     *         replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-     *         // (*)
-     *         if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
-     *             // The entry with origin (replicatedIdentifier() is remote entry's origin),
-     *             // equal to the current node, should be lost on on this node (or this node is
-     *             // a different Chronicle Map instance, because the previous was lost, just using
-     *             // the same identifier), if it happens we should propagate this recovered
-     *             // event again, to other nodes
-     *             replicableAbsentEntry.raiseChanged();
-     *         } else {
-     *             // We accepted a replication event, suppress further even propagation
-     *             replicableAbsentEntry.dropChanged();
-     *         }
-     *     }
-     * } else {
-     *     MapAbsentEntry<K, V> absentEntry = q.absentEntry();
-     *     ReplicableEntry replicableAbsentEntry;
-     *     if (!(absentEntry instanceof ReplicableEntry)) {
-     *         // Note in the two following lines dummy value is inserted and removed using direct
-     *         // entry.doXxx calls, not q.xxx(entry). The intention is to avoid calling possibly
-     *         // overridden MapEntryOperations, because this is technical procedure of making
-     *         // "truly absent" entry "deleted", not actual insertion and removal.
-     *         absentEntry.doInsert(q.dummyZeroValue());
-     *         q.entry().doRemove();
-     *         replicableAbsentEntry = (ReplicableEntry) q.absentEntry();
-     *     } else {
-     *         replicableAbsentEntry = (ReplicableEntry) absentEntry;
-     *         if (DefaultEventualConsistencyStrategy.decideOnRemoteModification(
-     *                 replicableAbsentEntry, q) == DISCARD) {
-     *             return;
-     *         }
-     *     }
-     *     replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-     *     // For explanation see similar block above (*)
-     *     if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
-     *         replicableAbsentEntry.raiseChanged();
-     *     } else {
-     *         replicableAbsentEntry.dropChanged();
-     *     }
-     * }}</pre>
-     *
      * @param q the remote operation context
      */
     default void remove(MapRemoteQueryContext<K, V, R> q) {
@@ -137,6 +89,10 @@ public interface MapRemoteOperations<K, V, R> {
                     // a different Chronicle Map instance, because the previous was lost, just using
                     // the same identifier), if it happens we should propagate this recovered
                     // event again, to other nodes
+
+                    // There was an attempt to use raiseChangedForAllExcept(q.remoteNodeIdentifier),
+                    // But it fails in the case connected to what explained in the end of put()
+                    // method. TODO it's not comprehensible WHY is this so
                     replicableAbsentEntry.raiseChanged();
                 } else {
                     // We accepted a replication event, suppress further event propagation
@@ -178,37 +134,6 @@ public interface MapRemoteOperations<K, V, R> {
      * key ({@code q.queriedKey()}) was changed on some remote {@code ChronicleMap} node, with the
      * given {@code newValue}.
      *
-     * @implNote the default implementation applies the put event using {@link
-     * DefaultEventualConsistencyStrategy} "latest wins" strategy: <pre>{@code
-     * MapReplicableEntry<K, V> entry = q.entry();
-     * if (entry != null) {
-     *     if (DefaultEventualConsistencyStrategy.decideOnRemoteModification(entry, q) == ACCEPT) {
-     *         q.replaceValue(entry, newValue);
-     *         entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-     *         // For explanation see similar block in remove() method documentation (*)
-     *         if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
-     *             entry.raiseChanged();
-     *         } else {
-     *             entry.dropChanged();
-     *         }
-     *     }
-     * } else {
-     *     MapAbsentEntry<K, V> absentEntry = q.absentEntry();
-     *     if (!(absentEntry instanceof ReplicableEntry) ||
-     *             DefaultEventualConsistencyStrategy.decideOnRemoteModification(
-     *                     (ReplicableEntry) absentEntry, q) == ACCEPT) {
-     *         q.insert(absentEntry, newValue);
-     *         entry = q.entry();
-     *         entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-     *         // For explanation see similar block in remove() method documentation (*)
-     *         if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
-     *             entry.raiseChanged();
-     *         } else {
-     *             entry.dropChanged();
-     *         }
-     *     }
-     * }}</pre>
-     *
      * @param q the remote operation context
      * @param newValue the new value to put
      */
@@ -218,7 +143,7 @@ public interface MapRemoteOperations<K, V, R> {
             if (decideOnRemoteModification(entry, q) == ACCEPT) {
                 q.replaceValue(entry, newValue);
                 entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-                // For explanation see similar block in remove() method documentation (*)
+                // For explanation see similar block in remove() method (*)
                 if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
                     entry.raiseChanged();
                 } else {
@@ -234,11 +159,43 @@ public interface MapRemoteOperations<K, V, R> {
                 entry = q.entry();
                 assert entry != null;
                 entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-                // For explanation see similar block in remove() method documentation (*)
+                // For explanation see similar block in remove() method (*)
                 if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
                     entry.raiseChanged();
                 } else {
                     entry.dropChanged();
+                }
+            } else {
+                // In case of old deleted entries cleanup + network disconnections and
+                // bootstrapping, it is possible that the entry is ends being removed on remote node
+                // and present on origin node:
+                //
+                // 1. Entry is added on node 1
+                // 2. This change is replicated and arrived to node 2
+                // 3. Entry is removed on node 1, it is scheduled for replication again
+                // 4. Network issues, disconnection, bootstrapping
+                // 5. Node 2 schedules the subject entry (currently present on node 2)
+                //    for bootstrapping to the node 1
+                // 6. Node 2 sends the replication event to node 1 (in-flight)
+                // 7. The entry removal is replicated to node 2, it is accepted, finally the entry
+                //    is removed on node 2
+                // 8. The entry is cleaned up (erased completely) on node 2, because it is already
+                //    replicated to everywhere it should be, and timeout (if set very short)
+                //    is expired
+                // 9. Replication event from node 2 (with present entry) arrives to node 1, as the
+                //    entry is already erased from node 1, this change is accepted, and finally
+                //    the entry is present on node 1. The is bootstrapped again, by (*) blocks
+                // 10. The "present" entry from node 1 is discarded on node 2, because it sees that
+                //     this entry was removed later.
+                //
+                // The following block captures the condition from item 10, and sends the event
+                // again back, to give the chance to be finally removed on node 1 (in the above
+                // example).
+                if (((ReplicableEntry) absentEntry).originIdentifier() == q.remoteIdentifier() &&
+                        q.remoteIdentifier() != q.currentNodeIdentifier()) {
+                    // If this change will arrive to the origin node and accepted, it will be
+                    // propagated to all other nodes, by (*) blocks
+                    ((ReplicableEntry) absentEntry).raiseChangedFor(q.remoteIdentifier());
                 }
             }
         }

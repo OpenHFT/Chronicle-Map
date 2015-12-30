@@ -30,9 +30,25 @@ public interface Replica extends Closeable {
 
     interface QueryContext<K, V> {
 
-        void remotePut(Data<V> newValue, byte remoteIdentifier, long timestamp);
+        /**
+         *  @param newValue the value of the replicated entry
+         * @param remoteEntryIdentifier origin identifier of the replicated entry
+         * @param remoteEntryTimestamp timestamp of the replicated entry
+         * @param remoteNodeIdentifier identifier of the remote node this replication came from,
+         *                             or -1 if unknown/not applicable
+         */
+        void remotePut(
+                Data<V> newValue,
+                byte remoteEntryIdentifier, long remoteEntryTimestamp, byte remoteNodeIdentifier);
 
-        void remoteRemove(byte remoteIdentifier, long timestamp);
+        /**
+         * @param remoteEntryIdentifier origin identifier of the replicated entry
+         * @param remoteEntryTimestamp timestamp of the replicated entry
+         * @param remoteNodeIdentifier identifier of the remote node this replication came from,
+         *                             or -1 if unknown/not applicable
+         */
+        void remoteRemove(
+                byte remoteEntryIdentifier, long remoteEntryTimestamp, byte remoteNodeIdentifier);
     }
 
     /**

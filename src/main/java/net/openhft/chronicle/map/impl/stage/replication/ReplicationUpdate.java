@@ -34,14 +34,18 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
 
     @Stage("ReplicationUpdate") public byte innerRemoteIdentifier = (byte) 0;
     @Stage("ReplicationUpdate") public long innerRemoteTimestamp;
+    @Stage("ReplicationUpdate") public byte innerRemoteNodeIdentifier;
 
     public abstract boolean replicationUpdateInit();
 
-    public void initReplicationUpdate(byte identifier, long timestamp) {
+    public void initReplicationUpdate(byte identifier, long timestamp, byte remoteNodeIdentifier) {
         innerRemoteTimestamp = timestamp;
         if (identifier == 0)
             throw new IllegalStateException("identifier can't be 0");
         innerRemoteIdentifier = identifier;
+        if (remoteNodeIdentifier == 0)
+            throw new IllegalStateException("remote node identifier can't be 0");
+        innerRemoteNodeIdentifier = remoteNodeIdentifier;
     }
     
     public void dropChange() {
@@ -62,6 +66,14 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
         mh.m().raiseChange(s.tierIndex, e.pos);
     }
 
+    public void raiseChangeFor(byte remoteIdentifier) {
+        mh.m().raiseChangeFor(s.tierIndex, e.pos, remoteIdentifier);
+    }
+
+    public void raiseChangeForAllExcept(byte remoteIdentifier) {
+        mh.m().raiseChangeForAllExcept(s.tierIndex, e.pos, remoteIdentifier);
+    }
+
     public boolean changed() {
         return mh.m().isChanged(s.tierIndex, e.pos);
     }
@@ -76,6 +88,12 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
     public byte remoteIdentifier() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return innerRemoteIdentifier;
+    }
+
+    @Override
+    public byte remoteNodeIdentifier() {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        return innerRemoteNodeIdentifier;
     }
 
     @Override

@@ -334,19 +334,30 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public void raiseChange(long tierIndex, long pos) {
+        // -1 is invalid remoteIdentifier => raise change for all
+        raiseChangeForAllExcept(tierIndex, pos, (byte) -1);
+    }
+
+    public void raiseChangeFor(long tierIndex, long pos, byte remoteIdentifier) {
+        acquireModificationIterator(remoteIdentifier).raiseChange0(tierIndex, pos);
+    }
+
+    public void raiseChangeForAllExcept(long tierIndex, long pos, byte remoteIdentifier) {
         if (tierIndex <= actualSegments) {
             long segmentIndex = tierIndex - 1;
             long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
-            for (ModificationIterator modificationIterator : assignedModificationIterators) {
-                modificationIterator.raiseChangeInSegment(offsetToTierBitSet, pos);
+            for (ModificationIterator it : assignedModificationIterators) {
+                if (it.remoteIdentifier != remoteIdentifier)
+                    it.raiseChangeInSegment(offsetToTierBitSet, pos);
             }
         } else {
             long extraTierIndex = tierIndex - 1 - actualSegments;
             int bulkIndex = (int) (extraTierIndex >> log2TiersInBulk);
             long offsetToTierBitSet =
                     (extraTierIndex & (tiersInBulk - 1)) * tierModIterBitSetOuterSize;
-            for (ModificationIterator modificationIterator : assignedModificationIterators) {
-                modificationIterator.raiseChangeInTierBulk(bulkIndex, offsetToTierBitSet, pos);
+            for (ModificationIterator it : assignedModificationIterators) {
+                if (it.remoteIdentifier != remoteIdentifier)
+                    it.raiseChangeInTierBulk(bulkIndex, offsetToTierBitSet, pos);
             }
         }
     }
@@ -545,7 +556,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         } else {
             assert hunk == ENTRY_HUNK;
             try (CompiledReplicatedMapQueryContext<K, V, R> remoteOpContext = mapContext()) {
-                remoteOpContext.processReplicatedEvent(source);
+                remoteOpContext.processReplicatedEvent(remoteNodeIdentifier, source);
             }
         }
     }
@@ -858,7 +869,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                         if (bootstrapOnlyLocalEntries) {
                             if (e.originIdentifier() == localIdentifier &&
                                     e.originTimestamp() >= fromTimeStamp) {
-                                raiseChangeDuringBootstrap(c);
+                                raiseChange0(c.tierIndex(), c.pos());
                             }
                         } else {
                             // TODO currently, all entries, originating not from the current node,
@@ -867,7 +878,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                             // reconnecting vs. different Map start-up
                             if (e.originIdentifier() != localIdentifier ||
                                     e.originTimestamp() >= fromTimeStamp) {
-                                raiseChangeDuringBootstrap(c);
+                                raiseChange0(c.tierIndex(), c.pos());
                             }
                         }
                     });
@@ -875,18 +886,17 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             }
         }
 
-        private void raiseChangeDuringBootstrap(CompiledReplicatedMapIterationContext<K, V, R> c) {
-            long tierIndex = c.tierIndex();
+        void raiseChange0(long tierIndex, long pos) {
             if (tierIndex <= actualSegments) {
                 long segmentIndex = tierIndex - 1;
                 long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
-                raiseChangeInSegment(offsetToTierBitSet, c.pos());
+                raiseChangeInSegment(offsetToTierBitSet, pos);
             } else {
                 long extraTierIndex = tierIndex - 1 - actualSegments;
                 int bulkIndex = (int) (extraTierIndex >> log2TiersInBulk);
                 long offsetToTierBitSet =
                         (extraTierIndex & (tiersInBulk - 1)) * tierModIterBitSetOuterSize;
-                raiseChangeInTierBulk(bulkIndex, offsetToTierBitSet, c.pos());
+                raiseChangeInTierBulk(bulkIndex, offsetToTierBitSet, pos);
             }
         }
     }
