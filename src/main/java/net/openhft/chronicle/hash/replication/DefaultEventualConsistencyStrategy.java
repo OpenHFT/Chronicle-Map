@@ -18,7 +18,6 @@ package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.map.Replica;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
 
@@ -73,6 +72,11 @@ public final class DefaultEventualConsistencyStrategy {
         // "back" from other nodes in the system, are discarded on this new node (this is the
         // of the condition originIdentifier == currentNodeIdentifier). But those new updates
         // should win on other nodes.
+        //
+        // Another case, in which we could have remoteTimestamp == originTimestamp &&
+        // remoteIdentifier == originIdentifier, is replication of barely the same entry, if an
+        // entry is bootstrapped "back" from remote node to it's origin node. In this case the
+        // following condition also plays right (the update is discarded, due to it's redundancy).
         return originIdentifier == context.currentNodeIdentifier() ? DISCARD : ACCEPT;
     }
     

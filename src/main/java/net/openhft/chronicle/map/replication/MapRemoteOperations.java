@@ -19,10 +19,7 @@ package net.openhft.chronicle.map.replication;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.MapAbsentEntry;
-import net.openhft.chronicle.map.MapEntryOperations;
+import net.openhft.chronicle.map.*;
 
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.ACCEPT;
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.DISCARD;
@@ -83,7 +80,18 @@ public interface MapRemoteOperations<K, V, R> {
      *         q.remove(entry);
      *         ReplicableEntry replicableAbsentEntry = (ReplicableEntry) q.absentEntry();
      *         replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-     *         replicableAbsentEntry.dropChanged();
+     *         // (*)
+     *         if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+     *             // The entry with origin (replicatedIdentifier() is remote entry's origin),
+     *             // equal to the current node, should be lost on on this node (or this node is
+     *             // a different Chronicle Map instance, because the previous was lost, just using
+     *             // the same identifier), if it happens we should propagate this recovered
+     *             // event again, to other nodes
+     *             replicableAbsentEntry.raiseChanged();
+     *         } else {
+     *             // We accepted a replication event, suppress further even propagation
+     *             replicableAbsentEntry.dropChanged();
+     *         }
      *     }
      * } else {
      *     MapAbsentEntry<K, V> absentEntry = q.absentEntry();
@@ -104,7 +112,12 @@ public interface MapRemoteOperations<K, V, R> {
      *         }
      *     }
      *     replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-     *     replicableAbsentEntry.dropChanged();
+     *     // For explanation see similar block above (*)
+     *     if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+     *         replicableAbsentEntry.raiseChanged();
+     *     } else {
+     *         replicableAbsentEntry.dropChanged();
+     *     }
      * }}</pre>
      *
      * @param q the remote operation context
@@ -115,11 +128,24 @@ public interface MapRemoteOperations<K, V, R> {
             if (decideOnRemoteModification(entry, q) == ACCEPT) {
                 q.remove(entry);
                 ReplicableEntry replicableAbsentEntry = (ReplicableEntry) q.absentEntry();
+                assert replicableAbsentEntry != null;
                 replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-                replicableAbsentEntry.dropChanged();
+                // (*)
+                if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+                    // The entry with origin (replicatedIdentifier() is remote entry's origin),
+                    // equal to the current node, should be lost on on this node (or this node is
+                    // a different Chronicle Map instance, because the previous was lost, just using
+                    // the same identifier), if it happens we should propagate this recovered
+                    // event again, to other nodes
+                    replicableAbsentEntry.raiseChanged();
+                } else {
+                    // We accepted a replication event, suppress further event propagation
+                    replicableAbsentEntry.dropChanged();
+                }
             }
         } else {
             MapAbsentEntry<K, V> absentEntry = q.absentEntry();
+            assert absentEntry != null;
             ReplicableEntry replicableAbsentEntry;
             if (!(absentEntry instanceof ReplicableEntry)) {
                 // Note in the two following lines dummy value is inserted and removed using direct
@@ -127,15 +153,23 @@ public interface MapRemoteOperations<K, V, R> {
                 // overridden MapEntryOperations, because this is technical procedure of making
                 // "truly absent" entry "deleted", not actual insertion and removal.
                 absentEntry.doInsert(q.dummyZeroValue());
-                q.entry().doRemove();
+                entry = q.entry();
+                assert entry != null;
+                entry.doRemove();
                 replicableAbsentEntry = (ReplicableEntry) q.absentEntry();
+                assert replicableAbsentEntry != null;
             } else {
                 replicableAbsentEntry = (ReplicableEntry) absentEntry;
                 if (decideOnRemoteModification(replicableAbsentEntry, q) == DISCARD)
                     return;
             }
             replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-            replicableAbsentEntry.dropChanged();
+            // For explanation see similar block above (*)
+            if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+                replicableAbsentEntry.raiseChanged();
+            } else {
+                replicableAbsentEntry.dropChanged();
+            }
         }
     }
 
@@ -151,7 +185,12 @@ public interface MapRemoteOperations<K, V, R> {
      *     if (DefaultEventualConsistencyStrategy.decideOnRemoteModification(entry, q) == ACCEPT) {
      *         q.replaceValue(entry, newValue);
      *         entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-     *         entry.dropChanged();
+     *         // For explanation see similar block in remove() method documentation (*)
+     *         if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+     *             entry.raiseChanged();
+     *         } else {
+     *             entry.dropChanged();
+     *         }
      *     }
      * } else {
      *     MapAbsentEntry<K, V> absentEntry = q.absentEntry();
@@ -161,7 +200,12 @@ public interface MapRemoteOperations<K, V, R> {
      *         q.insert(absentEntry, newValue);
      *         entry = q.entry();
      *         entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-     *         entry.dropChanged();
+     *         // For explanation see similar block in remove() method documentation (*)
+     *         if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+     *             entry.raiseChanged();
+     *         } else {
+     *             entry.dropChanged();
+     *         }
      *     }
      * }}</pre>
      *
@@ -174,16 +218,28 @@ public interface MapRemoteOperations<K, V, R> {
             if (decideOnRemoteModification(entry, q) == ACCEPT) {
                 q.replaceValue(entry, newValue);
                 entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-                entry.dropChanged();
+                // For explanation see similar block in remove() method documentation (*)
+                if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+                    entry.raiseChanged();
+                } else {
+                    entry.dropChanged();
+                }
             }
         } else {
             MapAbsentEntry<K, V> absentEntry = q.absentEntry();
+            assert absentEntry != null;
             if (!(absentEntry instanceof ReplicableEntry) ||
                     decideOnRemoteModification((ReplicableEntry) absentEntry, q) == ACCEPT) {
                 q.insert(absentEntry, newValue);
                 entry = q.entry();
+                assert entry != null;
                 entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
-                entry.dropChanged();
+                // For explanation see similar block in remove() method documentation (*)
+                if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+                    entry.raiseChanged();
+                } else {
+                    entry.dropChanged();
+                }
             }
         }
     }
