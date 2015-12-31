@@ -730,10 +730,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                         // raise and bit reading:
                         // bit raised ->
                         // lock released (end of update operation) ->
-                        // lock acquired (the following acquireAndReleaseReadLock() call) ->
+                        // lock acquired (the following acquireAndReleaseUpdateLock() call) ->
                         // bits are iterated (raised bits should be visible here)
                         if (entryPos == -1) {
-                            acquireAndReleaseReadLock(segmentIndex);
+                            acquireAndReleaseUpdateLock(segmentIndex);
                         }
 
                         if ((nextEntryPos = tierModIterFrame.nextSetBit(nativeAccess(),
@@ -783,11 +783,11 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             return NOT_FOUND;
         }
 
-        private void acquireAndReleaseReadLock(int segmentIndex) {
+        private void acquireAndReleaseUpdateLock(int segmentIndex) {
             try (CompiledReplicatedMapIterationContext<K, V, R> c =
                          iterationContext()) {
                 c.initSegmentIndex(segmentIndex);
-                c.readLock().lock();
+                c.updateLock().lock();
             }
         }
 
