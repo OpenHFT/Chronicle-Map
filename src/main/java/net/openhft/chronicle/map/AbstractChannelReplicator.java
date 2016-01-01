@@ -446,7 +446,7 @@ abstract class AbstractChannelReplicator implements Closeable {
         EntryCallback(@NotNull final Replica.EntryExternalizable externalizable,
                       final int tcpBufferSize) {
             this.externalizable = externalizable;
-            out = ByteBuffer.allocateDirect(tcpBufferSize);
+            out = ByteBuffer.allocateDirect(tcpBufferSize).order(ByteOrder.nativeOrder());
             in = new ByteBufferBytes(out);
         }
 

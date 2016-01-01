@@ -1395,11 +1395,10 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         private final HeapWriteLocked heapWriteLocked = new HeapWriteLocked(this);
         long pos;
         long valueSizePos;
-        private boolean used;
-        private SegmentState next;
-
         byte identifier = 0;
         long timestamp = 0;
+        private boolean used;
+        private SegmentState next;
 
         private SegmentState(int depth) {
             if (depth > (1 << 10))
@@ -2124,7 +2123,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         segmentState.identifier, replacedIdentifier,
                         segmentState.timestamp, replacedTimeStamp, this);
             }
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 byte replacedIdentifier = (byte) 0;
                 long replacedTimeStamp = 0;
                 final K key1 = toKey.toInstance(copies, key, keySize);
@@ -2164,7 +2163,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (bytesEventListener != null) {
                 bytesEventListener.onGetFound(entry, 0L, metaDataBytes, valuePos);
             }
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 eventListener.onGetFound(toKey.toInstance(copies, key, keySize),
                         toValue.toInstance(copies, v, valueSize));
             }
@@ -2237,7 +2236,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                                 segmentState.identifier, (byte) 0,
                                 segmentState.timestamp, 0, this
                         );
-                    if (eventListener != null) {
+                    if (eventListener != null && eventListener.isActive()) {
                         final K key1 = toKey.toInstance(copies, key, keySize);
                         final V newValue = toValue.toInstance(copies, value, valueSize);
                         writeUnlock();
@@ -2271,7 +2270,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                             segmentState.identifier, replacedIdentifier,
                             segmentState.timestamp, replacedTimeStamp, this);
                 }
-                if (eventListener != null) {
+                if (eventListener != null && eventListener.isActive()) {
                     byte replacedIdentifier = 0;
                     long replacedTimeStamp = 0;
                     final K key1 = toKey.toInstance(copies, key, keySize);
@@ -2386,7 +2385,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 bytesEventListener.onPut(entry, 0L, metaDataBytes,
                         segmentState.valueSizePos, true, false, true,
                         segmentState.identifier, (byte) 0, segmentState.timestamp, 0, this);
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 final K key1 = toKey.toInstance(copies, key, keySize);
                 final V newValue = toValue.toInstance(copies, value, valueSize);
                 writeUnlock();
@@ -2429,7 +2428,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             if (!resultUnused && !entryIsDeleted)
                 prevValue = readValue.readValue(copies, entry, null, prevValueSize);
             // todo optimize -- prevValue could be read twice
-            if (eventListener != null && !entryIsDeleted) {
+            if (eventListener != null && eventListener.isActive() && !entryIsDeleted) {
                 entry.positionAddr(valueAddr);
                 prevValueInstance = null;
                 if (!putReturnsNull)
@@ -2438,7 +2437,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
             boolean doPutValue;
             boolean hasValueChanged = false;
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 entry.positionAddr(valueAddr);
                 hasValueChanged = prevValueSize != valueSize ||
                         !metaValueInterop.startsWith(valueInterop, entry, value);
@@ -2469,7 +2468,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         hasValueChanged,
                         segmentState.identifier, replacedIdentifier,
                         segmentState.timestamp, replacedTimestamp, this);
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 final K key1 = toKey.toInstance(copies, key, keySize);
                 final V newValue = toValue.toInstance(copies, value, valueSize);
 
@@ -2717,7 +2716,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 boolean booleanResult, byte replacedIdentifier, long replacedTimestamp) {
             // get the removed value, if needed
             RV removedValue = null;
-            if ((!booleanResult && !resultUnused) || eventListener != null) {
+            if ((!booleanResult && !resultUnused) || (eventListener != null && eventListener.isActive())) {
                 // todo reuse some value
                 removedValue = readValue.readValue(copies, entry, null, valueSize);
                 entry.position(entry.position() - valueSize);
@@ -2739,7 +2738,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 bytesEventListener.onRemove(entry, 0L, metaDataBytes, valueSizePos, remote,
                         segmentState.identifier, replacedIdentifier,
                         segmentState.timestamp, replacedTimestamp, this);
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 V removedValueForEventListener =
                         toValue.toInstance(copies, removedValue, valueSize);
 
@@ -2884,7 +2883,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             long newValueSize = metaValueInterop.size(valueInterop, newValue);
             boolean doPutValue;
             boolean hasValueChanged = false;
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 entry.positionAddr(valueAddr);
                 hasValueChanged = valueSize != newValueSize ||
                         !metaValueInterop.startsWith(valueInterop, entry, newValue);
@@ -2916,7 +2915,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         segmentState.timestamp, replacedTimestamp, this);
 
             }
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 final K key1 = toKey.toInstance(copies, key, keySize);
                 final V newValue1 = toValue.toInstance(copies, newValue, newValueSize);
                 final V replacedValue = toValue.toInstance(copies, prevValue, valueSize);

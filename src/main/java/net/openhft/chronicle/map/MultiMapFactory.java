@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
+import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.DirectStore;
 
@@ -82,11 +83,11 @@ enum MultiMapFactory {
         return LONGS.align(BYTES.alignAndConvert(actualChunksPerSegment, BITS), BYTES);
     }
 
-    public static ATSDirectBitSet newPositions(long capacity) {
+    public static DirectBitSet newPositions(long capacity) {
         if (!isPowerOf2(capacity))
             throw new AssertionError("capacity should be a power of 2");
         capacity = LONGS.align(capacity, BITS);
-        return new ATSDirectBitSet(DirectStore.allocateLazy(BYTES.convert(capacity, BITS)).bytes());
+        return ATSDirectBitSet.wrap(DirectStore.allocateLazy(BYTES.convert(capacity, BITS)).bytes());
     }
 
     static long multiMapCapacity(long minCapacity) {

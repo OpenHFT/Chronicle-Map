@@ -30,6 +30,7 @@ import net.openhft.chronicle.map.Replica.EntryResolver;
 import net.openhft.chronicle.map.ReplicatedChronicleMap.ModificationIterator.EntryModifiableCallback;
 import net.openhft.lang.Maths;
 import net.openhft.lang.collection.ATSDirectBitSet;
+import net.openhft.lang.collection.DirectBitSet;
 import net.openhft.lang.io.Bytes;
 import net.openhft.lang.io.CheckedBytes;
 import net.openhft.lang.io.MultiStoreBytes;
@@ -107,7 +108,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             new AtomicReferenceArray<ModificationIterator>(127 + RESERVED_MOD_ITER);
     transient Set<Closeable> closeables;
     private transient Bytes identifierUpdatedBytes;
-    private transient ATSDirectBitSet modIterSet;
+    private transient DirectBitSet modIterSet;
     private transient long startOfModificationIterators;
     private boolean bootstrapOnlyLocalEntries;
 
@@ -199,7 +200,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         Bytes modDelBytes = ms.bytes(offset, assignedModIterBitSetSizeInBytes()).zeroOut();
         offset += assignedModIterBitSetSizeInBytes();
         startOfModificationIterators = offset;
-        modIterSet = new ATSDirectBitSet(new CheckedBytes(modDelBytes));
+        modIterSet = ATSDirectBitSet.wrap(new CheckedBytes(modDelBytes));
     }
 
     /**
@@ -961,7 +962,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                                 true, localIdentifier, replacedIdentifier, timestamp,
                                 replacedTimestamp, this);
                     }
-                    if (eventListener != null) {
+                    if (eventListener != null && eventListener.isActive()) {
                         V valueInstance = toValue.toInstance(copies, v, valueSize);
                         writeUnlock();
                         // TODO unlocking is dangerous, because this method is a part of
@@ -1185,7 +1186,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                                 identifier, replacedIdentifier,
                                 timeStamp, replacedTimestamp, this);
                     }
-                    if (eventListener != null) {
+                    if (eventListener != null && eventListener.isActive()) {
                         final K key1 = toKey.toInstance(copies, key, keySize);
                         final V newValue = toValue.toInstance(copies, value, valueSize);
 
@@ -1226,7 +1227,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                             segmentState.valueSizePos, true, false, true, identifier,
                             replacedIdentifier, timeStamp, replacedTimestamp, this);
                 }
-                if (eventListener != null) {
+                if (eventListener != null && eventListener.isActive()) {
                     byte replacedIdentifier = 0;
                     long replacedTimestamp = 0;
                     final K key1 = toKey.toInstance(copies, key, keySize);
@@ -1351,7 +1352,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                         replacedIdentifier, timestamp,
                         replacedTimestamp, this);
             }
-            if (eventListener != null) {
+            if (eventListener != null && eventListener.isActive()) {
                 byte replacedIdentifier = 0;
                 long replacedTimestamp = 0;
                 final K key1 = toKey.toInstance(copies, key, keySize);
@@ -1761,13 +1762,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
      */
     class ModificationIterator implements Replica.ModificationIterator {
 
-        private final ATSDirectBitSet changes;
+        private final DirectBitSet changes;
         private final int segmentIndexShift;
         private final long posMask;
         private final EntryModifiableCallback entryModifiableCallback =
                 new EntryModifiableCallback();
         // todo get rid of this
         private final MultiStoreBytes tmpBytes = new MultiStoreBytes();
+        volatile Thread thread = null;
         private ModificationNotifier modificationNotifier;
         // when a bootstrap is send this is the time stamp that the client will bootstrap up to
         // if it is set as ZERO then the onPut() will set it to the current time, once the
@@ -1787,14 +1789,14 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
             posMask = bitsPerSegment - 1L;
-            changes = new ATSDirectBitSet(bytes);
+            changes = ATSDirectBitSet.wrap(bytes);
         }
 
         public ModificationIterator(@NotNull final Bytes bytes) {
             long bitsPerSegment = bitsPerSegmentInModIterBitSet();
             segmentIndexShift = Long.numberOfTrailingZeros(bitsPerSegment);
             posMask = bitsPerSegment - 1L;
-            changes = new ATSDirectBitSet(bytes);
+            changes = ATSDirectBitSet.wrap(bytes);
         }
 
         public void setModificationNotifier(ModificationNotifier modificationNotifier) {
@@ -1867,8 +1869,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             return changes.nextSetBit(position + 1) != NOT_FOUND ||
                     (position >= 0L && changes.nextSetBit(0L) != NOT_FOUND);
         }
-
-        volatile Thread thread = null;
 
         /**
          * @param entryCallback call this to get an entry, this class will take care of the locking

@@ -97,34 +97,6 @@ public abstract class MapEventListener<K, V> implements Serializable {
 
     }
 
-
-    private static class LoggingMapEventListener extends MapEventListener {
-        private static final long serialVersionUID = 0L;
-        public final static Logger LOGGER = LoggerFactory.getLogger(LoggingMapEventListener.class);
-        private final String prefix;
-
-        private LoggingMapEventListener(String prefix) {
-            this.prefix = prefix;
-        }
-
-        @Override
-        public void onGetFound(Object key, Object value) {
-            LOGGER.info("get {} => {}", prefix, key, value);
-        }
-
-        @Override
-        public void onPut(Object key, Object value, Object replacedValue, boolean
-                replicationEvent, boolean updateResult, boolean hasValueChanged, byte identifier,
-                          byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
-            LOGGER.info("{} put {} => {}", prefix, key, value);
-        }
-
-        @Override
-        public void onRemove(Object key, Object value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
-            LOGGER.info("{} remove {} was {}", prefix, key, value);
-        }
-    }
-
     /**
      * This method is called if the key is found in the map during {@link ChronicleMap#get get},
      * {@link ChronicleMap#getUsing getUsing} or {@link ChronicleMap#acquireUsing acquireUsing}
@@ -154,6 +126,42 @@ public abstract class MapEventListener<K, V> implements Serializable {
     public void onRemove(K key, V value, boolean replicationEvent, byte identifier,
                          byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
         // do nothing
+    }
+
+    /**
+     * This performs an early check to see if the events will be consumed or discarded.
+     *
+     * @return true unless you know the event won't be needed.
+     */
+    public boolean isActive() {
+        return true;
+    }
+
+    private static class LoggingMapEventListener extends MapEventListener {
+        public final static Logger LOGGER = LoggerFactory.getLogger(LoggingMapEventListener.class);
+        private static final long serialVersionUID = 0L;
+        private final String prefix;
+
+        private LoggingMapEventListener(String prefix) {
+            this.prefix = prefix;
+        }
+
+        @Override
+        public void onGetFound(Object key, Object value) {
+            LOGGER.info("get {} => {}", prefix, key, value);
+        }
+
+        @Override
+        public void onPut(Object key, Object value, Object replacedValue, boolean
+                replicationEvent, boolean updateResult, boolean hasValueChanged, byte identifier,
+                          byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
+            LOGGER.info("{} put {} => {}", prefix, key, value);
+        }
+
+        @Override
+        public void onRemove(Object key, Object value, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timestamp, long replacedTimeStamp) {
+            LOGGER.info("{} remove {} was {}", prefix, key, value);
+        }
     }
 }
 

@@ -60,7 +60,7 @@ class Int24Int24MultiMap implements MultiMap {
         capacityMask = capacity - 1L;
         capacityInBytes = indexToPos(capacity);
         this.bytes = multiMapBytes;
-        positions = new ATSDirectBitSet(multiMapBitSetBytes);
+        positions = ATSDirectBitSet.wrap(multiMapBitSetBytes);
     }
 
     /**
@@ -80,16 +80,6 @@ class Int24Int24MultiMap implements MultiMap {
         return (key &= MASK) != UNSET_KEY ? key : HASH_INSTEAD_OF_UNSET_KEY;
     }
 
-    private void checkValueForPut(long value) {
-        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
-        assert positions.isClear(value) : "Shouldn't put existing value";
-    }
-
-    private void checkValueForRemove(long value) {
-        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
-        assert positions.isSet(value) : "Shouldn't remove absent value";
-    }
-
     private static long key(long entry) {
         return entry >>> 24;
     }
@@ -100,6 +90,16 @@ class Int24Int24MultiMap implements MultiMap {
 
     private static long entry(long key, long value) {
         return (key << 24) | (value & MASK);
+    }
+
+    private void checkValueForPut(long value) {
+        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
+        assert positions.isClear(value) : "Shouldn't put existing value";
+    }
+
+    private void checkValueForRemove(long value) {
+        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
+        assert positions.isSet(value) : "Shouldn't remove absent value";
     }
 
     private long pos(long key) {

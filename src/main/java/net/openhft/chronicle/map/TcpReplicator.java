@@ -99,11 +99,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private long selectorTimeout;
 
 
-    enum State {
-        CONNECTED, DISCONNECTED;
-    }
-
-
     /**
      * @throws IOException on an io error.
      */
@@ -345,7 +340,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             }
         }
     }
-
 
     /**
      * check to see if its time to send a heartbeat, and send one if required
@@ -864,6 +858,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         return result;
     }
 
+    enum State {
+        CONNECTED, DISCONNECTED;
+    }
+
     static class StatelessClientParameters<K, V> {
         VanillaChronicleMap<K, ?, ?, V, ?, ?> map;
         SerializationBuilder<K> keySerializationBuilder;
@@ -896,7 +894,7 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             this.op = op;
             this.selectionKeys = selectionKeys;
             long bitSetSize = LONGS.align(BYTES.alignAndConvert(selectionKeys.length, BITS), BYTES);
-            changeOfOpWriteRequired = new ATSDirectBitSet(DirectStore.allocate(bitSetSize).bytes());
+            changeOfOpWriteRequired = ATSDirectBitSet.wrap(DirectStore.allocate(bitSetSize).bytes());
         }
 
         public void applyUpdates() {

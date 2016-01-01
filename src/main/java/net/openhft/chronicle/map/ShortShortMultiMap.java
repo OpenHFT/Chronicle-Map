@@ -42,7 +42,7 @@ class ShortShortMultiMap implements MultiMap {
     private final int capacityMask;
     private final int capacityMask2;
     private final Bytes bytes;
-    private ATSDirectBitSet positions;
+    private DirectBitSet positions;
 
     public ShortShortMultiMap(long minCapacity) {
         assert minCapacity <= MAX_CAPACITY;
@@ -64,7 +64,7 @@ class ShortShortMultiMap implements MultiMap {
         capacityMask = (int) (capacity - 1L);
         capacityMask2 = (int) (capacityMask * ENTRY_SIZE);
         this.bytes = multiMapBytes;
-        positions = new ATSDirectBitSet(multiMapBitSetBytes);
+        positions = ATSDirectBitSet.wrap(multiMapBitSetBytes);
     }
 
     /**
@@ -76,30 +76,8 @@ class ShortShortMultiMap implements MultiMap {
         return multiMapCapacity(minCapacity) * ENTRY_SIZE;
     }
 
-    private void checkValueForPut(long value) {
-        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
-        assert positions.isClear(value) : "Shouldn't put existing value";
-    }
-
-    private void checkValueForRemove(long value) {
-        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
-        assert positions.isSet(value) : "Shouldn't remove absent value";
-    }
-
     private static long maskUnsetKey(long key) {
         return (key &= MASK) != UNSET_KEY ? key : HASH_INSTEAD_OF_UNSET_KEY;
-    }
-
-    private int step(int pos) {
-        return (pos + ENTRY_SIZE) & capacityMask2;
-    }
-
-    private long stepBack(long pos) {
-        return (pos - ENTRY_SIZE) & capacityMask2;
-    }
-
-    private int pos(long key) {
-        return ((int) key & capacityMask) << ENTRY_SIZE_SHIFT;
     }
 
     private static int entry(long key, long value) {
@@ -112,6 +90,28 @@ class ShortShortMultiMap implements MultiMap {
 
     private static long value(int entry) {
         return (long) (entry & 0xFFFF);
+    }
+
+    private void checkValueForPut(long value) {
+        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
+        assert positions.isClear(value) : "Shouldn't put existing value";
+    }
+
+    private void checkValueForRemove(long value) {
+        assert (value & ~MASK) == 0L : "Value out of range, was " + value;
+        assert positions.isSet(value) : "Shouldn't remove absent value";
+    }
+
+    private int step(int pos) {
+        return (pos + ENTRY_SIZE) & capacityMask2;
+    }
+
+    private long stepBack(long pos) {
+        return (pos - ENTRY_SIZE) & capacityMask2;
+    }
+
+    private int pos(long key) {
+        return ((int) key & capacityMask) << ENTRY_SIZE_SHIFT;
     }
 
     @Override
