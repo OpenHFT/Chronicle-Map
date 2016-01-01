@@ -28,5 +28,6 @@ interface ReadValue<RV> {
      * Updates the entry position by valueSize.
      */
     RV readValue(@NotNull ThreadLocalCopies copies, Bytes entry, RV usingValue, long valueSize);
+
     RV readNull();
 }

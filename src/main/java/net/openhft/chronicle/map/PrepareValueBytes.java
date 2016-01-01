@@ -33,14 +33,13 @@ import java.io.Serializable;
  *     .prepareDefaultValueBytes((bytes, k) -> bytes.writeLong(1L))
  *     ...
  *     .create();}</pre>
- *
+ * <p>
  * <p>Although the value type is not used in the API, {@link PrepareValueBytes} is not intended
  * to be generic by value type, because strategy should know the value layout and
  * {@linkplain Byteable#maxSize() how much bytes} does it take in memory.
  *
  * @param <K> the key type of {@link ChronicleMap}, on which {@code acquireUsing()} is queried
  * @param <V> the value type of {@link ChronicleMap}, on which {@code acquireUsing()} is queried
-
  */
 public interface PrepareValueBytes<K, V> extends Serializable {
 
@@ -51,11 +50,11 @@ public interface PrepareValueBytes<K, V> extends Serializable {
      * outside of this range shouldn't be altered.
      *
      * @param bytes the bytes, positioned at the first value byte. Bytes' {@linkplain Bytes#limit(
-     * long) limit} and {@linkplain Bytes#remaining()} are not specified, but it is guaranteed that
-     * the latter is not less than {@linkplain Byteable#maxSize() the value size}.
-     * @param key the key which is absent in the {@link ChronicleMap} during {@link
-     * ChronicleMap#acquireUsing(Object, Object) acquireUsing()} call and value bytes are prepared
-     * for
+     *long) limit} and {@linkplain Bytes#remaining()} are not specified, but it is guaranteed that
+     *              the latter is not less than {@linkplain Byteable#maxSize() the value size}.
+     * @param key   the key which is absent in the {@link ChronicleMap} during {@link
+     *              ChronicleMap#acquireUsing(Object, Object) acquireUsing()} call and value bytes are prepared
+     *              for
      */
     void prepare(Bytes bytes, K key);
 }

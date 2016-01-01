@@ -25,22 +25,25 @@ import java.nio.ByteBuffer;
  */
 public final class Accesses {
 
+    private Accesses() {
+    }
+
     /**
      * Returns the {@code Access} delegating {@code getXXX(input, offset)} methods to {@code
      * sun.misc.Unsafe.getXXX(input, offset)}.
-     *
+     * <p>
      * <p>Usage example: <pre>{@code
      * class Pair {
      *     long first, second;
-     *
+     * <p>
      *     static final long pairDataOffset =
      *         theUnsafe.objectFieldOffset(Pair.class.getDeclaredField("first"));
-     *
+     * <p>
      *     static long hashPair(Pair pair, LongHashFunction hashFunction) {
      *         return hashFunction.hash(pair, Accesses.unsafe(), pairDataOffset, 16L);
      *     }
      * }}</pre>
-     *
+     * <p>
      * <p>{@code null} is a valid input, on accepting {@code null} {@code Unsafe} just interprets
      * the given offset as a wild memory address.
      *
@@ -63,6 +66,4 @@ public final class Accesses {
     public static Access<Bytes> toBytes() {
         return BytesAccess.INSTANCE;
     }
-
-    private Accesses() {}
 }

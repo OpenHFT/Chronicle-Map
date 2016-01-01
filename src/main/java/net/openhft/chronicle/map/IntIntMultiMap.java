@@ -213,7 +213,7 @@ class IntIntMultiMap implements MultiMap {
     @Override
     public long nextPos(SearchState searchState) {
         long pos = searchState.searchPos;
-        for(long count = capacity; count > 0; count--) {
+        for (long count = capacity; count > 0; count--) {
             long entry = bytes.readLong(pos);
             if (entry == UNSET_ENTRY) {
                 searchState.searchPos = pos;

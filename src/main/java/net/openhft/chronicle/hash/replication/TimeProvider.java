@@ -26,7 +26,7 @@ import java.io.Serializable;
  * TimeProvider was aims to possibly later provide an optimization to
  * {@link System#currentTimeMillis()} on every call to replicated {@link ChronicleMap}
  * or {@link ChronicleSet}.
- *
+ * <p>
  * Subclasses should be immutable, because {@link ChronicleHashBuilder} doesn't make defensive
  * copies.
  *

@@ -26,18 +26,18 @@ import java.io.Serializable;
  * Deserializer (object from {@link Bytes}, mirroring the {@link BytesWriter}, i. e. assuming the
  * length of the serialized form isn't written in the beginning of the serialized form itself,
  * but managed by {@link ChronicleHash} implementation and passed to the reading methods.
- *
+ * <p>
  * <p>Implementation example:<pre><code>
  * class LongPair { long first, second; }
- * 
+ * <p>
  * enum LongPairArrayReader implements BytesReader&lt;LongPair[]&gt; {
  *     INSTANCE;
- *
+ * <p>
  *     &#064;Override
  *     public LongPair[] read(Bytes bytes, long size) {
  *         return read(bytes, size, null);
  *     }
- *
+ * <p>
  *     &#064;Override
  *     public LongPair[] read(Bytes bytes, long size, LongPair[] toReuse) {
  *         if (size &gt; Integer.MAX_VALUE * 16L)
@@ -72,13 +72,13 @@ public interface BytesReader<E> extends Serializable {
     /**
      * Reads and returns the object from {@code [position(), position() + size]} bytes of the given
      * {@link Bytes}.
-     *
+     * <p>
      * <p>Implementation of this method should increment the {@code bytes}' position by the given
      * size, i. e. "consume" the bytes of the deserialized object. It must not alter the
      * {@code bytes}' {@link Bytes#limit() limit} and contents.
      *
      * @param bytes the {@code Bytes} to read the object from
-     * @param size the size of the serialized form of the returned object
+     * @param size  the size of the serialized form of the returned object
      * @return the object read from the bytes
      * @see BytesWriter#write(Bytes, Object)
      * @see #read(Bytes, long, Object)
@@ -93,8 +93,8 @@ public interface BytesReader<E> extends Serializable {
      * be {@code null}, in this case this method should behave exactly the same as
      * {@link #read(Bytes, long)} method does.
      *
-     * @param bytes the {@code Bytes} to read the object from
-     * @param size the size of the serialized form of the returned object
+     * @param bytes   the {@code Bytes} to read the object from
+     * @param size    the size of the serialized form of the returned object
      * @param toReuse the object to read the deserialized data into
      * @return the object read from the bytes, either reused or newly created
      * @see #read(Bytes, long)

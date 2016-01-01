@@ -16,6 +16,6 @@
 
 package net.openhft.chronicle.set;
 
-  enum DummyValue {
+enum DummyValue {
     DUMMY_VALUE
 }

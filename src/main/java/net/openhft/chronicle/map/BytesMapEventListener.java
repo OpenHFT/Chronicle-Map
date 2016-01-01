@@ -33,7 +33,7 @@ import java.io.Serializable;
  * ChronicleMapBuilder#keySizeMarshaller(SizeMarshaller)}), then (optionally) alignment (see {@link
  * ChronicleMapBuilder#entryAndValueAlignment(Alignment)} ), followed by the serialized value
  * itself.</li> </ul>
- *
+ * <p>
  * <p>There are helper methods {@link ChronicleMap#readKey(Bytes, long)} and {@link
  * ChronicleMap#readValue(Bytes, long)} that help to deal with this.
  */

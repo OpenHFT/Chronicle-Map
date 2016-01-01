@@ -26,18 +26,18 @@ import java.io.Serializable;
 /**
  * Contains methods which are called when {@link ChronicleMap} key events occur. Typical use cases:
  * <ul> <li>Map data backup / replication.</li> <li>Logging, monitoring, debugging.</li> </ul>
- *
+ * <p>
  * <p>This is an adapter class - all methods have default implementations as no-ops. Extend this
  * class and override only methods corresponding the events you are interested in.
- *
+ * <p>
  * <p>To configure {@code MapEventListener} for {@code ChronicleMap}, use {@link
  * ChronicleMapBuilder#eventListener(MapEventListener)} method.
- *
+ * <p>
  * <p>See {@link #logging(String)} implementation.
- *
+ * <p>
  * <p>All these calls are synchronous while a {@code ChronicleMap} lock is held so make them as
  * quick as possible.
- *
+ * <p>
  * <p>The {@code entry} passed to the methods is {@code Bytes} instance positioned at meta data
  * area. See {@link ChronicleHashBuilder#metaDataBytes(int)} for more information.
  *
@@ -70,7 +70,7 @@ public abstract class MapEventListener<K, V> implements Serializable {
      * ChronicleMapBuilder#defaultValue(Object) default} for the map or obtained during {@link
      * ChronicleMap#acquireUsing acquireUsing} call is put for the key, this method is called as
      * well.
-     *
+     * <p>
      * <p>This method is called when put is already happened.
      *
      * @param key                the key the given value is put for

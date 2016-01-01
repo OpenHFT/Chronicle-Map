@@ -20,9 +20,10 @@ import org.jetbrains.annotations.NotNull;
 
 final class Asserts {
 
+    private Asserts() {
+    }
+
     public static void assertNotNull(@NotNull Object obj) {
         assert obj != null;
     }
-
-    private Asserts() {}
 }

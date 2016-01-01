@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
  * another host
  *
  * @param <H> the type of {@code ChronicleHash} accessed remotely, {@code ChronicleMap} or
- *           {@code ChronicleSet}
+ *            {@code ChronicleSet}
  */
 public interface ChronicleHashStatelessClientBuilder<
         C extends ChronicleHashStatelessClientBuilder<C, H>, H extends ChronicleHash> {

@@ -46,12 +46,12 @@ import java.util.concurrent.TimeUnit;
  * This interface defines the meaning of configurations, common to {@link
  * ChronicleMapBuilder} and {@link ChronicleSetBuilder}, i.
  * e. <i>Chronicle hash container</i> configurations.
- *
+ * <p>
  * <p>{@code ChronicleHashBuilder} is mutable. Configuration methods mutate the builder and return
  * <i>the builder itself</i> back to support chaining pattern, rather than the builder copies with
  * the corresponding configuration changed. To make an independent configuration, {@linkplain
  * #clone} the builder.
- *
+ * <p>
  * <p><a name="low-level-config"></a>There are some "low-level" configurations in this builder,
  * that require deep understanding of the Chronicle implementation design to be properly used.
  * Know what you do. These configurations are picked up strictly as-is, without extra round-ups,
@@ -88,21 +88,21 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * Configures the average number of bytes, taken by serialized form of keys, put into hash
      * containers, created by this builder. If key size is always the same, call {@link
      * #constantKeySizeBySample(Object)} method instead of this one.
-     *
+     * <p>
      * <p>{@code ChronicleHashBuilder} implementation heuristically chooses
      * {@linkplain #actualChunkSize(int) the actual chunk size} based on this configuration, that,
      * however, might result to quite high internal fragmentation, i. e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average key size
      * configuration, which is anyway needed.
-     *
+     * <p>
      * <p>If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
      * statically, it is automatically accounted and shouldn't be specified by user.
      *
      * @param averageKeySize the average number of bytes, taken by serialized form of keys
      * @return this builder back
-     * @throws IllegalStateException if key size is known statically and shouldn't be configured
-     *         by user
+     * @throws IllegalStateException    if key size is known statically and shouldn't be configured
+     *                                  by user
      * @throws IllegalArgumentException if the given {@code keySize} is non-positive
      * @see #constantKeySizeBySample(Object)
      * @see #actualChunkSize(int)
@@ -113,10 +113,10 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * Configures the constant number of bytes, taken by serialized form of keys, put into hash
      * containers, created by this builder. This is done by providing the {@code sampleKey}, all
      * keys should take the same number of bytes in serialized form, as this sample object.
-     *
+     * <p>
      * <p>If keys are of boxed primitive type or {@link Byteable} subclass, i. e. if key size is
      * known statically, it is automatically accounted and this method shouldn't be called.
-     *
+     * <p>
      * <p>If key size varies, method {@link #averageKeySize(double)} should be called instead of
      * this one.
      *
@@ -129,7 +129,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
     /**
      * Configures the size in bytes of allocation unit of hash container instances, created by this
      * builder.
-     *
+     * <p>
      * <p>{@link ChronicleMap} and {@link ChronicleSet} store their data off-heap, so it is required
      * to serialize key (and values, in {@code ChronicleMap} case) (unless they are direct {@link
      * Byteable} instances). Serialized key bytes (+ serialized value bytes, in {@code ChronicleMap}
@@ -139,16 +139,16 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * could only allocate 100, 200, 300... bytes for an entry. If say 150 bytes of entry space are
      * required by the entry, 200 bytes will be allocated, 150 used and 50 wasted. This is called
      * internal fragmentation.
-     *
+     * <p>
      * <p>To minimize memory overuse and improve speed, you should pay decent attention to this
      * configuration. Alternatively, you can just trust the heuristics and doesn't configure
      * the chunk size.
-     *
+     * <p>
      * <p>Specify chunk size so that most entries would take from 5 to several dozens of chunks.
      * However, remember that operations with entries that span several chunks are a bit slower,
      * than with entries which take a single chunk. Particularly avoid entries to take more than
      * 64 chunks.
-     *
+     * <p>
      * <p>Example: if values in your {@code ChronicleMap} are adjacency lists of some social graph,
      * where nodes are represented as {@code long} ids, and adjacency lists are serialized in
      * efficient manner, for example as {@code long[]} arrays. Typical number of connections is
@@ -160,7 +160,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      *     .averageValueSize(150 * 8) // 150 is average adjacency list size
      *     .actualChunkSize(30 * 8) // average 5-6 chunks per entry
      *     .create();}</pre>
-     *
+     * <p>
      * <p>This is a <a href="#low-level-config">low-level configuration</a>. The configured number
      * of bytes is strictly used as-is, without anything like round-up to the multiple of 8 or
      * 16, or any other adjustment.
@@ -185,7 +185,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * @param maxChunksPerEntry how many chunks a single entry could span at most
      * @return this builder back
      * @throws IllegalArgumentException if the given {@code maxChunksPerEntry} is lesser than 1
-     *         or greater than 64
+     *                                  or greater than 64
      * @see #actualChunkSize(int)
      */
     B maxChunksPerEntry(int maxChunksPerEntry);
@@ -195,13 +195,13 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * created by this builder. If you try to insert more data, {@link IllegalStateException}
      * <i>might</i> be thrown, because currently {@link ChronicleMap} and {@link ChronicleSet}
      * don't support resizing.
-     *
+     * <p>
      * <p><b>You shouldn't put additional margin over the actual maximum number of entries.</b>
      * This bad practice was popularized by {@link HashMap#HashMap(int)} and {@link
      * HashSet#HashSet(int)} constructors, which accept <i>capacity</i>, that should be multiplied
      * by <i>load factor</i> to obtain the actual maximum expected number of entries.
      * {@code ChronicleMap} and {@code ChronicleSet} don't have a notion of load factor.
-     *
+     * <p>
      * <p>Default maximum entries is 2^20 (~ 1 million).
      *
      * @param entries maximum size of the maps or sets, created by this builder
@@ -214,11 +214,11 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * of the hash containers, created by this builder. Configuring both the actual number of
      * entries per segment and {@linkplain #actualSegments(int) actual segments} replaces a single
      * {@link #entries(long)} configuration.
-     *
+     * <p>
      * <p>This is a <a href="#low-level-config">low-level configuration</a>.
      *
      * @param entriesPerSegment the actual maximum number entries per segment in the
-     *                                hash containers, created by this builder
+     *                          hash containers, created by this builder
      * @return this builder back
      * @see #entries(long)
      * @see #actualSegments(int)
@@ -242,7 +242,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * Configures the actual number of segments in the hash containers, created by this builder.
      * With {@linkplain #entriesPerSegment(long) actual number of segments}, this
      * configuration replaces a single {@link #entries(long)} call.
-     *
+     * <p>
      * <p>This is a <a href="#low-level-config">low-level configuration</a>. The configured number
      * is used as-is, without anything like round-up to the closest power of 2.
      *
@@ -262,7 +262,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * until thread is interrupted. However, you can configure {@linkplain
      * #errorListener(ChronicleHashErrorListener) error listener} to throw an exception on the first
      * (or n-th) lock acquisition fail.
-     *
+     * <p>
      * <p>Default lock time out is 2 seconds.
      *
      * @param lockTimeOut new lock timeout for segments of containers created by this builder, in
@@ -279,7 +279,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
     /**
      * Configures a time provider, used by hash containers, created by this builder, for needs of
      * replication consensus protocol (conflicting data updates resolution).
-     *
+     * <p>
      * <p>Default time provider is {@link TimeProvider#SYSTEM}.
      *
      * @param timeProvider a new time provider for replication needs
@@ -293,7 +293,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * BytesMarshallableSerializer}, which is a default {@link #objectSerializer ObjectSerializer},
      * to serialize/deserialize data to/from off-heap memory in hash containers, created by this
      * builder.
-     *
+     * <p>
      * <p>Default {@code BytesMarshallerFactory} is an instance of {@link
      * VanillaBytesMarshallerFactory}. This is a convenience configuration method, it has no effect
      * on the resulting hash containers, if {@linkplain #keyMarshaller(BytesMarshaller) custom data
@@ -315,7 +315,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * {@code Object} is specified as the data class), or nullable data, and if custom marshaller is
      * not {@linkplain #keyMarshaller(BytesMarshaller) configured}, in hash containers, created by
      * this builder. Please read {@link ObjectSerializer} docs for more info and available options.
-     *
+     * <p>
      * <p>Default serializer is {@link BytesMarshallableSerializer}, configured with the specified
      * or default {@link #bytesMarshallerFactory(BytesMarshallerFactory) BytesMarshallerFactory}.
      *
@@ -343,10 +343,10 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * Configures the marshallers, used to serialize/deserialize keys to/from off-heap memory in
      * hash containers, created by this builder. See <a href="https://github.com/OpenHFT/Chronicle-Map#serialization">the
      * section about serialization in ChronicleMap manual</a> for more information.
-     *
+     * <p>
      * <p>Configuring marshalling this way results to a little bit more compact in-memory layout of
      * the map, comparing to a single interface configuration: {@link #keyMarshaller(BytesMarshaller)}.
-     *
+     * <p>
      * <p>Passing {@link BytesInterop} (which is a subinterface of {@link BytesWriter}) as the first
      * argument is supported, and even more advantageous from performance perspective.
      *
@@ -360,7 +360,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
     /**
      * Configures the marshaller used to serialize actual key sizes to off-heap memory in hash
      * containers, created by this builder.
-     *
+     * <p>
      * <p>Default key size marshaller is so-called {@linkplain SizeMarshallers#stopBit() stop bit
      * encoding marshalling}. If {@linkplain #constantKeySizeBySample(Object) constant key size} is
      * configured, or defaulted if the key type is always constant and {@code ChronicleHashBuilder}
@@ -381,7 +381,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * eligible for data value generation, or {@linkplain #keyMarshallers(BytesWriter, BytesReader)
      * configured custom key reader} implements {@link DeserializationFactoryConfigurableBytesReader
      * }, in maps, created by this builder.
-     *
+     * <p>
      * <p>Default key deserialization factory is {@link NewInstanceObjectFactory}, which creates a
      * new key instance using {@link Class#newInstance()} default constructor. You could provide an
      * {@link AllocateInstanceObjectFactory}, which uses {@code Unsafe.allocateInstance(Class)} (you
@@ -403,7 +403,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * to be immutable, as in ordinary {@link Map} or {@link Set} implementations, because they are
      * serialized off-heap. However, {@code ChronicleMap} and {@code ChronicleSet} implementations
      * can benefit from the knowledge that keys are not mutated between queries.
-     *
+     * <p>
      * <p>By default, {@code ChronicleHashBuilder}s detects immutability automatically only for very
      * few standard JDK types (for example, for {@link String}), it is not recommended to rely on
      * {@code ChronicleHashBuilder} to be smart enough about this.
@@ -416,9 +416,9 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * Configures replication of the hash containers, created by this builder. See <a
      * href="https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication"> the section about
      * replication in ChronicleMap manual</a> for more information.
-     *
+     * <p>
      * <p>By default, hash containers, created by this builder doesn't replicate their data.
-     *
+     * <p>
      * <p>This method call overrides all previous replication configurations of this builder, made
      * either by this method or {@link #replication(byte, TcpTransportAndNetworkConfig)} shortcut
      * method.
@@ -451,7 +451,7 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * On {@link ChronicleHash#close()} called on the returned container, or after the container
      * object is collected during GC, or on JVM shutdown the off-heap memory used by the returned
      * container is freed.
-     *
+     * <p>
      * <p>This method is a shortcut for {@code instance().create()}.
      *
      * @return a new off-heap hash container
@@ -464,17 +464,17 @@ public interface ChronicleHashBuilder<K, C extends ChronicleHash,
      * Opens a hash container residing the specified file, or creates a new one if the file not yet
      * exists and maps its off-heap memory to the file. All changes to the map are persisted to disk
      * (this is an operating system guarantee) independently from JVM process lifecycle.
-     *
+     * <p>
      * <p>Multiple containers could give access to the same data simultaneously, either inside a
      * single JVM or across processes. Access is synchronized correctly across all instances, i. e.
      * hash container mapping the data from the first JVM isn't able to modify the data,
      * concurrently accessed from the second JVM by another hash container instance, mapping the
      * same data.
-     *
+     * <p>
      * <p>On container's {@link ChronicleHash#close() close()} the data isn't removed, it remains on
      * disk and available to be opened again (given the same file name) or during different JVM
      * run.
-     *
+     * <p>
      * <p>This method is shortcut for {@code instance().persistedTo(file).create()}.
      *
      * @param file the file with existing hash container or a desired location of a new off-heap

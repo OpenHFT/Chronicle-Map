@@ -33,15 +33,6 @@ public abstract class DataValueMetaBytesInterop<E>
         super(buffer);
     }
 
-    void init(BytesWriter<E> writer, E e, long size) {
-        Bytes buffer = this.buffer.obtain(size, true);
-        writer.write(buffer, e);
-        buffer.flip();
-        assert buffer.remaining() == size;
-        this.size = size;
-        hash = 0L;
-    }
-
     public static <E> MetaBytesInterop<E, BytesWriter<E>> forIdentity(Serializable bufferIdentity) {
         return new DirectBytesBuffer(bufferIdentity).forDataValueWriter;
     }
@@ -51,8 +42,17 @@ public abstract class DataValueMetaBytesInterop<E>
         return new InteropProvider<>(eClass);
     }
 
+    void init(BytesWriter<E> writer, E e, long size) {
+        Bytes buffer = this.buffer.obtain(size, true);
+        writer.write(buffer, e);
+        buffer.flip();
+        assert buffer.remaining() == size;
+        this.size = size;
+        hash = 0L;
+    }
+
     private static class InteropProvider<E> extends BasicCopyingMetaBytesInteropProvider<
-                E, BytesWriter<E>, MetaBytesInterop<E, BytesWriter<E>>> {
+            E, BytesWriter<E>, MetaBytesInterop<E, BytesWriter<E>>> {
         private static final long serialVersionUID = 0L;
 
         private final Class<E> eClass;
@@ -84,7 +84,7 @@ public abstract class DataValueMetaBytesInterop<E>
             if (e instanceof Byteable)
                 return metaByteableInterop;
             DirectBytesBuffer.ForDataValueWriter forDataValueWriter =
-                    provider.get(copies, ((DataValueMetaBytesInterop)originalMetaWriter).buffer)
+                    provider.get(copies, ((DataValueMetaBytesInterop) originalMetaWriter).buffer)
                             .forDataValueWriter;
             forDataValueWriter.init(writer, e, size);
             return forDataValueWriter;

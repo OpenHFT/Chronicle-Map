@@ -34,12 +34,12 @@ public interface ChronicleHashInstanceBuilder<C extends ChronicleHash> {
      * "channels". See
      * <a href="https://github.com/OpenHFT/Chronicle-Map#channels-and-channelprovider">the
      * section about Channels and ChannelProvider in ChronicleMap manual</a> for more information.
-     *
+     * <p>
      * <p>Another way to establish replication is {@link #replicated(SingleChronicleHashReplication)} method
      * or it's shortcut: {@link #replicated(byte, TcpTransportAndNetworkConfig)}.
-     *
+     * <p>
      * <p>By default, hash containers, created by this builder doesn't replicate their data.
-     *
+     * <p>
      * <p>This method call overrides all previous replication configurations of this builder, made
      * either by means of this method, {@link #replicated(SingleChronicleHashReplication)}
      * or {@link #replicated(byte, TcpTransportAndNetworkConfig)} method calls.

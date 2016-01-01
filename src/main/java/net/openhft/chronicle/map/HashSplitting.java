@@ -23,18 +23,8 @@ import static net.openhft.lang.Maths.isPowerOf2;
 interface HashSplitting extends Serializable {
 
     int segmentIndex(long hash);
-    long segmentHash(long hash);
 
-    class Splitting {
-        static HashSplitting forSegments(int segments) {
-            assert segments > 0;
-            if (segments == 1)
-                return ForSingleSegment.INSTANCE;
-            if (isPowerOf2(segments))
-                return new ForPowerOf2Segments(segments);
-            return new ForNonPowerOf2Segments(segments);
-        }
-    }
+    long segmentHash(long hash);
 
     enum ForSingleSegment implements HashSplitting {
         INSTANCE;
@@ -47,6 +37,17 @@ interface HashSplitting extends Serializable {
         @Override
         public long segmentHash(long hash) {
             return hash;
+        }
+    }
+
+    class Splitting {
+        static HashSplitting forSegments(int segments) {
+            assert segments > 0;
+            if (segments == 1)
+                return ForSingleSegment.INSTANCE;
+            if (isPowerOf2(segments))
+                return new ForPowerOf2Segments(segments);
+            return new ForNonPowerOf2Segments(segments);
         }
     }
 

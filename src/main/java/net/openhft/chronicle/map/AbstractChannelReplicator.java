@@ -510,7 +510,7 @@ abstract class AbstractChannelReplicator implements Closeable {
 
                 start = in.position();
 
-                externalizable.writeExternalEntry(entry, in, chronicleId,bootstrapTime);
+                externalizable.writeExternalEntry(entry, in, chronicleId, bootstrapTime);
 
                 if (in.position() == start) {
                     in.position(pos0);

@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
  * be used as a classic builder and/or factory.
- *
+ * <p>
  * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link
  * ChronicleHashBuilder} interface documentation.
  *
@@ -101,21 +101,21 @@ public final class ChronicleSetBuilder<E>
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p>Example: if keys in your set(s) are English words in {@link String} form, average English
      * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleSet<String> uniqueWords = ChronicleSetBuilder.of(String.class)
      *     .entries(50000)
      *     .averageKeySize(6)
      *     .create();}</pre>
-     *
+     * <p>
      * <p>(Note that 6 is chosen as average key size in bytes despite strings in Java are UTF-16
      * encoded (and each character takes 2 bytes on-heap), because default off-heap {@link String}
      * encoding is UTF-8 in {@code ChronicleSet}.)
      *
+     * @param averageKeySize
      * @see #constantKeySizeBySample(Object)
      * @see #actualChunkSize(int)
-     * @param averageKeySize
      */
     @Override
     public ChronicleSetBuilder<E> averageKeySize(double averageKeySize) {
@@ -125,7 +125,7 @@ public final class ChronicleSetBuilder<E>
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Set<byte[]> gitCommitsOfInterest = ChronicleSetBuilder.of(byte[].class)
      *     .constantKeySizeBySample(new byte[20])
@@ -210,7 +210,7 @@ public final class ChronicleSetBuilder<E>
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p> Example: <pre>{@code Set<Key> set = ChronicleSetBuilder.of(Key.class)
      *     .entries(1_000_000)
      *     .keySize(100)
@@ -245,7 +245,7 @@ public final class ChronicleSetBuilder<E>
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p>Actually this is just a convenience method supporting key marshaller configurations, made
      * initially during {@link #of(Class)} call. Because if you {@linkplain
      * #keyMarshaller(BytesMarshaller) configure} own custom key marshaller, this method doesn't

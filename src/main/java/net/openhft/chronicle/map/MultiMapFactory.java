@@ -27,7 +27,7 @@ import static net.openhft.lang.MemoryUnit.*;
 
 /**
  * Created by peter on 09/11/14.
- *
+ * <p>
  * In future we might support I32 -> I16 or similar.
  */
 enum MultiMapFactory {
@@ -94,7 +94,7 @@ enum MultiMapFactory {
         if (minCapacity < 0L)
             throw new IllegalArgumentException("minCapacity should be positive");
         long capacity = Maths.nextPower2(minCapacity, 16L);
-        if (((double) minCapacity) / capacity > 2./3.) {
+        if (((double) minCapacity) / capacity > 2. / 3.) {
             // multi map shouldn't be too dense
             capacity <<= 1L;
         }

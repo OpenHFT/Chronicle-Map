@@ -20,7 +20,7 @@ import java.io.Serializable;
 
 /**
  * Represents a function that accepts one argument and produces a result.
- *
+ * <p>
  * <p>This is a <a href="package-summary.html">functional interface</a> whose functional method is {@link
  * #apply(Object)}.
  *

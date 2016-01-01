@@ -18,7 +18,8 @@ package net.openhft.chronicle.hash.hashing;
 
 final class Primitives {
 
-    private Primitives() {}
+    private Primitives() {
+    }
 
     static long unsignedInt(int i) {
         return i & 0xFFFFFFFFL;

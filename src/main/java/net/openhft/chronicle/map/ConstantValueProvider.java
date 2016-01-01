@@ -24,10 +24,9 @@ import java.nio.ByteBuffer;
 
 final class ConstantValueProvider<K, V> implements DefaultValueProvider<K, V> {
     private static final long serialVersionUID = 0L;
-
-    private transient V value;
     private final int size;
     private final byte[] serializedValueBytes;
+    private transient V value;
 
     <W> ConstantValueProvider(V value, MetaBytesWriter<V, W> metaValueWriter, W valueWriter) {
         this.value = value;

@@ -33,7 +33,7 @@ import java.util.Arrays;
  * buffers, worker threads for that, considerably reducing resources usage and increasing cumulative
  * (for all replicated containers) replication throughput. See <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
  * the corresponding section in ChronicleMap manual</a> for more information.
- *
+ * <p>
  * <p>Create instances of this class using this pattern: <pre>{@code
  * ReplicationHub hub = ReplicationHub.builder()
  *     .tcpTransportAndNetwork(tcpConfig)
@@ -131,7 +131,7 @@ public final class ReplicationHub extends AbstractReplication {
         /**
          * Configures the maximum number of channels could be {@linkplain #createChannel(int)}
          * created for {@code ReplicationHub}s, created by this builder.
-         *
+         * <p>
          * <p>Default value is {@code 128}.
          *
          * @param maxNumberOfChannels {@link ReplicationHub#maxNumberOfChannels()} of {@link

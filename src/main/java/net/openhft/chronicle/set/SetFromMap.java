@@ -31,6 +31,7 @@ import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
 class SetFromMap<E> extends AbstractSet<E>
         implements ChronicleSet<E>, Serializable {
 
+    private static final long serialVersionUID = 2454657854757543876L;
     private final ChronicleMap<E, DummyValue> m;  // The backing map
     private transient Set<E> s;       // Its keySet
 
@@ -96,13 +97,11 @@ class SetFromMap<E> extends AbstractSet<E>
     public boolean removeAll(Collection<?> c) {
         return s.removeAll(c);
     }
+    // addAll is the only inherited implementation
 
     public boolean retainAll(Collection<?> c) {
         return s.retainAll(c);
     }
-    // addAll is the only inherited implementation
-
-    private static final long serialVersionUID = 2454657854757543876L;
 
     private void readObject(java.io.ObjectInputStream stream)
             throws IOException, ClassNotFoundException {

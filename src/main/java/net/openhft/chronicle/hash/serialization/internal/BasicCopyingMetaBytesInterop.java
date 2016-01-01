@@ -22,25 +22,12 @@ import net.openhft.lang.threadlocal.Provider;
 import net.openhft.lang.threadlocal.ThreadLocalCopies;
 
 public abstract class BasicCopyingMetaBytesInterop<E, W> implements MetaBytesInterop<E, W> {
-    private static final long serialVersionUID = 0L;
-
     static final Provider<DirectBytesBuffer> provider =
             Provider.of(DirectBytesBuffer.class);
-
-    static abstract class BasicCopyingMetaBytesInteropProvider<E, I,
-            MI extends MetaBytesInterop<E, I>> implements MetaProvider<E, I, MI> {
-        private static final long serialVersionUID = 0L;
-
-        @Override
-        public ThreadLocalCopies getCopies(ThreadLocalCopies copies) {
-            return provider.getCopies(copies);
-        }
-    }
-
+    private static final long serialVersionUID = 0L;
     final DirectBytesBuffer buffer;
     transient long size;
     transient long hash;
-
     protected BasicCopyingMetaBytesInterop(DirectBytesBuffer buffer) {
         this.buffer = buffer;
     }
@@ -66,5 +53,15 @@ public abstract class BasicCopyingMetaBytesInterop<E, W> implements MetaBytesInt
     @Override
     public void write(W writer, Bytes bytes, E e) {
         bytes.write(buffer.buffer, buffer.buffer.position(), buffer.buffer.remaining());
+    }
+
+    static abstract class BasicCopyingMetaBytesInteropProvider<E, I,
+            MI extends MetaBytesInterop<E, I>> implements MetaProvider<E, I, MI> {
+        private static final long serialVersionUID = 0L;
+
+        @Override
+        public ThreadLocalCopies getCopies(ThreadLocalCopies copies) {
+            return provider.getCopies(copies);
+        }
     }
 }

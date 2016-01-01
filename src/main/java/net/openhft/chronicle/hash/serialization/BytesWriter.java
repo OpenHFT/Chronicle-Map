@@ -26,18 +26,18 @@ import java.io.Serializable;
  * of any object before actual serialization 2) doesn't include that length in the serialized
  * form itself, assuming it will be passed by the {@link ChronicleHash} into
  * {@link BytesReader#read(Bytes, long)} deserialization method.
- *
+ * <p>
  * <p>Implementation example: <pre><code>
  * class LongPair { long first, second; }
- *
+ * <p>
  * enum LongPairArrayWriter implements BytesWriter&lt;LongPair[]&gt; {
  *     INSTANCE;
- *
+ * <p>
  *     &#064;Override
  *     public long size(LongPair[] longPairs) {
  *         return longPairs.length * 16L;
  *     }
- *
+ * <p>
  *     &#064;Override
  *     public void write(Bytes bytes, LongPair[] longPairs) {
  *         for (LongPair pair : longPairs) {
@@ -66,7 +66,7 @@ public interface BytesWriter<E> extends Serializable {
     /**
      * Serializes the given object to the given {@code bytes}, without writing the length of the
      * serialized form itself.
-     *
+     * <p>
      * <p>Implementation of this method should increment the {@code bytes}' {@linkplain
      * Bytes#position() position} by {@link #size(Object) size(e)}. The given object should
      * be written into these range between the initial {@code bytes}' position and the position
@@ -74,7 +74,7 @@ public interface BytesWriter<E> extends Serializable {
      * {@code bytes}' {@linkplain Bytes#limit() limit} and contents outside of the specified range.
      *
      * @param bytes the {@code Bytes} to write the given object to
-     * @param e the object to serialize to the given bytes
+     * @param e     the object to serialize to the given bytes
      * @see BytesReader#read(Bytes, long)
      */
     void write(Bytes bytes, E e);

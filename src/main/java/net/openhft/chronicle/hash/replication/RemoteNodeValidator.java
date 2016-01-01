@@ -28,8 +28,8 @@ public interface RemoteNodeValidator {
      * and host.
      *
      * @param remoteIdentifier remoteIdentifier
-     * @param remoteAddress        remoteAddress
-     * @return               true if unique
+     * @param remoteAddress    remoteAddress
+     * @return true if unique
      */
     boolean validate(byte remoteIdentifier, SocketAddress remoteAddress);
 

@@ -27,15 +27,15 @@ import java.io.Serializable;
  * ChronicleHashInstanceBuilder#replicatedViaChannel(ReplicationChannel)} method, to establish a channel
  * replication. See <a href="https://github.com/OpenHFT/Chronicle-Map#multiple-chronicle-maps---network-distributed">
  * the corresponding section in ChronicleMap manual</a> for more information.
- *
+ * <p>
  * <p>A {@code ReplicationChannel} could be used to replicate only one {@link ChronicleHash} instance.
  *
  * @see ReplicationHub
  * @see ReplicationHub#createChannel(int)
  */
-public final class ReplicationChannel implements Serializable{
-    private ReplicationHub hub;
+public final class ReplicationChannel implements Serializable {
     private final int channelId;
+    private ReplicationHub hub;
 
     ReplicationChannel(ReplicationHub hub, int channelId) {
         this.hub = hub;

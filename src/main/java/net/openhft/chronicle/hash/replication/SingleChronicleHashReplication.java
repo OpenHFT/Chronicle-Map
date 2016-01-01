@@ -20,13 +20,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class SingleChronicleHashReplication extends AbstractReplication {
 
+    public SingleChronicleHashReplication(byte localIdentifier, Builder builder) {
+        super(localIdentifier, builder);
+    }
+
     @NotNull
     public static Builder builder() {
         return new Builder();
-    }
-
-    public SingleChronicleHashReplication(byte localIdentifier, Builder builder) {
-        super(localIdentifier, builder);
     }
 
     @Override
@@ -36,7 +36,8 @@ public class SingleChronicleHashReplication extends AbstractReplication {
 
     public static class Builder
             extends AbstractReplication.Builder<SingleChronicleHashReplication, Builder> {
-        private Builder() {}
+        private Builder() {
+        }
 
         @NotNull
         @Override

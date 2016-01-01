@@ -151,6 +151,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     private PrepareValueBytes<K, V> prepareValueBytes = null;
     private SingleChronicleHashReplication singleHashReplication = null;
     private InetSocketAddress[] pushToAddresses;
+
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass, SerializationBuilder.Role.KEY);
         valueBuilder = new SerializationBuilder<>(valueClass, SerializationBuilder.Role.VALUE);

@@ -25,6 +25,9 @@ import net.openhft.lang.io.serialization.BytesMarshaller;
  */
 public final class BytesReaders {
 
+    private BytesReaders() {
+    }
+
     /**
      * Returns a {@link BytesReader} wrapping the given {@link BytesMarshaller}. One of the
      * bridge methods between general serialization API from {@link net.openhft.lang} and
@@ -44,7 +47,7 @@ public final class BytesReaders {
      * #fromBytesMarshaller(BytesMarshaller) fromBytesMarshaller(m)} call, {@code null} otherwise.
      *
      * @param reader reader to extract {@code BytesMarshaller} from
-     * @param <E> type of the objects marshalled
+     * @param <E>    type of the objects marshalled
      * @return {@code BytesMarshaller} from which the specified reader was created, or {@code null}
      */
     public static <E> BytesMarshaller<E> getBytesMarshaller(BytesReader<E> reader) {
@@ -69,8 +72,5 @@ public final class BytesReaders {
         public E read(Bytes bytes, long size, E toReuse) {
             return (E) marshaller.read(bytes, toReuse);
         }
-    }
-
-    private BytesReaders() {
     }
 }

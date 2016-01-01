@@ -30,12 +30,11 @@ final class MapInstanceBuilder<K, V>
         implements ChronicleHashInstanceBuilder<ChronicleMap<K, V>>, Serializable {
 
     final ChronicleMapBuilder<K, V> mapBuilder;
+    final AtomicBoolean used;
     transient SingleChronicleHashReplication singleHashReplication;
     transient ReplicationChannel channel;
     transient File file;
     String name;
-
-    final AtomicBoolean used;
 
     MapInstanceBuilder(ChronicleMapBuilder<K, V> mapBuilder,
                        SingleChronicleHashReplication singleHashReplication,

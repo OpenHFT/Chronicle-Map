@@ -28,15 +28,15 @@ public final class ChronicleSetStatelessClientBuilder<E> implements
         ChronicleHashStatelessClientBuilder<
                 ChronicleSetStatelessClientBuilder<E>, ChronicleSet<E>> {
 
-    public static <E> ChronicleSetStatelessClientBuilder<E> of(InetSocketAddress serverAddress) {
-        return new ChronicleSetStatelessClientBuilder<>(serverAddress);
-    }
-
     private final ChronicleMapStatelessClientBuilder<E, DummyValue> mapClientBuilder;
 
     ChronicleSetStatelessClientBuilder(InetSocketAddress serverAddress) {
         Class<E> eClass = null;
         this.mapClientBuilder = ChronicleMapBuilder.of(eClass, DummyValue.class, serverAddress);
+    }
+
+    public static <E> ChronicleSetStatelessClientBuilder<E> of(InetSocketAddress serverAddress) {
+        return new ChronicleSetStatelessClientBuilder<>(serverAddress);
     }
 
     @Override

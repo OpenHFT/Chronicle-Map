@@ -48,7 +48,7 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
      * Gets (if it does not exist, creates) an instance of ModificationIterator associated with a
      * remote node, this weak associated is bound using the {@code identifier}.
      *
-     * @param remoteIdentifier     the identifier of the remote node
+     * @param remoteIdentifier the identifier of the remote node
      * @return the ModificationIterator dedicated for replication to the remote node with the given
      * identifier
      * @see #identifier()
@@ -152,11 +152,12 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
 
         /**
          * The map implements this method to save its contents.
-         * @param entry       the byte location of the entry to be stored
-         * @param destination a buffer the entry will be written to, the segment may reject this
-         *                    operation and add zeroBytes, if the identifier in the entry did not
-         *                    match the maps local
-         * @param chronicleId is the channel id used to identify the canonical map or queue
+         *
+         * @param entry         the byte location of the entry to be stored
+         * @param destination   a buffer the entry will be written to, the segment may reject this
+         *                      operation and add zeroBytes, if the identifier in the entry did not
+         *                      match the maps local
+         * @param chronicleId   is the channel id used to identify the canonical map or queue
          * @param bootstrapTime
          */
         void writeExternalEntry(@NotNull Bytes entry,
@@ -169,7 +170,7 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
          * in the same sequence and with the same types as were written by {@code
          * writeExternalEntry()}. This method is typically called when we receive a remote
          * replication event, this event could originate from either a remote {@code put(K key, V
-         *value)} or {@code remove(Object key)}
+         * value)} or {@code remove(Object key)}
          *
          * @param copies
          * @param segmentState
@@ -217,16 +218,14 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
         /**
          * Called whenever a put() or remove() has occurred to a replicating map.
          *
-         * @param entry       the entry you will receive, this does not have to be locked, as
-         *                    locking is already provided from the caller.
-         * @param chronicleId only assigned when clustering
+         * @param entry              the entry you will receive, this does not have to be locked, as
+         *                           locking is already provided from the caller.
+         * @param chronicleId        only assigned when clustering
          * @param bootStrapTimeStamp sent to the client on every update this is the timestamp
          *                           that the remote client should bootstrap from when there has
          *                           been a disconnection, this time maybe later than the message
          *                           time as event are not send in chronological order from the
          *                           bit set.
-         *
-         *
          * @return {@code false} if this entry should be ignored because the identifier of the
          * source node is not from one of our changes, WARNING even though we check the identifier
          * in the ModificationIterator the entry may have been updated.

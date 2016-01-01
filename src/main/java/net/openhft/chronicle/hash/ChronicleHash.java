@@ -33,7 +33,7 @@ public interface ChronicleHash extends Closeable {
      * i. e. if it is created by {@link ChronicleHashBuilder#create()} call.
      *
      * @return the file this {@link ChronicleMap} or {@link ChronicleSet} is mapped to,
-     *         or {@code null} if it is not mapped to any file
+     * or {@code null} if it is not mapped to any file
      * @see ChronicleHashBuilder#createPersistedTo(java.io.File)
      */
     File file();
@@ -44,15 +44,15 @@ public interface ChronicleHash extends Closeable {
      * and there are other instances mapping the same data on the server across JVMs, the memory
      * won't be actually freed on operation system level. I. e. this method call doesn't affect
      * other {@link ChronicleMap} or {@link ChronicleSet} instances mapping the same data.
-     *
+     * <p>
      * <p>If you won't call this method, memory would be held at least until next garbage
      * collection. This could be a problem if, for example, you target rare garbage collections,
      * but load and drop {@code ChronicleHash}es regularly.
-     *
+     * <p>
      * <p>
      * TODO what about commit guarantees, when ChronicleMap is used with memory-mapped files, if
      * {@code ChronicleMap}/{@code ChronicleSet} closed/not?
-     *
+     * <p>
      * <p>After this method call behaviour of <i>all</i> methods of {@code ChronicleMap}
      * or {@code ChronicleSet} is undefined. <i>Any</i> method call on the map might throw
      * <i>any</i> exception, or even JVM crash. Shortly speaking, don't call use map closing.

@@ -1153,10 +1153,10 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
             if (!message.startsWith("java.io.IOException: Not enough available space for writing ")) {
                 throw e;
             }
-                String substring = message.substring("java.io.IOException: Not enough available space for writing ".length(), message.length());
-                int i = substring.indexOf(' ');
+            String substring = message.substring("java.io.IOException: Not enough available space for writing ".length(), message.length());
+            int i = substring.indexOf(' ');
             if (i == -1)
-                    throw e;
+                throw e;
 
             int size = Integer.parseInt(substring.substring(0, i));
 

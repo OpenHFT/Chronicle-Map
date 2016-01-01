@@ -37,7 +37,7 @@ public final class Hasher {
      * Returns the hash code for {@code len} continuous bytes of the given {@code input} object,
      * starting from the given offset. The abstraction of input as ordered byte sequence and
      * "offset within the input" is defined by the given {@code access} strategy.
-     *
+     * <p>
      * <p>This method doesn't promise to throw a {@code RuntimeException} if {@code
      * [off, off + len - 1]} subsequence exceeds the bounds of the bytes sequence, defined by {@code
      * access} strategy for the given {@code input}, so use this method with caution.
@@ -47,7 +47,7 @@ public final class Hasher {
      *               as ordered byte sequence
      * @param offset offset to the first byte of the subsequence to hash
      * @param length length of the subsequence to hash
-     * @param <T> the type of the input
+     * @param <T>    the type of the input
      * @return hash code for the specified bytes subsequence
      */
     public static <T> long hash(T input, Access<T> access, long offset, long length) {

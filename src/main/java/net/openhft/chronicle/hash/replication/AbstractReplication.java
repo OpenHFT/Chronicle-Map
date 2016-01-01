@@ -164,7 +164,7 @@ public abstract class AbstractReplication implements Serializable {
          * Configures if the node, provided with replication, created by this builder, should
          * replicate only local data, last updated with own identifier, or all data currently
          * present on the node, when a new node joins the replication grid.
-         *
+         * <p>
          * <p>Default configuration is {@code false}, potentially swamping new nodes with
          * duplicates. However, this does guarantee that all the data is replicated over to the new
          * node and is useful especially in the case that the originating node of some data is not

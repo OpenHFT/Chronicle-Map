@@ -302,6 +302,7 @@ class Int24Int24MultiMap implements MultiMap {
     public long capacity() {
         return capacity;
     }
+
     @Override
     public DirectBitSet getPositions() {
         return positions;

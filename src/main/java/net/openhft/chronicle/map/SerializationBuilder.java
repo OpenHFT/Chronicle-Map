@@ -49,6 +49,29 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
     private static final long serialVersionUID = 0L;
 
     private static final Bytes EMPTY_BYTES = new ByteBufferBytes(ByteBuffer.allocate(0));
+    private static final List<Class> knownJDKImmutableClasses = Arrays.<Class>asList(
+            String.class, Byte.class, Short.class, Character.class, Integer.class,
+            Float.class, Long.class, Double.class, BigDecimal.class, BigInteger.class, URL.class
+    );
+    final Class<E> eClass;
+    final boolean sizeIsStaticallyKnown;
+    private final Role role;
+    boolean serializesGeneratedClasses = false;
+    private boolean instancesAreMutable;
+    private SizeMarshaller sizeMarshaller = stopBit();
+    private BytesReader<E> reader;
+    private Object interop;
+    private CopyingInterop copyingInterop = null;
+    private MetaBytesInterop<E, ?> metaInterop;
+    private MetaProvider<E, ?, ?> metaInteropProvider;
+    private long maxSize;
+    @SuppressWarnings("unchecked")
+    SerializationBuilder(Class<E> eClass, Role role) {
+        this.role = role;
+        this.eClass = eClass;
+        configureByDefault(eClass, role);
+        sizeIsStaticallyKnown = constantSizeMarshaller();
+    }
 
     private static boolean concreteClass(Class c) {
         return !c.isInterface() && !Modifier.isAbstract(c.getModifiers());
@@ -60,40 +83,8 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
                 Externalizable.class.isAssignableFrom(c);
     }
 
-    private static final List<Class> knownJDKImmutableClasses = Arrays.<Class>asList(
-            String.class, Byte.class, Short.class, Character.class, Integer.class,
-            Float.class, Long.class, Double.class, BigDecimal.class, BigInteger.class, URL.class
-    );
-
     private static boolean instancesAreMutable(Class c) {
         return !knownJDKImmutableClasses.contains(c);
-    }
-
-    enum Role {KEY, VALUE}
-
-    private enum CopyingInterop {FROM_MARSHALLER, FROM_WRITER}
-
-    private final Role role;
-    final Class<E> eClass;
-    private boolean instancesAreMutable;
-    private SizeMarshaller sizeMarshaller = stopBit();
-    private BytesReader<E> reader;
-    private Object interop;
-    private CopyingInterop copyingInterop = null;
-    private MetaBytesInterop<E, ?> metaInterop;
-    private MetaProvider<E, ?, ?> metaInteropProvider;
-    private long maxSize;
-
-    final boolean sizeIsStaticallyKnown;
-    
-    boolean serializesGeneratedClasses = false;
-
-    @SuppressWarnings("unchecked")
-    SerializationBuilder(Class<E> eClass, Role role) {
-        this.role = role;
-        this.eClass = eClass;
-        configureByDefault(eClass, role);
-        sizeIsStaticallyKnown = constantSizeMarshaller();
     }
 
     private void configureByDefault(Class<E> eClass, Role role) {
@@ -445,6 +436,10 @@ final class SerializationBuilder<E> implements Cloneable, Serializable {
             throw new AssertionError(e);
         }
     }
+
+    enum Role {KEY, VALUE}
+
+    private enum CopyingInterop {FROM_MARSHALLER, FROM_WRITER}
 
     private static class SerializableMarshaller implements BytesMarshaller {
         private static final long serialVersionUID = 0L;

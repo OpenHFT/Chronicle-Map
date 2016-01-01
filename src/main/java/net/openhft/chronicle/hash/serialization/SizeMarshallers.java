@@ -22,8 +22,15 @@ import static net.openhft.lang.io.IOTools.stopBitLength;
 
 public final class SizeMarshallers {
 
+    private SizeMarshallers() {
+    }
+
     public static SizeMarshaller stopBit() {
         return StopBit.INSTANCE;
+    }
+
+    public static SizeMarshaller constant(long size) {
+        return new ConstantSizeMarshaller(size);
     }
 
     private enum StopBit implements SizeMarshaller {
@@ -58,10 +65,6 @@ public final class SizeMarshallers {
         public long readSize(Bytes bytes) {
             return bytes.readStopBit();
         }
-    }
-
-    public static SizeMarshaller constant(long size) {
-        return new ConstantSizeMarshaller(size);
     }
 
     private static class ConstantSizeMarshaller implements SizeMarshaller {
@@ -103,6 +106,4 @@ public final class SizeMarshallers {
             return size;
         }
     }
-
-    private SizeMarshallers() {}
 }

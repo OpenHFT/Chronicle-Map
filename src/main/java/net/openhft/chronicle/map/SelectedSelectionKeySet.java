@@ -41,14 +41,14 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
 
         if (isA) {
             int size = keysASize;
-            keysA[size ++] = o;
+            keysA[size++] = o;
             keysASize = size;
             if (size == keysA.length) {
                 doubleCapacityA();
             }
         } else {
             int size = keysBSize;
-            keysB[size ++] = o;
+            keysB[size++] = o;
             keysBSize = size;
             if (size == keysB.length) {
                 doubleCapacityB();

@@ -24,7 +24,7 @@ import java.io.Closeable;
 
 /**
  * A simpler form of the replication interface used by Engine
- *
+ * <p>
  * *** PLEASE DON'T REFACTOR THIS WITHOUT FIRST CHANGING THE ENGINE CODE ***
  *
  * @author Rob Austin.

@@ -287,6 +287,7 @@ final class ChannelProvider implements Closeable {
             ChannelProvider.this.close();
         }
     };
+
     private ChannelProvider(ReplicationHub hub) {
         localIdentifier = hub.identifier();
         this.hub = hub;
