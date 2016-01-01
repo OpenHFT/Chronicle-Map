@@ -17,11 +17,15 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.SortedMapDifference;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
+import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
+import net.openhft.chronicle.map.impl.QueryContextInterface;
 import net.openhft.chronicle.set.Builder;
 import net.openhft.chronicle.values.Values;
 import org.junit.After;
@@ -139,8 +143,22 @@ public class OldDeletedEntriesCleanupTest {
 
             waitTillEqual(15000);
             if (!map1.equals(map2)) {
+
+                SortedMapDifference<Integer, CharSequence> diff =
+                        Maps.difference(new TreeMap<>(map1), new TreeMap<>(map2));
+                diff.entriesOnlyOnLeft().forEach((k, v) -> {
+                    try (ExternalMapQueryContext<Integer, CharSequence, ?> c =
+                                 map1.queryContext(k)) {
+                        c.entry();
+                        System.out.println(c.entry().key() + " " + c.entry().value() + " " +
+                                ((ReplicableEntry) c.entry()).originTimestamp() + " " +
+                                ((CompiledReplicatedMapQueryContext) c).pos);
+                        int x = 0;
+                        c.entry();
+                    }
+                });
                 Assert.assertEquals(
-                        Maps.difference(new TreeMap<>(map1), new TreeMap<>(map2)).toString(),
+                        diff.toString(),
                         new TreeMap<>(map1), new TreeMap<>(map2));
             }
         } finally {
