@@ -1810,7 +1810,6 @@ public class ChronicleMapTest {
                 }
             }
         }
-
     }
 
     @Test(expected = IllegalArgumentException.class)

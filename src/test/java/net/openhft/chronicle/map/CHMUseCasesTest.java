@@ -483,7 +483,6 @@ public class CHMUseCasesTest {
                 mpx1030.setBidPx(107.6);
             }
         }
-
     }
 
     @Test
