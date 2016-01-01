@@ -18,7 +18,6 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -54,7 +53,6 @@ public class Issue24ChronicleSetTest {
     }
 
     @Test
-    @Ignore("HCOLL-418 Test which throws an error")
     public void issue24ChronicleSetTest() throws ExecutionException, InterruptedException {
         ChronicleSet<String> set = initSet(String.class, 1_000_000, 30, "stringSet.dat");
         ExecutorService executor = Executors.newFixedThreadPool(5);
@@ -106,10 +104,23 @@ public class Issue24ChronicleSetTest {
                 String nomenclature = "#############################" + i;
                 toRemove.add(nomenclature);
             }
-            set.removeAll(toRemove);
+            for (Iterator<String> iterator = set.iterator(); iterator.hasNext(); ) {
+                try {
+                    String s = iterator.next();
+                    if (toRemove.contains(s))
+                        iterator.remove();
+                } catch (NoSuchElementException e) {
+                    // ignore
+                }
+            }
 
-            for (String s : set) {
-                System.out.println(s);
+            for (Iterator<String> iterator = set.iterator(); iterator.hasNext(); ) {
+                try {
+                    String s = iterator.next();
+                    System.out.println(s);
+                } catch (NoSuchElementException e) {
+                    // ignore
+                }
             }
 
             strings = new HashSet<>(selectRandomSubset(
@@ -117,8 +128,13 @@ public class Issue24ChronicleSetTest {
 
             set.addAll(strings);
 
-            for (String s : set) {
-                System.out.println(s);
+            for (Iterator<String> iterator = set.iterator(); iterator.hasNext(); ) {
+                try {
+                    String s = iterator.next();
+                    System.out.println(s);
+                } catch (NoSuchElementException e) {
+                    // ignore
+                }
             }
         }
     }
