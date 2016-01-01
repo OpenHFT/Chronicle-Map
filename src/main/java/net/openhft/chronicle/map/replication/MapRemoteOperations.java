@@ -89,11 +89,8 @@ public interface MapRemoteOperations<K, V, R> {
                     // a different Chronicle Map instance, because the previous was lost, just using
                     // the same identifier), if it happens we should propagate this recovered
                     // event again, to other nodes
-
-                    // There was an attempt to use raiseChangedForAllExcept(q.remoteNodeIdentifier),
-                    // But it fails in the case connected to what explained in the end of put()
-                    // method. TODO it's not comprehensible WHY is this so
-                    replicableAbsentEntry.raiseChanged();
+                    replicableAbsentEntry.raiseChangedForAllExcept(q.remoteNodeIdentifier());
+                    replicableAbsentEntry.dropChangedFor(q.remoteNodeIdentifier());
                 } else {
                     // We accepted a replication event, suppress further event propagation
                     replicableAbsentEntry.dropChanged();
@@ -122,7 +119,8 @@ public interface MapRemoteOperations<K, V, R> {
             replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
             // For explanation see similar block above (*)
             if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
-                replicableAbsentEntry.raiseChanged();
+                replicableAbsentEntry.raiseChangedForAllExcept(q.remoteNodeIdentifier());
+                replicableAbsentEntry.dropChangedFor(q.remoteNodeIdentifier());
             } else {
                 replicableAbsentEntry.dropChanged();
             }
@@ -145,6 +143,8 @@ public interface MapRemoteOperations<K, V, R> {
                 entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
                 // For explanation see similar block in remove() method (*)
                 if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+                    // This differs from action under the same conditions in remove() method,
+                    // to let the item 10 in (**) work!
                     entry.raiseChanged();
                 } else {
                     entry.dropChanged();
@@ -161,14 +161,17 @@ public interface MapRemoteOperations<K, V, R> {
                 entry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
                 // For explanation see similar block in remove() method (*)
                 if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
+                    // This differs from action under the same conditions in remove() method,
+                    // to let the item 10 in (**) work!
                     entry.raiseChanged();
                 } else {
                     entry.dropChanged();
                 }
             } else {
+                // (**)
                 // In case of old deleted entries cleanup + network disconnections and
-                // bootstrapping, it is possible that the entry is ends being removed on remote node
-                // and present on origin node:
+                // bootstrapping, it is possible that the entry ends being removed on the remote
+                // node and present on the origin node:
                 //
                 // 1. Entry is added on node 1
                 // 2. This change is replicated and arrived to node 2
@@ -177,18 +180,19 @@ public interface MapRemoteOperations<K, V, R> {
                 // 5. Node 2 schedules the subject entry (currently present on node 2)
                 //    for bootstrapping to the node 1
                 // 6. Node 2 sends the replication event to node 1 (in-flight)
-                // 7. The entry removal is replicated to node 2, it is accepted, finally the entry
-                //    is removed on node 2
-                // 8. The entry is cleaned up (erased completely) on node 2, because it is already
+                // 7. The entry removal is replicated from node 1 to node 2, it is accepted, finally
+                //    the entry is removed on node 2
+                // 8. The entry is cleaned up (erased completely) on node 1, because it is already
                 //    replicated to everywhere it should be, and timeout (if set very short)
                 //    is expired
                 // 9. Replication event from node 2 (with present entry) arrives to node 1, as the
                 //    entry is already erased from node 1, this change is accepted, and finally
-                //    the entry is present on node 1. The is bootstrapped again, by (*) blocks
-                // 10. The "present" entry from node 1 is discarded on node 2, because it sees that
+                //    the entry is present on node 1.
+                // 10. The entry is bootstrapped again on node 1, by (*) blocks
+                // 11. The "present" entry from node 1 is discarded on node 2, because it sees that
                 //     this entry was removed later.
                 //
-                // The following block captures the condition from item 10, and sends the event
+                // The following block captures the condition from item 11, and sends the event
                 // again back, to give the chance to be finally removed on node 1 (in the above
                 // example).
                 if (((ReplicableEntry) absentEntry).originIdentifier() == q.remoteIdentifier() &&

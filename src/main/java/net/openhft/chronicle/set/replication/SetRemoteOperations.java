@@ -35,7 +35,8 @@ public interface SetRemoteOperations<K, R> {
                 replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
                 // See MapRemoteOperations
                 if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
-                    replicableAbsentEntry.raiseChanged();
+                    replicableAbsentEntry.raiseChangedForAllExcept(q.remoteNodeIdentifier());
+                    replicableAbsentEntry.dropChangedFor(q.remoteNodeIdentifier());
                 } else {
                     replicableAbsentEntry.dropChanged();
                 }
@@ -63,7 +64,8 @@ public interface SetRemoteOperations<K, R> {
             replicableAbsentEntry.updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
             // See MapRemoteOperations
             if (q.remoteIdentifier() == q.currentNodeIdentifier()) {
-                replicableAbsentEntry.raiseChanged();
+                replicableAbsentEntry.raiseChangedForAllExcept(q.remoteNodeIdentifier());
+                replicableAbsentEntry.dropChangedFor(q.remoteNodeIdentifier());
             } else {
                 replicableAbsentEntry.dropChanged();
             }
@@ -96,6 +98,12 @@ public interface SetRemoteOperations<K, R> {
                     entry.raiseChanged();
                 } else {
                     entry.dropChanged();
+                }
+            } else {
+                // See MapRemoteOperations
+                if (((ReplicableEntry) absentEntry).originIdentifier() == q.remoteIdentifier() &&
+                        q.remoteIdentifier() != q.currentNodeIdentifier()) {
+                    ((ReplicableEntry) absentEntry).raiseChangedFor(q.remoteIdentifier());
                 }
             }
         }
