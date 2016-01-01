@@ -44,25 +44,21 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class ReplicationTest {
 
-
     static int s_port = 8093;
-    Set<Thread> threads;
-    private ChronicleMap<Integer, CharSequence> map1;
     final AtomicLong count = new AtomicLong();
     final AtomicBoolean hasValueChanged = new AtomicBoolean();
-
     final AtomicInteger identifier = new AtomicInteger();
     final AtomicInteger replacedIdentifier = new AtomicInteger();
     final AtomicLong timeStamp = new AtomicLong();
     final AtomicLong replacedTimeStamp = new AtomicLong();
-
+    Set<Thread> threads;
+    private ChronicleMap<Integer, CharSequence> map1;
     private IntValue value;
 
     @Before
     public void setup() throws IOException {
         value = DataValueClasses.newDirectReference(IntValue.class);
         ((Byteable) value).bytes(new ByteBufferBytes(ByteBuffer.allocateDirect(4)), 0);
-
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 
@@ -103,7 +99,6 @@ public class ReplicationTest {
                         }
 
                     };
-
 
             map1 = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     .entries(Builder.SIZE + Builder.SIZE)
@@ -160,7 +155,6 @@ public class ReplicationTest {
         Assert.assertEquals(124, timeStamp.get());
         Assert.assertEquals(123, replacedTimeStamp.get());
 
-
         map.put(1, "test2", (byte) 2, 125);
         Assert.assertTrue(hasValueChanged.get());
         Assert.assertEquals((byte) 2, identifier.get());
@@ -175,7 +169,6 @@ public class ReplicationTest {
         Assert.assertEquals(125, timeStamp.get());
         Assert.assertEquals(125, replacedTimeStamp.get());
     }
-
 
 }
 

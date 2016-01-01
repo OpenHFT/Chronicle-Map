@@ -555,8 +555,9 @@ public class MapCheck {
             initDoubles(key, absent, size);
         } else if (eclass == String.class) {
             initWords(size, key, absent);
-        } else
+        } else {
             throw new Error("unknown type");
+        }
     }
 
     static void initInts(Object[] key, Object[] absent, int size) {
@@ -702,8 +703,9 @@ public class MapCheck {
                 if (n == 0) {
                     n = stats.firstn;
                     s = stats.first;
-                } else
+                } else {
                     s = stats.sum;
+                }
 
                 double t = ((double) s) / n;
                 long nano = Math.round(t);

@@ -216,7 +216,6 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-
         }
     }
 
@@ -238,7 +237,6 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-
         }
     }
 
@@ -260,7 +258,6 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-
         }
     }
 
@@ -684,7 +681,6 @@ public class ChronicleMapTest {
                         assertEquals(j, value3.getValue());
                     }
                 }
-
             }
         }
     }
@@ -777,7 +773,6 @@ public class ChronicleMapTest {
                 }
             }
         }
-
     }
 
     @Test
@@ -1246,7 +1241,6 @@ public class ChronicleMapTest {
                     assertNull(map.getUsing(key, value));
                 }
             }
-
         }
     }
 
@@ -1266,7 +1260,6 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
             assertValues(map.values(), new CharSequence[]{"1", "3"});
         }
-
     }
 
     @Test
@@ -1317,7 +1310,6 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
 
         }
-
     }
 
     @Test
@@ -1334,7 +1326,6 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
 
         }
-
     }
 
     @Test
@@ -1378,7 +1369,6 @@ public class ChronicleMapTest {
             assertValues(values, expectedValues);
 
         }
-
     }
 
     @Test
@@ -1405,7 +1395,6 @@ public class ChronicleMapTest {
             assertValues(values, expectedValues);
 
         }
-
     }
 
     @Test
@@ -1427,7 +1416,6 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"3"});
 
         }
-
     }
 
     @Test
@@ -1444,7 +1432,6 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"3"});
 
         }
-
     }
 
     @Test
@@ -1498,7 +1485,6 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"2", "1"});
 
         }
-
     }
 
     @Test
@@ -1531,7 +1517,6 @@ public class ChronicleMapTest {
             org.junit.Assert.assertTrue(values.isEmpty());
 
         }
-
     }
 
     @Test
@@ -1564,7 +1549,6 @@ public class ChronicleMapTest {
             org.junit.Assert.assertTrue(values.isEmpty());
 
         }
-
     }
 
     @Test
@@ -1583,7 +1567,6 @@ public class ChronicleMapTest {
             assertEquals(noOfElements, sum);
 
         }
-
     }
 
     @Test
@@ -1657,7 +1640,6 @@ public class ChronicleMapTest {
             assertValues(map.values(), new String[]{"B"});
 
         }
-
     }
 
     @Test
@@ -1704,7 +1686,6 @@ public class ChronicleMapTest {
             assertEquals(largeValue, map.remove(key));
             map.checkConsistency();
         }
-
     }
 
     @Test
@@ -1724,7 +1705,6 @@ public class ChronicleMapTest {
                 assertEquals(map1, map2);
             }
         }
-
     }
 
     @Test
@@ -1746,7 +1726,6 @@ public class ChronicleMapTest {
             throw new AssertionError("Should throw either IllegalStateException or " +
                     "NullPointerException, but succeed");
         }
-
     }
 
     @Test
@@ -1802,7 +1781,6 @@ public class ChronicleMapTest {
                 assert value == context.value();
                 assertEquals(1, context.value().getValue());
             }
-
         }
     }
 
@@ -1831,7 +1809,6 @@ public class ChronicleMapTest {
                     Assert.assertNotNull(map2.get(key));
                 }
             }
-
         }
 
     }
@@ -1969,7 +1946,6 @@ public class ChronicleMapTest {
                 e.printStackTrace();
             }
         }
-
     }
 
 }

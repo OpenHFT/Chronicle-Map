@@ -262,7 +262,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             outBytes.position(position);
             //     outBytesLock.lock();
         }
-
     }
 
     private byte[] copyBufferBytes() {
@@ -300,7 +299,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             if (closeables != null) closeables.closeQuietly();
             clientChannel = null;
         }
-
     }
 
     /**
@@ -817,7 +815,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                 inBytesLock.unlock();
             }
         }
-
     }
 
     public void putAll(@NotNull Map<? extends K, ? extends V> map) {
@@ -1068,8 +1065,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             long limit = inBytes.position();
             inBytes.position(limit);
             resizeBufferInBuffer(remainingBytes, pos);
-        } else
+        } else {
             inBytes.limit(inBytes.capacity());
+        }
 
         try {
             // block until we have received all the bytes in this chunk
@@ -1710,7 +1708,6 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
             default:
                 return false;
         }
-
     }
 
     private void writeObject(@NotNull Object function) {
@@ -1735,8 +1732,9 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
                         throw e;
                     }
 
-                } else
+                } else {
                     throw e;
+                }
             }
         }
     }
@@ -1753,10 +1751,12 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
 
                 long requiresExtra = size - outBytes.remaining();
                 resizeBufferOutBuffer((int) (outBytes.capacity() + requiresExtra), start);
-            } else
+            } else {
                 throw e;
-        } else
+            }
+        } else {
             throw e;
+        }
     }
 
     @Nullable

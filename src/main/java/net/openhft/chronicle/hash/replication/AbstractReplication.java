@@ -206,6 +206,5 @@ public abstract class AbstractReplication implements Serializable {
             return ", udpConfig=" + udpConfig +
                     ", remoteNodeValidator=" + remoteNodeValidator;
         }
-
     }
 }

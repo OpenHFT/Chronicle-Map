@@ -555,9 +555,9 @@ abstract class AbstractChannelReplicator implements Closeable {
                     entry.position(startOfEntry);
 
                     return onEntry(entry, chronicleId, bootstrapTime);
-                } else
+                } else {
                     throw e;
-
+                }
             }
             return true;
         }
@@ -647,7 +647,6 @@ abstract class AbstractChannelReplicator implements Closeable {
         public void setSuccessfullyConnected() {
             connectionAttempts = 0;
         }
-
     }
 
 }

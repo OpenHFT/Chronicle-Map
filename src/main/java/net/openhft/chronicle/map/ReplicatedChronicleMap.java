@@ -130,7 +130,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         while (destination.remaining() > 0 && source.remaining() > 0) {
             destination.writeByte(source.readByte());
         }
-
     }
 
     private int assignedModIterBitSetSizeInBytes() {
@@ -311,7 +310,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         } finally {
             segment.writeUnlock();
         }
-
     }
 
     @Override
@@ -645,7 +643,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         } finally {
             entry.position(start);
         }
-
     }
 
     /**
@@ -666,7 +663,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         final long timeStamp = entry.readLong();
 
         final byte identifier = entry.readByte();
-
 
         final boolean isDeleted = entry.readBoolean();
         long valueSize;
@@ -1726,7 +1722,6 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
             entry.skip(keySize);
             return entry.readLong();
         }
-
     }
 
     class TimestampTrackingEntry extends SimpleEntry<K, V> {

@@ -340,7 +340,6 @@ public class CHMUseCasesTest {
                     return map1;
 
                 }
-
             }
 
             case STATELESS: {
@@ -483,7 +482,6 @@ public class CHMUseCasesTest {
                 mpx1030.setAskPx(109.7);
                 mpx1030.setBidPx(107.6);
             }
-
         }
 
     }
@@ -1180,7 +1178,6 @@ public class CHMUseCasesTest {
 
             } catch (Exception todoMoreSpecificException) {
             }
-
         }
     }
 
@@ -2597,7 +2594,6 @@ public class CHMUseCasesTest {
         public String update(String s) {
             return prefix + s;
         }
-
     }
 
 }

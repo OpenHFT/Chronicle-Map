@@ -618,7 +618,6 @@ public class StatelessClientTest {
             executorService.awaitTermination(1000, TimeUnit.SECONDS);
 
         }
-
     }
 
     @Test
@@ -715,7 +714,6 @@ public class StatelessClientTest {
             executorService.shutdownNow();
             executorService.awaitTermination(1000, TimeUnit.SECONDS);
         }
-
     }
 
     @Test(timeout = 10000)
@@ -765,7 +763,6 @@ public class StatelessClientTest {
 
             }
         }
-
     }
 
     @Test(timeout = 10000)

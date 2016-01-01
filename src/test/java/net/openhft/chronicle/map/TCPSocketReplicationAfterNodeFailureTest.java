@@ -52,7 +52,6 @@ public class TCPSocketReplicationAfterNodeFailureTest {
         StatelessClientTest.checkThreadsShutdown(threads);
     }
 
-
     @Test
     public void testTCPSocketReplicationAfterNodeFailure()
             throws IOException, InterruptedException {
@@ -125,7 +124,6 @@ public class TCPSocketReplicationAfterNodeFailureTest {
 
         waitTillEqual(2500, favoriteComputerServer1, favoriteComputerServer2);
 
-
         assertEquals(favoriteComputerServer1, favoriteComputerServer2);
         assertEquals(2, favoriteComputerServer1.size());
 
@@ -164,9 +162,7 @@ public class TCPSocketReplicationAfterNodeFailureTest {
             favoriteComputerServer3.put("ozan", "mac");
         }
 
-
         waitTillEqual(2500, favoriteComputerServer1, favoriteComputerServer3);
-
 
         assertEquals(favoriteComputerServer1, favoriteComputerServer3);
         assertEquals(3, favoriteComputerServer1.size());
@@ -175,7 +171,6 @@ public class TCPSocketReplicationAfterNodeFailureTest {
         favoriteComputerServer3.close();
 
     }
-
 
     private void waitTillEqual(final int timeOutMs, Map map1, Map map2) throws InterruptedException {
         int t = 0;

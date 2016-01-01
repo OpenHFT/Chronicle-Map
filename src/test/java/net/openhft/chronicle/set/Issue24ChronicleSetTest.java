@@ -118,6 +118,5 @@ public class Issue24ChronicleSetTest {
                 System.out.println(s);
             }
         }
-
     }
 }

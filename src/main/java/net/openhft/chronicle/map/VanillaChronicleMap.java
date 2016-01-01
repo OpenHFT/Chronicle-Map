@@ -705,7 +705,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
             return result;
         }
-
     }
 
     V putMapped0(K key, @NotNull UnaryOperator<V> unaryOperator) {
@@ -779,7 +778,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 metaKeyInteropProvider.get(copies, originalMetaKeyInterop, keyInterop, key);
         long keySize = metaKeyInterop.size(keyInterop, key);
         long hash = metaKeyInterop.hash(keyInterop, key);
-
 
         int segmentNum = getSegment(hash);
         long segmentHash = segmentHash(hash);
@@ -1371,7 +1369,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         public void write(Void writer, Bytes bytes, Bytes value) {
             bytes.write(value, value.position(), value.remaining());
         }
-
     }
 
     public static final class SegmentState implements StatefulCopyable<SegmentState>,
@@ -1893,7 +1890,6 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                 }
             }
         }
-
 
         public WriteLocked<K, KI, MKI, V, VI, MVI> writeLock() {
             return writeLock(null, false);

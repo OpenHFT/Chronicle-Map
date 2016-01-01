@@ -28,7 +28,6 @@ public class DoubleArrayExample {
         //        .createPersistedTo(File.createTempFile("map", "chron"));
         System.out.println("Created the monkey map ValueWrapper 128");
 
-
         double[] values = new double[125];
 
         Arrays.fill(values, 1.1);
@@ -42,21 +41,18 @@ public class DoubleArrayExample {
         for (double v : valueRead.getValues()) {
             System.out.println("" + v);
         }
-
-
     }
-
 
     private static class ValueWrapper implements BytesMarshallable {
 
         private double values[];
 
-        public double[] getValues() {
-            return values;
-        }
-
         public ValueWrapper(@NotNull double[] values) {
             this.values = values;
+        }
+
+        public double[] getValues() {
+            return values;
         }
 
         @Override
@@ -69,7 +65,6 @@ public class DoubleArrayExample {
             for (int i = 0; i < values.length; i++) {
                 values[i] = bytes.readDouble();
             }
-
         }
 
         @Override
@@ -80,11 +75,8 @@ public class DoubleArrayExample {
             for (double value : values) {
                 bytes.writeDouble(value);
             }
-
-
         }
     }
-
 
 }
 

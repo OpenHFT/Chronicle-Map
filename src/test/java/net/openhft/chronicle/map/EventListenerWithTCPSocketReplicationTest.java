@@ -37,18 +37,12 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class EventListenerWithTCPSocketReplicationTest {
 
-    ChronicleMap<Integer, CharSequence> map1;
-    ChronicleMap<Integer, CharSequence> map2;
-
     final AtomicReference<Integer> keyRef = new AtomicReference<Integer>();
-
     final AtomicReference<CharSequence> replacedValueRef = new AtomicReference<CharSequence>();
     final AtomicReference<CharSequence> valueRef = new AtomicReference<CharSequence>();
     final AtomicBoolean putWasCalled = new AtomicBoolean(false);
-
     final AtomicBoolean wasRemoved = new AtomicBoolean(false);
     final AtomicReference<CharSequence> valueRemoved = new AtomicReference<CharSequence>();
-
     final MapEventListener<Integer, CharSequence> eventListener = new
             MapEventListener<Integer, CharSequence>() {
                 private static final long serialVersionUID = 1L;
@@ -70,6 +64,8 @@ public class EventListenerWithTCPSocketReplicationTest {
                     valueRemoved.set(value);
                 }
             };
+    ChronicleMap<Integer, CharSequence> map1;
+    ChronicleMap<Integer, CharSequence> map2;
 
     @After
     public void tearDown() throws InterruptedException {
@@ -250,7 +246,6 @@ public class EventListenerWithTCPSocketReplicationTest {
                 if (numberOfTimesTheSame == 100) {
                     break;
                 }
-
             }
             Thread.sleep(1);
         }

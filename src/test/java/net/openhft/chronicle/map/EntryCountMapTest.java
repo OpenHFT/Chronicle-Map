@@ -257,7 +257,6 @@ public class EntryCountMapTest {
                         ", seg: " + segments + ", min: " + minSize +
                         ", size: " + map.size());
         }
-
     }
 
     private void dumpMapStats(int segments, int minSize,

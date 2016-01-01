@@ -84,6 +84,5 @@ public class CHMMetaDataTest {
         public void onRemove(Bytes entry, long metaDataPos, long keyPos, long valuePos, boolean replicationEvent, byte identifier, byte replacedIdentifier, long timeStamp, long replacedTimeStamp, SharedSegment segment) {
             System.out.println("Removed entry with ts of " + entry.readLong(metaDataPos));
         }
-
     }
 }

@@ -92,8 +92,9 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-            } else
+            } else {
                 Thread.yield();
+            }
         }
 
         Assert.assertEquals(map1, map2);

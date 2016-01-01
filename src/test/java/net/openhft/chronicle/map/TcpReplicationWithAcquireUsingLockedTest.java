@@ -73,7 +73,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 Assert.assertEquals(map1a, map2a);
             }
         }
-
     }
 
     @Test
@@ -121,7 +120,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 Assert.assertEquals(map1a, map2a);
             }
         }
-
     }
 
     @Test
@@ -170,7 +168,6 @@ public class TcpReplicationWithAcquireUsingLockedTest {
                 Assert.assertEquals(map1a, map2a);
             }
         }
-
     }
 
 }

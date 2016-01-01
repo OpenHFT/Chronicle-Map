@@ -33,10 +33,6 @@ import java.util.concurrent.locks.LockSupport;
  */
 public class ChronicleMapSanityCheckTest {
 
-    enum DummyValue {
-        DUMMY_VALUE
-    }
-
     @Test
     public void testSanity1() throws IOException, InterruptedException
     {
@@ -124,6 +120,9 @@ public class ChronicleMapSanityCheckTest {
                 throw new RuntimeException(e);
             }
         }
+    }
 
+    enum DummyValue {
+        DUMMY_VALUE
     }
 }

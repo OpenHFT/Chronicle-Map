@@ -138,7 +138,6 @@ public class TcpReplicationSoakTest {
             map1.close();
             map2.close();
         }
-
     }
 
     private void waitTillEqual(final int timeOutMs) throws InterruptedException {
@@ -161,7 +160,6 @@ public class TcpReplicationSoakTest {
                     System.out.println("same");
                     break;
                 }
-
             }
             Thread.sleep(1);
         }

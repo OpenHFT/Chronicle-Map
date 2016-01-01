@@ -12,12 +12,16 @@ import java.util.Collection;
  * @author Rob Austin.
  */
 
-
 @RunWith(Parameterized.class)
 public class MapFullTest {
 
     private final int segments;
     private final long maxEntries;
+
+    public MapFullTest(int segments, long maxEntries) {
+        this.segments = segments;
+        this.maxEntries = maxEntries;
+    }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -36,12 +40,6 @@ public class MapFullTest {
                         8, 1024
                 }
         });
-    }
-
-
-    public MapFullTest(int segments, long maxEntries) {
-        this.segments = segments;
-        this.maxEntries = maxEntries;
     }
 
     @Test
@@ -66,7 +64,6 @@ public class MapFullTest {
         }
 
         Assert.assertEquals(size, chronicleMap.size());
-
 
         chronicleMap.clear();
 

@@ -32,23 +32,33 @@ public abstract class ByteableMarshaller<E extends Byteable>
         DeserializationFactoryConfigurableBytesReader<E, ByteableMarshaller<E>>,
         SizeMarshaller {
     private static final long serialVersionUID = 0L;
-
-    public static <E extends Byteable> ByteableMarshaller<E> of(@NotNull Class<E> eClass) {
-        return new Default<>(eClass);
-    }
-
-    @Override
-    public ByteableMarshaller<E> withDeserializationFactory(
-            ObjectFactory<E> deserializationFactory) {
-        return new WithCustomFactory<>(tClass, deserializationFactory);
-    }
-
     @NotNull
     private final Class<E> tClass;
     private long size;
 
     private ByteableMarshaller(@NotNull Class<E> tClass) {
         this.tClass = tClass;
+    }
+
+    public static <E extends Byteable> ByteableMarshaller<E> of(@NotNull Class<E> eClass) {
+        return new Default<>(eClass);
+    }
+
+    public static void setBytesAndOffset(Byteable e, Bytes bytes) {
+        // use the unshifting underlying Bytes (the position never changes)
+        // if you use a Bytes where the position changes, you risk concurrency issues.
+        if (bytes instanceof MultiStoreBytes) {
+            MultiStoreBytes msb = (MultiStoreBytes) bytes;
+            e.bytes(msb.underlyingBytes(), msb.underlyingOffset() + msb.position());
+        } else {
+            e.bytes(bytes, bytes.position());
+        }
+    }
+
+    @Override
+    public ByteableMarshaller<E> withDeserializationFactory(
+            ObjectFactory<E> deserializationFactory) {
+        return new WithCustomFactory<>(tClass, deserializationFactory);
     }
 
     void initSize() {
@@ -148,17 +158,6 @@ public abstract class ByteableMarshaller<E extends Byteable>
         }
     }
 
-    public static void setBytesAndOffset(Byteable e, Bytes bytes) {
-        // use the unshifting underlying Bytes (the position never changes)
-        // if you use a Bytes where the position changes, you risk concurrency issues.
-        if (bytes instanceof MultiStoreBytes) {
-            MultiStoreBytes msb = (MultiStoreBytes) bytes;
-            e.bytes(msb.underlyingBytes(), msb.underlyingOffset() + msb.position());
-        } else {
-            e.bytes(bytes, bytes.position());
-        }
-    }
-
     @SuppressWarnings("unchecked")
     @NotNull
     E getInstance() throws Exception {
@@ -192,8 +191,6 @@ public abstract class ByteableMarshaller<E extends Byteable>
             super(tClass);
             initSize();
         }
-
-
     }
 
     private static class WithCustomFactory<E extends Byteable> extends ByteableMarshaller<E> {
@@ -214,7 +211,5 @@ public abstract class ByteableMarshaller<E extends Byteable>
         E getInstance() throws Exception {
             return factory.create();
         }
-
-
     }
 }

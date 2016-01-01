@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.Closeable;
@@ -195,7 +194,6 @@ public class TCPSocketReplicationTest {
                     System.out.println("same");
                     break;
                 }
-
             }
             Thread.sleep(1);
         }

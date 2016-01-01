@@ -214,11 +214,12 @@ class LoopHelpers {
 
         public void run() {
             long t = System.nanoTime();
-            if (!started) {
+            if (started) {
+                endTime = t;
+            } else {
                 started = true;
                 startTime = t;
-            } else
-                endTime = t;
+            }
         }
 
         public void clear() {

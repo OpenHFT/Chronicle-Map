@@ -133,7 +133,6 @@ public class TcpTimeBasedReplicationSoakTest {
             } else {
                 map.remove(rnd.nextInt(100));
             }
-
         }
 
         System.out.println("\nwaiting till equal");
@@ -164,7 +163,6 @@ public class TcpTimeBasedReplicationSoakTest {
 
                 break;
             }
-
         }
     }
 

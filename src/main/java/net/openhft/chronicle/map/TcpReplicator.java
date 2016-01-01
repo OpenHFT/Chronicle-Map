@@ -98,7 +98,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
     private long largestEntrySoFar = 128;
     private long selectorTimeout;
 
-
     /**
      * @throws IOException on an io error.
      */
@@ -151,7 +150,6 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                 connectionListener0.onDisconnect(address, identifier);
             }
         };
-
 
         start();
     }
@@ -569,14 +567,14 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         if (!remoteVersion.equals(localVersion)) {
             byte remoteIdentifier = attached.remoteIdentifier;
             LOG.warn("DIFFERENT CHRONICLE-MAP VERSIONS : " +
-                            "local-map=" + localVersion +
-                            ", remote-map-id-" + remoteIdentifier + "=" +
-                            remoteVersion +
+                    "local-map=" + localVersion +
+                    ", remote-map-id-" + remoteIdentifier + "=" +
+                    remoteVersion +
 
-                            ", The Remote Chronicle Map with " +
-                            "identifier=" + remoteIdentifier +
-                            " and this Chronicle Map are on different " +
-                            "versions, we suggest that you use the same version."
+                    ", The Remote Chronicle Map with " +
+                    "identifier=" + remoteIdentifier +
+                    " and this Chronicle Map are on different " +
+                    "versions, we suggest that you use the same version."
 
             );
         }
@@ -817,8 +815,9 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
                     AbstractConnector connector = attached.connector;
                     if (connector != null)
                         connector.connectLater();
-                } else
+                } else {
                     socketChannel.close();
+                }
                 return;
             }
 
@@ -1151,18 +1150,18 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
         void resizeToMessage(@NotNull IllegalStateException e) {
 
             String message = e.getMessage();
-            if (message.startsWith("java.io.IOException: Not enough available space for writing ")) {
+            if (!message.startsWith("java.io.IOException: Not enough available space for writing ")) {
+                throw e;
+            }
                 String substring = message.substring("java.io.IOException: Not enough available space for writing ".length(), message.length());
                 int i = substring.indexOf(' ');
-                if (i != -1) {
-                    int size = Integer.parseInt(substring.substring(0, i));
-
-                    long requiresExtra = size - in().remaining();
-                    ensureBufferSize((int) (in().capacity() + requiresExtra));
-                } else
+            if (i == -1)
                     throw e;
-            } else
-                throw e;
+
+            int size = Integer.parseInt(substring.substring(0, i));
+
+            long requiresExtra = size - in().remaining();
+            ensureBufferSize((int) (in().capacity() + requiresExtra));
         }
 
         Bytes in() {
@@ -1500,12 +1499,13 @@ final class TcpReplicator<K, V> extends AbstractChannelReplicator implements Clo
          * @return the timestamp or -1 if unsuccessful
          */
         String readRemoteServerVersion() {
-            if (out.remaining() >= 64) {
-                char[] chars = new char[64];
-                out.readFully(chars, 0, chars.length);
-                return new String(chars).trim();
-            } else
+            if (out.remaining() < 64) {
                 return null;
+            }
+            char[] chars = new char[64];
+            out.readFully(chars, 0, chars.length);
+            return new String(chars).trim();
+
         }
 
         public long readRemoteHeartbeatIntervalFromBuffer() {
@@ -2163,7 +2163,6 @@ class StatelessServerConnector<K, V> {
             out.limit(limit);
             out.position(pos);
         }
-
     }
 
     private void writeException(@NotNull TcpReplicator.TcpSocketChannelEntryWriter out, Throwable e) {

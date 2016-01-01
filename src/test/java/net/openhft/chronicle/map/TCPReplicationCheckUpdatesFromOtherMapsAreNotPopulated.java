@@ -41,7 +41,6 @@ import java.util.concurrent.TimeUnit;
 
 public class TCPReplicationCheckUpdatesFromOtherMapsAreNotPopulated {
 
-
     static int s_port = 8093;
     Set<Thread> threads;
     private ChronicleMap<Integer, CharSequence> map1;
@@ -120,14 +119,12 @@ public class TCPReplicationCheckUpdatesFromOtherMapsAreNotPopulated {
     @Test
     public void test() throws IOException, InterruptedException {
 
-
         ReplicatedChronicleMap map = (ReplicatedChronicleMap) map1;
 
         map.put(1, "test", (byte) 2, System.currentTimeMillis());
         //    ((ReplicatedChronicleMap) map1).put(1, "test");
         Thread.sleep(1000);
         Assert.assertTrue(map2.isEmpty());
-
 
         map.put(1, "test2", (byte) 1, System.currentTimeMillis());
         //    ((ReplicatedChronicleMap) map1).put(1, "test");
@@ -136,7 +133,6 @@ public class TCPReplicationCheckUpdatesFromOtherMapsAreNotPopulated {
         Assert.assertEquals("test2", map2.get(1));
 
     }
-
 
 }
 

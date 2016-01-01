@@ -81,7 +81,6 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             } catch (Exception e1) {
                 throw new ConversionException("class=" + clazz, e1);
             }
-
         }
     }
 
@@ -111,7 +110,6 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             }
             writer.endNode();
         }
-
     }
 
     @Override

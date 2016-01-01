@@ -136,6 +136,5 @@ class DirectBytesBuffer
         private ForDataValueWriter() {
             super(DirectBytesBuffer.this);
         }
-
     }
 }
