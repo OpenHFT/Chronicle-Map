@@ -380,6 +380,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         }
     }
 
+    public void dropChangeFor(long tierIndex, long pos, byte remoteIdentifier) {
+        acquireModificationIterator(remoteIdentifier).dropChange0(tierIndex, pos);
+    }
+
     public void moveChange(long oldTierIndex, long oldPos, long newTierIndex, long newPos) {
         if (oldTierIndex <= actualSegments) {
             long oldSegmentIndex = oldTierIndex - 1;
@@ -897,6 +901,20 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 long offsetToTierBitSet =
                         (extraTierIndex & (tiersInBulk - 1)) * tierModIterBitSetOuterSize;
                 raiseChangeInTierBulk(bulkIndex, offsetToTierBitSet, pos);
+            }
+        }
+
+        void dropChange0(long tierIndex, long pos) {
+            if (tierIndex <= actualSegments) {
+                long segmentIndex = tierIndex - 1;
+                long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
+                dropChangeInSegment(offsetToTierBitSet, pos);
+            } else {
+                long extraTierIndex = tierIndex - 1 - actualSegments;
+                int bulkIndex = (int) (extraTierIndex >> log2TiersInBulk);
+                long offsetToTierBitSet =
+                        (extraTierIndex & (tiersInBulk - 1)) * tierModIterBitSetOuterSize;
+                dropChangeInTierBulk(bulkIndex, offsetToTierBitSet, pos);
             }
         }
     }

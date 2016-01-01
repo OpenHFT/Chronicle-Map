@@ -52,6 +52,10 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
         mh.m().dropChange(s.tierIndex, e.pos);
     }
 
+    public void dropChangeFor(byte remoteIdentifier) {
+        mh.m().dropChangeFor(s.tierIndex, e.pos, remoteIdentifier);
+    }
+
     public void moveChange(long oldTierIndex, long oldPos, long newPos) {
         mh.m().moveChange(oldTierIndex, oldPos, s.tierIndex, newPos);
     }

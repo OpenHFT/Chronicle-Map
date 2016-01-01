@@ -43,6 +43,11 @@ public interface ReplicableEntryDelegating extends ReplicableEntry {
     }
 
     @Override
+    default void dropChangedFor(byte remoteIdentifier) {
+        d().dropChangedFor(remoteIdentifier);
+    }
+
+    @Override
     default void raiseChanged() {
         d().raiseChanged();
     }

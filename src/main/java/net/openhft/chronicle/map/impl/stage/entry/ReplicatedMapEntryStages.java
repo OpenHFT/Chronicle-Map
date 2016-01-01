@@ -113,6 +113,13 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
     }
 
     @Override
+    public void dropChangedFor(byte remoteIdentifier) {
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        s.innerUpdateLock.lock();
+        ru.dropChangeFor(remoteIdentifier);
+    }
+
+    @Override
     public void raiseChanged() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         s.innerUpdateLock.lock();

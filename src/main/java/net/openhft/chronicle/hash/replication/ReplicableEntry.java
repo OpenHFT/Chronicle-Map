@@ -77,12 +77,18 @@ public interface ReplicableEntry {
     void dropChanged();
 
     /**
+     * Suppress the entry, if it was scheduled to be replicated over to the remote Chronicle node
+     * with the specified identifier.
+     */
+    void dropChangedFor(byte remoteIdentifier);
+
+    /**
      * Propagate the entry, schedule it to be replicated over to all remote Chronicle nodes.
      */
     void raiseChanged();
 
     /**
-     * Propagate the entry, schedule it to be replicated over to the remote Chronicle nodes with
+     * Propagate the entry, schedule it to be replicated over to the remote Chronicle node with
      * the specified identifier.
      *
      * @param remoteIdentifier the identifier of the node to replicate this entry to
