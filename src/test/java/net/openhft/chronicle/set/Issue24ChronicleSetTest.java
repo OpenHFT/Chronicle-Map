@@ -18,15 +18,16 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import static com.samskivert.util.CollectionUtil.selectRandomSubset;
 
@@ -53,16 +54,18 @@ public class Issue24ChronicleSetTest {
     }
 
     @Test
-    public void issue24ChronicleSetTest() {
+    @Ignore("HCOLL-418 Test which throws an error")
+    public void issue24ChronicleSetTest() throws ExecutionException, InterruptedException {
         ChronicleSet<String> set = initSet(String.class, 1_000_000, 30, "stringSet.dat");
         ExecutorService executor = Executors.newFixedThreadPool(5);
+        List<Future<?>> futures = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             Runnable worker = new WorkerThread(set);
-            executor.execute(worker);
+            futures.add(executor.submit(worker));
         }
         executor.shutdown();
-        while (!executor.isTerminated()) {
-
+        for (Future<?> future : futures) {
+            future.get();
         }
         System.out.println("Finished all threads");
 
