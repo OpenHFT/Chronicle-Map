@@ -315,14 +315,18 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         if (modificationIterator != null)
             return modificationIterator;
 
-        //noinspection SynchronizeOnNonFinalField
-        synchronized (modificationIterators) {
+        globalMutableStateLock();
+        try {
             modificationIterator = modificationIterators.get(remoteIdentifier);
 
             if (modificationIterator != null)
                 return modificationIterator;
 
-            final ModificationIterator modIter = new ModificationIterator(remoteIdentifier);
+            boolean modificationIteratorInit =
+                    globalMutableState().getModificationIteratorInitAt(remoteIdentifier);
+            final ModificationIterator modIter =
+                    new ModificationIterator(remoteIdentifier, modificationIteratorInit);
+            globalMutableState().setModificationIteratorInitAt(remoteIdentifier, true);
             //noinspection unchecked
             assignedModificationIterators = Stream
                     .concat(Arrays.stream(assignedModificationIterators), Stream.of(modIter))
@@ -330,6 +334,8 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                     .toArray(ReplicatedChronicleMap.ModificationIterator[]::new);
             modificationIterators.set(remoteIdentifier, modIter);
             return modIter;
+        } finally {
+            globalMutableStateUnlock();
         }
     }
 
@@ -629,12 +635,14 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
          */
         private long tierBitSetAddr;
 
-        public ModificationIterator(byte remoteIdentifier) {
+        public ModificationIterator(byte remoteIdentifier, boolean sharedMemoryInit) {
             this.remoteIdentifier = remoteIdentifier;
             segmentBitSetsAddr = bsAddress() + startOfModificationIterators +
                     remoteIdentifier * segmentModIterBitSetsForIdentifierOuterSize;
-            nativeAccess().zeroOut(null, segmentBitSetsAddr,
-                    segmentModIterBitSetsForIdentifierOuterSize);
+            if (!sharedMemoryInit) {
+                nativeAccess().zeroOut(null, segmentBitSetsAddr,
+                        segmentModIterBitSetsForIdentifierOuterSize);
+            }
             offsetToBitSetsWithinATierBulk =
                     remoteIdentifier * tierBulkModIterBitSetsForIdentifierOuterSize;
 

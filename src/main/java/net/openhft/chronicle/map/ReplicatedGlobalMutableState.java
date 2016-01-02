@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
+import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.Group;
 
 interface ReplicatedGlobalMutableState extends VanillaGlobalMutableState {
@@ -24,4 +25,9 @@ interface ReplicatedGlobalMutableState extends VanillaGlobalMutableState {
     @Group(5)
     int getCurrentCleanupSegmentIndex();
     void setCurrentCleanupSegmentIndex(int currentCleanupSegmentIndex);
+
+    @Group(6)
+    @Array(length = 128)
+    boolean getModificationIteratorInitAt(int index);
+    void setModificationIteratorInitAt(int index, boolean init);
 }
