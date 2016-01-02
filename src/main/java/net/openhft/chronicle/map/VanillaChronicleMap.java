@@ -426,7 +426,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         return multiMapFactory.sizeInBytes(entriesPerSegment);
     }
 
-    private long sizeOfMultiMapBitSet() {
+    long sizeOfMultiMapBitSet() {
         return MultiMapFactory.sizeOfBitSetInBytes(actualChunksPerSegment);
     }
 
