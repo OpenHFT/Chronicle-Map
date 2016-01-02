@@ -228,8 +228,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         CompactOffHeapLinearHashTable hl = hh.h().hashLookup;
         long oldEntry = hl.readEntry(oldHashLookupAddr, oldHashLookupPos);
         hl.checkValueForPut(pos);
-        hl.writeEntryVolatile(s.tierBaseAddr, hlp.hashLookupPos,
-                oldEntry, hl.key(oldEntry), pos);
+        hl.writeEntryVolatile(s.tierBaseAddr, hlp.hashLookupPos, hl.key(oldEntry), pos);
         if (tierHasChanged)
             hl.remove(oldHashLookupAddr, oldHashLookupPos);
     }

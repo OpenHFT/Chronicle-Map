@@ -94,8 +94,7 @@ public abstract class HashLookupSearch {
         }
 
         hl().checkValueForPut(entryPos);
-        long currentEntry = hl().readEntry(addr(), hlp.hashLookupPos);
-        hl().writeEntryVolatile(addr(), hlp.hashLookupPos, currentEntry, searchKey, entryPos);
+        hl().writeEntryVolatile(addr(), hlp.hashLookupPos, searchKey, entryPos);
     }
     
     public boolean checkSlotContainsExpectedKeyAndValue(long value) {

@@ -135,24 +135,22 @@ public abstract class CompactOffHeapLinearHashTable {
 
     public abstract long readEntry(long addr, long pos);
 
-    public abstract void writeEntryVolatile(
-            long addr, long pos, long prevEntry, long key, long value);
+    public abstract void writeEntryVolatile(long addr, long pos, long key, long value);
     
     public void putValueVolatile(long addr, long pos, long value) {
         checkValueForPut(value);
         long currentEntry = readEntry(addr, pos);
-        writeEntryVolatile(addr, pos, currentEntry, key(currentEntry), value);
+        writeEntryVolatile(addr, pos, key(currentEntry), value);
     }
 
-    abstract void writeEntry(long addr, long pos, long prevEntry, long anotherEntry);
+    abstract void writeEntry(long addr, long pos, long newEntry);
 
-    abstract void clearEntry(long addr, long pos, long prevEntry);
+    abstract void clearEntry(long addr, long pos);
 
     /**
      * Returns "insert" position in terms of consequent putValue()
      */
     public long remove(long addr, long posToRemove) {
-        long entryToRemove = readEntry(addr, posToRemove);
         long posToShift = posToRemove;
         while (true) {
             posToShift = step(posToShift);
@@ -171,12 +169,11 @@ public abstract class CompactOffHeapLinearHashTable {
             if ((cond1 && cond2) ||
                     // chain wrapped around capacity
                     (posToShift < insertPos && (cond1 || cond2))) {
-                writeEntry(addr, posToRemove, entryToRemove, entryToShift);
+                writeEntry(addr, posToRemove, entryToShift);
                 posToRemove = posToShift;
-                entryToRemove = entryToShift;
             }
         }
-        clearEntry(addr, posToRemove, entryToRemove);
+        clearEntry(addr, posToRemove);
         return posToRemove;
     }
 }
