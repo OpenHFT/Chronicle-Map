@@ -326,7 +326,8 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                     globalMutableState().getModificationIteratorInitAt(remoteIdentifier);
             final ModificationIterator modIter =
                     new ModificationIterator(remoteIdentifier, modificationIteratorInit);
-            globalMutableState().setModificationIteratorInitAt(remoteIdentifier, true);
+            if (!modificationIteratorInit)
+                globalMutableState().setModificationIteratorInitAt(remoteIdentifier, true);
             //noinspection unchecked
             assignedModificationIterators = Stream
                     .concat(Arrays.stream(assignedModificationIterators), Stream.of(modIter))
