@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.bytes.RandomDataInput;
+
 /**
  * Defines reasonable defaults for {@code Data}'s {@code equals()}, {@code hashCode()} and
  * {@code toString()}. They should be default implementations in the {@code Data} interface itself,
@@ -47,10 +49,26 @@ public abstract class AbstractData<T> implements Data<T> {
     }
 
     /**
-     * Delegates to {@code Data}'s <i>object</i> {@code toString()}.
+     * Delegates to {@code Data}'s <i>object</i> {@code toString()}. If deserialization fails with
+     * exception (e. g. if data bytes are corrupted, and represent not a valid serialized form of
+     * an object), traces the data's bytes and the exception.
      */
     @Override
     public String toString() {
-        return get().toString();
+        T object;
+        try {
+            object = get();
+        } catch (Exception e) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("failed to deserialize object from data with bytes: [");
+            RandomDataInput bs = bytes();
+            for (long off = offset(), lim = offset() + size(); off < lim; off++) {
+                sb.append(bs.printable(off));
+            }
+            sb.append("], exception: ");
+            sb.append(e);
+            return sb.toString();
+        }
+        return object.toString();
     }
 }

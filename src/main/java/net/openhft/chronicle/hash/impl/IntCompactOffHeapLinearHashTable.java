@@ -52,12 +52,12 @@ public final class IntCompactOffHeapLinearHashTable extends CompactOffHeapLinear
     }
 
     @Override
-    void writeEntry(long addr, long pos, long newEntry) {
+    public void writeEntry(long addr, long pos, long newEntry) {
         OS.memory().writeInt(addr + pos, (int) newEntry);
     }
 
     @Override
-    void clearEntry(long addr, long pos) {
+    public void clearEntry(long addr, long pos) {
         OS.memory().writeInt(addr + pos, 0);
     }
 }

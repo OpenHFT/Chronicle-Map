@@ -108,7 +108,7 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
         return keyOffset + keySize;
     }
 
-    protected long entryEnd() {
+    public long entryEnd() {
         return keyEnd();
     }
 

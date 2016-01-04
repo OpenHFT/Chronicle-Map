@@ -98,7 +98,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         }
     }
 
-    private <T> boolean forEachTierEntryWhile(
+    public <T> boolean forEachTierEntryWhile(
             Predicate<? super T> predicate,
             int currentTier, long currentTierBaseAddr, long tierIndex) {
         long leftEntries = tierEntriesForIteration();

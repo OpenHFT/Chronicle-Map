@@ -58,8 +58,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     public abstract boolean segmentIndexInit();
 
-    @Stage("SegmentHeader") long segmentHeaderAddress;
-    @Stage("SegmentHeader") SegmentHeader segmentHeader = null;
+    @Stage("SegmentHeader") public long segmentHeaderAddress;
+    @Stage("SegmentHeader") public SegmentHeader segmentHeader = null;
 
     private void initSegmentHeader() {
         segmentHeaderAddress = hh.h().segmentHeaderAddress(segmentIndex);
@@ -82,7 +82,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         }
     }
 
-    long lowestPossiblyFreeChunk() {
+    public long lowestPossiblyFreeChunk() {
         if (tier == 0) {
             return segmentHeader.lowestPossiblyFreeChunk(segmentHeaderAddress);
         } else {
@@ -513,7 +513,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         tier = 0;
     }
 
-    private void initSegmentTier(int tier, long tierIndex) {
+    public void initSegmentTier(int tier, long tierIndex) {
         this.tier = tier;
         this.tierIndex = tierIndex;
         assert tierIndex > 0;
@@ -584,7 +584,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     
     @Stage("Segment") public final PointerBytesStore segmentBS = new PointerBytesStore();
     @Stage("Segment") public final Bytes segmentBytes = new VanillaBytes(segmentBS);
-    @Stage("Segment") private final ReusableBitSet freeList = new ReusableBitSet(
+    @Stage("Segment") public final ReusableBitSet freeList = new ReusableBitSet(
             new SingleThreadedFlatBitSetFrame(LONGS.align(hh.h().actualChunksPerSegmentTier, BITS)),
             Access.nativeAccess(), null, 0);
     @Stage("Segment") long entrySpaceOffset = 0;

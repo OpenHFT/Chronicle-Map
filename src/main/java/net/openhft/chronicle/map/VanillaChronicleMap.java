@@ -36,8 +36,10 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -146,6 +148,11 @@ public class VanillaChronicleMap<K, V, R>
     public void initTransients() {
         super.initTransients();
         initOwnTransients();
+    }
+
+    public void recover(File file, RandomAccessFile raf) throws IOException {
+        basicRecover(file, raf);
+        iterationContext().recoverSegments();
     }
 
     private void initOwnTransients() {

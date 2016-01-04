@@ -24,16 +24,14 @@ import net.openhft.chronicle.hash.impl.stage.hash.OwnerThreadHolder;
 import net.openhft.chronicle.hash.impl.stage.iter.IterationAlloc;
 import net.openhft.chronicle.hash.impl.stage.iter.IterationKeyHashCode;
 import net.openhft.chronicle.hash.impl.stage.iter.IterationSegmentStages;
+import net.openhft.chronicle.hash.impl.stage.iter.SegmentsRecovery;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.WrappedValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceDataHolder;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
-import net.openhft.chronicle.map.impl.stage.iter.IterationCheckOnEachPublicOperation;
-import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapAbsentDelegatingForIteration;
-import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapEntryDelegating;
-import net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration;
+import net.openhft.chronicle.map.impl.stage.iter.*;
 import net.openhft.chronicle.map.impl.stage.map.*;
 import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.sg.Context;
@@ -68,6 +66,9 @@ import net.openhft.sg.Staged;
         DefaultValue.class,
 
         IterationAlloc.class,
+
+        ReplicatedTierRecovery.class,
+        SegmentsRecovery.class,
 }, nested = {
         ReadLock.class,
         UpdateLock.class,

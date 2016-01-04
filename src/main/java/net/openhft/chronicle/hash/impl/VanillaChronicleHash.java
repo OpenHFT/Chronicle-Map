@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
@@ -30,6 +29,7 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.map.impl.IterationContext;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -43,12 +43,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
+import static java.util.stream.Collectors.toSet;
 import static net.openhft.chronicle.algo.MemoryUnit.*;
+import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 import static net.openhft.chronicle.bytes.NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity;
 import static net.openhft.chronicle.core.OS.pageAlign;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
@@ -120,7 +123,7 @@ public abstract class VanillaChronicleHash<K,
     long maxExtraTiers;
     long tierBulkSizeInBytes;
     long tierBulkInnerOffsetToTiers;
-    protected long tiersInBulk;
+    public long tiersInBulk;
     protected int log2TiersInBulk;
 
     /////////////////////////////////////////////////
@@ -325,7 +328,7 @@ public abstract class VanillaChronicleHash<K,
         return Values.newNativeReference(VanillaGlobalMutableState.class);
     }
 
-    protected VanillaGlobalMutableState globalMutableState() {
+    public VanillaGlobalMutableState globalMutableState() {
         return globalMutableState;
     }
 
@@ -383,7 +386,8 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public final void initBeforeMapping(FileChannel ch, long headerSize) throws IOException {
+    public final void initBeforeMapping(File file, FileChannel ch, long headerSize)
+            throws IOException {
         this.headerSize = roundUpMapHeaderSize(headerSize);
         if (!createdOrInMemory) {
             // This block is for reading segmentHeadersOffset before main mapping
@@ -394,7 +398,7 @@ public abstract class VanillaChronicleHash<K,
                 if (ch.read(globalMutableStateBuffer,
                         this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET +
                                 globalMutableStateBuffer.position()) == -1) {
-                    throw new RuntimeException();
+                    throw new RuntimeException(file + " truncated");
                 }
             }
             globalMutableStateBuffer.flip();
@@ -411,15 +415,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
-        if (bytesStore.start() != 0) {
-            throw new AssertionError("bytes store " + bytesStore + " starts from " +
-                    bytesStore.start() + ", 0 expected");
-        }
-        this.bs = bytesStore;
-        globalMutableState.bytesStore(bs, headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET,
-                globalMutableState.maxSize());
-
-        onHeaderCreated();
+        initBytesStoreAndHeadersViews(bytesStore);
 
         segmentHeadersOffset = segmentHeadersOffset();
 
@@ -431,11 +427,27 @@ public abstract class VanillaChronicleHash<K,
             // write the segment headers offset after zeroing out
             globalMutableState.setSegmentHeadersOffset(segmentHeadersOffset);
         } else {
-            if (globalMutableState.getAllocatedExtraTierBulks() > 0) {
-                appendBulkData(0, globalMutableState.getAllocatedExtraTierBulks() - 1,
-                        bs, sizeInBytesWithoutTiers());
-            }
+            initBulks();
         }
+    }
+
+    private void initBulks() {
+        if (globalMutableState.getAllocatedExtraTierBulks() > 0) {
+            appendBulkData(0, globalMutableState.getAllocatedExtraTierBulks() - 1,
+                    bs, sizeInBytesWithoutTiers());
+        }
+    }
+
+    private void initBytesStoreAndHeadersViews(BytesStore bytesStore) {
+        if (bytesStore.start() != 0) {
+            throw new AssertionError("bytes store " + bytesStore + " starts from " +
+                    bytesStore.start() + ", 0 expected");
+        }
+        this.bs = bytesStore;
+        globalMutableState.bytesStore(bs, headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET,
+                globalMutableState.maxSize());
+
+        onHeaderCreated();
     }
 
     public final void createMappedStoreAndSegments(File file, RandomAccessFile raf)
@@ -445,6 +457,50 @@ public abstract class VanillaChronicleHash<K,
         this.file = file;
         long mapSize = expectedFileSize();
         createMappedStoreAndSegments(map(raf, mapSize, 0));
+    }
+
+    public final void basicRecover(File file, RandomAccessFile raf) throws IOException {
+        this.file = file;
+        long segmentHeadersOffset = computeSegmentHeadersOffset();
+        long sizeInBytesWithoutTiers = computeSizeInBytesWithoutTiers(segmentHeadersOffset);
+        long sizeBeyondSegments = Math.max(raf.length() - sizeInBytesWithoutTiers, 0);
+        int allocatedExtraTierBulks = (int) (sizeBeyondSegments / tierBulkSizeInBytes);
+        long mapSize = pageAlign(sizeInBytesWithoutTiers +
+                allocatedExtraTierBulks * tierBulkSizeInBytes);
+        initBytesStoreAndHeadersViews(map(raf, mapSize, 0));
+
+        resetGlobalMutableStateLock(file);
+        recoverAllocatedExtraTierBulks(file, allocatedExtraTierBulks);
+        recoverSegmentHeadersOffset(file, segmentHeadersOffset);
+        initBulks();
+    }
+
+    private void resetGlobalMutableStateLock(File file) {
+        long lockAddr = globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET;
+        LockingStrategy lockingStrategy = globalMutableStateLockingStrategy;
+        long lockState = lockingStrategy.getState(nativeAccess(), null, lockAddr);
+        if (lockState != lockingStrategy.resetState()) {
+            LOG.error("global mutable state lock of map at {} is not clear: {}",
+                    file, lockingStrategy.toString(lockState));
+            lockingStrategy.reset(nativeAccess(), null, lockAddr);
+        }
+    }
+
+    private void recoverAllocatedExtraTierBulks(File file, int allocatedExtraTierBulks) {
+        if (globalMutableState.getAllocatedExtraTierBulks() != allocatedExtraTierBulks) {
+            LOG.error("allocated extra tier bulks counter corrupted, or the map file {} " +
+                    "is truncated. stored: {}, should be: {}", file,
+                    globalMutableState.getAllocatedExtraTierBulks(), allocatedExtraTierBulks);
+            globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks);
+        }
+    }
+
+    private void recoverSegmentHeadersOffset(File file, long segmentHeadersOffset) {
+        if (globalMutableState.getSegmentHeadersOffset() != segmentHeadersOffset) {
+            LOG.error("segment headers offset of map at {} corrupted. stored: {}, should be: {}",
+                    file, globalMutableState.getSegmentHeadersOffset(), segmentHeadersOffset);
+            globalMutableState.setSegmentHeadersOffset(segmentHeadersOffset);
+        }
     }
 
     private boolean persisted() {
@@ -480,7 +536,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private void zeroOutNewlyMappedTier(BytesStore bytesStore, long tierOffset) {
-        // Zero out hash lookup, tier data and free list bit set. Leave entry space.
+        // Zero out hash lookup, tier data and free list bit set. Leave entry space dirty.
         bytesStore.zeroOut(tierOffset, tierOffset + tierSize - tierEntrySpaceOuterSize);
     }
 
@@ -501,13 +557,17 @@ public abstract class VanillaChronicleHash<K,
 
     private long segmentHeadersOffset() {
         if (createdOrInMemory) {
-            // Align segment headers on page boundary to minimize number of pages that
-            // segment headers span
-            long reserved = RESERVED_GLOBAL_MUTABLE_STATE_BYTES - globalMutableStateTotalUsedSize();
-            return pageAlign(mapHeaderInnerSize() + reserved);
+            return computeSegmentHeadersOffset();
         } else {
             return globalMutableState.getSegmentHeadersOffset();
         }
+    }
+
+    private long computeSegmentHeadersOffset() {
+        long reserved = RESERVED_GLOBAL_MUTABLE_STATE_BYTES - globalMutableStateTotalUsedSize();
+        // Align segment headers on page boundary to minimize number of pages that
+        // segment headers span
+        return pageAlign(mapHeaderInnerSize() + reserved);
     }
 
     public long mapHeaderInnerSize() {
@@ -520,7 +580,11 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public final long sizeInBytesWithoutTiers() {
-        return segmentHeadersOffset() + actualSegments * (segmentHeaderSize + tierSize);
+        return computeSizeInBytesWithoutTiers(segmentHeadersOffset());
+    }
+
+    private long computeSizeInBytesWithoutTiers(long segmentHeadersOffset) {
+        return segmentHeadersOffset + actualSegments * (segmentHeaderSize + tierSize);
     }
 
     public final long expectedFileSize() {
@@ -632,12 +696,12 @@ public abstract class VanillaChronicleHash<K,
     public void globalMutableStateLock() {
         globalMutableStateLockAcquisitionStrategy.acquire(
                 globalMutableStateLockTryAcquireOperation, globalMutableStateLockingStrategy,
-                Access.nativeAccess(), null,
+                nativeAccess(), null,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
     public void globalMutableStateUnlock() {
-        globalMutableStateLockingStrategy.unlock(Access.nativeAccess(), null,
+        globalMutableStateLockingStrategy.unlock(nativeAccess(), null,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
@@ -687,7 +751,7 @@ public abstract class VanillaChronicleHash<K,
         mapTierBulks(allocatedExtraTierBulks);
 
         // integer overflow aware
-        long firstTierIndex = actualSegments + 1L + ((long) allocatedExtraTierBulks) * tiersInBulk;
+        long firstTierIndex = extraTierIndexToTierIndex(allocatedExtraTierBulks * tiersInBulk);
         BytesStore tierBytesStore = tierBytesStore(firstTierIndex);
         long firstTierOffset = tierBytesOffset(firstTierIndex);
         if (tierBulkInnerOffsetToTiers > 0) {
@@ -695,10 +759,20 @@ public abstract class VanillaChronicleHash<K,
             tierBytesStore.zeroOut(firstTierOffset - tierBulkInnerOffsetToTiers, firstTierOffset);
         }
 
-        // Link newly allocated tiers into free tiers list
         long lastTierIndex = firstTierIndex + tiersInBulk - 1;
+        linkAndZeroOutFreeTiers(firstTierIndex, lastTierIndex);
+
+        // TODO HCOLL-397 insert msync here!
+
+        // after we are sure the new bulk is initialized, update the global mutable state
+        globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks + 1);
+        globalMutableState.setFirstFreeTierIndex(firstTierIndex);
+    }
+
+    public void linkAndZeroOutFreeTiers(long firstTierIndex, long lastTierIndex) {
         for (long tierIndex = firstTierIndex; tierIndex <= lastTierIndex; tierIndex++) {
             long tierOffset = tierBytesOffset(tierIndex);
+            BytesStore tierBytesStore = tierBytesStore(tierIndex);
             zeroOutNewlyMappedTier(tierBytesStore, tierOffset);
             if (tierIndex < lastTierIndex) {
                 long tierCountersAreaOffset = tierOffset + tierHashLookupOuterSize;
@@ -706,12 +780,10 @@ public abstract class VanillaChronicleHash<K,
                         tierIndex + 1);
             }
         }
+    }
 
-        // TODO HCOLL-397 insert msync here!
-
-        // after we are sure the new bulk is initialized, update the global mutable state
-        globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks + 1);
-        globalMutableState.setFirstFreeTierIndex(firstTierIndex);
+    public long extraTierIndexToTierIndex(long extraTierIndex) {
+        return actualSegments + extraTierIndex + 1;
     }
 
     public long tierIndexToBaseAddr(long tierIndex) {

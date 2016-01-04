@@ -377,4 +377,24 @@ public final class BigSegmentHeader implements SegmentHeader {
     public void downgradeWriteToReadLock(long address) {
         LOCK.downgradeWriteToReadLock(A, null, address + LOCK_OFFSET);
     }
+
+    @Override
+    public void resetLock(long address) {
+        LOCK.reset(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public long resetLockState() {
+        return LOCK.resetState();
+    }
+
+    @Override
+    public long getLockState(long address) {
+        return LOCK.getState(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public String lockStateToString(long lockState) {
+        return LOCK.toString(lockState);
+    }
 }

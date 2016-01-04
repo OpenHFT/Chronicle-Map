@@ -59,4 +59,9 @@ public interface SegmentHeader {
     void writeUnlock(long address);
     void downgradeWriteToUpdateLock(long address);
     void downgradeWriteToReadLock(long address);
+
+    void resetLock(long address);
+    long resetLockState();
+    long getLockState(long address);
+    String lockStateToString(long lockState);
 }

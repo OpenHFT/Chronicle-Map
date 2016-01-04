@@ -333,12 +333,21 @@ public final class ChronicleSetBuilder<K>
         return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
     }
 
+    @Override
+    public ChronicleSet<K> recoverPersistedTo(File file, boolean sameBuilderConfig)
+            throws IOException {
+        ChronicleMap<K, DummyValue> map =
+                chronicleMapBuilder.recoverPersistedTo(file, sameBuilderConfig);
+        return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
+    }
+
     /**
      * @deprecated don't use private API in the client code
      */
     @Deprecated
     @Override
     public ChronicleHashBuilderPrivateAPI<K> privateAPI() {
+        //noinspection deprecation
         return chronicleMapBuilder.privateAPI();
     }
 }

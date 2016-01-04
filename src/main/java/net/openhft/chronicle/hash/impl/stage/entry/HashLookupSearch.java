@@ -67,9 +67,7 @@ public abstract class HashLookupSearch {
                 return hl().value(entry);
             }
         }
-        throw new IllegalStateException("MultiMap is full, that most likely means you " +
-                "misconfigured entrySize/chunkSize, and entries tend to take less chunks than " +
-                "expected");
+        throw new IllegalStateException("HashLookup overflow should never occur");
     }
 
     public void found() {

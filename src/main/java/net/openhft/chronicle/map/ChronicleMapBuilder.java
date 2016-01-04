@@ -24,6 +24,7 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
+import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
 import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
@@ -47,7 +48,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Double.isNaN;
 import static java.lang.Math.round;
@@ -267,6 +267,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * @deprecated don't use private API in the client code
      */
     @Override
+    @Deprecated
     public ChronicleHashBuilderPrivateAPI<K> privateAPI() {
         return privateAPI;
     }
@@ -1358,8 +1359,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     @Override
     public ChronicleHashInstanceBuilder<ChronicleMap<K, V>> instance() {
-        return new MapInstanceBuilder<>(this.clone(), singleHashReplication, null, null, null,
-                new AtomicBoolean(false));
+        return new MapInstanceBuilder<>(this.clone(), singleHashReplication);
     }
 
     @Override
@@ -1367,7 +1367,13 @@ public final class ChronicleMapBuilder<K, V> implements
         // clone() to make this builder instance thread-safe, because createWithFile() method
         // computes some state based on configurations, but doesn't synchronize on configuration
         // changes.
-        return clone().createWithFile(file, singleHashReplication, null);
+        return clone().createWithFile(file, singleHashReplication, null, false, false);
+    }
+
+    @Override
+    public ChronicleMap<K, V> recoverPersistedTo(File file, boolean sameBuilderConfig)
+            throws IOException {
+        return clone().createWithFile(file, singleHashReplication, null, true, sameBuilderConfig);
     }
 
     @Override
@@ -1378,9 +1384,12 @@ public final class ChronicleMapBuilder<K, V> implements
         return clone().createWithoutFile(singleHashReplication, null);
     }
 
-    ChronicleMap<K, V> create(MapInstanceBuilder<K, V> ib) throws IOException {
+    ChronicleMap<K, V> create(
+            MapInstanceBuilder<K, V> ib, boolean recover, boolean sameBuilderConfig)
+            throws IOException {
         if (ib.file != null) {
-            return createWithFile(ib.file, ib.singleHashReplication, ib.channel);
+            return createWithFile(
+                    ib.file, ib.singleHashReplication, ib.channel, recover, sameBuilderConfig);
         } else {
             return createWithoutFile(ib.singleHashReplication, ib.channel);
         }
@@ -1388,7 +1397,10 @@ public final class ChronicleMapBuilder<K, V> implements
 
     ChronicleMap<K, V> createWithFile(
             File file, SingleChronicleHashReplication singleHashReplication,
-            ReplicationChannel channel) throws IOException {
+            ReplicationChannel channel,
+            boolean recover, boolean overrideBuilderConfig) throws IOException {
+        if (overrideBuilderConfig && !recover)
+            throw new AssertionError("recover -> overrideBuilderConfig");
         replicated = singleHashReplication != null || channel != null;
         persisted = true;
 
@@ -1397,6 +1409,12 @@ public final class ChronicleMapBuilder<K, V> implements
             if (fileLength > 0) {
                 try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
                     FileChannel fileChannel = raf.getChannel();
+                    int headerSize = 0;
+                    if (overrideBuilderConfig) {
+                        VanillaChronicleMap<K, V, ?> mapObjectForHeaderOverwrite =
+                                newMap(singleHashReplication, channel);
+                        headerSize = writeHeader(fileChannel, mapObjectForHeaderOverwrite);
+                    }
                     ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
                     while (headerBuffer.remaining() > 0 &&
                             headerBuffer.position() < fileChannel.size()) {
@@ -1408,24 +1426,42 @@ public final class ChronicleMapBuilder<K, V> implements
                     headerBytes.readLimit(headerBuffer.limit());
                     Wire wire = new BinaryWire(headerBytes);
                     VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
-                    map.initTransientsFromBuilder(this);
-                    initTransientsFromReplication(map, singleHashReplication, channel);
-
-                    map.initBeforeMapping(fileChannel, headerBytes.readPosition());
+                    long readHeaderSize = headerBytes.readPosition();
+                    if (overrideBuilderConfig && headerSize != readHeaderSize) {
+                        throw new ChronicleHashRecoveryFailedException("read header size " +
+                                readHeaderSize + " != overwritten header size " + headerSize);
+                    }
+                    map.initBeforeMapping(file, fileChannel, readHeaderSize);
                     long expectedFileLength = map.expectedFileSize();
-                    if (expectedFileLength != fileLength) {
+                    if (!recover && expectedFileLength != fileLength) {
                         throw new IOException("The file " + file + " the map is serialized from " +
                                 "has unexpected length " + fileLength + ", probably corrupted. " +
                                 "Expected length is " + expectedFileLength);
                     }
-                    map.createMappedStoreAndSegments(file, raf);
+
+                    map.initTransientsFromBuilder(this);
+                    initTransientsFromReplication(map, singleHashReplication, channel);
+
+                    if (!recover) {
+                        map.createMappedStoreAndSegments(file, raf);
+                    } else {
+                        map.recover(file, raf);
+                    }
+
                     establishReplication(map, singleHashReplication, channel);
+
                     fileChannel.force(true);
                     // TODO according to Self Boostrapping Data spec, should write "init complete"
                     // byte *after* the above force instruction, see HCOLL-396
                     return map;
+                } catch (Exception e) {
+                    if (recover && !(e instanceof IOException))
+                        throw new ChronicleHashRecoveryFailedException(e);
+                    throw e;
                 }
             }
+            if (recover)
+                throw new FileNotFoundException("file " + file + " should exist for recovery");
             if (file.createNewFile() || fileLength == 0) {
                 break;
             }
@@ -1443,21 +1479,28 @@ public final class ChronicleMapBuilder<K, V> implements
 
         try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
             FileChannel fileChannel = raf.getChannel();
-            ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
-            Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
-            Wire wire = new BinaryWire(headerBytes);
-            wire.getValueOut().typedMarshallable(map);
+            int headerSize = writeHeader(fileChannel, map);
+            map.initBeforeMapping(file, fileChannel, headerSize);
 
-            int headerSize = (int) headerBytes.writePosition();
-            headerBuffer.limit(headerSize);
-            while (headerBuffer.remaining() > 0) {
-                fileChannel.write(headerBuffer, headerBuffer.position());
-            }
-            map.initBeforeMapping(fileChannel, headerSize);
             map.createMappedStoreAndSegments(file, raf);
+            establishReplication(map, singleHashReplication, channel);
+            return map;
         }
+    }
 
-        return establishReplication(map, singleHashReplication, channel);
+    private static <K, V> int writeHeader(FileChannel fileChannel, VanillaChronicleMap<K, V, ?> map)
+            throws IOException {
+        ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
+        Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
+        Wire wire = new BinaryWire(headerBytes);
+        wire.getValueOut().typedMarshallable(map);
+
+        int headerSize = (int) headerBytes.writePosition();
+        headerBuffer.limit(headerSize);
+        while (headerBuffer.remaining() > 0) {
+            fileChannel.write(headerBuffer, headerBuffer.position());
+        }
+        return headerSize;
     }
 
     private static void initTransientsFromReplication(
@@ -1492,7 +1535,8 @@ public final class ChronicleMapBuilder<K, V> implements
             BytesStore bytesStore =
                     lazyNativeBytesStoreWithFixedCapacity(map.sizeInBytesWithoutTiers());
             map.createMappedStoreAndSegments(bytesStore);
-            return establishReplication(map, singleHashReplication, channel);
+            establishReplication(map, singleHashReplication, channel);
+            return map;
         } catch (IOException e) {
             // file-less version should never trigger an IOException.
             throw new AssertionError(e);
@@ -1552,7 +1596,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 && actualChunkSize > 0;
     }
 
-    private ChronicleMap<K, V> establishReplication(
+    private void establishReplication(
             VanillaChronicleMap<K, V, ?> map,
             SingleChronicleHashReplication singleHashReplication,
             ReplicationChannel channel) throws IOException {
@@ -1591,7 +1635,6 @@ public final class ChronicleMapBuilder<K, V> implements
                 result.addCloseable(token);
             }
         }
-        return map;
     }
 
     private void establishCleanupThread(ReplicatedChronicleMap map) {

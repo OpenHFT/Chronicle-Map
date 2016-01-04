@@ -172,7 +172,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     @Override
-    protected ReplicatedGlobalMutableState globalMutableState() {
+    public ReplicatedGlobalMutableState globalMutableState() {
         return (ReplicatedGlobalMutableState) super.globalMutableState();
     }
 
@@ -338,6 +338,15 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         } finally {
             globalMutableStateUnlock();
         }
+    }
+
+    public ModificationIterator[] acquireAllModificationIterators() {
+        for (int remoteIdentifier = 0; remoteIdentifier < 128; remoteIdentifier++) {
+            if (globalMutableState().getModificationIteratorInitAt(remoteIdentifier)) {
+                acquireModificationIterator((byte) remoteIdentifier);
+            }
+        }
+        return assignedModificationIterators;
     }
 
     public void raiseChange(long tierIndex, long pos) {
@@ -601,7 +610,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
      *
      * @author Rob Austin.
      */
-    class ModificationIterator implements Replica.ModificationIterator {
+    public class ModificationIterator implements Replica.ModificationIterator {
         private final byte remoteIdentifier;
         private final long segmentBitSetsAddr;
         private final long offsetToBitSetsWithinATierBulk;
@@ -924,6 +933,23 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 long offsetToTierBitSet =
                         (extraTierIndex & (tiersInBulk - 1)) * tierModIterBitSetOuterSize;
                 dropChangeInTierBulk(bulkIndex, offsetToTierBitSet, pos);
+            }
+        }
+
+        public void clearRange0(long tierIndex, long pos, long endPosExclusive) {
+            if (tierIndex <= actualSegments) {
+                long segmentIndex = tierIndex - 1;
+                long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
+                tierModIterFrame.clearRange(nativeAccess(), null,
+                        segmentBitSetsAddr + offsetToTierBitSet, pos, endPosExclusive);
+            } else {
+                long extraTierIndex = tierIndex - 1 - actualSegments;
+                int bulkIndex = (int) (extraTierIndex >> log2TiersInBulk);
+                long offsetToTierBitSet =
+                        (extraTierIndex & (tiersInBulk - 1)) * tierModIterBitSetOuterSize;
+                TierBulkData tierBulkData = tierBulkOffsets.get(bulkIndex);
+                long bitSetAddr = bitSetsAddr(tierBulkData) + offsetToTierBitSet;
+                tierModIterFrame.clearRange(nativeAccess(), null, bitSetAddr, pos, endPosExclusive);
             }
         }
     }

@@ -24,7 +24,6 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 final class MapInstanceBuilder<K, V>
         implements ChronicleHashInstanceBuilder<ChronicleMap<K, V>>, Serializable {
@@ -35,18 +34,12 @@ final class MapInstanceBuilder<K, V>
     transient File file;
     String name;
 
-    final AtomicBoolean used;
+    volatile boolean used = false;
 
     MapInstanceBuilder(ChronicleMapBuilder<K, V> mapBuilder,
-                       SingleChronicleHashReplication singleHashReplication,
-                       ReplicationChannel channel,
-                       File file, String name, AtomicBoolean used) {
+                       SingleChronicleHashReplication singleHashReplication) {
         this.mapBuilder = mapBuilder;
         this.singleHashReplication = singleHashReplication;
-        this.channel = channel;
-        this.file = file;
-        this.name = name;
-        this.used = used;
     }
 
     @Override
@@ -84,14 +77,35 @@ final class MapInstanceBuilder<K, V>
 
     @Override
     public synchronized ChronicleMap<K, V> create() throws IOException {
-        if (!used.getAndSet(true)) {
-            return mapBuilder.create(this);
+        if (!used) {
+            ChronicleMap<K, V> map = mapBuilder.create(this, false, false);
+            // Set used = true, if map created successfully.
+            // If exception is thrown in mapBuilder.create(), the next line is not executed.
+            used = true;
+            return map;
         } else {
-            throw new IllegalStateException(
-                    "A ChronicleMap has already been created using this instance config chain. " +
-                            "Create a new instance config (builder.instance()) to create a new " +
-                            "ChronicleMap instance");
+            throw alreadyCreated();
         }
     }
 
+    @Override
+    public synchronized ChronicleMap<K, V> recover(boolean sameBuilderConfig) throws IOException {
+        if (file == null)
+            throw new IllegalStateException("persistedTo(file) must be configured for " +
+                    "ChronicleHashInstanceBuilder, for recover()");
+        if (!used) {
+            ChronicleMap<K, V> map = mapBuilder.create(this, true, sameBuilderConfig);
+            used = true;
+            return map;
+        } else {
+            throw alreadyCreated();
+        }
+    }
+
+    private static IllegalStateException alreadyCreated() {
+        return new IllegalStateException(
+                "A ChronicleHash has already been created using this " +
+                        "ChronicleHashInstanceBuilder. Create a new instance builder " +
+                        "(chronicleHashBuilder.instance()) to create another Chronicle Hash");
+    }
 }

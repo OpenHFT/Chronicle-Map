@@ -24,5 +24,9 @@ public interface ChecksumStrategy {
 
     boolean innerCheckSum();
 
+    int computeChecksum();
+
+    int storedChecksum();
+
     long extraEntryBytes();
 }

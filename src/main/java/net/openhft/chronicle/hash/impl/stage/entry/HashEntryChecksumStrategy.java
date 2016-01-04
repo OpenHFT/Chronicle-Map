@@ -35,7 +35,8 @@ public class HashEntryChecksumStrategy implements ChecksumStrategy {
         s.segmentBS.writeInt(e.entryEnd(), checksum);
     }
 
-    private int computeChecksum() {
+    @Override
+    public int computeChecksum() {
         long keyHashCode = h.keyHashCode();
 
         long keyEnd = e.keyEnd();
@@ -55,9 +56,14 @@ public class HashEntryChecksumStrategy implements ChecksumStrategy {
 
     @Override
     public boolean innerCheckSum() {
-        int oldChecksum = s.segmentBS.readInt(e.entryEnd());
+        int oldChecksum = storedChecksum();
         int checksum = computeChecksum();
         return oldChecksum == checksum;
+    }
+
+    @Override
+    public int storedChecksum() {
+        return s.segmentBS.readInt(e.entryEnd());
     }
 
     @Override

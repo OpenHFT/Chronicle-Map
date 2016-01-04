@@ -69,17 +69,12 @@ final class SetInstanceBuilder<E> implements ChronicleHashInstanceBuilder<Chroni
 
     @Override
     public synchronized ChronicleSet<E> create() throws IOException {
-        try {
-            return new SetFromMap<>((VanillaChronicleMap<E, DummyValue, ?>) mapBuilder.create());
-        } catch (IllegalStateException e) {
-            if (e.getMessage() != null && e.getMessage().startsWith("A ChronicleMap")) {
-                throw new IllegalStateException(
-                        "A ChronicleSet has already been created using this instance config. " +
-                                "Create a new instance config (builder.instance()) to create " +
-                                "a new ChronicleSet instance");
-            } else {
-                throw e;
-            }
-        }
+        return new SetFromMap<>((VanillaChronicleMap<E, DummyValue, ?>) mapBuilder.create());
+    }
+
+    @Override
+    public synchronized ChronicleSet<E> recover(boolean sameBuilderConfig) throws IOException {
+        ChronicleMap<E, DummyValue> map = mapBuilder.recover(sameBuilderConfig);
+        return new SetFromMap<>((VanillaChronicleMap<E, DummyValue, ?>) map);
     }
 }

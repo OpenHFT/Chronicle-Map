@@ -112,7 +112,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     @Override
-    protected long entryEnd() {
+    public long entryEnd() {
         return valueOffset + valueSize;
     }
     

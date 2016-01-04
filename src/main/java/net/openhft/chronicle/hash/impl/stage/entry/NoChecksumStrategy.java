@@ -30,6 +30,16 @@ public enum NoChecksumStrategy implements ChecksumStrategy {
     }
 
     @Override
+    public int computeChecksum() {
+        return 0;
+    }
+
+    @Override
+    public int storedChecksum() {
+        return 0;
+    }
+
+    @Override
     public long extraEntryBytes() {
         return 0; // no extra bytes to store checksum
     }
