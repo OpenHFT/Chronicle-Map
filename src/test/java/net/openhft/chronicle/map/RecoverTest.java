@@ -17,6 +17,8 @@
 package net.openhft.chronicle.map;
 
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,9 +33,11 @@ import static org.junit.Assert.assertNull;
 
 public class RecoverTest {
 
+    Logger LOG = LoggerFactory.getLogger(RecoverTest.class);
+
     ReplicatedChronicleMap<Integer, Integer, ?> map;
 
-    @Test(timeout = 60_000)
+    @Test
     public void recoverTest() throws IOException, ExecutionException, InterruptedException {
         File mapFile = File.createTempFile("recoverTestFile", ".map");
         mapFile.deleteOnExit();
@@ -93,7 +97,7 @@ public class RecoverTest {
             for (long offset = segmentHeadersOffset; offset < mapFile.length();
                  offset += 8) {
                 for (int bit = 0; bit < 64; bit++) {
-                    System.out.println("flip bit " + bit + " of word at " + offset);
+                    LOG.error("flip bit {} of word at {}", bit, offset);
                     mapBB.putLong((int) offset, mapBB.getLong((int) offset) ^ (1L << bit));
                     try (ChronicleMap<Integer, Integer> recovered = ChronicleMap
                             .of(Integer.class, Integer.class)
