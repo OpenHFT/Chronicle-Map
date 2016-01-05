@@ -261,7 +261,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public void onHeaderCreated() {
-        startOfModificationIterators = super.mapHeaderInnerSize();
+        // Pad modification iterators at 3 cache lines from the end of the map header,
+        // to avoid false sharing with the header of the first segment
+        startOfModificationIterators = super.mapHeaderInnerSize() +
+                RESERVED_GLOBAL_MUTABLE_STATE_BYTES - BYTES.convert(3, CACHE_LINES);
     }
 
     @Override
