@@ -355,7 +355,7 @@ public abstract class VanillaChronicleHash<K,
         // TODO review heuristics
         int tiersInBulk = actualSegments / 8;
         tiersInBulk = Maths.nextPower2(tiersInBulk, 1);
-        while (tierSize * tiersInBulk < OS.pageSize()) {
+        while (computeTierBulkBytesSize(tiersInBulk) < OS.pageSize()) {
             tiersInBulk *= 2;
         }
         return tiersInBulk;
