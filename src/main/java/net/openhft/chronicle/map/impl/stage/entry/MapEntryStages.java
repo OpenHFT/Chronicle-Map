@@ -266,4 +266,8 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
             initEntrySizeInChunks(allocatedChunks.allocatedChunks);
         }
     }
+
+    public boolean entryDeleted() {
+        return false;
+    }
 }

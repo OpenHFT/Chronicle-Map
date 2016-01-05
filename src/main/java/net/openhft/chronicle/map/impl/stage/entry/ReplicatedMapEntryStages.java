@@ -69,6 +69,7 @@ public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V
         return replicationBytesOffset + 9L;
     }
 
+    @Override
     public boolean entryDeleted() {
         return s.segmentBS.readBoolean(entryDeletedOffset());
     }

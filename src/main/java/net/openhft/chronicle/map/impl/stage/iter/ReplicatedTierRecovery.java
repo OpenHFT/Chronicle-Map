@@ -72,7 +72,7 @@ public class ReplicatedTierRecovery extends TierRecovery {
         ReplicatedChronicleMap<?, ?, ?>.ModificationIterator[] its =
                 m.acquireAllModificationIterators();
         ReusableBitSet freeList = s.freeList;
-        for (long pos = 0;;) {
+        for (long pos = 0; pos < m.actualChunksPerSegmentTier;) {
             long nextPos = freeList.nextSetBit(pos);
             if (nextPos > pos) {
                 for (ReplicatedChronicleMap<?, ?, ?>.ModificationIterator it : its) {
@@ -88,11 +88,10 @@ public class ReplicatedTierRecovery extends TierRecovery {
                 }
                 pos = nextPos + e.entrySizeInChunks;
             } else {
-                if (pos < m.actualChunksPerSegmentTier) {
-                    for (ReplicatedChronicleMap<?, ?, ?>.ModificationIterator it : its) {
-                        it.clearRange0(s.tierIndex, pos, m.actualChunksPerSegmentTier);
-                    }
+                for (ReplicatedChronicleMap<?, ?, ?>.ModificationIterator it : its) {
+                    it.clearRange0(s.tierIndex, pos, m.actualChunksPerSegmentTier);
                 }
+                break;
             }
         }
     }

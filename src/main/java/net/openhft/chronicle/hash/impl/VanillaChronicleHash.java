@@ -149,7 +149,7 @@ public abstract class VanillaChronicleHash<K,
     public transient List<TierBulkData> tierBulkOffsets;
 
     public transient long headerSize;
-    transient long segmentHeadersOffset;
+    public transient long segmentHeadersOffset;
     transient long segmentsOffset;
 
     public transient CompactOffHeapLinearHashTable hashLookup;
@@ -416,7 +416,10 @@ public abstract class VanillaChronicleHash<K,
 
     public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
         initBytesStoreAndHeadersViews(bytesStore);
+        initOffsetsAndBulks();
+    }
 
+    private void initOffsetsAndBulks() {
         segmentHeadersOffset = segmentHeadersOffset();
 
         long segmentHeadersSize = actualSegments * segmentHeaderSize;
@@ -472,7 +475,7 @@ public abstract class VanillaChronicleHash<K,
         resetGlobalMutableStateLock(file);
         recoverAllocatedExtraTierBulks(file, allocatedExtraTierBulks);
         recoverSegmentHeadersOffset(file, segmentHeadersOffset);
-        initBulks();
+        initOffsetsAndBulks();
     }
 
     private void resetGlobalMutableStateLock(File file) {

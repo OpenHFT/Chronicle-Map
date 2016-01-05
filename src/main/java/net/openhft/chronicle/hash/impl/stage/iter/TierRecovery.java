@@ -19,8 +19,6 @@ package net.openhft.chronicle.hash.impl.stage.iter;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.ExternalHashQueryContext;
-import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
@@ -134,11 +132,13 @@ public class TierRecovery {
                 Data key = (Data) e.key();
                 try (ExternalMapQueryContext<?, ?, ?> c = m.queryContext(key)) {
                     MapEntry<?, ?> entry2 = c.entry();
-                    Data<?> key2 = entry2.key();
+                    Data<?> key2 = ((MapEntry) c).key();
                     if (key2.bytes().address(key2.offset()) != key.bytes().address(key.offset())) {
                         lh.LOG.error("entries with duplicate key {} in segment {}: " +
                                 "with values {} and {}, removing the latter",
-                                key, c.segmentIndex(), entry2.value(), e.value());
+                                key, c.segmentIndex(),
+                                entry2 != null ? ((MapEntry) c).value() : "<deleted>",
+                                !e.entryDeleted() ? e.value() : "<deleted>");
                         if (hashLookup.remove(currentTierBaseAddr, hlPos) != hlPos) {
                             hlPos = hashLookup.stepBack(hlPos);
                             steps--;

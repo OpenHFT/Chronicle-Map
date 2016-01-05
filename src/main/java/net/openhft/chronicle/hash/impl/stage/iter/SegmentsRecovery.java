@@ -34,7 +34,6 @@ public abstract class SegmentsRecovery implements IterationContext {
     @StageRef SegmentStages s;
     @StageRef TierRecovery tierRecovery;
     @StageRef LogHolder lh;
-    @StageRef HashSegmentIteration iteration;
 
     @Override
     public void recoverSegments() {
