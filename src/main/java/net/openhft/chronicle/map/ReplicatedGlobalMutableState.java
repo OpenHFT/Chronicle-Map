@@ -30,4 +30,8 @@ interface ReplicatedGlobalMutableState extends VanillaGlobalMutableState {
     @Array(length = 128)
     boolean getModificationIteratorInitAt(int index);
     void setModificationIteratorInitAt(int index, boolean init);
+
+    @Group(7)
+    int getModificationIteratorsCount();
+    int addModificationIteratorsCount(int addition);
 }

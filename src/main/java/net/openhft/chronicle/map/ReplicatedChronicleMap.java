@@ -325,12 +325,24 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             if (modificationIterator != null)
                 return modificationIterator;
 
+            ReplicatedGlobalMutableState globalMutableState = globalMutableState();
             boolean modificationIteratorInit =
-                    globalMutableState().getModificationIteratorInitAt(remoteIdentifier);
+                    globalMutableState.getModificationIteratorInitAt(remoteIdentifier);
             final ModificationIterator modIter =
                     new ModificationIterator(remoteIdentifier, modificationIteratorInit);
-            if (!modificationIteratorInit)
-                globalMutableState().setModificationIteratorInitAt(remoteIdentifier, true);
+            if (!modificationIteratorInit) {
+                globalMutableState.setModificationIteratorInitAt(remoteIdentifier, true);
+                // This doesn't need to be volatile update, because modification iterators count
+                // is checked (also non-volatile) in the beginning of raiseChange()/dropChange()
+                // methods, the risk is that a new modification iterator is added, dirtyEntries()
+                // already completed, and then we call raiseChange() and miss the new iterator.
+                // raiseChange() is called, when the segment lock is held on update level, as well
+                // as dirtyEntries() (that is segment iteration, which is always performed on
+                // update-level lock), so the two actions (dirtyEntries() and raiseChange())
+                // are serialized between each other, => change to ModificationIteratorsCount is
+                // visible.
+                globalMutableState.addModificationIteratorsCount(1);
+            }
             //noinspection unchecked
             assignedModificationIterators = Stream
                     .concat(Arrays.stream(assignedModificationIterators), Stream.of(modIter))
@@ -352,6 +364,13 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         return assignedModificationIterators;
     }
 
+    private void updateModificationIteratorsArray() {
+        if (globalMutableState().getModificationIteratorsCount() !=
+                assignedModificationIterators.length) {
+            acquireAllModificationIterators();
+        }
+    }
+
     public void raiseChange(long tierIndex, long pos) {
         // -1 is invalid remoteIdentifier => raise change for all
         raiseChangeForAllExcept(tierIndex, pos, (byte) -1);
@@ -362,6 +381,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public void raiseChangeForAllExcept(long tierIndex, long pos, byte remoteIdentifier) {
+        updateModificationIteratorsArray();
         if (tierIndex <= actualSegments) {
             long segmentIndex = tierIndex - 1;
             long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
@@ -382,6 +402,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public void dropChange(long tierIndex, long pos) {
+        updateModificationIteratorsArray();
         if (tierIndex <= actualSegments) {
             long segmentIndex = tierIndex - 1;
             long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
@@ -404,6 +425,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public void moveChange(long oldTierIndex, long oldPos, long newTierIndex, long newPos) {
+        updateModificationIteratorsArray();
         if (oldTierIndex <= actualSegments) {
             long oldSegmentIndex = oldTierIndex - 1;
             long oldOffsetToTierBitSet = oldSegmentIndex * tierModIterBitSetOuterSize;
@@ -457,6 +479,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public boolean isChanged(long tierIndex, long pos) {
+        updateModificationIteratorsArray();
         if (tierIndex <= actualSegments) {
             long segmentIndex = tierIndex - 1;
             long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
