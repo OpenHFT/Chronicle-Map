@@ -154,6 +154,7 @@ public abstract class SegmentsRecovery implements IterationContext {
         if (TierCountersArea.tier(tierCountersAreaAddr) != 0) {
             lh.LOG.error("stored tier in first tier of segment {}: {}, should be 0",
                     s.segmentIndex, TierCountersArea.tier(tierCountersAreaAddr));
+            TierCountersArea.tier(tierCountersAreaAddr, 0);
         }
     }
 }
