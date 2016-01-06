@@ -137,6 +137,15 @@ public abstract class MapEventListener<K, V> implements Serializable {
         return true;
     }
 
+    /**
+     * This performs an early check to see if the values will be consumed or discarded.
+     *
+     * @return true unless you know the event won't be needed.
+     */
+    public boolean usesValue() {
+        return true;
+    }
+
     private static class LoggingMapEventListener extends MapEventListener {
         public final static Logger LOGGER = LoggerFactory.getLogger(LoggingMapEventListener.class);
         private static final long serialVersionUID = 0L;

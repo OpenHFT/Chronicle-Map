@@ -959,7 +959,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                                 replacedTimestamp, this);
                     }
                     if (eventListener != null && eventListener.isActive()) {
-                        V valueInstance = toValue.toInstance(copies, v, valueSize);
+                        V valueInstance = eventListener.usesValue() ? toValue.toInstance(copies, v, valueSize) : null;
                         writeUnlock();
                         // TODO unlocking is dangerous, because this method is a part of
                         // acquireUsingLocked()
@@ -1184,7 +1184,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     }
                     if (eventListener != null && eventListener.isActive()) {
                         final K key1 = toKey.toInstance(copies, key, keySize);
-                        final V newValue = toValue.toInstance(copies, value, valueSize);
+                        final V newValue = eventListener.usesValue() ? toValue.toInstance(copies, value, valueSize) : null;
 
                         writeUnlock();
                         try {
@@ -1227,7 +1227,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                     byte replacedIdentifier = 0;
                     long replacedTimestamp = 0;
                     final K key1 = toKey.toInstance(copies, key, keySize);
-                    final V newValue = toValue.toInstance(copies, value, valueSize);
+                    final V newValue = eventListener.usesValue() ? toValue.toInstance(copies, value, valueSize) : null;
                     writeUnlock();
                     try {
                         eventListener.onPut(key1,
@@ -1352,7 +1352,7 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
                 byte replacedIdentifier = 0;
                 long replacedTimestamp = 0;
                 final K key1 = toKey.toInstance(copies, key, keySize);
-                final V newValue = toValue.toInstance(copies, value, valueSize);
+                final V newValue = eventListener.usesValue() ? toValue.toInstance(copies, value, valueSize) : null;
                 writeUnlock();
                 try {
                     eventListener.onPut(key1,
