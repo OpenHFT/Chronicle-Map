@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class ReplicateProxyMapUpdatedViaSharedMemoryTest {
 
-    @Ignore("HCOLL-417")
     @Test(timeout = 10000)
     public void testReplicateProxyMapUpdatedViaSharedMemory() throws IOException, InterruptedException {
 
