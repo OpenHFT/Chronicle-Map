@@ -40,6 +40,7 @@ import static org.junit.Assert.assertTrue;
 
 public class TCPSocketReplicationNativeTest {
 
+    Set<Thread> threads;
     private ChronicleMap<Integer, LongValue> map1;
     private ChronicleMap<Integer, LongValue> map2;
 
@@ -65,15 +66,14 @@ public class TCPSocketReplicationNativeTest {
 
         for (final Closeable closeable : new Closeable[]{map1, map2}) {
             try {
-                closeable.close();
+                if (closeable != null)
+                    closeable.close();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         System.gc();
     }
-
-    Set<Thread> threads;
 
     @Before
     public void sampleThreads() {
