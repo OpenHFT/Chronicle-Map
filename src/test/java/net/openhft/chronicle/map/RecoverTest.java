@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,7 @@ public class RecoverTest {
 
     ReplicatedChronicleMap<Integer, Integer, ?> map;
 
+    @Ignore("HCOLL-422")
     @Test
     public void recoverTest() throws IOException, ExecutionException, InterruptedException {
         File mapFile = File.createTempFile("recoverTestFile", ".map");
