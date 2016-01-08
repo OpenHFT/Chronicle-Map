@@ -18,7 +18,6 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -34,13 +33,9 @@ import static com.samskivert.util.CollectionUtil.selectRandomSubset;
 public class Issue24ChronicleSetTest {
 
     public static <K, H extends ChronicleHash<K, ?, ?, ?>,  B extends ChronicleHashBuilder<K, H, B>>
-    H init(B builder, int entrySize, int averageKeySize, String fileName) {
+    H init(B builder, int entrySize, int averageKeySize) throws IOException {
 
-        String tmp = System.getProperty("java.io.tmpdir");
-        String pathname = tmp + "/" + fileName;
-        File file = new File(pathname);
-        if (file.exists())
-            file.delete();
+        File file = File.createTempFile("stringSet", ".dat");
         file.deleteOnExit();
         try {
             H result = builder.entries(entrySize)
@@ -52,13 +47,14 @@ public class Issue24ChronicleSetTest {
     }
 
     public synchronized static <A> ChronicleSet<A> initSet(
-            Class<A> entryClass, int entrySize, int averageKeySize, String fileName) {
-        return init(ChronicleSetBuilder.of(entryClass), entrySize, averageKeySize, fileName);
+            Class<A> entryClass, int entrySize, int averageKeySize)
+            throws IOException {
+        return init(ChronicleSetBuilder.of(entryClass), entrySize, averageKeySize);
     }
 
     @Test
-    public void issue24ChronicleSetTest() {
-        ChronicleSet<String> set = initSet(String.class, 1_000_000, 30, "stringSet.dat");
+    public void issue24ChronicleSetTest() throws IOException {
+        ChronicleSet<String> set = initSet(String.class, 1_000_000, 30);
         ExecutorService executor = Executors.newFixedThreadPool(5);
         for (int i = 0; i < 10; i++) {
             Runnable worker = new WorkerThread(set);
