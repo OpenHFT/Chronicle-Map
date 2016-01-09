@@ -29,27 +29,28 @@ public interface SegmentHeader {
     void lowestPossiblyFreeChunk(long address, long lowestPossiblyFreeChunk);
 
     void readLock(long address);
-    void readLockInterruptibly(long address);
+    void readLockInterruptibly(long address) throws InterruptedException;
     boolean tryReadLock(long address);
-    boolean tryReadLock(long address, long time, TimeUnit unit);
+    boolean tryReadLock(long address, long time, TimeUnit unit) throws InterruptedException;
 
     void updateLock(long address);
-    void updateLockInterruptibly(long address);
+    void updateLockInterruptibly(long address) throws InterruptedException;
     boolean tryUpdateLock(long address);
-    boolean tryUpdateLock(long address, long time, TimeUnit unit);
+    boolean tryUpdateLock(long address, long time, TimeUnit unit) throws InterruptedException;
 
     void writeLock(long address);
-    void writeLockInterruptibly(long address);
+    void writeLockInterruptibly(long address) throws InterruptedException;
     boolean tryWriteLock(long address);
-    boolean tryWriteLock(long address, long time, TimeUnit unit);
+    boolean tryWriteLock(long address, long time, TimeUnit unit) throws InterruptedException;
 
     boolean tryUpgradeReadToUpdateLock(long address);
     boolean tryUpgradeReadToWriteLock(long address);
 
     void upgradeUpdateToWriteLock(long address);
-    void upgradeUpdateToWriteLockInterruptibly(long address);
+    void upgradeUpdateToWriteLockInterruptibly(long address) throws InterruptedException;
     boolean tryUpgradeUpdateToWriteLock(long address);
-    boolean tryUpgradeUpdateToWriteLock(long address, long time, TimeUnit unit);
+    boolean tryUpgradeUpdateToWriteLock(long address, long time, TimeUnit unit)
+            throws InterruptedException;
 
     void readUnlock(long address);
 

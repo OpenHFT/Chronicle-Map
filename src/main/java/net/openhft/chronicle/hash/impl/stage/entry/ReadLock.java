@@ -56,6 +56,8 @@ public class ReadLock implements InterProcessLock {
     @Override
     public void lockInterruptibly() throws InterruptedException {
         checkOnEachPublicOperation.checkOnEachLockOperation();
+        if (Thread.interrupted())
+            throw new InterruptedException();
         if (s.localLockState == UNLOCKED) {
             if (s.readZero() && s.updateZero() && s.writeZero())
                 s.segmentHeader.readLockInterruptibly(s.segmentHeaderAddress);
@@ -84,6 +86,8 @@ public class ReadLock implements InterProcessLock {
     @Override
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
         checkOnEachPublicOperation.checkOnEachLockOperation();
+        if (Thread.interrupted())
+            throw new InterruptedException();
         if (s.localLockState == UNLOCKED) {
             if (!s.readZero() || !s.updateZero() || !s.writeZero() ||
                     s.segmentHeader.tryReadLock(s.segmentHeaderAddress, time, unit)) {

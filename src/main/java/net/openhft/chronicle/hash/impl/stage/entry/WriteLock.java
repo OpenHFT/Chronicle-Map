@@ -94,6 +94,8 @@ public class WriteLock implements InterProcessLock {
     @Override
     public void lockInterruptibly() throws InterruptedException {
         checkOnEachPublicOperation.checkOnEachLockOperation();
+        if (Thread.interrupted())
+            throw new InterruptedException();
         switch (s.localLockState) {
             case UNLOCKED:
                 s.checkIterationContextNotLockedInThisThread();
@@ -184,6 +186,8 @@ public class WriteLock implements InterProcessLock {
     @Override
     public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException {
         checkOnEachPublicOperation.checkOnEachLockOperation();
+        if (Thread.interrupted())
+            throw new InterruptedException();
         switch (s.localLockState) {
             case UNLOCKED:
                 s.checkIterationContextNotLockedInThisThread();

@@ -24,22 +24,26 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
 /**
- * Abstracts inter-process lock of {@link ChronicleHash} data: segments, entries.
+ * An inter-process lock, used to control access to some shared off-heap resources of {@link
+ * ChronicleHash} instances.
  *
  * <p>This lock is not reentrant, but kind of "saturating": multiple {@link #lock()} calls have
- * the same effect as a single call. Likewise {@link #unlock()} -- multiple unlocks, or "unlocking"
+ * the same effect as a single call. Likewise {@link #unlock()} -- multiple unlocks, or unlocking
  * when the lock isn't actually held, has no negative effects.
  *
  * <p>Once a lock object obtained, it <i>shouldn't be stored in a field and accessed from multiple
  * threads</i>, instead of that, lock objects should be obtained in each thread separately, using
- * the same call chain. This is because since the lock is inter-process, it anyway keeps the
- * synchronization state in shared memory, but restricting on-heap "view" of shared lock to a single
- * thread is beneficial form performance point-of-view, e. g. fields of the on-heap
+ * the same call chain. This is because since the lock is inter-process, it anyway keeps it's
+ * synchronization state in shared off-heap memory, but restricting on-heap "view" of shared lock
+ * to a single thread is beneficial form performance point-of-view, e. g. fields of the on-heap
  * {@code InterProcessLock} object shouldn't be {@code volatile}.
  *
  * <p>Lock is inter-process, hence it cannot afford to wait for acquisition infinitely, because
  * it would be too dead-lock prone. {@link #lock()} throws {@code RuntimeException} after some
- * finite time.
+ * implementation-defined time spent in waiting for the lock acquisition.
+ *
+ * <p>{@code InterProcessLock} supports interruption of lock acquisition (in {@link
+ * #lockInterruptibly()} and {@link #tryLock(long, TimeUnit)} methods).
  *
  * @implNote Inter-process lock is unfair.
  *
@@ -53,13 +57,14 @@ public interface InterProcessLock extends Lock {
     boolean isHeldByCurrentThread();
 
     /**
-     * Acquires the lock, if this lock (or stronger-level lock, in the context of {@link
-     * InterProcessReadWriteUpdateLock}) is already held by current thread, this call returns
+     * Acquires the lock, if this lock (or a stronger-level lock, in the context of {@link
+     * InterProcessReadWriteUpdateLock}) is already held by the current thread, this call returns
      * immediately.
      *
-     * <p>If the lock is not available then the current thread enter a busy loop. After some
-     * specified threshold, the thread <i>might</i> be disabled for thread scheduling purposes
-     * and lies dormant until the lock has been acquired. After another specified threshold
+     * <p>If the lock is not available then the current thread enters a busy loop. After some
+     * threshold time spent in a busy loop, the thread <i>might</i> be disabled for thread
+     * scheduling purposes and lay dormant until the lock has been acquired. After some
+     * implementation-defined time spent in waiting for the lock acquisition,
      * {@link RuntimeException} is thrown.
      *
      * @throws IllegalMonitorStateException if this method call observes illegal lock state, or some
@@ -78,7 +83,7 @@ public interface InterProcessLock extends Lock {
      * If the lock is not available then this method will return
      * immediately with the value {@code false}.
      *
-     * <p>Example usage: <pre>{@code
+     * @apiNote Example usage: <pre>{@code
      * try (ExternalMapQueryContext<K, V, ?> q = map.queryContext(key)) {
      *     if (q.updateLock().tryLock()) {
      *         // highly-probable branch
