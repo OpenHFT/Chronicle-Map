@@ -296,8 +296,7 @@ public final class ChronicleMapBuilder<K, V> implements
      */
     @Override
     public ChronicleMapBuilder<K, V> averageKeySize(double averageKeySize) {
-        if (keyBuilder.sizeIsStaticallyKnown)
-            return this;
+        checkSizeIsStaticallyKnown(keyBuilder, "Key");
         checkAverageSize(averageKeySize, "key");
         this.averageKeySize = averageKeySize;
         averageKey = null;
@@ -319,8 +318,7 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMapBuilder<K, V> averageKey(K averageKey) {
         Objects.requireNonNull(averageKey);
-        if (keyBuilder.sizeIsStaticallyKnown)
-            return this;
+        checkSizeIsStaticallyKnown(keyBuilder, "Key");
         this.averageKey = averageKey;
         sampleKey = null;
         averageKeySize = UNDEFINED_DOUBLE_CONFIG;
@@ -384,8 +382,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * @see #actualChunkSize(int)
      */
     public ChronicleMapBuilder<K, V> averageValueSize(double averageValueSize) {
-        if (valueBuilder.sizeIsStaticallyKnown)
-            return this;
+        checkSizeIsStaticallyKnown(valueBuilder, "Value");
         checkAverageSize(averageValueSize, "value");
         this.averageValueSize = averageValueSize;
         averageValue = null;
@@ -427,12 +424,19 @@ public final class ChronicleMapBuilder<K, V> implements
      */
     public ChronicleMapBuilder<K, V> averageValue(V averageValue) {
         Objects.requireNonNull(averageValue);
-        if (valueBuilder.sizeIsStaticallyKnown)
-            return this;
+        checkSizeIsStaticallyKnown(valueBuilder, "Value");
         this.averageValue = averageValue;
         sampleValue = null;
         averageValueSize = UNDEFINED_DOUBLE_CONFIG;
         return this;
+    }
+
+    private static void checkSizeIsStaticallyKnown(SerializationBuilder builder, String role) {
+        if (builder.sizeIsStaticallyKnown) {
+            throw new IllegalStateException("Size of " + builder.tClass +
+                    " instances is constant and statically known, shouldn't be specified via " +
+                    "average" + role + "Size() or average" + role + "() methods");
+        }
     }
 
     private static void checkAverageSize(double averageSize, String role) {
