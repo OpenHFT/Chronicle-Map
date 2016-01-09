@@ -734,7 +734,7 @@ public abstract class VanillaChronicleHash<K,
                     long tierCountersAreaAddr = tierBaseAddr + tierHashLookupOuterSize;
                     long nextFreeTierIndex = TierCountersArea.nextTierIndex(tierCountersAreaAddr);
                     // now, when this tier will be a part of the map, the next tier designates
-                    // the next tier in the data structure, should be 0
+                    // the next tier in the data store, should be 0
                     TierCountersArea.nextTierIndex(tierCountersAreaAddr, 0);
                     TierCountersArea.segmentIndex(tierCountersAreaAddr, forSegmentIndex);
                     TierCountersArea.tier(tierCountersAreaAddr, tier);

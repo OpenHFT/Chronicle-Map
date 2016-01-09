@@ -34,8 +34,8 @@ applications. Notably trading, financial market applications.
  - Replication *without logs*, with constant footprint cost, guarantees progress even if the network
  doesn't sustain write rates.
 
-<b><i>Chronicle Map</i> has two meanings:</b> [the language-agnostic data structure](spec) and [the
-implementation of this data structure for the JVM](src). Currently, this is the only implementation.
+<b><i>Chronicle Map</i> has two meanings:</b> [the language-agnostic data store](spec) and [the
+implementation of this data store for the JVM](src). Currently, this is the only implementation.
 
 **From Java perspective,** Chronicle Map is a `ConcurrentMap` implementation which stores the
 entries *off-heap*, serializing/deserializing key and value objects to/from off-heap memory
@@ -68,11 +68,11 @@ queries*.
  Chronicle Map project, there are projects *on top* of Chronicle Map which address these questions,
  e. g. [Chronicle Enterprise](http://chronicle.software/products/chronicle-enterprise/).
 
-**What is the Chronicle Map data structure?** In one sentence and simplified, Chronicle Map instance
-is a big chunk of shared memory (optionally mapped to disk), split into independent segments, each
-segment has an independent memory allocation for storing the entries, a hash table for search, and a
-lock in shared memory (implemented via CAS loops) for managing concurrent access. Read [the
-Chronicle Map design overview](spec/2-design-overview.md) for more.
+**What is the Chronicle Map's data structure?** In one sentence and simplified, a Chronicle Map
+instance is a big chunk of shared memory (optionally mapped to disk), split into independent
+segments, each segment has an independent memory allocation for storing the entries, a hash table
+for search, and a lock in shared memory (implemented via CAS loops) for managing concurrent access.
+Read [the Chronicle Map data store design overview](spec/2-design-overview.md) for more.
 
 ### Chronicle Map is *not*
 
@@ -1058,7 +1058,7 @@ Combined, interception SPI interfaces and `ChronicleMap.queryContext()` API are 
  - Perform multi-key operations on a single `ChronicleMap` correctly in concurrent environment, by
  acquiring locks on all keys before updating the entries
  - Define own replication/reconciliation logic for distributed Chronicle Maps
- - Dump statistics of a Chronicle Map data structure -- each segment's load, size in bytes of each
+ - Dump statistics of the Chronicle Map instance -- each segment's load, size in bytes of each
  entry, etc.
 
 #### Example - Simple logging

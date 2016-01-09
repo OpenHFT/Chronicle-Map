@@ -1,6 +1,4 @@
-# The Chronicle Map Specification, revision 1-pre
-
-This directory contains the Chronicle Map Specification.
+# The Chronicle Map Data Store Specification, revision 1-pre
 
 This is currently work-in-progress.
 

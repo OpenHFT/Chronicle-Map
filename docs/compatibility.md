@@ -1,6 +1,6 @@
 # Chronicle Map 3 Compatibility
 
-## Java implementation compatibility
+## The Java Implementation Compatibility
 
 ### Public API
 
@@ -26,7 +26,7 @@ of some types could change, "high level" configurations in `ChronicleMapBuilder`
 Chronicle Map instances with different properties, etc. Such changes should be documented in release
 notes.
 
-### Persistence file binary form
+### Persistence File Binary Form
 
 A persisted Chronicle Map instance (a binary file), produced by a production release of the library,
 should be accessible and updatable by any subsequent production release of the library in 3.x
@@ -41,19 +41,19 @@ To support this,
  new version of root implementation class, e. g. `VanillaChronicleMap_3_5` should be created and
  put along with older version, which should keep behave the same as before.
 
-### Replication protocol
+### Replication Protocol
 
 The replication protocol might change between Chronicle Map versions with different "minor" number.
 Chronicle Map nodes running different versions of the library shouldn't communicate to each other.
 Though this might lead to failures, but not to data corruption on either of the nodes.
 
-## Specification compatibility
+## The Specification Compatibility
 
-Chronicle Map Data Structure Specification could be updated without revision change while it remains
-backward compatible, i. e. implementation of the newer version of specification could access and
-update any persisted Chronicle Map instance, produced by older version. In addition, potential
-*concurrent* accessing implementations of older versions ("within" the same revision) shouldn't lose
-correctness and corrupt the data.
+The Chronicle Map Data Store Specification could be updated without changing the revision while it
+remains backward compatible, i. e. the implementation of the newer version of the specification
+could access and update any persisted Chronicle Map instance, produced by an older version.
+In addition, potential *concurrent* accessing implementations of older versions ("within" the same
+revision) shouldn't lose correctness and corrupt the data.
 
 If more substantial changes to the specification are required, the revision number should be
 updated.

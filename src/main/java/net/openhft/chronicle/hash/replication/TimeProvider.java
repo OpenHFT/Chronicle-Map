@@ -28,7 +28,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 /**
  * {@code TimeProvider} encapsulates time measurement for {@link ChronicleHash} replication needs.
  * It is used to obtain timestamps of entry updates, and to determine, when deleted entries become
- * eligible for complete purge from the Chronicle Hash data structure.
+ * eligible for complete purge from the Chronicle Hash data store.
  *
  * @see ReplicableEntry#originTimestamp()
  * @see RemoteOperationContext#remoteTimestamp()

@@ -1,6 +1,6 @@
 # Chronicle Map 3 Versioning
 
-## Java implementation versioning
+## The Java implementation Versioning
 
 3.minor.patch
 
@@ -14,10 +14,10 @@
    number of segments, or segment's capacity, etc.
  - Any dependency is updated, even if only "patch" number is updated, e. g. `chronicle-bytes`
  dependency is updated from `1.1.1` to `1.1.2`.
- - Bug fixing, performance optimization or feature addition requires to change binary or serialized
- form of the Chronicle Map data structure (therefore revise the Chronicle Map Specification, see
- below), or binary replication protocol, or serialization form of some marshaller classes, that
- requires to [create new versions of classes](compatibility.md).
+ - Bug fixing, performance optimization or feature addition requires to change the binary or
+ serialized form of Chronicle Map data store (therefore revise the Chronicle Map data store
+ specification, see below), or the binary replication protocol, or the serialized form of some
+ marshaller classes, that requires to [create new versions of classes](compatibility.md).
 
 "Minor" number shouldn't be updated, i. e. the next release could update only the "patch" number,
 when
@@ -33,16 +33,18 @@ commit* these changes are made.
 
 Suffixes `-alpha`, `-beta`, `-rc` etc. mean this is a pre-production release.
 
-## Specification versioning
+## The Specification Versioning
 
-The first Chronicle Map 3 production release designates the Chronicle Map Specification revision 1.
+The first Chronicle Map 3 production release designates the Chronicle Map data store specification,
+revision 1.
 
 When the specification should be updated in a way that is not [backward compatible](
-compatibility.md#specification-compatibility), the revision should be updated (revision 2, 3, ...)
-and the Java implementation of this revision should have "minor" number updated in it's version.
+compatibility.md#the-specification-compatibility), the revision should be updated (revision 2, 3,
+...) and the Java implementation of this revision should have "minor" number updated in it's
+version.
 
-During development after the release of the revision `x`, while the specification is backward
-compatible, it should remain versioned `x`. In the same commit where specification becomes
+During the development after the release of the revision `x`, while the specification is backward
+compatible, it should remain versioned `x`. In the same commit where the specification becomes
 incompatible, it's revision should be set to `<x+1>-pre` until the next production release.
 
 Releases and updates to the "minor" number in the library version should be synchronized with

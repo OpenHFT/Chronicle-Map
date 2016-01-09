@@ -2664,16 +2664,16 @@ public class CHMUseCasesTest {
 
     @Test
     public void testBytesMarshallable2() throws IOException {
-        ChronicleMapBuilder<Data, Data> builder = ChronicleMapBuilder
-                .of(Data.class, Data.class)
+        ChronicleMapBuilder<IData.Data, IData.Data> builder = ChronicleMapBuilder
+                .of(IData.Data.class, IData.Data.class)
                 .keyReaderAndDataAccess(new DataReader(), new DataDataAccess())
                 .valueReaderAndDataAccess(new DataReader(), new DataDataAccess())
                 .actualChunkSize(64)
                 .entries(1000);
-        try (ChronicleMap<Data, Data> map = newInstance(builder)) {
+        try (ChronicleMap<IData.Data, IData.Data> map = newInstance(builder)) {
             for (int i = 0; i < 100; i++) {
-                Data key = new Data();
-                Data value = new Data();
+                IData.Data key = new IData.Data();
+                IData.Data value = new IData.Data();
                 key.setText("key-" + i);
                 key.setNumber(i);
                 value.setNumber(i);
@@ -2685,30 +2685,30 @@ public class CHMUseCasesTest {
         }
     }
 
-    private static class DataDataAccess extends BytesMarshallableDataAccess<Data> {
+    private static class DataDataAccess extends BytesMarshallableDataAccess<IData.Data> {
         public DataDataAccess() {
-            super(Data.class);
+            super(IData.Data.class);
         }
 
         @Override
-        protected Data createInstance() {
-            return new Data();
+        protected IData.Data createInstance() {
+            return new IData.Data();
         }
 
         @Override
-        public DataAccess<Data> copy() {
+        public DataAccess<IData.Data> copy() {
             return new DataDataAccess();
         }
     }
 
-    private static class DataReader extends BytesMarshallableReader<Data> {
+    private static class DataReader extends BytesMarshallableReader<IData.Data> {
         public DataReader() {
-            super(Data.class);
+            super(IData.Data.class);
         }
 
         @Override
-        protected Data createInstance() {
-            return new Data();
+        protected IData.Data createInstance() {
+            return new IData.Data();
         }
     }
 }
@@ -2721,53 +2721,53 @@ interface IData extends BytesMarshallable {
     String getText();
 
     int getNumber();
-}
 
-class Data implements IData, BytesMarshallable {
-    static final long MAGIC = 0x8081828384858687L;
-    static final long MAGIC2 = 0xa0a1a2a3a4a5a6a7L;
+    class Data implements IData, BytesMarshallable {
+        static final long MAGIC = 0x8081828384858687L;
+        static final long MAGIC2 = 0xa0a1a2a3a4a5a6a7L;
 
-    String text;
-    int number;
+        String text;
+        int number;
 
-    @Override
-    public String getText() {
-        return text;
-    }
+        @Override
+        public String getText() {
+            return text;
+        }
 
-    @Override
-    public void setText(String text) {
-        this.text = text;
-    }
+        @Override
+        public void setText(String text) {
+            this.text = text;
+        }
 
-    @Override
-    public int getNumber() {
-        return number;
-    }
+        @Override
+        public int getNumber() {
+            return number;
+        }
 
-    @Override
-    public void setNumber(int number) {
-        this.number = number;
-    }
+        @Override
+        public void setNumber(int number) {
+            this.number = number;
+        }
 
-    @Override
-    public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
-        long magic = in.readLong();
-        if (magic != MAGIC)
-            throw new AssertionError("Start " + Long.toHexString(magic));
-        text = in.readUTFΔ();
-        number = in.readInt();
-        long magic2 = in.readLong();
-        if (magic2 != MAGIC2)
-            throw new AssertionError("End " + Long.toHexString(magic2));
-    }
+        @Override
+        public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
+            long magic = in.readLong();
+            if (magic != MAGIC)
+                throw new AssertionError("Start " + Long.toHexString(magic));
+            text = in.readUTFΔ();
+            number = in.readInt();
+            long magic2 = in.readLong();
+            if (magic2 != MAGIC2)
+                throw new AssertionError("End " + Long.toHexString(magic2));
+        }
 
-    @Override
-    public void writeMarshallable(@NotNull Bytes out) {
-        out.writeLong(MAGIC);
-        out.writeUTFΔ(text);
-        out.writeInt(number);
-        out.writeLong(MAGIC2);
+        @Override
+        public void writeMarshallable(@NotNull Bytes out) {
+            out.writeLong(MAGIC);
+            out.writeUTFΔ(text);
+            out.writeInt(number);
+            out.writeLong(MAGIC2);
+        }
     }
 }
 

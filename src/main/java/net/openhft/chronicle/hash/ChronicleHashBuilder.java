@@ -286,7 +286,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *
      * <p>It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
      * almost certainly, you either should configure {@code ChronicleHash}es completely differently,
-     * or this data structure doesn't fit you case.
+     * or this data store doesn't fit to your case.
      *
      * @param maxBloatFactor the maximum number ot times, the created hash container is supposed
      *                       to bloat up beyond the {@link #entries(long)}
@@ -393,19 +393,19 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
 
     /**
      * Configures timeout after which entries, marked as removed in the Chronicle Hash, constructed
-     * by this builder, are allowed to be completely removed from the data structure. In replicated
+     * by this builder, are allowed to be completely removed from the data store. In replicated
      * Chronicle nodes, when {@code remove()} on the key is called, the corresponding entry
-     * is not immediately erased from the data structure, to let the distributed system eventually
+     * is not immediately erased from the data store, to let the distributed system eventually
      * converge on some value for this key (or converge on the fact, that this key is removed).
      * Chronicle Hash watch in runtime after the entries, and if one is removed and not updated
      * in any way for this {@code removedEntryCleanupTimeout}, Chronicle is allowed to remove this
-     * entry completely from the data structure. This timeout should depend on your distributed
+     * entry completely from the data store. This timeout should depend on your distributed
      * system topology, and typical replication latencies, that should be determined experimentally.
      *
      * <p>Default timeout is 1 minute.
      *
      * @param removedEntryCleanupTimeout timeout, after which stale removed entries could be erased
-     *                                   from Chronicle Hash data structure completely
+     *                                   from Chronicle Hash data store completely
      * @param unit time unit, in which the timeout is given
      * @return this builder back
      * @throws IllegalArgumentException is the specified timeout is less than 1 millisecond
