@@ -13,7 +13,11 @@
    `ChronicleMapBuilder` configured the same way constructs a `ChronicleMap` with different
    number of segments, or segment's capacity, etc.
  - Any dependency is updated, even if only "patch" number is updated, e. g. `chronicle-bytes`
- dependency is updated from `1.1.1` to `1.1.2`.
+ dependency is updated from `1.1.1` to `1.1.2`. This rule doesn't apply to dependencies to the
+ umbrella POMs which merely determine versions of other dependencies (namely `chronicle-bom` and
+ `third-party-bom`), if the versions of actual dependencies doesn't change between those versions
+ of umbrella POMs. Also, this rule doesn't apply to dependencies with `test` and `provided` Maven
+ scopes.
  - Bug fixing, performance optimization or feature addition requires to change the binary or
  serialized form of Chronicle Map data store (therefore revise the Chronicle Map data store
  specification, see below), or the binary replication protocol, or the serialized form of some
