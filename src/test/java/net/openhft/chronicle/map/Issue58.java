@@ -60,16 +60,16 @@ public class Issue58 {
         try (
                 ChronicleMap<String, UUID> map = ChronicleMap.of(String.class, UUID.class)
                         .averageKeySize(2)
-                        .valueMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
+                        .valueMarshaller(UuidMarshaller.INSTANCE)
                         .constantValueSizeBySample(UUID.randomUUID())
                         .entries(data.size())
                         .createPersistedTo(mapFile);
                 ChronicleMap<UUID, String> reverseMap = ChronicleMap.of(UUID.class, String.class)
-                        .keyMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
+                        .keyMarshaller(UuidMarshaller.INSTANCE)
                         .averageValueSize(2)
                         .constantKeySizeBySample(UUID.randomUUID())
                         .entries(data.size())
-                        .createPersistedTo(reverseMapFile);
+                        .createPersistedTo(reverseMapFile)
         ) {
 
             map.putAll(data);
@@ -84,12 +84,12 @@ public class Issue58 {
         try (
                 ChronicleMap<String, UUID> map = ChronicleMap.of(String.class, UUID.class)
                         .averageKeySize(2)
-                        .valueMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
+                        .valueMarshaller(UuidMarshaller.INSTANCE)
                         .constantValueSizeBySample(UUID.randomUUID())
                         .entries(data.size())
                         .createPersistedTo(mapFile);
                 ChronicleMap<UUID, String> reverseMap = ChronicleMap.of(UUID.class, String.class)
-                        .keyMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
+                        .keyMarshaller(UuidMarshaller.INSTANCE)
                         .constantKeySizeBySample(UUID.randomUUID())
                         .averageValueSize(2)
                         .entries(data.size())
@@ -106,12 +106,12 @@ public class Issue58 {
         try (
                 ChronicleMap<String, UUID> map = ChronicleMap.of(String.class, UUID.class)
                         .averageKeySize(2)
-                        .valueMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
+                        .valueMarshaller(UuidMarshaller.INSTANCE)
                         .constantValueSizeBySample(UUID.randomUUID())
                         .entries(data.size())
                         .createPersistedTo(mapFile);
                 ChronicleMap<UUID, String> reverseMap = ChronicleMap.of(UUID.class, String.class)
-                        .keyMarshallers(UuidMarshaller.INSTANCE, UuidMarshaller.INSTANCE)
+                        .keyMarshaller(UuidMarshaller.INSTANCE)
                         .constantKeySizeBySample(UUID.randomUUID())
                         .averageValueSize(2)
                         .entries(data.size())

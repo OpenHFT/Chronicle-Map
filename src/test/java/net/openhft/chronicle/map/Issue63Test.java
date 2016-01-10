@@ -26,7 +26,7 @@ import java.nio.file.Paths;
 import static org.junit.Assert.assertArrayEquals;
 
 public class Issue63Test {
-    
+
     @Test
     public void issue63Test() throws Exception {
         Path path = Paths.get(System.getProperty("java.io.tmpdir") + "/test-vectors.dat");
