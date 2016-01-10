@@ -242,6 +242,14 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     public abstract boolean locksInit();
 
     void initLocks() {
+        // Ensure SegmentHeader is init. This method initLocks() doesn't trigger SegmentHeader
+        // initialization otherwise, so it could remain uninit on the beginning of locking methods.
+        // But Locks still anyway depends on SegmentHeader stage (at least via
+        // readUnlockAndDecrementCount() method), so when on later stages of locking methods
+        // SegmentHeader is init, Locks stage is closed (and then need to be re-init again), as
+        // a dependency of SegmentHeader. So ensuring SegmentHeader is always init before Locks
+        // allows to avoid redundant work.
+        if (segmentHeader == null) throw new AssertionError();
         localLockState = UNLOCKED;
         int indexOfThisContext = chaining.indexInContextChain;
         for (int i = indexOfThisContext - 1; i >= 0; i--) {
