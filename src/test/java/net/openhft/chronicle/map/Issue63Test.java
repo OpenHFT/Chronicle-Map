@@ -16,13 +16,23 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.serialization.ListMarshaller;
+import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesReader;
+import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesWriter;
+import net.openhft.chronicle.set.*;
 import org.junit.Test;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.Assert.assertArrayEquals;
 
 public class Issue63Test {
@@ -43,7 +53,7 @@ public class Issue63Test {
                 .createPersistedTo(mapFile);
 
 
-        float[] exp1 = new float[] {
+        float[] exp1 = new float[]{
                 (float) -0.4200737, (float) -0.5428019, (float) 0.25542524, (float) -0.10631648,
                 (float) 0.12206168, (float) 0.0411969, (float) 0.9899967, (float) 0.15887073,
                 (float) -0.09775953, (float) 0.21812996, (float) -0.2724478, (float) 1.1872392,
@@ -71,7 +81,7 @@ public class Issue63Test {
                 (float) -0.868858, (float) 0.4946002, (float) 0.61442167, (float) 0.70633507
         };
 
-        float[] exp2 = new float[] {
+        float[] exp2 = new float[]{
                 (float) -0.0043417793, (float) -0.004025369, (float) 1.8009785E-4,
                 (float) 5.522854E-4, (float) -2.9725596E-4, (float) 0.0038219264,
                 (float) 0.0057955547, (float) -0.0036915164, (float) 1.2905941E-5,
@@ -126,4 +136,171 @@ public class Issue63Test {
         assertArrayEquals(exp2, xVectors2.get(key2), 0.0f);
     }
 
+    // Right now no corresponding "knownUsers" object
+    private ChronicleMap<CharSequence, List<CharSequence>> knownItems;
+    private ChronicleMap<CharSequence, float[]> xVectors;
+    private ChronicleSet<CharSequence> xRecentIDs;
+    private ChronicleMap<CharSequence, float[]> yVectors;
+    private ChronicleSet<CharSequence> yRecentIDs;
+
+    public static void main(String[] args) throws Exception {
+        new Issue63Test().testChronicleMap();
+    }
+
+    void testChronicleMap() throws Exception {
+        int num = 1_000_000;
+        testChronicleMap(System.getProperty("java.io.tmpdir"), num, num);
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        for (int i = 0; i < num; i++) {
+            String id = UUID.randomUUID().toString().substring(0, 32);
+            setUserVector(id, new float[random.nextInt(50, 150)]);
+
+            String id2 = UUID.randomUUID().toString().substring(0, 9);
+            setItemVector(id2, new float[random.nextInt(50, 150)]);
+
+            ArrayList<CharSequence> items = new ArrayList<>();
+            for (int j = 0; j < random.nextInt(50, 150); j++) {
+                items.add("average sized known item");
+            }
+            addKnownItems(id, items);
+        }
+    }
+
+    void testChronicleMap(String persistToDir,
+                          int numXIDs,
+                          int numYIDs)
+            throws Exception {
+
+        if (!Files.exists(Paths.get(persistToDir))) Files.createDirectory(Paths.get(persistToDir));
+
+        Path knownItemsPath = Paths.get(persistToDir + "/I-known-items.dat");
+
+        System.err.println("Loading knownItems");
+        ArrayList<CharSequence> averageKnownItems = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            averageKnownItems.add("average sized known item");
+        }
+        ChronicleMapBuilder<CharSequence, List<CharSequence>> knownItemsBuilder = ChronicleMap
+                .of(CharSequence.class, (Class<List<CharSequence>>) ((Class) List.class))
+                .averageKey("2B6EC73CD63ACA5D93F4D5A710AD9CFE")
+                .averageValue(averageKnownItems)
+                .valueMarshaller(ListMarshaller.of(
+                        CharSequenceBytesReader.INSTANCE, CharSequenceBytesWriter.INSTANCE))
+                .entries(numXIDs)
+                .maxBloatFactor(5.0)
+                .putReturnsNull(true);
+        if (Files.exists(knownItemsPath)) {
+            knownItems = knownItemsBuilder.recoverPersistedTo(knownItemsPath.toFile(), true);
+        } else {
+            knownItems = knownItemsBuilder.createPersistedTo(knownItemsPath.toFile());
+        }
+
+        System.err.println("Loading xVectors");
+        Path xVectorsPath = Paths.get(persistToDir + "/" + "X-vectors.dat");
+        ChronicleMapBuilder<CharSequence, float[]> xVectorsBuilder = ChronicleMap
+                .of(CharSequence.class, float[].class)
+                .averageKey("2B6EC73CD63ACA5D93F4D5A710AD9CFE") //use the actual UUID size
+                .averageValue(new float[100])
+                .putReturnsNull(true)
+                .entries(numXIDs);
+        if (Files.exists(xVectorsPath)) {
+            xVectors = xVectorsBuilder.recoverPersistedTo(xVectorsPath.toFile(), true);
+        } else {
+            xVectors = xVectorsBuilder.createPersistedTo(xVectorsPath.toFile());
+        }
+
+        System.err.println("Loading xRecentIds");
+        Path xRecentIDsPath = Paths.get(persistToDir + "/" + "X-recent-ids.dat");
+        ChronicleSetBuilder<CharSequence> xRecentBuilder = ChronicleSet
+                .of(CharSequence.class)
+                .entries(numXIDs)
+                .averageKey("2B6EC73CD63ACA5D93F4D5A710AD9CFE"); //use the actual UUID size
+        if (Files.exists(xRecentIDsPath)) {
+            xRecentIDs = xRecentBuilder.recoverPersistedTo(xRecentIDsPath.toFile(), true);
+        } else {
+            xRecentIDs = xRecentBuilder.createPersistedTo(xRecentIDsPath.toFile());
+        }
+
+        System.err.println("Loading yVectors");
+        Path yVectorsPath = Paths.get(persistToDir + "/" + "Y-vectors.dat");
+        ChronicleMapBuilder<CharSequence, float[]> yVectorsBuilder = ChronicleMap
+                .of(CharSequence.class, float[].class)
+                .averageKey("198321433")
+                .averageValue(new float[100])
+                .putReturnsNull(true)
+                .entries(numYIDs);
+        if (Files.exists(yVectorsPath)) {
+            yVectors = yVectorsBuilder.recoverPersistedTo(yVectorsPath.toFile(), true);
+        } else {
+            yVectors = yVectorsBuilder.createPersistedTo(yVectorsPath.toFile());
+        }
+
+        System.err.println("Loading yRecentIDs");
+        Path yRecentIDsPath = Paths.get(persistToDir + "/" + "Y-recent-ids.dat");
+        ChronicleSetBuilder<CharSequence> yRecentBuilder = ChronicleSet
+                .of(CharSequence.class)
+                .averageKey("198321433")
+                .entries(numYIDs);
+        if (Files.exists(yRecentIDsPath)) {
+            yRecentIDs = yRecentBuilder.recoverPersistedTo(yRecentIDsPath.toFile(), true);
+        } else {
+            yRecentIDs = yRecentBuilder.createPersistedTo(yRecentIDsPath.toFile());
+        }
+    }
+
+    public void setUserVector(String id, float[] arr) {
+        putIntoMapAndRecentSet(xVectors, xRecentIDs, id, arr);
+    }
+
+    public void setItemVector(String id, float[] arr) {
+        putIntoMapAndRecentSet(yVectors, yRecentIDs, id, arr);
+    }
+
+    private static void putIntoMapAndRecentSet(
+            ChronicleMap<CharSequence, float[]> map, ChronicleSet<CharSequence> recentSet,
+            String key, float[] value) {
+        try (ExternalMapQueryContext<CharSequence, float[], ?> c = map.queryContext(key);
+             ExternalSetQueryContext<CharSequence, ?> setC = recentSet.queryContext(key)) {
+            if (c.writeLock().tryLock(1, MINUTES) && setC.writeLock().tryLock(1, MINUTES)) {
+                putNoReturn(c, value);
+                addNoReturn(setC);
+            } else {
+                throw new RuntimeException("Dead lock");
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static <K> void addNoReturn(SetQueryContext<K, ?> c) {
+        SetAbsentEntry<K> setAbsentEntry = c.absentEntry();
+        if (setAbsentEntry != null) {
+            c.insert(setAbsentEntry);
+        }
+    }
+
+    private static <K, V> void putNoReturn(MapQueryContext<K, V, ?> c, V value) {
+        MapEntry<K, V> entry = c.entry();
+        Data<V> newValue = c.wrapValueAsData(value);
+        if (entry != null) {
+            c.replaceValue(entry, newValue);
+        } else {
+            MapAbsentEntry<K, V> absentEntry = c.absentEntry();
+            assert absentEntry != null;
+            c.insert(absentEntry, newValue);
+        }
+    }
+
+    public void addKnownItems(String id, List<CharSequence> items) {
+        try (ExternalMapQueryContext<CharSequence, List<CharSequence>, ?> c =
+                     knownItems.queryContext(id)) {
+            if (c.writeLock().tryLock(1, MINUTES)) {
+                putNoReturn(c, items);
+            } else {
+                throw new RuntimeException("Dead lock");
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
