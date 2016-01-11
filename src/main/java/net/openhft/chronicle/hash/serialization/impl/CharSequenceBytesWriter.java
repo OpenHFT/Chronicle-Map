@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * {@link BytesWriter} implementation for {@link CharSequence}, for the primary ChronicleMap's
  * key or value type {@link CharSequenceSizedWriter} + {@link StringSizedReader} are more
- * effective (because don't store the size twice), so this writer is useful in conjunction with
+ * efficient (because don't store the size twice), so this writer is useful in conjunction with
  * {@link ListMarshaller} or {@link SetMarshaller}.
  *
- * @see CharSequenceBytesWriter
+ * @see StringBytesReader
  */
 public enum CharSequenceBytesWriter
         implements BytesWriter<CharSequence>, EnumMarshallable<CharSequenceBytesWriter> {
@@ -36,6 +36,8 @@ public enum CharSequenceBytesWriter
 
     @Override
     public void write(Bytes out, @NotNull CharSequence toWrite) {
+        if (toWrite == null)
+            throw new NullPointerException("BytesWriter couldn't write null");
         out.writeUtf8(toWrite);
     }
 

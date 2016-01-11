@@ -30,55 +30,40 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 /**
- * {@link BytesReader} implementation for String, for the primary ChronicleMap's key of value type
- * {@link StringSizedReader} + {@link CharSequenceSizedWriter} are more efficient (because don't
- * store the size twice), so this reader is useful in conjunction with {@link ListMarshaller} or
- * {@link SetMarshaller}.
+ * {@link BytesReader} implementation for {@code CharSequence}, for the primary ChronicleMap's key
+ * of value type {@link CharSequenceSizedReader} + {@link CharSequenceSizedWriter} are more
+ * efficient (because don't store the size twice), so this reader is useful in conjunction with
+ * {@link ListMarshaller} or {@link SetMarshaller}.
  *
  * @see CharSequenceBytesWriter
  */
-public class StringBytesReader
-        implements BytesReader<String>, StatefulCopyable<StringBytesReader> {
-
-    /** Cache field */
-    private transient StringBuilder sb;
-
-    public StringBytesReader() {
-        initTransients();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initTransients();
-    }
-
-    private void initTransients() {
-        sb = new StringBuilder();
-    }
+public enum CharSequenceBytesReader implements BytesReader<CharSequence>,
+        StatefulCopyable<CharSequenceBytesReader>, EnumMarshallable<CharSequenceBytesReader> {
+    INSTANCE;
 
     @NotNull
     @Override
-    public String read(Bytes in, @Nullable String using) {
-        if (in.readUtf8(sb)) {
-            return sb.toString();
+    public CharSequence read(Bytes in, @Nullable CharSequence using) {
+        StringBuilder usingSB;
+        if (using instanceof StringBuilder) {
+            usingSB = (StringBuilder) using;
+        } else {
+            usingSB = new StringBuilder();
+        }
+        if (in.readUtf8(usingSB)) {
+            return usingSB;
         } else {
             throw new NullPointerException("BytesReader couldn't read null");
         }
     }
 
     @Override
-    public StringBytesReader copy() {
-        return new StringBytesReader();
+    public CharSequenceBytesReader copy() {
+        return INSTANCE;
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) {
-        // no fields to read
-        initTransients();
-    }
-
-    @Override
-    public void writeMarshallable(@NotNull WireOut wireOut) {
-        // no fields to write
+    public CharSequenceBytesReader readResolve() {
+        return INSTANCE;
     }
 }
