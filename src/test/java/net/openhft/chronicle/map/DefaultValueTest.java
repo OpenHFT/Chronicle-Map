@@ -38,12 +38,10 @@ public class DefaultValueTest {
 
             ArrayList<Integer> defaultValue = new ArrayList<Integer>();
             defaultValue.add(42);
-            ListMarshaller<Integer> valueMarshaller =
-                    new ListMarshaller<>(IntegerMarshaller.INSTANCE, IntegerMarshaller.INSTANCE);
             try (ChronicleMap<String, List<Integer>> map = ChronicleMap
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
                     .entries(3)
-                    .valueMarshaller(valueMarshaller)
+                    .valueMarshaller(ListMarshaller.of(IntegerMarshaller.INSTANCE))
                     .averageKey("a").averageValue(Arrays.asList(1, 2))
                     .defaultValueProvider(absentEntry ->
                             absentEntry.context().wrapValueAsData(defaultValue))

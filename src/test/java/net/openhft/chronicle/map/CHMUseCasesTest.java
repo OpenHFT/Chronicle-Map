@@ -2415,12 +2415,11 @@ public class CHMUseCasesTest {
     @Test
     public void testListValue() throws IOException {
 
-        ListMarshaller<String> valueMarshaller = new ListMarshaller<>(
-                new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, List<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<List<String>>) (Class) List.class)
                 .entries(2)
-                .valueMarshaller(valueMarshaller);
+                .valueMarshaller(ListMarshaller.of(
+                        new StringBytesReader(), CharSequenceBytesWriter.INSTANCE));
 
 
         try (ChronicleMap<String, List<String>> map = newInstance(builder)) {
@@ -2463,12 +2462,11 @@ public class CHMUseCasesTest {
 
     @Test
     public void testSetValue() throws IOException {
-        SetMarshaller<String> valueMarshaller = new SetMarshaller<>(
-                new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
         ChronicleMapBuilder<String, Set<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
                 .entries(10)
-                .valueMarshaller(valueMarshaller);
+                .valueMarshaller(SetMarshaller.of(
+                        new StringBytesReader(), CharSequenceBytesWriter.INSTANCE));
 
 
         try (ChronicleMap<String, Set<String>> map = newInstance(builder)) {

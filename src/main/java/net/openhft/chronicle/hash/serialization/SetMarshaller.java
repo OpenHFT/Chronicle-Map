@@ -60,6 +60,16 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 public final class SetMarshaller<T>
         implements BytesReader<Set<T>>, BytesWriter<Set<T>>, StatefulCopyable<SetMarshaller<T>> {
 
+    public static <T> SetMarshaller<T> of(
+            BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
+        return new SetMarshaller<>(elementReader, elementWriter);
+    }
+
+    public static <T, M extends BytesReader<T> & BytesWriter<? super T>> SetMarshaller<T> of(
+            M elementMarshaller) {
+        return of(elementMarshaller, elementMarshaller);
+    }
+
     // Config fields
     private BytesReader<T> elementReader;
     private BytesWriter<? super T> elementWriter;
