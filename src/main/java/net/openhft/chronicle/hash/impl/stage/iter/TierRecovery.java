@@ -49,12 +49,19 @@ public class TierRecovery {
         CompactOffHeapLinearHashTable hl = h.hashLookup;
         long hlAddr = s.tierBaseAddr;
 
+        long validEntries = 0;
         long hlPos = 0;
         do {
             long hlEntry = hl.readEntry(hlAddr, hlPos);
             nextHlPos:
             if (!hl.empty(hlEntry)) {
+                // (*)
                 hl.clearEntry(hlAddr, hlPos);
+                if (validEntries >= h.maxEntriesPerHashLookup) {
+                    log.error("Too many entries in tier with index {}, max is {}",
+                            s.tierIndex, h.maxEntriesPerHashLookup);
+                    break nextHlPos;
+                }
 
                 long searchKey = hl.key(hlEntry);
                 long entryPos = hl.value(hlEntry);
@@ -62,6 +69,7 @@ public class TierRecovery {
                 if (si < 0) {
                     break nextHlPos;
                 } else {
+                    s.freeList.setRange(entryPos, entryPos + e.entrySizeInChunks);
                     segmentIndex = si;
                 }
 
@@ -72,31 +80,43 @@ public class TierRecovery {
                     long hlInsertEntry = hl.readEntry(hlAddr, insertPos);
                     if (hl.empty(hlInsertEntry)) {
                         hl.writeEntry(hlAddr, insertPos, hl.entry(searchKey, entryPos));
+                        validEntries++;
                         break nextHlPos;
                     }
                     if (insertPos == hlPos) {
+                        // means we made a whole loop, without finding a hole to re-insert entry,
+                        // even if hashLookup was corrupted and all slots are dirty now, at least
+                        // the slot cleared at (*) should be clear, if it is dirty, only
+                        // a concurrent modification thread could occupy it
                         throw new ChronicleHashRecoveryFailedException(
                                 "Concurrent modification of ChronicleMap at " + h.file() +
                                         " while recovery procedure is in progress");
                     }
+                    checkDuplicateKeys:
                     if (hl.key(hlInsertEntry) == searchKey) {
                         long anotherEntryPos = hl.value(hlInsertEntry);
-                        if (anotherEntryPos == entryPos)
+                        if (anotherEntryPos == entryPos) {
+                            validEntries++;
                             break nextHlPos;
+                        }
                         long currentKeyOffset = e.keyOffset;
                         long currentKeySize = e.keySize;
                         int currentEntrySizeInChunks = e.entrySizeInChunks;
-                        if (checkEntry(searchKey, anotherEntryPos, segmentIndex) > 0) {
-                            if (e.keySize == currentKeySize &&
-                                    BytesUtil.bytesEqual(s.segmentBS, currentKeyOffset,
-                                            s.segmentBS, e.keyOffset, currentKeySize)) {
-                                log.error("Entries with duplicate keys within a tier: " +
-                                        "at pos {} and {} with key {}, first value is {}",
-                                        entryPos, anotherEntryPos, e.key(), e.value());
-                                s.freeList.clearRange(
-                                        entryPos, entryPos + currentEntrySizeInChunks);
-                                break nextHlPos;
-                            }
+                        if (insertPos >= 0 && insertPos < hlPos) {
+                            // insertPos already checked
+                            e.readExistingEntry(anotherEntryPos);
+                        } else if (checkEntry(searchKey, anotherEntryPos, segmentIndex) < 0) {
+                            break checkDuplicateKeys;
+                        }
+                        if (e.keySize == currentKeySize &&
+                                BytesUtil.bytesEqual(s.segmentBS, currentKeyOffset,
+                                        s.segmentBS, e.keyOffset, currentKeySize)) {
+                            log.error("Entries with duplicate keys within a tier: " +
+                                            "at pos {} and {} with key {}, first value is {}",
+                                    entryPos, anotherEntryPos, e.key(), e.value());
+                            s.freeList.clearRange(
+                                    entryPos, entryPos + currentEntrySizeInChunks);
+                            break nextHlPos;
                         }
                     }
                     insertPos = hl.step(insertPos);
@@ -108,7 +128,38 @@ public class TierRecovery {
             }
             hlPos = hl.step(hlPos);
         } while (hlPos != 0);
+        shiftHashLookupEntries();
         return segmentIndex;
+    }
+
+    private void shiftHashLookupEntries() {
+        VanillaChronicleHash<?, ?, ?, ?> h = mh.h();
+        CompactOffHeapLinearHashTable hl = h.hashLookup;
+        long hlAddr = s.tierBaseAddr;
+
+        long hlPos = 0;
+        long steps = 0;
+        do {
+            long hlEntry = hl.readEntry(hlAddr, hlPos);
+            if (!hl.empty(hlEntry)) {
+                long searchKey = hl.key(hlEntry);
+                long hlHolePos = hl.hlPos(searchKey);
+                while (hlHolePos != hlPos) {
+                    long hlHoleEntry = hl.readEntry(hlAddr, hlHolePos);
+                    if (hl.empty(hlHoleEntry)) {
+                        hl.writeEntry(hlAddr, hlHolePos, hlEntry);
+                        if (hl.remove(hlAddr, hlPos) != hlPos) {
+                            hlPos = hl.stepBack(hlPos);
+                            steps--;
+                        }
+                        break;
+                    }
+                    hlHolePos = hl.step(hlHolePos);
+                }
+            }
+            hlPos = hl.step(hlPos);
+            steps++;
+        } while (hlPos != 0 || steps == 0);
     }
 
     public void removeDuplicatesInSegment() {
@@ -184,6 +235,7 @@ public class TierRecovery {
         if (entryPos < 0 || entryPos >= h.actualChunksPerSegmentTier) {
             log.error("Entry pos is out of range: {}, should be 0-{}",
                     entryPos, h.actualChunksPerSegmentTier - 1);
+            return -1;
         }
         try {
             e.readExistingEntry(entryPos);
@@ -215,6 +267,7 @@ public class TierRecovery {
         }
 
         try {
+            // e.entryEnd() implicitly reads the value size, to be computed
             long entryAndChecksumEnd = e.entryEnd() + e.checksumStrategy.extraEntryBytes();
             if (entryAndChecksumEnd > s.segmentBytes.capacity()) {
                 log.error("Wrong value size: {}, key: {}", e.valueSize, e.key());
@@ -237,8 +290,8 @@ public class TierRecovery {
         if (!s.freeList.isRangeClear(entryPos, entryPos + e.entrySizeInChunks)) {
             log.error("Overlapping entry: positions {}-{}, key: {}, value: {}",
                     entryPos, entryPos + e.entrySizeInChunks - 1, e.key(), e.value());
+            return -1;
         }
-        s.freeList.setRange(entryPos, entryPos + e.entrySizeInChunks);
 
         if (segmentIndex < 0) {
             return segmentIndexFromKey;

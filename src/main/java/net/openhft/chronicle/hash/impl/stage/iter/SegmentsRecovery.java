@@ -92,7 +92,6 @@ public abstract class SegmentsRecovery implements IterationContext {
         if (firstFreeExtraTierIndex == -1) {
             if (allocatedExtraTiers > expectedExtraTiersInUse) {
                 firstFreeTierIndex = h.extraTierIndexToTierIndex(expectedExtraTiersInUse);
-
             } else {
                 firstFreeTierIndex = 0;
             }
