@@ -133,8 +133,8 @@ public class TcpReplicationLargeEntryTest {
 
         waitTillEqual(10000);
 
-        Assert.assertEquals(xString, map2.get(1));
-        Assert.assertEquals(yString, map2.get(2));
+        Assert.assertEquals(xString, map2.get(1).toString());
+        Assert.assertEquals(yString, map2.get(2).toString());
 
     }
 

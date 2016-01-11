@@ -186,7 +186,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testGet() throws IOException {
         ChronicleMap map = map5();
-        assertEquals("A", map.get(JSR166TestCase.one));
+        assertEquals("A", map.get(JSR166TestCase.one).toString());
         ChronicleMap empty = newShmIntString();
         assertNull(map.get(JSR166TestCase.notPresent));
     }
@@ -238,14 +238,13 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     public void testValuesToArray() throws IOException {
         ChronicleMap map = map5();
         Collection v = map.values();
-        Object[] ar = v.toArray();
-        ArrayList s = new ArrayList(Arrays.asList(ar));
-        assertEquals(5, ar.length);
-        assertTrue(s.contains("A"));
-        assertTrue(s.contains("B"));
-        assertTrue(s.contains("C"));
-        assertTrue(s.contains("D"));
-        assertTrue(s.contains("E"));
+        ArrayList<CharSequence> s = new ArrayList(map.values());
+        assertEquals(5, s.size());
+        assertTrue(s.stream().anyMatch("A"::contentEquals));
+        assertTrue(s.stream().anyMatch("B"::contentEquals));
+        assertTrue(s.stream().anyMatch("C"::contentEquals));
+        assertTrue(s.stream().anyMatch("D"::contentEquals));
+        assertTrue(s.stream().anyMatch("E"::contentEquals));
     }
 
     /**
@@ -317,13 +316,18 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         assertEquals(5, s.size());
         Iterator it = s.iterator();
         while (it.hasNext()) {
-            Map.Entry e = (Map.Entry) it.next();
+            Map.Entry<Integer, CharSequence> e = (Map.Entry<Integer, CharSequence>) it.next();
             assertTrue(
-                    (e.getKey().equals(JSR166TestCase.one) && e.getValue().equals("A")) ||
-                            (e.getKey().equals(JSR166TestCase.two) && e.getValue().equals("B")) ||
-                            (e.getKey().equals(JSR166TestCase.three) && e.getValue().equals("C")) ||
-                            (e.getKey().equals(JSR166TestCase.four) && e.getValue().equals("D")) ||
-                            (e.getKey().equals(JSR166TestCase.five) && e.getValue().equals("E"))
+                    (e.getKey().equals(JSR166TestCase.one) &&
+                            "A".contentEquals(e.getValue())) ||
+                            (e.getKey().equals(JSR166TestCase.two) &&
+                                    "B".contentEquals(e.getValue())) ||
+                            (e.getKey().equals(JSR166TestCase.three) &&
+                                    "C".contentEquals(e.getValue())) ||
+                            (e.getKey().equals(JSR166TestCase.four) &&
+                                    "D".contentEquals(e.getValue())) ||
+                            (e.getKey().equals(JSR166TestCase.five) &&
+                                    "E".contentEquals(e.getValue()))
             );
         }
     }
@@ -360,8 +364,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testPutIfAbsent2() throws IOException {
         ChronicleMap map = map5();
-        final Object z = map.putIfAbsent(JSR166TestCase.one, "Z");
-        assertEquals("A", z);
+        assertEquals("A", map.putIfAbsent(JSR166TestCase.one, "Z").toString());
     }
 
     /**
@@ -381,7 +384,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     public void testReplace2() throws IOException {
         ChronicleMap map = map5();
         assertNotNull(map.replace(JSR166TestCase.one, "Z"));
-        assertEquals("Z", map.get(JSR166TestCase.one));
+        assertEquals("Z", map.get(JSR166TestCase.one).toString());
     }
 
     /**
@@ -390,9 +393,9 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testReplaceValue() throws IOException {
         ChronicleMap map = map5();
-        assertEquals("A", map.get(JSR166TestCase.one));
+        assertEquals("A", map.get(JSR166TestCase.one).toString());
         assertFalse(map.replace(JSR166TestCase.one, "Z", "Z"));
-        assertEquals("A", map.get(JSR166TestCase.one));
+        assertEquals("A", map.get(JSR166TestCase.one).toString());
     }
 
     /**
@@ -401,9 +404,9 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     @Test
     public void testReplaceValue2() throws IOException {
         ChronicleMap map = map5();
-        assertEquals("A", map.get(JSR166TestCase.one));
+        assertEquals("A", map.get(JSR166TestCase.one).toString());
         assertTrue(map.replace(JSR166TestCase.one, "A", "Z"));
-        assertEquals("Z", map.get(JSR166TestCase.one));
+        assertEquals("Z", map.get(JSR166TestCase.one).toString());
     }
 
     /**

@@ -38,11 +38,11 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 public class GuavaTest extends TestCase {
 
     public static Test suite() {
-        MapTestSuiteBuilder<CharSequence, CharSequence> chmSuite = using(new CHMTestGenerator());
+        MapTestSuiteBuilder<String, String> chmSuite = using(new CHMTestGenerator());
         configureSuite(chmSuite);
         TestSuite chmTests = chmSuite.named("Guava tests of Chronicle Map").createTestSuite();
 
-        MapTestSuiteBuilder<CharSequence, CharSequence> backed = using(new BackedUpMapGenerator());
+        MapTestSuiteBuilder<String, String> backed = using(new BackedUpMapGenerator());
         configureSuite(backed);
         TestSuite backedTests = backed
                 .named("Guava tests tests of Chronicle Map, backed with HashMap")
@@ -55,7 +55,7 @@ public class GuavaTest extends TestCase {
         return tests;
     }
 
-    private static void configureSuite(MapTestSuiteBuilder<CharSequence, CharSequence> suite) {
+    private static void configureSuite(MapTestSuiteBuilder<String, String> suite) {
         suite.withFeatures(GENERAL_PURPOSE)
                 .withFeatures(CollectionSize.ANY)
                 .withFeatures(CollectionFeature.REMOVE_OPERATIONS)
@@ -63,63 +63,60 @@ public class GuavaTest extends TestCase {
     }
 
     static abstract class TestGenerator
-            implements TestMapGenerator<CharSequence, CharSequence> {
+            implements TestMapGenerator<String, String> {
 
-        abstract Map<CharSequence, CharSequence> newMap();
+        abstract Map<String, String> newMap();
 
-        public CharSequence[] createKeyArray(int length) {
-            return new CharSequence[length];
+        public String[] createKeyArray(int length) {
+            return new String[length];
         }
 
         @Override
-        public CharSequence[] createValueArray(int length) {
-            return new CharSequence[length];
+        public String[] createValueArray(int length) {
+            return new String[length];
         }
 
         @Override
-        public SampleElements<Map.Entry<CharSequence, CharSequence>> samples() {
+        public SampleElements<Map.Entry<String, String>> samples() {
             return SampleElements.mapEntries(
-                    new SampleElements<CharSequence>(
-                            "key1", "key2", "key3", "key4", "key5"
-                    ),
-                    new SampleElements<CharSequence>(
-                            "val1", "val2", "val3", "val4", "val5"
-                    )
+                    new SampleElements<>("key1", "key2", "key3", "key4", "key5"),
+                    new SampleElements<>("val1", "val2", "val3", "val4", "val5")
             );
         }
 
         @Override
-        public Map<CharSequence, CharSequence> create(Object... objects) {
-            Map<CharSequence, CharSequence> map = newMap();
+        public Map<String, String> create(Object... objects) {
+            Map<String, String> map = newMap();
             for (Object obj : objects) {
                 Map.Entry e = (Map.Entry) obj;
-                map.put((CharSequence) e.getKey(),
-                        (CharSequence) e.getValue());
+                map.put((String) e.getKey(),
+                        (String) e.getValue());
             }
             return map;
         }
 
         @Override
-        public Map.Entry<CharSequence, CharSequence>[] createArray(int length) {
+        public Map.Entry<String, String>[] createArray(int length) {
+            //noinspection unchecked
             return new Map.Entry[length];
         }
 
         @Override
-        public Iterable<Map.Entry<CharSequence, CharSequence>> order(
-                List<Map.Entry<CharSequence, CharSequence>> insertionOrder) {
+        public Iterable<Map.Entry<String, String>> order(
+                List<Map.Entry<String, String>> insertionOrder) {
             return insertionOrder;
         }
     }
 
     static class CHMTestGenerator extends TestGenerator {
-        ChronicleMapBuilder<CharSequence, CharSequence> builder =
-                ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+        ChronicleMapBuilder<String, String> builder =
+                ChronicleMapBuilder.of(String.class, String.class)
                         .entries(100)
                         .averageKeySize(10).averageValueSize(10)
                         .minSegments(2);
 
         @Override
-        Map<CharSequence, CharSequence> newMap() {
+        Map<String, String> newMap() {
             return builder.create();
         }
     }
@@ -127,29 +124,29 @@ public class GuavaTest extends TestCase {
     static class BackedUpMapGenerator extends CHMTestGenerator {
         
         @Override
-        Map<CharSequence, CharSequence> newMap() {
-            Map<CharSequence, CharSequence> m = new HashMap<>();
-            builder.entryOperations(new MapEntryOperations<CharSequence, CharSequence, Void>() {
+        Map<String, String> newMap() {
+            Map<String, String> m = new HashMap<>();
+            builder.entryOperations(new MapEntryOperations<String, String, Void>() {
                 @Override
-                public Void remove(@NotNull MapEntry<CharSequence, CharSequence> entry) {
+                public Void remove(@NotNull MapEntry<String, String> entry) {
                     Assert.assertEquals(m, entry.context().map());
-                    m.remove(entry.key().get().toString());
+                    m.remove(entry.key().get());
                     return MapEntryOperations.super.remove(entry);
                 }
 
                 @Override
-                public Void replaceValue(@NotNull MapEntry<CharSequence, CharSequence> entry,
-                                         net.openhft.chronicle.hash.Data<CharSequence> newValue) {
+                public Void replaceValue(@NotNull MapEntry<String, String> entry,
+                                         net.openhft.chronicle.hash.Data<String> newValue) {
                     Assert.assertEquals(m, entry.context().map());
-                    m.put(entry.key().get().toString(), newValue.get().toString());
+                    m.put(entry.key().get(), newValue.get());
                     return MapEntryOperations.super.replaceValue(entry, newValue);
                 }
 
                 @Override
-                public Void insert(@NotNull MapAbsentEntry<CharSequence, CharSequence> absentEntry,
-                                   Data<CharSequence> value) {
+                public Void insert(@NotNull MapAbsentEntry<String, String> absentEntry,
+                                   Data<String> value) {
                     Assert.assertEquals(m, absentEntry.context().map());
-                    m.put(absentEntry.absentKey().get().toString(), value.get().toString());
+                    m.put(absentEntry.absentKey().get(), value.get());
                     return MapEntryOperations.super.insert(absentEntry, value);
                 }
             });

@@ -42,7 +42,7 @@ public class Issue42Test {
 
             for (int i = 0; i < 1000000; ++i) {
                 String s = String.valueOf(i);
-                Assert.assertEquals(s, map.get(s));
+                Assert.assertEquals(s, map.get(s).toString());
             }
         }
     }

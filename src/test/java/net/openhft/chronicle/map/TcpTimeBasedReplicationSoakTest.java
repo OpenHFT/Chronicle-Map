@@ -34,8 +34,8 @@ import java.util.*;
 public class TcpTimeBasedReplicationSoakTest {
 
 
-    private ChronicleMap<Integer, CharSequence> map1;
-    private ChronicleMap<Integer, CharSequence> map2;
+    private ChronicleMap<Integer, String> map1;
+    private ChronicleMap<Integer, String> map2;
     static int s_port = 8010;
     int t = 0;
 
@@ -44,8 +44,8 @@ public class TcpTimeBasedReplicationSoakTest {
 
         final InetSocketAddress endpoint = new InetSocketAddress("localhost", s_port + 1);
 
-        ChronicleMapBuilder<Integer, CharSequence> builder = ChronicleMapBuilder
-                .of(Integer.class, CharSequence.class)
+        ChronicleMapBuilder<Integer, String> builder = ChronicleMapBuilder
+                .of(Integer.class, String.class)
                 .averageValue("test-1000000")
                 .entries(Builder.SIZE);
         {
@@ -102,12 +102,12 @@ public class TcpTimeBasedReplicationSoakTest {
                 System.out.print(".");
             Random rnd = new Random(System.currentTimeMillis());
 
-            final ChronicleMap<Integer, CharSequence> map = rnd.nextBoolean() ? map1 : map2;
+            final ChronicleMap<Integer, String> map = rnd.nextBoolean() ? map1 : map2;
 
             if (rnd.nextBoolean()) {
-                map.put((int) rnd.nextInt(100), "test" + j);
+                map.put(rnd.nextInt(100), "test" + j);
             } else {
-                map.remove((int) rnd.nextInt(100));
+                map.remove(rnd.nextInt(100));
             }
 
         }

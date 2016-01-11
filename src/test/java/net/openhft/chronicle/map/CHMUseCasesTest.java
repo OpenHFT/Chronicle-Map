@@ -610,7 +610,7 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
             map.put(new StringBuilder("Hello"), "World2");
 
-            Assert.assertEquals("World2", map.get("Hello"));
+            Assert.assertEquals("World2", map.get("Hello").toString());
             mapChecks();
         }
     }
@@ -626,8 +626,8 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
             map.put("Hello2", new StringBuilder("World2"));
 
-            Assert.assertEquals("World2", map.get("Hello2"));
-            Assert.assertEquals("World", map.get("Hello"));
+            Assert.assertEquals("World2", map.get("Hello2").toString());
+            Assert.assertEquals("World", map.get("Hello").toString());
             mapChecks();
         }
     }
@@ -654,7 +654,7 @@ public class CHMUseCasesTest {
             StringBuilder value = new StringBuilder();
             value.append("value-").append(1);
             map.put(key, value);
-            assertEquals("value-1", map.get("key-1"));
+            assertEquals("value-1", map.get("key-1").toString());
 
             assertEquals(value, map.getUsing(key, value));
             assertEquals("value-1", value.toString());
@@ -669,14 +669,14 @@ public class CHMUseCasesTest {
             assertEquals("New World !!", map.computeIfPresent("Hello", (k, s) -> {
                 ((StringBuilder) s).append(" !!");
                 return "New " + s;
-            }));
+            }).toString());
 
             assertEquals("New World !!", map.get("Hello").toString());
 
             assertEquals("New !!", map.compute("no-key", (k, s) -> {
                 assertNull(s);
                 return "New !!";
-            }));
+            }).toString());
 
             mapChecks();
         }
@@ -700,7 +700,7 @@ public class CHMUseCasesTest {
                 ((StringBuilder) using).append("Hello World");
             }
 
-            assertEquals("Hello World", map.get("1"));
+            assertEquals("Hello World", map.get("1").toString());
             mapChecks();
         }
     }
@@ -795,7 +795,7 @@ public class CHMUseCasesTest {
             }
 
             key.setValue(1);
-            assertEquals("Hello", map.get(key));
+            assertEquals("Hello", map.get(key).toString());
             mapChecks();
         }
     }

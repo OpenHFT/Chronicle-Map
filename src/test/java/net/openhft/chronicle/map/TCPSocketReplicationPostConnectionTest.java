@@ -114,7 +114,7 @@ public class TCPSocketReplicationPostConnectionTest {
 
         assertEquals(map1, map2);
         assertTrue(!map1.isEmpty());
-        assertTrue(map2.get(6).equals("EXAMPLE-1"));
+        assertEquals("EXAMPLE-1", map2.get(6).toString());
     }
 
     @After

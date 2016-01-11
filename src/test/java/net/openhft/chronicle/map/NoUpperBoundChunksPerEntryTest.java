@@ -31,6 +31,6 @@ public class NoUpperBoundChunksPerEntryTest {
             ultraLargeValue += "Hello";
         }
         map.put(1, ultraLargeValue);
-        Assert.assertEquals(ultraLargeValue, map.get(1));
+        Assert.assertEquals(ultraLargeValue, map.get(1).toString());
     }
 }

@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesUtil;
+import net.openhft.chronicle.core.util.ReadResolvable;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.StatefulCopyable;
 import net.openhft.chronicle.wire.WireIn;
@@ -25,27 +26,19 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
+public class CharSequenceSizedReader implements SizedReader<CharSequence>,
+        StatefulCopyable<CharSequenceSizedReader>, ReadResolvable<CharSequenceSizedReader> {
 
-public class CharSequenceSizedReader
-        implements SizedReader<CharSequence>, StatefulCopyable<CharSequenceSizedReader> {
+    private static final long serialVersionUID = 3949878688964423946L;
 
-    /** Cache field */
-    private transient StringBuilder sb;
+    public static final CharSequenceSizedReader INSTANCE = new CharSequenceSizedReader();
 
-    public CharSequenceSizedReader() {
-        initTransients();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initTransients();
-    }
-
-    private void initTransients() {
-        sb = new StringBuilder();
-    }
+    /**
+     * @deprecated use {@link #INSTANCE} as {@code CharSequenceSizedReader} is immutable and
+     * stateless
+     */
+    @Deprecated
+    public CharSequenceSizedReader() {}
 
     @NotNull
     @Override
@@ -54,33 +47,35 @@ public class CharSequenceSizedReader
         if (0 > size || size > Integer.MAX_VALUE)
             throw new IllegalStateException("positive int size expected, " + size + " given");
         int csLen = (int) size;
-        if (!(using instanceof StringBuilder)) {
-            sb.setLength(0);
-            sb.ensureCapacity(csLen);
-            BytesUtil.parseUtf8(in, sb, csLen);
-            return sb.toString();
-        } else {
-            StringBuilder usingSB = (StringBuilder) using;
+        StringBuilder usingSB;
+        if (using instanceof StringBuilder) {
+            usingSB = ((StringBuilder) using);
             usingSB.setLength(0);
             usingSB.ensureCapacity(csLen);
-            BytesUtil.parseUtf8(in, usingSB, csLen);
-            return usingSB;
+        } else {
+            usingSB = new StringBuilder(csLen);
         }
+        BytesUtil.parseUtf8(in, usingSB, csLen);
+        return usingSB;
     }
 
     @Override
     public CharSequenceSizedReader copy() {
-        return new CharSequenceSizedReader();
+        return INSTANCE;
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
         // no fields to read
-        initTransients();
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
         // no fields to write
+    }
+
+    @Override
+    public CharSequenceSizedReader readResolve() {
+        return INSTANCE;
     }
 }

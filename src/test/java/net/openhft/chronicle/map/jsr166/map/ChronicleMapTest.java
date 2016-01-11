@@ -23,6 +23,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.Map.Entry;
 
 import static org.junit.Assert.*;
 
@@ -52,7 +53,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * Returns a new map from Integers 1-5 to Strings "A"-"E".
      */
-    private static ChronicleMap map5() throws IOException {
+    private static ChronicleMap<Integer, CharSequence> map5() throws IOException {
         ChronicleMap<Integer, CharSequence> map = newShmIntString(10);
         assertTrue(map.isEmpty());
         map.put(one, "A");
@@ -70,7 +71,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testClear() throws IOException {
-        try (ChronicleMap<Integer, String> map = map5()) {
+        try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.clear();
             assertEquals(0, map.size());
         }
@@ -115,7 +116,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testGet() throws IOException {
         try (ChronicleMap map = map5()) {
-            assertEquals("A", map.get(one));
+            assertEquals("A", map.get(one).toString());
             try (ChronicleMap empty = newStrStrMap(8078)) {
                 assertNull(map.get(notPresent));
             }
@@ -174,16 +175,15 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testValuesToArray() throws IOException {
-        try (ChronicleMap map = map5()) {
-            Collection v = map.values();
-            Object[] ar = v.toArray();
-            ArrayList s = new ArrayList(Arrays.asList(ar));
-            assertEquals(5, ar.length);
-            assertTrue(s.contains("A"));
-            assertTrue(s.contains("B"));
-            assertTrue(s.contains("C"));
-            assertTrue(s.contains("D"));
-            assertTrue(s.contains("E"));
+        try (ChronicleMap<Integer, CharSequence> map = map5()) {
+            Collection<CharSequence> vs = map.values();
+            ArrayList<CharSequence> s = new ArrayList<>(vs);
+            assertEquals(5, s.size());
+            assertTrue(s.stream().anyMatch("A"::contentEquals));
+            assertTrue(s.stream().anyMatch("B"::contentEquals));
+            assertTrue(s.stream().anyMatch("C"::contentEquals));
+            assertTrue(s.stream().anyMatch("D"::contentEquals));
+            assertTrue(s.stream().anyMatch("E"::contentEquals));
         }
     }
 
@@ -197,8 +197,8 @@ public class ChronicleMapTest extends JSR166TestCase {
             Object[] ar = s.toArray();
             assertEquals(5, ar.length);
             for (int i = 0; i < 5; ++i) {
-                assertTrue(map.containsKey(((java.util.Map.Entry) (ar[i])).getKey()));
-                assertTrue(map.containsValue(((java.util.Map.Entry) (ar[i])).getValue()));
+                assertTrue(map.containsKey(((Entry) (ar[i])).getKey()));
+                assertTrue(map.containsValue(((Entry) (ar[i])).getValue()));
             }
         }
     }
@@ -224,18 +224,18 @@ public class ChronicleMapTest extends JSR166TestCase {
      */
     @Test(timeout = 5000)
     public void testEntrySet() throws IOException {
-        try (ChronicleMap map = map5()) {
-            Set s = map.entrySet();
+        try (ChronicleMap<Integer, CharSequence> map = map5()) {
+            Set<Entry<Integer, CharSequence>> s = map.entrySet();
             assertEquals(5, s.size());
-            Iterator it = s.iterator();
+            Iterator<Entry<Integer, CharSequence>> it = s.iterator();
             while (it.hasNext()) {
-                java.util.Map.Entry e = (java.util.Map.Entry) it.next();
+                Entry<Integer, CharSequence> e = it.next();
                 assertTrue(
-                        (e.getKey().equals(one) && e.getValue().equals("A")) ||
-                                (e.getKey().equals(two) && e.getValue().equals("B")) ||
-                                (e.getKey().equals(three) && e.getValue().equals("C")) ||
-                                (e.getKey().equals(four) && e.getValue().equals("D")) ||
-                                (e.getKey().equals(five) && e.getValue().equals("E"))
+                        (e.getKey().equals(one) && "A".contentEquals(e.getValue())) ||
+                                (e.getKey().equals(two) && "B".contentEquals(e.getValue())) ||
+                                (e.getKey().equals(three) && "C".contentEquals(e.getValue())) ||
+                                (e.getKey().equals(four) && "D".contentEquals(e.getValue())) ||
+                                (e.getKey().equals(five) && "E".contentEquals(e.getValue()))
                 );
             }
         }
@@ -277,7 +277,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     @Test(timeout = 5000)
     public void testPutIfAbsent2() throws IOException {
         try (ChronicleMap map = map5()) {
-            assertEquals("A", map.putIfAbsent(one, "Z"));
+            assertEquals("A", map.putIfAbsent(one, "Z").toString());
         }
     }
 
@@ -300,7 +300,7 @@ public class ChronicleMapTest extends JSR166TestCase {
             IOException {
         try (ChronicleMap map = map5()) {
             assertNotNull(map.replace(one, "Z"));
-            assertEquals("Z", map.get(one));
+            assertEquals("Z", map.get(one).toString());
         }
     }
 
@@ -311,9 +311,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplaceValue() throws
             IOException {
         try (ChronicleMap map = map5()) {
-            assertEquals("A", map.get(one));
+            assertEquals("A", map.get(one).toString());
             assertFalse(map.replace(one, "Z", "Z"));
-            assertEquals("A", map.get(one));
+            assertEquals("A", map.get(one).toString());
         }
     }
 
@@ -324,9 +324,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplaceValue2
     () throws IOException {
         try (ChronicleMap map = map5()) {
-            assertEquals("A", map.get(one));
+            assertEquals("A", map.get(one).toString());
             assertTrue(map.replace(one, "A", "Z"));
-            assertEquals("Z", map.get(one));
+            assertEquals("Z", map.get(one).toString());
         }
     }
 

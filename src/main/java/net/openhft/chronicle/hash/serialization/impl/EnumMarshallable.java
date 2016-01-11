@@ -31,6 +31,6 @@ public interface EnumMarshallable<E extends Enum<E>> extends Marshallable, ReadR
 
     @Override
     default void writeMarshallable(@NotNull WireOut wireOut) {
-        // shouldn't read -> shouldn't write fields
+        // shouldn't read => shouldn't write fields
     }
 }

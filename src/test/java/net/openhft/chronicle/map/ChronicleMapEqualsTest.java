@@ -26,14 +26,13 @@ public class ChronicleMapEqualsTest {
 
     @Test
     public void test() {
-        ChronicleMap<CharSequence, CharSequence> map =
-                ChronicleMapBuilder
-                        .of(CharSequence.class, CharSequence.class)
-                        .averageKey("a").averageValue("b")
-                        .entries(100)
-                        .create();
+        ChronicleMap<String, String> map = ChronicleMap
+                .of(String.class, String.class)
+                .averageKey("a").averageValue("b")
+                .entries(100)
+                .create();
 
-        HashMap<CharSequence, CharSequence> refMap = new HashMap<>();
+        HashMap<String, String> refMap = new HashMap<>();
         refMap.put("a", "b");
         map.putAll(refMap);
         assertTrue(map.equals(refMap));

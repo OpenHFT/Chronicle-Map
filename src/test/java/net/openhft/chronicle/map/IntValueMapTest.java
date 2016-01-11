@@ -46,7 +46,7 @@ public class IntValueMapTest {
             map.put(value, expected);
 
             final CharSequence actual = map.get(value);
-            assertEquals(expected, actual);
+            assertEquals(expected, actual.toString());
 
             // this will fail
 

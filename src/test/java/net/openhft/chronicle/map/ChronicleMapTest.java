@@ -33,7 +33,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.*;
 
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
@@ -70,16 +72,22 @@ public class ChronicleMapTest {
     static void assertEntrySet(Set<Map.Entry<Integer, CharSequence>> entrySet, int[] expectedKeys, CharSequence[] expectedValues) {
         Set<Map.Entry<Integer, CharSequence>> expectedSet = new HashSet<Map.Entry<Integer, CharSequence>>();
         for (int i = 0; i < expectedKeys.length; i++) {
-            expectedSet.add(new AbstractMap.SimpleEntry<Integer, CharSequence>(expectedKeys[i], expectedValues[i]));
+            expectedSet.add(new AbstractMap.SimpleEntry<>(expectedKeys[i],
+                    expectedValues[i].toString()));
         }
 
+        entrySet = entrySet.stream().map(e ->
+                new AbstractMap.SimpleImmutableEntry<Integer, CharSequence>(
+                        e.getKey(), e.getValue().toString()))
+                .collect(toSet());
         assertEquals(expectedSet, entrySet);
     }
 
     static void assertMap(Map<Integer, CharSequence> map, int[] expectedKeys, CharSequence[] expectedValues) {
         assertEquals(expectedKeys.length, map.size());
         for (int i = 0; i < expectedKeys.length; i++) {
-            assertEquals("On position " + i, expectedValues[i], map.get(expectedKeys[i]));
+            assertEquals("On position " + i,
+                    expectedValues[i].toString(), map.get(expectedKeys[i]).toString());
         }
     }
 
@@ -152,29 +160,29 @@ public class ChronicleMapTest {
             assertTrue(map.containsKey("key2"));
             assertFalse(map.containsKey("key3"));
 
-            assertEquals("one", map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("one", map.get("key1").toString());
+            assertEquals("two", map.get("key2").toString());
 
             final CharSequence result = map.remove("key1");
 
             assertEquals(1, map.size());
 
-            assertEquals("one", result);
+            assertEquals("one", result.toString());
             assertFalse(map.containsKey("key1"));
 
             assertEquals(null, map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("two", map.get("key2").toString());
             assertFalse(map.containsKey("key3"));
 
             // lets add one more item for luck !
             map.put("key3", "three");
-            assertEquals("three", map.get("key3"));
+            assertEquals("three", map.get("key3").toString());
             assertTrue(map.containsKey("key3"));
             assertEquals(2, map.size());
 
             // and just for kicks we'll overwrite what we have
             map.put("key3", "overwritten");
-            assertEquals("overwritten", map.get("key3"));
+            assertEquals("overwritten", map.get("key3").toString());
             assertTrue(map.containsKey("key3"));
             assertEquals(2, map.size());
 
@@ -340,8 +348,8 @@ public class ChronicleMapTest {
             assertTrue(map.containsKey("key2"));
             assertFalse(map.containsKey("key3"));
 
-            assertEquals("one", map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("one", map.get("key1").toString());
+            assertEquals("two", map.get("key2").toString());
 
             final CharSequence result = map.remove("key1");
             assertEquals(null, result);
@@ -351,18 +359,18 @@ public class ChronicleMapTest {
             assertFalse(map.containsKey("key1"));
 
             assertEquals(null, map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("two", map.get("key2").toString());
             assertFalse(map.containsKey("key3"));
 
             // lets add one more item for luck !
             map.put("key3", "three");
-            assertEquals("three", map.get("key3"));
+            assertEquals("three", map.get("key3").toString());
             assertTrue(map.containsKey("key3"));
             assertEquals(2, map.size());
 
             // and just for kicks we'll overwrite what we have
             map.put("key3", "overwritten");
-            assertEquals("overwritten", map.get("key3"));
+            assertEquals("overwritten", map.get("key3").toString());
             assertTrue(map.containsKey("key3"));
             assertEquals(2, map.size());
 
@@ -382,21 +390,21 @@ public class ChronicleMapTest {
             map.put("key2", "two");
             assertEquals(2, map.size());
 
-            assertEquals("one", map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("one", map.get("key1").toString());
+            assertEquals("two", map.get("key2").toString());
 
             assertTrue(map.containsKey("key1"));
             assertTrue(map.containsKey("key2"));
 
             final CharSequence result = map.replace("key1", "newValue");
 
-            assertEquals("one", result);
+            assertEquals("one", result.toString());
             assertTrue(map.containsKey("key1"));
             assertTrue(map.containsKey("key2"));
             assertEquals(2, map.size());
 
-            assertEquals("newValue", map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("newValue", map.get("key1").toString());
+            assertEquals("two", map.get("key2").toString());
 
             assertTrue(map.containsKey("key1"));
             assertTrue(map.containsKey("key2"));
@@ -411,11 +419,11 @@ public class ChronicleMapTest {
             assertTrue(map.containsKey("key1"));
             assertTrue(map.containsKey("key2"));
             assertTrue(map.containsKey("key3"));
-            assertEquals("three", map.get("key3"));
+            assertEquals("three", map.get("key3").toString());
 
             // and just for kicks we'll overwrite what we have
             map.put("key3", "overwritten");
-            assertEquals("overwritten", map.get("key3"));
+            assertEquals("overwritten", map.get("key3").toString());
 
             assertTrue(map.containsKey("key1"));
             assertTrue(map.containsKey("key2"));
@@ -423,8 +431,8 @@ public class ChronicleMapTest {
 
             final CharSequence result2 = map.replace("key2", "newValue");
 
-            assertEquals("two", result2);
-            assertEquals("newValue", map.get("key2"));
+            assertEquals("two", result2.toString());
+            assertEquals("newValue", map.get("key2").toString());
 
             final CharSequence result3 = map.replace("rubbish", "newValue");
             assertEquals(null, result3);
@@ -447,28 +455,28 @@ public class ChronicleMapTest {
             map.put("key1", "one");
             map.put("key2", "two");
 
-            assertEquals("one", map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("one", map.get("key1").toString());
+            assertEquals("two", map.get("key2").toString());
 
             final boolean result = map.replace("key1", "one", "newValue");
 
             assertEquals(true, result);
 
-            assertEquals("newValue", map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("newValue", map.get("key1").toString());
+            assertEquals("two", map.get("key2").toString());
 
             // let and one more item for luck !
             map.put("key3", "three");
-            assertEquals("three", map.get("key3"));
+            assertEquals("three", map.get("key3").toString());
 
             // and just for kicks we'll overwrite what we have
             map.put("key3", "overwritten");
-            assertEquals("overwritten", map.get("key3"));
+            assertEquals("overwritten", map.get("key3").toString());
 
             final boolean result2 = map.replace("key2", "two", "newValue2");
 
             assertEquals(true, result2);
-            assertEquals("newValue2", map.get("key2"));
+            assertEquals("newValue2", map.get("key2").toString());
 
             final boolean result3 = map.replace("newKey", "", "newValue");
             assertEquals(false, result3);
@@ -491,16 +499,16 @@ public class ChronicleMapTest {
             map.put("key1", "one");
             map.put("key2", "two");
 
-            assertEquals("one", map.get("key1"));
-            assertEquals("two", map.get("key2"));
+            assertEquals("one", map.get("key1").toString());
+            assertEquals("two", map.get("key2").toString());
 
             // a false remove
             final boolean wasRemoved1 = map.remove("key1", "three");
 
             assertFalse(wasRemoved1);
 
-            assertEquals(null, map.get("key1"), "one");
-            assertEquals("two", map.get("key2"), "two");
+            assertEquals(null, map.get("key1").toString(), "one");
+            assertEquals("two", map.get("key2").toString(), "two");
 
             map.put("key1", "one");
 
@@ -509,11 +517,11 @@ public class ChronicleMapTest {
 
             // lets add one more item for luck !
             map.put("key3", "three");
-            assertEquals("three", map.get("key3"));
+            assertEquals("three", map.get("key3").toString());
 
             // and just for kicks we'll overwrite what we have
             map.put("key3", "overwritten");
-            assertEquals("overwritten", map.get("key3"));
+            assertEquals("overwritten", map.get("key3").toString());
 
         }
     }
@@ -1350,7 +1358,7 @@ public class ChronicleMapTest {
             Set<Integer> keySet = map.keySet();
             Collection<CharSequence> values = map.values();
 
-            values.remove("2");
+            values.removeIf("2"::contentEquals);
             assertMap(map, new int[]{1, 3}, new CharSequence[]{"1", "3"});
             assertEntrySet(entrySet, new int[]{1, 3}, new CharSequence[]{"1", "3"});
             assertKeySet(keySet, new int[]{1, 3});
@@ -1408,7 +1416,8 @@ public class ChronicleMapTest {
     @Test
     public void valuesIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            HashBiMap<Integer, CharSequence> refMap = HashBiMap.create(map);
+            HashBiMap<Integer, CharSequence> refMap = HashBiMap.create();
+            map.forEach((k, v) -> refMap.put(k, v.toString()));
 
             Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
             Set<Integer> keySet = map.keySet();
@@ -1416,7 +1425,7 @@ public class ChronicleMapTest {
 
             Iterator<CharSequence> valueIterator = values.iterator();
             valueIterator.next();
-            refMap.inverse().remove(valueIterator.next());
+            refMap.inverse().remove(valueIterator.next().toString());
             valueIterator.remove();
             int[] expectedKeys = Ints.toArray(refMap.keySet());
             CharSequence[] expectedValues = new CharSequence[expectedKeys.length];
@@ -1478,7 +1487,7 @@ public class ChronicleMapTest {
             Set<Integer> keySet = map.keySet();
             Collection<CharSequence> values = map.values();
 
-            values.removeAll(Arrays.asList("1", "2"));
+            values.removeIf(e -> "1".contentEquals(e) || "2".contentEquals(e));
             assertMap(map, new int[]{3}, new CharSequence[]{"3"});
             assertEntrySet(entrySet, new int[]{3}, new CharSequence[]{"3"});
             assertKeySet(keySet, new int[]{3});
@@ -1495,12 +1504,9 @@ public class ChronicleMapTest {
             Set<Integer> keySet = map.keySet();
             Collection<CharSequence> values = map.values();
 
-            entrySet.retainAll(
-                    Arrays.asList(
-                            new AbstractMap.SimpleEntry<Integer, CharSequence>(1, "1"),
-                            new AbstractMap.SimpleEntry<Integer, CharSequence>(2, "2")
-                    )
-            );
+            entrySet.removeIf(e ->
+                    !(e.getKey().equals(1) && "1".contentEquals(e.getValue())) &&
+                            !(e.getKey().equals(2) && "2".contentEquals(e.getValue())));
             assertMap(map, new int[]{2, 1}, new CharSequence[]{"2", "1"});
             assertEntrySet(entrySet, new int[]{2, 1}, new CharSequence[]{"2", "1"});
             assertKeySet(keySet, new int[]{2, 1});
@@ -1534,7 +1540,7 @@ public class ChronicleMapTest {
             Set<Integer> keySet = map.keySet();
             Collection<CharSequence> values = map.values();
 
-            values.retainAll(Arrays.asList("1", "2"));
+            values.removeIf(v -> !"1".contentEquals(v) && !"2".contentEquals(v));
             assertMap(map, new int[]{2, 1}, new CharSequence[]{"2", "1"});
             assertEntrySet(entrySet, new int[]{2, 1}, new CharSequence[]{"2", "1"});
             assertKeySet(keySet, new int[]{2, 1});

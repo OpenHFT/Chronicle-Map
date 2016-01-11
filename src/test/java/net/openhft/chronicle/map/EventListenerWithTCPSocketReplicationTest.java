@@ -161,7 +161,7 @@ public class EventListenerWithTCPSocketReplicationTest {
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
-        Assert.assertEquals("EXAMPLE", valueRef.get());
+        Assert.assertEquals("EXAMPLE", valueRef.get().toString());
     }
 
     @Test
@@ -190,7 +190,7 @@ public class EventListenerWithTCPSocketReplicationTest {
 
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
-        Assert.assertEquals("EXAMPLE", valueRef.get());
+        Assert.assertEquals("EXAMPLE", valueRef.get().toString());
         Assert.assertEquals("WILL_GET_OVER-WRITTEN", replacedValueRef.get().toString());
     }
 
@@ -220,7 +220,7 @@ public class EventListenerWithTCPSocketReplicationTest {
         Assert.assertTrue("The eventListener.onPut should have been called", putWasCalled.get());
         Assert.assertEquals(Integer.valueOf(5), keyRef.get());
         Assert.assertEquals("small", replacedValueRef.get().toString());
-        Assert.assertEquals("EXAMPLE", valueRef.get());
+        Assert.assertEquals("EXAMPLE", valueRef.get().toString());
     }
 
     @Test

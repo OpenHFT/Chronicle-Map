@@ -82,7 +82,7 @@ public final class SerializationBuilder<T> implements Cloneable, Serializable {
             dataAccess((DataAccess<T>) new ByteableDataAccess<>((Class) tClass));
             sizeMarshaller(constant(((Byteable) OS.memory().allocateInstance(tClass)).maxSize()));
         } else if (tClass == CharSequence.class) {
-            reader((SizedReader<T>) new CharSequenceSizedReader());
+            reader((SizedReader<T>) CharSequenceSizedReader.INSTANCE);
             writer((SizedWriter<T>) CharSequenceSizedWriter.INSTANCE);
         } else if (tClass == StringBuilder.class) {
             reader((SizedReader<T>) StringBuilderSizedReader.INSTANCE);

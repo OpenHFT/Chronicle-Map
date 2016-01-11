@@ -84,7 +84,7 @@ public class TCPSocketReplicationBootStrapTest {
 
         // add data into it
         waitTillEqual(5000);
-        assertEquals("ADDED WHEN DISCONNECTED TO MAP1", map1.get(11));
+        assertEquals("ADDED WHEN DISCONNECTED TO MAP1", map1.get(11).toString());
 
         map2.file().delete();
         persistenceFile.delete();
@@ -158,7 +158,7 @@ public class TCPSocketReplicationBootStrapTest {
 
         // add data into it
         waitTillEqual(5000);
-        assertEquals("ADDED WHEN DISCONNECTED TO MAP1", map1.get(11));
+        assertEquals("ADDED WHEN DISCONNECTED TO MAP1", map1.get(11).toString());
     }
 
     @After
