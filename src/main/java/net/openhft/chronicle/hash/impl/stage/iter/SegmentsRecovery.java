@@ -58,7 +58,7 @@ public abstract class SegmentsRecovery implements IterationContext {
             // `tier` is unused in recoverTier(), 0 should be a safe value
             s.initSegmentTier(0, tierIndex);
             int segmentIndex = tierRecovery.recoverTier(-1);
-            if (segmentIndex > 0) {
+            if (segmentIndex >= 0) {
                 long tierCountersAreaAddr = s.tierCountersAreaAddr();
                 int storedSegmentIndex = TierCountersArea.segmentIndex(tierCountersAreaAddr);
                 if (storedSegmentIndex != segmentIndex) {
