@@ -21,7 +21,6 @@ import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesReader;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesWriter;
 import net.openhft.chronicle.set.*;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -41,7 +40,7 @@ public class Issue63Test {
 
     @Test
     public void issue63Test() throws Exception {
-        Path path = Paths.get(System.getProperty("java.io.tmpdir") + "/test-vectors.dat");
+        Path path = Paths.get(System.getProperty("java.io.tmpdir") + "/test-vectors1.dat");
         if (Files.exists(path)) Files.delete(path);
         File mapFile = path.toFile();
         mapFile.deleteOnExit();
@@ -314,7 +313,8 @@ public class Issue63Test {
         for (int i = 0; i < 100; i++) {
             averageKnownItems.add("average sized known item");
         }
-        Path knownItemsPath = Paths.get(System.getProperty("java.io.tmpdir") + "/test-vectors.dat");
+        Path knownItemsPath = Paths.get(
+                System.getProperty("java.io.tmpdir") + "/test-vectors2.dat");
         Files.deleteIfExists(knownItemsPath);
         ChronicleMap<CharSequence, List<CharSequence>> knownItems;
         ChronicleMapBuilder<CharSequence, List<CharSequence>> knownItemsBuilder = ChronicleMap
