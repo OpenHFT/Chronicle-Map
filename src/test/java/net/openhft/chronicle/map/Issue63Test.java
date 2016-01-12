@@ -21,6 +21,7 @@ import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesReader;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesWriter;
 import net.openhft.chronicle.set.*;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -34,6 +35,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 public class Issue63Test {
 
@@ -162,7 +164,7 @@ public class Issue63Test {
             for (int j = 0; j < random.nextInt(50, 150); j++) {
                 items.add("average sized known item");
             }
-            addKnownItems(id, items);
+            addKnownItems(knownItems, id, items);
         }
     }
 
@@ -291,7 +293,8 @@ public class Issue63Test {
         }
     }
 
-    public void addKnownItems(String id, List<CharSequence> items) {
+    public void addKnownItems(ChronicleMap<CharSequence, List<CharSequence>> knownItems,
+                              String id, List<CharSequence> items) {
         try (ExternalMapQueryContext<CharSequence, List<CharSequence>, ?> c =
                      knownItems.queryContext(id)) {
             if (c.writeLock().tryLock(1, MINUTES)) {
@@ -302,5 +305,49 @@ public class Issue63Test {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    public void testKnownItems() throws Exception {
+
+        ArrayList<CharSequence> averageKnownItems = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            averageKnownItems.add("average sized known item");
+        }
+        Path knownItemsPath = Paths.get(System.getProperty("java.io.tmpdir") + "/test-vectors.dat");
+        Files.deleteIfExists(knownItemsPath);
+        ChronicleMap<CharSequence, List<CharSequence>> knownItems;
+        ChronicleMapBuilder<CharSequence, List<CharSequence>> knownItemsBuilder = ChronicleMap
+                .of(CharSequence.class, (Class<List<CharSequence>>) ((Class) List.class))
+                .averageKey("2B6EC73CD63ACA5D93F4D5A710AD9CFE")
+                .averageValue(averageKnownItems)
+                .valueMarshaller(new ListMarshaller<>(
+                        CharSequenceBytesReader.INSTANCE, CharSequenceBytesWriter.INSTANCE))
+                .entries(20)
+                .maxBloatFactor(5.0)
+                .putReturnsNull(true);
+
+        File mapFile = knownItemsPath.toFile();
+        mapFile.deleteOnExit();
+        knownItems = knownItemsBuilder.createPersistedTo(mapFile);
+        ArrayList<CharSequence> ids = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            String id = UUID.randomUUID().toString();
+            ids.add(id);
+            addKnownItems(knownItems, id, averageKnownItems);
+        }
+        knownItems.close();
+
+        final ChronicleMap<CharSequence, List<CharSequence>> knownItems2 =
+                knownItemsBuilder.recoverPersistedTo(mapFile, true);
+
+        assertEquals(5, knownItems2.size());
+       /* ids.forEach((id) -> {
+            System.out.println(knownItems2.get(id.subSequence(0, id.length())));
+        });*/
+        knownItems2.forEach((id, list) -> {
+            System.out.println(id + " : " + String.join(",", list));
+        });
+
     }
 }

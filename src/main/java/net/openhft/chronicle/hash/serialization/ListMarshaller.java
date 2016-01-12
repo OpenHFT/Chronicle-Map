@@ -84,6 +84,9 @@ public final class ListMarshaller<T>
         int size = in.readInt();
         if (using == null) {
             using = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                using.add(null);
+            }
         } else if (using.size() < size) {
             while (using.size() < size) {
                 using.add(null);
