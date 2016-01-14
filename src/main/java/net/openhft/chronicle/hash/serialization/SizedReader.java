@@ -22,8 +22,6 @@ import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
-
 /**
  * Deserializer of objects from bytes, mirroring the {@link SizedWriter}, i. e. assuming the length
  * of the serialized form isn't written in the beginning of the serialized form itself, but managed
@@ -72,7 +70,7 @@ import java.io.Serializable;
  * @param <T> the type of the object deserialized
  * @see SizedWriter
  */
-public interface SizedReader<T> extends Serializable, Marshallable {
+public interface SizedReader<T> extends Marshallable {
 
     /**
      * Reads and returns the object from {@link Bytes#readPosition()} (i. e. the current position)

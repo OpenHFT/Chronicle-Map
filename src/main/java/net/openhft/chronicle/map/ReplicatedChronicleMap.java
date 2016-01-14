@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;
@@ -90,7 +89,7 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
  */
 public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R>
         implements Replica, Replica.EntryExternalizable {
-    private static final long serialVersionUID = 0L;
+
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
 
     public static final int ADDITIONAL_ENTRY_BYTES = 10;
@@ -206,11 +205,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
         if (localIdentifier == -1)
             throw new IllegalStateException("localIdentifier should not be -1");
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initOwnTransients();
     }
 
     private long computeTierModIterBitSetSizeInBits() {

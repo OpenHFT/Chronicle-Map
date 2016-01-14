@@ -30,8 +30,7 @@ import java.nio.ByteBuffer;
 import static net.openhft.chronicle.hash.serialization.SizeMarshaller.constant;
 import static net.openhft.chronicle.hash.serialization.SizeMarshaller.stopBit;
 
-public final class SerializationBuilder<T> implements Cloneable, Serializable {
-    private static final long serialVersionUID = 0L;
+public final class SerializationBuilder<T> implements Cloneable {
 
     private static boolean concreteClass(Class c) {
         return !c.isInterface() && !Modifier.isAbstract(c.getModifiers());
@@ -122,25 +121,6 @@ public final class SerializationBuilder<T> implements Cloneable, Serializable {
             reader((SizedReader<T>) new SerializableReader<>());
             dataAccess((DataAccess<T>) new SerializableDataAccess<>());
         }
-    }
-
-    private void writeObject(ObjectOutputStream out) throws IOException {
-        out.writeBoolean(serializesGeneratedClasses);
-        if (serializesGeneratedClasses) {
-            out.writeObject(tClass);
-        }
-        out.defaultWriteObject();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        boolean generatedClassesSerialized = in.readBoolean();
-        if (generatedClassesSerialized) {
-            Class<?> eClass = (Class) in.readObject();
-            // This is needed because ValueDataAccess/ValueReader tries to serialize/deserialize
-            // generated classes, requires them to be generated beforehand
-            new SerializationBuilder<>(eClass);
-        }
-        in.defaultReadObject();
     }
 
     public void reader(SizedReader<T> reader) {

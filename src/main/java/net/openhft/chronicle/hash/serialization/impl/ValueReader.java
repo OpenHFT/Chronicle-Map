@@ -60,11 +60,6 @@ public class ValueReader<T>
         return heapClass;
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initTransients();
-    }
-
     private void initTransients() {
         nativeClass = Values.nativeClassFor(valueType);
         heapClass = Values.heapClassFor(valueType);

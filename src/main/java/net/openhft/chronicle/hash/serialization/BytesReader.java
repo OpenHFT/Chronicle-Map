@@ -21,15 +21,13 @@ import net.openhft.chronicle.bytes.ReadBytesMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-
 /**
  * External version on {@link ReadBytesMarshallable}.
  *
  * @param <T> type of objects deserialized
  * @see BytesWriter
  */
-public interface BytesReader<T> extends Serializable, Marshallable {
+public interface BytesReader<T> extends Marshallable {
 
     /**
      * Reads and returns the object from {@link Bytes#readPosition()} (i. e. the current position)

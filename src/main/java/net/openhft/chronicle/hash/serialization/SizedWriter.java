@@ -21,8 +21,6 @@ import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-
 /**
  * Serializer (object to bytes writer) which 1) knows the length of serialized
  * form of any object before actual serialization 2) doesn't include that length in the serialized
@@ -59,7 +57,7 @@ import java.io.Serializable;
  * @param <T> the type of the object marshalled
  * @see SizedReader
  */
-public interface SizedWriter<T> extends Serializable, Marshallable {
+public interface SizedWriter<T> extends Marshallable {
 
     /**
      * Returns the length (in bytes) of the serialized form of the given object. Serialization form

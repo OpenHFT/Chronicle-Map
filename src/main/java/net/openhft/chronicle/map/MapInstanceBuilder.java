@@ -23,10 +23,8 @@ import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 
-final class MapInstanceBuilder<K, V>
-        implements ChronicleHashInstanceBuilder<ChronicleMap<K, V>>, Serializable {
+final class MapInstanceBuilder<K, V> implements ChronicleHashInstanceBuilder<ChronicleMap<K, V>> {
 
     final ChronicleMapBuilder<K, V> mapBuilder;
     transient SingleChronicleHashReplication singleHashReplication;

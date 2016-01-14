@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -52,8 +51,6 @@ public class VanillaChronicleMap<K, V, R>
         extends VanillaChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>,
         ExternalMapQueryContext<K, V, ?>>
         implements AbstractChronicleMap<K, V> {
-
-    private static final long serialVersionUID = 4L;
 
     /////////////////////////////////////////////////
     // Value Data model
@@ -159,11 +156,6 @@ public class VanillaChronicleMap<K, V, R>
         couldNotDetermineAlignmentBeforeAllocation =
                 greatestCommonDivisor((int) chunkSize, alignment) != alignment;
         cxt = new ThreadLocal<>();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initOwnTransients();
     }
 
     public final V checkValue(Object value) {

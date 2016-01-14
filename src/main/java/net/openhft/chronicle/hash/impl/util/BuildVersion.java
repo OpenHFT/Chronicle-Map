@@ -29,6 +29,10 @@ public final class BuildVersion {
 
     private static String version = null;
 
+    public static void main(String[] args) {
+        System.out.println(version());
+    }
+
     /**
      * @return version of ChronicleMap being used, or NULL if its not known
      */

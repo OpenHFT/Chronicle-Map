@@ -22,9 +22,10 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
 
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 
@@ -80,11 +81,6 @@ public final class SetMarshaller<T>
     public SetMarshaller(BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
         this.elementReader = elementReader;
         this.elementWriter = elementWriter;
-        initTransients();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
         initTransients();
     }
 

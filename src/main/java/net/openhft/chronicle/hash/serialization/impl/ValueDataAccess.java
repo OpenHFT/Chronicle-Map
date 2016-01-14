@@ -28,9 +28,6 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 import static net.openhft.chronicle.bytes.NativeBytesStore.nativeStoreWithFixedCapacity;
 
 public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T> {
@@ -63,11 +60,6 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
 
     protected Class<? extends T> heapClass() {
         return heapClass;
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initTransients();
     }
 
     private void initTransients() {

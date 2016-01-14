@@ -26,9 +26,6 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 /**
  * {@link BytesReader} implementation for String, for the primary ChronicleMap's key of value type
  * {@link StringSizedReader} + {@link CharSequenceSizedWriter} are more efficient (because don't
@@ -37,18 +34,12 @@ import java.io.ObjectInputStream;
  *
  * @see CharSequenceBytesWriter
  */
-public class StringBytesReader
-        implements BytesReader<String>, StatefulCopyable<StringBytesReader> {
+public class StringBytesReader implements BytesReader<String>, StatefulCopyable<StringBytesReader> {
 
     /** Cache field */
     private transient StringBuilder sb;
 
     public StringBytesReader() {
-        initTransients();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
         initTransients();
     }
 

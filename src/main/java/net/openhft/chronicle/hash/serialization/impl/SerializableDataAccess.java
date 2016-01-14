@@ -43,11 +43,6 @@ public class SerializableDataAccess<T extends Serializable> extends AbstractData
         initTransients();
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initTransients();
-    }
-
     void initTransients() {
         bytes = Bytes.allocateElasticDirect(1);
         out = bytes.outputStream();

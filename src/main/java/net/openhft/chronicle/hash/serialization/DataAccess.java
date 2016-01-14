@@ -20,9 +20,7 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-
-public interface DataAccess<T> extends StatefulCopyable<DataAccess<T>>, Serializable, Marshallable {
+public interface DataAccess<T> extends StatefulCopyable<DataAccess<T>>, Marshallable {
 
     Data<T> getData(@NotNull T instance);
 

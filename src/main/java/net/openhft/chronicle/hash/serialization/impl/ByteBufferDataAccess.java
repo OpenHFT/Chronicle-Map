@@ -26,8 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.nio.ch.DirectBuffer;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.nio.ByteBuffer;
 
 public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
@@ -43,11 +41,6 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     private transient BytesStore bytesStore;
 
     public ByteBufferDataAccess() {
-        initTransients();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
         initTransients();
     }
 

@@ -21,8 +21,6 @@ import net.openhft.chronicle.hash.serialization.impl.ConstantSizeMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.StopBitSizeMarshaller;
 import net.openhft.chronicle.wire.Marshallable;
 
-import java.io.Serializable;
-
 /**
  * Strategy of storing numbers in bytes stores (usually sizes of the subsequent chunks in
  * the same bytes store). Normal number storing (4 bytes for {@code int}, 8 bytes for {@code long}
@@ -37,7 +35,7 @@ import java.io.Serializable;
  * value (it's constant size). If the marshaller is fed with the size it is not able store, it could
  * throw an {@code IllegalArgumentException}.
  */
-public interface SizeMarshaller extends Serializable, Marshallable {
+public interface SizeMarshaller extends Marshallable {
 
     static SizeMarshaller stopBit() {
         return StopBitSizeMarshaller.INSTANCE;

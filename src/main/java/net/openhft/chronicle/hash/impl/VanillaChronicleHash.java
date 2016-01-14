@@ -29,7 +29,6 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.map.impl.IterationContext;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -38,18 +37,19 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
-import static java.util.stream.Collectors.toSet;
 import static net.openhft.chronicle.algo.MemoryUnit.*;
 import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 import static net.openhft.chronicle.bytes.NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity;
@@ -60,11 +60,9 @@ import static net.openhft.chronicle.hash.impl.DummyReferenceCounted.DUMMY_REFERE
 public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         ECQ extends ExternalHashQueryContext<K>>
-        implements ChronicleHash<K, C, SC, ECQ>, Serializable, Marshallable {
+        implements ChronicleHash<K, C, SC, ECQ>, Marshallable {
 
     private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleHash.class);
-
-    private static final long serialVersionUID = 0L;
 
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
     public static final long RESERVED_GLOBAL_MUTABLE_STATE_BYTES = 1024;
@@ -541,11 +539,6 @@ public abstract class VanillaChronicleHash<K,
     private void zeroOutNewlyMappedTier(BytesStore bytesStore, long tierOffset) {
         // Zero out hash lookup, tier data and free list bit set. Leave entry space dirty.
         bytesStore.zeroOut(tierOffset, tierOffset + tierSize - tierEntrySpaceOuterSize);
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initOwnTransients();
     }
 
     public void onHeaderCreated() {

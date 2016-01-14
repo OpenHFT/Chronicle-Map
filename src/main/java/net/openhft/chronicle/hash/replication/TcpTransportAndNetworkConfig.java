@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.replication;
 
-import java.io.Serializable;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public final class TcpTransportAndNetworkConfig implements Serializable {
+public final class TcpTransportAndNetworkConfig {
 
     private static final int DEFAULT_TCP_BUFFER_SIZE = 1024 * 64;
     private static final long DEFAULT_HEART_BEAT_INTERVAL = 20;

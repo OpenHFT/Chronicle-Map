@@ -21,15 +21,13 @@ import net.openhft.chronicle.bytes.WriteBytesMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-
 /**
  * External version of {@link WriteBytesMarshallable}.
  *
  * @param <T> the type of objects serialized
  * @see BytesReader
  */
-public interface BytesWriter<T> extends Serializable, Marshallable {
+public interface BytesWriter<T> extends Marshallable {
 
     /**
      * Serializes the given object to the given {@code out}.

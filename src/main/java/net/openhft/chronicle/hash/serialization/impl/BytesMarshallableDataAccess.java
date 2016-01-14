@@ -25,9 +25,6 @@ import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 public class BytesMarshallableDataAccess<T extends BytesMarshallable>
         extends InstanceCreatingMarshaller<T> implements DataAccess<T>, Data<T> {
 
@@ -45,11 +42,6 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
         super.readMarshallable(wireIn);
-        initTransients();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
         initTransients();
     }
 

@@ -22,8 +22,6 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -49,8 +47,7 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * @see ListMarshaller
  * @see SetMarshaller
  */
-public final class MapMarshaller<K, V>
-        implements BytesReader<Map<K, V>>, BytesWriter<Map<K, V>>,
+public final class MapMarshaller<K, V> implements BytesReader<Map<K, V>>, BytesWriter<Map<K, V>>,
         StatefulCopyable<MapMarshaller<K, V>> {
 
     // Config fields
@@ -70,11 +67,6 @@ public final class MapMarshaller<K, V>
         this.keyWriter = keyWriter;
         this.valueReader = valueReader;
         this.valueWriter = valueWriter;
-        initTransients();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
         initTransients();
     }
 

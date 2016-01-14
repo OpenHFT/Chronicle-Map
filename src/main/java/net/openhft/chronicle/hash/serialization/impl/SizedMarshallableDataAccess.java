@@ -27,9 +27,6 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 
 public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T>
@@ -59,11 +56,6 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
 
     SizedWriter<? super T> sizedWriter() {
         return sizedWriter;
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        initTransients();
     }
 
     private void initTransients() {

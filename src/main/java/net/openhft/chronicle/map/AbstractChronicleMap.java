@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -31,7 +30,7 @@ import java.util.function.Predicate;
 import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.hash.impl.util.Objects.requireNonNull;
 
-interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V>, Serializable {
+interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
 
     @Override
     default <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {

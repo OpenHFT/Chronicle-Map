@@ -24,8 +24,6 @@ import net.openhft.chronicle.map.VanillaChronicleMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -40,8 +38,7 @@ import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
  * trades correctness of abstractions for simplicity and minimizing changes before production 3.x
  * release.
  */
-class SetFromMap<E> extends AbstractSet<E>
-        implements ChronicleSet<E>, Serializable {
+class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
 
     private final ChronicleMap<E, DummyValue> m;  // The backing map
     private transient Set<E> s;       // Its keySet
@@ -112,14 +109,6 @@ class SetFromMap<E> extends AbstractSet<E>
         return s.retainAll(c);
     }
     // addAll is the only inherited implementation
-
-    private static final long serialVersionUID = 2454657854757543876L;
-
-    private void readObject(java.io.ObjectInputStream stream)
-            throws IOException, ClassNotFoundException {
-        stream.defaultReadObject();
-        s = m.keySet();
-    }
 
     @Override
     public long longSize() {

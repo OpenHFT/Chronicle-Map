@@ -25,15 +25,13 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-
 /**
  * Holds new instance creation logic, common for many {@link DataAccess} and {@link SizedReader}
  * implementations
  *
  * @param <T> the type of objects deserialized
  */
-public abstract class InstanceCreatingMarshaller<T> implements Serializable, Marshallable {
+public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
 
     private Class<T> tClass;
 

@@ -22,11 +22,9 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Serializable;
-
 import static net.openhft.chronicle.core.Maths.isPowerOf2;
 
-public interface HashSplitting extends Serializable, Marshallable {
+public interface HashSplitting extends Marshallable {
 
     int segmentIndex(long hash);
     long segmentHash(long hash);
@@ -62,7 +60,6 @@ public interface HashSplitting extends Serializable, Marshallable {
     }
 
     class ForPowerOf2Segments implements HashSplitting {
-        private static final long serialVersionUID = 0L;
 
         private int mask;
         private int bits;
@@ -97,7 +94,6 @@ public interface HashSplitting extends Serializable, Marshallable {
 
     //TODO optimize?
     class ForNonPowerOf2Segments implements HashSplitting {
-        private static final long serialVersionUID = 0L;
 
         private static final int MASK = Integer.MAX_VALUE;
         private static final int BITS = 31;

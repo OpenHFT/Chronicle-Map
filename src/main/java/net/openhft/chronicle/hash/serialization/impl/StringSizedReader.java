@@ -25,20 +25,12 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 public class StringSizedReader implements SizedReader<String>, StatefulCopyable<StringSizedReader> {
 
     /** Cache field */
     private transient StringBuilder sb;
 
     public StringSizedReader() {
-        initTransients();
-    }
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
         initTransients();
     }
 

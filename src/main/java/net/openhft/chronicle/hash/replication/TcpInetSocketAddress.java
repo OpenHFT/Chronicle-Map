@@ -19,6 +19,8 @@ package net.openhft.chronicle.hash.replication;
 import java.net.InetSocketAddress;
 
 class TcpInetSocketAddress extends InetSocketAddress {
+    private static final long serialVersionUID = 2747559307347096475L;
+
     private final String toString;
 
     public TcpInetSocketAddress(String hostname, int port) {
