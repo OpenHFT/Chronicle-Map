@@ -22,7 +22,6 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.hash.impl.TierCountersArea;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import net.openhft.chronicle.hash.replication.AbstractReplication;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
@@ -116,7 +115,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private transient ModificationIterator[] assignedModificationIterators;
     private transient AtomicReferenceArray<ModificationIterator> modificationIterators;
     private transient long startOfModificationIterators;
-    private transient boolean bootstrapOnlyLocalEntries;
 
     public transient boolean cleanupRemovedEntries;
     public transient long cleanupTimeout;
@@ -128,8 +126,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     private transient long[] remoteNodeCouldBootstrapFrom;
 
-    public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder,
-                                  AbstractReplication replication) throws IOException {
+    public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder) throws IOException {
         super(builder);
         tierModIterBitSetSizeInBits = computeTierModIterBitSetSizeInBits();
         tierModIterBitSetOuterSize = computeTierModIterBitSetOuterSize();
@@ -137,8 +134,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 computeSegmentModIterBitSetsForIdentifierOuterSize();
         tierBulkModIterBitSetsForIdentifierOuterSize =
                 computeTierBulkModIterBitSetsForIdentifierOuterSize(tiersInBulk);
-
-        initTransientsFromReplication(replication);
     }
 
     @Override
@@ -193,18 +188,14 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     @Override
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
         super.initTransientsFromBuilder(builder);
+        this.localIdentifier = builder.replicationIdentifier;
+        if (localIdentifier == -1)
+            throw new IllegalStateException("localIdentifier should not be -1");
         //noinspection unchecked
         this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
         cleanupRemovedEntries = builder.cleanupRemovedEntries;
         cleanupTimeout = builder.cleanupTimeout;
         cleanupTimeoutUnit = builder.cleanupTimeoutUnit;
-    }
-
-    void initTransientsFromReplication(AbstractReplication replication) {
-        this.localIdentifier = replication.identifier();
-        this.bootstrapOnlyLocalEntries = replication.bootstrapOnlyLocalEntries();
-        if (localIdentifier == -1)
-            throw new IllegalStateException("localIdentifier should not be -1");
     }
 
     private long computeTierModIterBitSetSizeInBits() {
@@ -637,12 +628,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
         private ModificationNotifier modificationNotifier;
 
-        /**
-         * Holds a single long value. Is kept as Bytes, to reuse existing "payload write" option in
-         * {@link net.openhft.chronicle.map.Replica.EntryCallback}
-         */
-        private final Bytes bootstrapTimeAfterNextReplicationIterationComplete =
-                Bytes.wrapForRead(new byte[8]);
+        private long bootstrapTimeAfterNextIterationComplete = 0L;
         private boolean somethingSentOnThisIteration = false;
 
         // The iteration "cursor" consists of 4 fields:
@@ -686,10 +672,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             entryPos = -1;
 
             tierBitSetAddr = segmentBitSetsAddr; // + tierModIterBitSetOuterSize * segmentIndex = 0
-        }
-
-        private void setBootstrapTimeAfterNextReplicationIterationComplete(long bootstrapTime) {
-            bootstrapTimeAfterNextReplicationIterationComplete.writeLong(0, bootstrapTime);
         }
 
         public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
@@ -750,7 +732,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             return nextEntryPos(null, 0) != NOT_FOUND;
         }
 
-        private long nextEntryPos(EntryCallback entryCallback, int chronicleId) {
+        private long nextEntryPos(Callback callback, int chronicleId) {
             long nextEntryPos;
             boolean allBitSetsScannedFromTheStart = false;
             // at most 2 iterations
@@ -758,18 +740,17 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 if (segmentIndex >= 0) {
                     allBitSetsScannedFromTheStart = segmentIndex == 0 && entryPos == -1;
                     if (allBitSetsScannedFromTheStart) {
-                        setBootstrapTimeAfterNextReplicationIterationComplete(currentTime());
+                        bootstrapTimeAfterNextIterationComplete = currentTime();
                         somethingSentOnThisIteration = false;
                     }
 
                     while (segmentIndex < actualSegments) {
                         // This is needed to ensure, that any entry update with the timestamp,
-                        // smaller than assigned for
-                        // bootstrapTimeAfterNextReplicationIterationComplete, is visible during
-                        // the iteration of the current segment. Bits are raised during the update
-                        // via non-volatile bit set (performance concerns), hence to guarantee
-                        // visibility during the iteration, we build a happens-before between bit
-                        // raise and bit reading:
+                        // smaller than assigned for bootstrapTimeAfterNextIterationComplete, is
+                        // visible during the iteration of the current segment. Bits are raised
+                        // during the update via non-volatile bit set (performance concerns), hence
+                        // to guarantee visibility during the iteration, we build a happens-before
+                        // between bit raise and bit reading:
                         // bit raised ->
                         // lock released (end of update operation) ->
                         // lock acquired (the following acquireAndReleaseUpdateLock() call) ->
@@ -815,32 +796,29 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
                 resetCursor();
 
-                // we walked through the whole chronicle map instance, "replication iteration"
-                if (entryCallback != null && somethingSentOnThisIteration) {
-                    // send the previous bootstrap time
-                    entryCallback.onEntry(
-                            null, bootstrapTimeAfterNextReplicationIterationComplete, chronicleId);
+                // we walked through the whole chronicle map instance, "iteration"
+                if (callback != null && somethingSentOnThisIteration) {
+                    callback.onBootstrapTime(bootstrapTimeAfterNextIterationComplete, chronicleId);
                 }
             }
             return NOT_FOUND;
         }
 
         private void acquireAndReleaseUpdateLock(int segmentIndex) {
-            try (CompiledReplicatedMapIterationContext<K, V, R> c =
-                         iterationContext()) {
+            try (CompiledReplicatedMapIterationContext<K, V, R> c = iterationContext()) {
                 c.initSegmentIndex(segmentIndex);
                 c.updateLock().lock();
             }
         }
 
         /**
-         * @param entryCallback call this to get an entry, this class will take care of the locking
+         * @param callback call this to get an entry, this class will take care of the locking
          * @return true if an entry was processed
          */
         @Override
-        public boolean nextEntry(@NotNull EntryCallback entryCallback, int chronicleId) {
+        public boolean nextEntry(@NotNull Callback callback, int chronicleId) {
             while (true) {
-                long nextEntryPos = nextEntryPos(entryCallback, chronicleId);
+                long nextEntryPos = nextEntryPos(callback, chronicleId);
                 if (nextEntryPos == NOT_FOUND)
                     return false;
                 entryPos = nextEntryPos;
@@ -866,8 +844,8 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
                     if (entryIsStillDirty(entryPos)) {
                         context.readExistingEntry(entryPos);
-                        entryCallback.onEntry(
-                                (ReplicableEntry) context.entryForIteration(), null, chronicleId);
+                        ReplicableEntry entry = (ReplicableEntry) context.entryForIteration();
+                        callback.onEntry(entry, chronicleId);
                         somethingSentOnThisIteration = true;
                         clearEntry(entryPos);
                         return true;
@@ -908,20 +886,13 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                                     fromTimeStamp, e.originTimestamp(),
                                     e.originIdentifier(), localIdentifier);
                         }
-                        if (bootstrapOnlyLocalEntries) {
-                            if (e.originIdentifier() == localIdentifier &&
-                                    e.originTimestamp() >= fromTimeStamp) {
-                                raiseChange0(c.tierIndex(), c.pos());
-                            }
-                        } else {
-                            // TODO currently, all entries, originating not from the current node,
-                            // are bootstrapped. This could be optimized, but requires to generate
-                            // unique connection id, it identify two ChronicleMap instances
-                            // reconnecting vs. different Map start-up
-                            if (e.originIdentifier() != localIdentifier ||
-                                    e.originTimestamp() >= fromTimeStamp) {
-                                raiseChange0(c.tierIndex(), c.pos());
-                            }
+                        // TODO currently, all entries, originating not from the current node,
+                        // are bootstrapped. This could be optimized, but requires to generate
+                        // unique connection id, it identify two ChronicleMap instances
+                        // reconnecting vs. different Map start-up
+                        if (e.originIdentifier() != localIdentifier ||
+                                e.originTimestamp() >= fromTimeStamp) {
+                            raiseChange0(c.tierIndex(), c.pos());
                         }
                     });
                 }

@@ -16,14 +16,11 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.net.InetSocketAddress;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
 
 public class Issue62ChronicleServer {
 
@@ -52,9 +49,7 @@ public class Issue62ChronicleServer {
                 ChronicleMapBuilder.of(String.class, Long.class)
                         //.averageKeySize(100)
                         .averageKey(STR)
-                        .replication((byte) 1, TcpTransportAndNetworkConfig
-                                .of(8076, new InetSocketAddress("localhost", 8077))
-                                .heartBeatInterval(1, TimeUnit.SECONDS))
+                        .replication((byte) 1)
                         .entries(50_000);
 
         ChronicleMap<String, Long> cityPostalCodes =

@@ -21,8 +21,6 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.values.*;
-import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.MapMarshaller;
@@ -44,11 +42,9 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 import static java.util.Arrays.asList;
@@ -62,7 +58,7 @@ import static org.junit.Assert.*;
 public class CHMUseCasesTest {
 
 
-    enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED, REPLICATED}
+    enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED}
 
     private final TypeOfMap typeOfMap;
 
@@ -98,10 +94,6 @@ public class CHMUseCasesTest {
                 },
 
                 {
-                        TypeOfMap.REPLICATED
-                },
-
-                {
                         TypeOfMap.SIMPLE_PERSISTED
                 }
         });
@@ -129,43 +121,8 @@ public class CHMUseCasesTest {
 
 
     private void mapChecks() {
-        if (typeOfMap == TypeOfMap.REPLICATED) {
-
-            // see HCOLL-265 Chronicle Maps with Identical char[] values are not equal1
-            if (map1.valueClass() == char[].class ||
-                    map1.valueClass() == byte[].class ||
-                    map1.valueClass() == byte[][].class) {
-
-                waitTillEqual(5000);
-
-                assertArrayValueEquals(map1, map2);
-                if (typeOfMap == TypeOfMap.SIMPLE)
-                    checkJsonSerilization();
-
-                return;
-            }
-
-
-            // see HCOLL-265 Chronicle Maps with Identical char[] values are not equal1
-            if (map1.keyClass() == char[].class ||
-                    map1.keyClass() == byte[][].class) {
-
-                return;
-            }
-
-
-            if (ByteBuffer.class.isAssignableFrom(map1.valueClass()) ||
-                    ByteBuffer.class.isAssignableFrom(map1.keyClass()))
-                return;
-
-
-            waitTillEqual(5000);
-            assertEquals(map1, map2);
-        }
-
         if (typeOfMap == TypeOfMap.SIMPLE)
             checkJsonSerilization();
-
     }
 
     private void assertArrayValueEquals(ChronicleMap map1, ChronicleMap map2) {
@@ -267,55 +224,9 @@ public class CHMUseCasesTest {
                 final File file = file0;
                 map1 = builder.createPersistedTo(file);
                 closeables.add(map1);
-                closeables.add(new Closeable() {
-                    @Override
-                    public void close() throws IOException {
-                        file.delete();
-                    }
-                });
+                closeables.add(() -> file.delete());
 
                 return map1;
-
-            case REPLICATED: {
-
-                map2 = null;
-                {
-                    final TcpTransportAndNetworkConfig tcpConfig1 = TcpTransportAndNetworkConfig
-                            .of(8086)
-                            .heartBeatInterval(1, TimeUnit.SECONDS)
-                            .tcpBufferSize(1024 * 64);
-
-
-                    map2 = builder
-                            .replication(SingleChronicleHashReplication.builder()
-                                    .tcpTransportAndNetwork(tcpConfig1).name("server")
-                                    .createWithId((byte) 1))
-                            .instance()
-                            .name("server")
-                            .create();
-                    closeables.add(map2);
-
-                }
-                {
-                    final TcpTransportAndNetworkConfig tcpConfig2 = TcpTransportAndNetworkConfig.of
-                            (8087, new InetSocketAddress("localhost", 8086))
-                            .heartBeatInterval(1, TimeUnit.SECONDS)
-                            .tcpBufferSize(1024 * 64);
-
-                    map1 = builder
-                            .replication(SingleChronicleHashReplication.builder()
-                                    .tcpTransportAndNetwork(tcpConfig2).name("map2")
-                                    .createWithId((byte) 2))
-                            .instance()
-                            .name("map2")
-                            .create();
-                    closeables.add(map1);
-                    return map1;
-
-                }
-
-
-            }
 
             default:
                 throw new IllegalStateException();

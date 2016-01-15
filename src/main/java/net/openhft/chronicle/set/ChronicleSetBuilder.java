@@ -18,10 +18,7 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
-import net.openhft.chronicle.hash.ChronicleHashInstanceBuilder;
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
@@ -266,19 +263,6 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
-    public ChronicleSetBuilder<K> replication(SingleChronicleHashReplication replication) {
-        chronicleMapBuilder.replication(replication);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<K> replication(
-            byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork) {
-        chronicleMapBuilder.replication(identifier, tcpTransportAndNetwork);
-        return this;
-    }
-
-    @Override
     public ChronicleSetBuilder<K> replication(byte identifier) {
         chronicleMapBuilder.replication(identifier);
         return this;
@@ -314,11 +298,6 @@ public final class ChronicleSetBuilder<K>
             }
         });
         return this;
-    }
-
-    @Override
-    public ChronicleHashInstanceBuilder<ChronicleSet<K>> instance() {
-        return new SetInstanceBuilder<>(chronicleMapBuilder.instance());
     }
 
     @Override

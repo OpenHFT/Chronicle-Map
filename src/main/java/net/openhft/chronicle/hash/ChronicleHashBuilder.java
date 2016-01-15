@@ -19,8 +19,6 @@ package net.openhft.chronicle.hash;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -44,13 +42,6 @@ import java.util.concurrent.TimeUnit;
  * <i>the builder itself</i> back to support chaining pattern, rather than the builder copies with
  * the corresponding configuration changed. To make an independent configuration, {@linkplain
  * #clone} the builder.
- *
- * <p>{@code ChronicleHashBuilder} focuses on configurations, it could be used to create several
- * containers of the same key-value domain. In this case {@code ChronicleHashBuilder} play like a
- * factory (design pattern), rather than builder. The {@code ChronicleHashBuilder} could be
- * "converted" to an {@link ChronicleHashInstanceBuilder} using {@link #instance()} method.
- * {@code ChronicleHashInstanceBuilder} is a classic disposable builder, allowing to configure
- * parameters, supposed to be unique for each created Chronicle Hash.
  *
  * <p>{@code ChronicleHashBuilder} instances are not safe for concurrent use from multiple threads,
  * if at least one of the threads mutates the {@code ChronicleHashBuilder}'s state.
@@ -520,63 +511,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      */
     B checksumEntries(boolean checksumEntries);
 
-    /**
-     * Configures replication of the hash containers, created by this builder. See <a
-     * href="https://github.com/OpenHFT/Chronicle-Map#tcp--udp-replication"> the section about
-     * replication in ChronicleMap manual</a> for more information.
-     *
-     * <p>By default, hash containers, created by this builder doesn't replicate their data.
-     *
-     * <p>This method call overrides all previous replication configurations of this builder, made
-     * either by this method or {@link #replication(byte, TcpTransportAndNetworkConfig)}, or
-     * {@link #replication(byte)} shortcut methods.
-     *
-     * @param replication the replication config
-     * @return this builder back
-     * @see ChronicleHashInstanceBuilder#replicated(SingleChronicleHashReplication)
-     * @see #replication(byte, TcpTransportAndNetworkConfig)
-     */
-    B replication(SingleChronicleHashReplication replication);
-
-    /**
-     * Shortcut for {@code replication(SingleChronicleHashReplication.builder()
-     * .tcpTransportAndNetwork(tcpTransportAndNetwork).createWithId(identifier))}.
-     *
-     * @param identifier             the network-wide identifier of the containers, created by this
-     *                               builder
-     * @param tcpTransportAndNetwork configuration of tcp connection and network
-     * @return this builder back
-     * @see #replication(SingleChronicleHashReplication)
-     * @see ChronicleHashInstanceBuilder#replicated(byte, TcpTransportAndNetworkConfig)
-     */
-    B replication(byte identifier, TcpTransportAndNetworkConfig tcpTransportAndNetwork);
-
-    /**
-     * Shortcut for {@link #replication(SingleChronicleHashReplication)
-     * replication(SingleChronicleHashReplication.builder().createWithId(identifier)}.
-     *
-     * <p>This method is used to configure a replicated Chronicle Hash, that shouldn't communicate
-     * to other nodes. For example, if several processes access the same persisted Chronicle Hash,
-     * only one of them should communicate to other nodes and replicate entries.
-     *
-     * @param identifier the network-wide identifier for containers, created by this builder. This
-     * identifier is used when calling e. g. put() of the created container, to write the entry
-     * origin identifier (along with timestamp) into the entry memory. This change may be replicated
-     * to other nodes by a concurrent (or later) process, mapping to the same file.
-     * @return this builder back
-     */
     B replication(byte identifier);
-
-    /**
-     * Returns a new {@code ChronicleHashInstanceBuilder}, which inherits configuration from this
-     * builder (in it's <i>current</i> state) and could be used to specify individual configurations
-     * for a Chronicle Hash container. Changes to this {@code ChronicleHashBuilder}, made after
-     * an instance is create, doesn't affect that instance, i. e. the returned instance is
-     * independent from the {@code ChronicleHashBuilder}, used to create it.
-     *
-     * @return a new Chronicle Hash instance builder
-     */
-    ChronicleHashInstanceBuilder<H> instance();
 
     /**
      * Creates a new hash container from this builder, storing it's data in off-heap memory, not
@@ -615,7 +550,6 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see ChronicleHash#file()
      * @see ChronicleHash#close()
      * @see #create()
-     * @see ChronicleHashInstanceBuilder#persistedTo(File)
      * @see #recoverPersistedTo(File, boolean)
      */
     H createPersistedTo(File file) throws IOException;

@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,9 +37,7 @@ public class Issue62ChronicleClient {
                 ChronicleMapBuilder.of(String.class, Long.class)
                         //.averageKeySize(100)
                         .averageKey(Issue62ChronicleServer.STR)
-                        .replication((byte) 2, TcpTransportAndNetworkConfig
-                                .of(8077, new InetSocketAddress("localhost", 8076))
-                                .heartBeatInterval(1, TimeUnit.SECONDS))
+                        .replication((byte) 2)
                         .entries(50_000);
 
         try (ChronicleMap<String, Long> map =

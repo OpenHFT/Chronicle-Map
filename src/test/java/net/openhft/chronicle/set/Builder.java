@@ -16,18 +16,10 @@
 
 package net.openhft.chronicle.set;
 
-import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
-import net.openhft.chronicle.hash.serialization.SizeMarshaller;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Rob Austin.
@@ -78,31 +70,6 @@ public class Builder {
             if (System.currentTimeMillis() - startTime > timeOutMs)
                 break;
         }
-    }
-
-    public static <T extends ChronicleMap<Integer, DummyValue>> T newMapDummyValue(
-            final byte identifier,
-            final int serverPort,
-            final InetSocketAddress... endpoints) throws IOException {
-        return (T) newTcpSocketShmBuilder(Integer.class, DummyValue.class,
-                identifier, serverPort, endpoints)
-                .valueReaderAndDataAccess(
-                        DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
-                .valueSizeMarshaller(SizeMarshaller.constant(0))
-                .create();
-    }
-
-    public static <K, V> ChronicleMapBuilder<K, V> newTcpSocketShmBuilder(
-            Class<K> kClass, Class<V> vClass,
-            final byte identifier,
-            final int serverPort,
-            final InetSocketAddress... endpoints) throws IOException {
-        TcpTransportAndNetworkConfig tcpConfig = TcpTransportAndNetworkConfig
-                .of(serverPort, Arrays.asList(endpoints))
-                .heartBeatInterval(1L, TimeUnit.SECONDS).autoReconnectedUponDroppedConnection(true);
-        return ChronicleMapBuilder.of(kClass, vClass)
-                .entries(SIZE)
-                .replication(identifier, tcpConfig);
     }
 
 }

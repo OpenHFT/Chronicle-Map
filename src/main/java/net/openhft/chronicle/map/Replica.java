@@ -113,7 +113,7 @@ public interface Replica extends Closeable {
 
         /**
          * @return {@code true} if the is another entry to be received via {@link
-         * #nextEntry(Replica.EntryCallback, int chronicleId)}
+         * #nextEntry(Callback, int chronicleId)}
          */
         boolean hasNext();
 
@@ -126,13 +126,14 @@ public interface Replica extends Closeable {
          * @return {@code true} if the entry was accepted by the {@code callback.onEntry()} method,
          * {@code false} if the entry was not accepted or was not available
          */
-        boolean nextEntry(@NotNull final EntryCallback callback, final int chronicleId);
+        boolean nextEntry(@NotNull final Callback callback, final int chronicleId);
 
         /**
-         * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer. It
-         * means all these entries will be considered as "new" by this ModificationIterator and
-         * iterated once again no matter if they have already been.  <p>This functionality is used
-         * to publish recently modified entries to a new remote node as it connects.
+         * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer and
+         * origin identifier equal to the current node identifier. It means all these entries will
+         * be considered as "new" by this ModificationIterator and iterated once again no matter if
+         * they have already been.  <p>This functionality is used to publish recently modified
+         * entries to a new remote node as it connects.
          *
          * @param fromTimeStamp the timestamp from which all entries should be dirty
          */
@@ -145,6 +146,23 @@ public interface Replica extends Closeable {
          * @param modificationNotifier gets notified when a change occurs
          */
         void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier);
+
+        /**
+         * Implemented typically by a replicator, This interface provides the event, which will get
+         * called whenever a put() or remove() has occurred to the map
+         */
+        interface Callback {
+
+            /**
+             * Called whenever a put() or remove() has occurred to a replicating map.
+             *  @param entry       the entry you will receive, this does not have to be locked, as
+             *                    locking is already provided from the caller.
+             * @param chronicleId only assigned when clustering
+             */
+            void onEntry(ReplicableEntry entry, int chronicleId);
+
+            void onBootstrapTime(long bootstrapTime, int chronicleId);
+        }
     }
 
     /**
@@ -185,20 +203,5 @@ public interface Replica extends Closeable {
         void readExternalEntry(@NotNull Bytes source, byte remoteNodeIdentifier);
     }
 
-    /**
-     * Implemented typically by a replicator, This interface provides the event, which will get
-     * called whenever a put() or remove() has occurred to the map
-     */
-    interface EntryCallback {
-
-        /**
-         * Called whenever a put() or remove() has occurred to a replicating map.
-         *
-         * @param entry       the entry you will receive, this does not have to be locked, as
-         *                    locking is already provided from the caller.
-         * @param chronicleId only assigned when clustering
-         */
-        void onEntry(ReplicableEntry entry, Bytes payload, int chronicleId);
-    }
 }
 

@@ -20,12 +20,10 @@ import java.io.File;
 
 /**
  * This exception is thrown, when a Chronicle Hash recovery using {@link
- * ChronicleHashBuilder#recoverPersistedTo(File, boolean)} or {@link
- * ChronicleHashInstanceBuilder#recover(boolean)} method is impossible, for example, if the
- * persistence file is corrupted too much.
+ * ChronicleHashBuilder#recoverPersistedTo(File, boolean)}  method is impossible, for example,
+ * if the persistence file is corrupted too much.
  *
  * @see ChronicleHashBuilder#recoverPersistedTo(File, boolean)
- * @see ChronicleHashInstanceBuilder#recover(boolean)
  */
 public final class ChronicleHashRecoveryFailedException extends RuntimeException {
     private static final long serialVersionUID = 0L;
