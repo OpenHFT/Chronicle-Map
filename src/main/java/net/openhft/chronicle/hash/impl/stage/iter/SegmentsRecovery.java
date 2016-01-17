@@ -106,6 +106,7 @@ public abstract class SegmentsRecovery implements IterationContext {
         if (storedFirstFreeTierIndex != firstFreeTierIndex) {
             log.error("wrong first free tier index in global mutable state, stored: {}, " +
                     "should be: {}", storedFirstFreeTierIndex, firstFreeTierIndex);
+            globalMutableState.setFirstFreeTierIndex(firstFreeTierIndex);
         }
 
         removeDuplicatesInSegments();
