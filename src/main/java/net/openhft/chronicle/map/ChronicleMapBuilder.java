@@ -1360,6 +1360,11 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     @Override
+    public ChronicleMap<K, V> createOrRecoverPersistedTo(File file) throws IOException {
+        return file.exists() ? recoverPersistedTo(file, true) : createPersistedTo(file);
+    }
+
+    @Override
     public ChronicleMap<K, V> recoverPersistedTo(File file, boolean sameBuilderConfig)
             throws IOException {
         return clone().createWithFile(file, true, sameBuilderConfig);
