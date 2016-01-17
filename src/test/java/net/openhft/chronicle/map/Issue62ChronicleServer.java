@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +50,10 @@ public class Issue62ChronicleServer {
                 ChronicleMapBuilder.of(String.class, Long.class)
                         //.averageKeySize(100)
                         .averageKey(STR)
-                        .replication((byte) 1)
                         .entries(50_000);
+
+        ((ChronicleHashBuilderPrivateAPI<?, ?>) cityPostalCodesMapBuilder.privateAPI())
+                .replication((byte) 1);
 
         ChronicleMap<String, Long> cityPostalCodes =
                 cityPostalCodesMapBuilder.createPersistedTo(MAP_FILE_A);

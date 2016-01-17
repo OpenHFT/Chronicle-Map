@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.HashAbsentEntry;
 import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -121,8 +122,8 @@ public interface ReplicableEntry {
      * method any subsequent call of any method of {@code ReplicableEntry} class throws {@code
      * IllegalStateException}.
      *
-     * @see ChronicleHashBuilder#cleanupRemovedEntries(boolean)
-     * @see ChronicleHashBuilder#removedEntryCleanupTimeout(long, TimeUnit)
+     * @see ChronicleHashBuilderPrivateAPI#cleanupRemovedEntries(boolean)
+     * @see ChronicleHashBuilderPrivateAPI#removedEntryCleanupTimeout(long, TimeUnit)
      */
     void doRemoveCompletely();
 }

@@ -22,14 +22,10 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
-import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
-import net.openhft.chronicle.set.replication.SetRemoteOperations;
-import net.openhft.chronicle.set.replication.SetRemoteQueryContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
@@ -46,12 +42,17 @@ public final class ChronicleSetBuilder<K>
         implements ChronicleHashBuilder<K, ChronicleSet<K>, ChronicleSetBuilder<K>> {
 
     private ChronicleMapBuilder<K, DummyValue> chronicleMapBuilder;
+    private ChronicleSetBuilderPrivateAPI<K> privateAPI;
 
     ChronicleSetBuilder(Class<K> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
                 .valueReaderAndDataAccess(
                         DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
                 .valueSizeMarshaller(SizeMarshaller.constant(0));
+        //noinspection deprecation,unchecked
+        privateAPI = new ChronicleSetBuilderPrivateAPI<>(
+                (ChronicleHashBuilderPrivateAPI<K, MapRemoteOperations<K, DummyValue, ?>>)
+                        chronicleMapBuilder.privateAPI());
     }
 
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -196,19 +197,6 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
-    public ChronicleSetBuilder<K> removedEntryCleanupTimeout(
-            long removedEntryCleanupTimeout, TimeUnit unit) {
-        chronicleMapBuilder.removedEntryCleanupTimeout(removedEntryCleanupTimeout, unit);
-        return this;
-    }
-
-    @Override
-    public ChronicleSetBuilder<K> cleanupRemovedEntries(boolean cleanupRemovedEntries) {
-        chronicleMapBuilder.cleanupRemovedEntries(cleanupRemovedEntries);
-        return this;
-    }
-
-    @Override
     public ChronicleSetBuilder<K> keyReaderAndDataAccess(
             SizedReader<K> keyReader, @NotNull DataAccess<K> keyDataAccess) {
         chronicleMapBuilder.keyReaderAndDataAccess(keyReader, keyDataAccess);
@@ -262,39 +250,19 @@ public final class ChronicleSetBuilder<K>
         return this;
     }
 
-    @Override
-    public ChronicleSetBuilder<K> replication(byte identifier) {
-        chronicleMapBuilder.replication(identifier);
-        return this;
-    }
-
     public ChronicleSetBuilder<K> entryOperations(SetEntryOperations<K, ?> entryOperations) {
         chronicleMapBuilder.entryOperations(new MapEntryOperations<K, DummyValue, Object>() {
             @Override
             public Object remove(@NotNull MapEntry<K, DummyValue> entry) {
+                //noinspection unchecked
                 return entryOperations.remove((SetEntry<K>) entry);
             }
 
             @Override
             public Object insert(
                     @NotNull MapAbsentEntry<K, DummyValue> absentEntry, Data<DummyValue> value) {
+                //noinspection unchecked
                 return entryOperations.insert((SetAbsentEntry<K>) absentEntry);
-            }
-        });
-        return this;
-    }
-
-    public ChronicleSetBuilder<K> remoteOperations(SetRemoteOperations<K, ?> remoteOperations) {
-        chronicleMapBuilder.remoteOperations(new MapRemoteOperations<K, DummyValue, Object>() {
-            @Override
-            public void remove(MapRemoteQueryContext<K, DummyValue, Object> q) {
-                remoteOperations.remove((SetRemoteQueryContext) q);
-            }
-
-            @Override
-            public void put(
-                    MapRemoteQueryContext<K, DummyValue, Object> q, Data<DummyValue> newValue) {
-                remoteOperations.put((SetRemoteQueryContext) q);
             }
         });
         return this;
@@ -331,9 +299,8 @@ public final class ChronicleSetBuilder<K>
      */
     @Deprecated
     @Override
-    public ChronicleHashBuilderPrivateAPI<K> privateAPI() {
-        //noinspection deprecation
-        return chronicleMapBuilder.privateAPI();
+    public Object privateAPI() {
+        return privateAPI;
     }
 }
 

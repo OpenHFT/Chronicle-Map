@@ -22,7 +22,6 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
-import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
@@ -146,7 +145,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
 
     // not final because of cloning
-    private ChronicleMapBuilderPrivateAPI<K> privateAPI = new ChronicleMapBuilderPrivateAPI<>(this);
+    private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
+            new ChronicleMapBuilderPrivateAPI<>(this);
 
     //////////////////////////////
     // Configuration fields
@@ -267,7 +267,7 @@ public final class ChronicleMapBuilder<K, V> implements
      */
     @Override
     @Deprecated
-    public ChronicleHashBuilderPrivateAPI<K> privateAPI() {
+    public Object privateAPI() {
         return privateAPI;
     }
 
@@ -1152,8 +1152,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return toString().hashCode();
     }
 
-    @Override
-    public ChronicleMapBuilder<K, V> removedEntryCleanupTimeout(
+    ChronicleMapBuilder<K, V> removedEntryCleanupTimeout(
             long removedEntryCleanupTimeout, TimeUnit unit) {
         if (unit.toMillis(removedEntryCleanupTimeout) < 1) {
             throw new IllegalArgumentException("timeout should be >= 1 millisecond, " +
@@ -1164,8 +1163,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    @Override
-    public ChronicleMapBuilder<K, V> cleanupRemovedEntries(boolean cleanupRemovedEntries) {
+    ChronicleMapBuilder<K, V> cleanupRemovedEntries(boolean cleanupRemovedEntries) {
         this.cleanupRemovedEntries = cleanupRemovedEntries;
         return this;
     }
@@ -1342,8 +1340,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    @Override
-    public ChronicleMapBuilder<K, V> replication(byte identifier) {
+    ChronicleMapBuilder<K, V> replication(byte identifier) {
         if (identifier <= 0)
             throw new IllegalArgumentException("Identifier must be positive, " + identifier +
                     " given");
@@ -1608,7 +1605,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    public ChronicleMapBuilder<K, V> remoteOperations(
+    ChronicleMapBuilder<K, V> remoteOperations(
             MapRemoteOperations<K, V, ?> remoteOperations) {
         Objects.requireNonNull(remoteOperations);
         this.remoteOperations = remoteOperations;

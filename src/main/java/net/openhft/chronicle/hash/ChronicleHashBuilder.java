@@ -18,7 +18,6 @@ package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -32,7 +31,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This interface defines the meaning of configurations, common to {@link ChronicleMapBuilder} and
@@ -383,43 +381,6 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B actualSegments(int actualSegments);
 
     /**
-     * Configures timeout after which entries, marked as removed in the Chronicle Hash, constructed
-     * by this builder, are allowed to be completely removed from the data store. In replicated
-     * Chronicle nodes, when {@code remove()} on the key is called, the corresponding entry
-     * is not immediately erased from the data store, to let the distributed system eventually
-     * converge on some value for this key (or converge on the fact, that this key is removed).
-     * Chronicle Hash watch in runtime after the entries, and if one is removed and not updated
-     * in any way for this {@code removedEntryCleanupTimeout}, Chronicle is allowed to remove this
-     * entry completely from the data store. This timeout should depend on your distributed
-     * system topology, and typical replication latencies, that should be determined experimentally.
-     *
-     * <p>Default timeout is 1 minute.
-     *
-     * @param removedEntryCleanupTimeout timeout, after which stale removed entries could be erased
-     *                                   from Chronicle Hash data store completely
-     * @param unit time unit, in which the timeout is given
-     * @return this builder back
-     * @throws IllegalArgumentException is the specified timeout is less than 1 millisecond
-     * @see #cleanupRemovedEntries(boolean)
-     * @see ReplicableEntry#doRemoveCompletely()
-     */
-    B removedEntryCleanupTimeout(long removedEntryCleanupTimeout, TimeUnit unit);
-
-    /**
-     * Configures if replicated Chronicle Hashes, constructed by this builder, should
-     * completely erase entries, removed some time ago. See {@link #removedEntryCleanupTimeout(
-     * long, TimeUnit)} for more details on this mechanism.
-     *
-     * <p>Default value is {@code true} -- old removed entries are erased with 1 second timeout.
-     *
-     * @param cleanupRemovedEntries if stale removed entries should be purged from Chronicle Hash
-     * @return this builder back
-     * @see #removedEntryCleanupTimeout(long, TimeUnit)
-     * @see ReplicableEntry#doRemoveCompletely()
-     */
-    B cleanupRemovedEntries(boolean cleanupRemovedEntries);
-
-    /**
      * Configures the {@code DataAccess} and {@code SizedReader} used to serialize and deserialize
      * keys to and from off-heap memory in hash containers, created by this builder.
      *
@@ -510,8 +471,6 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see ChecksumEntry
      */
     B checksumEntries(boolean checksumEntries);
-
-    B replication(byte identifier);
 
     /**
      * Creates a new hash container from this builder, storing it's data in off-heap memory, not
@@ -622,5 +581,5 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @deprecated don't use private API in the client code
      */
     @Deprecated
-    ChronicleHashBuilderPrivateAPI<K> privateAPI();
+    Object privateAPI();
 }

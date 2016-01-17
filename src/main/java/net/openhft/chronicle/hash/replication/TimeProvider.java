@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -32,7 +33,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  *
  * @see ReplicableEntry#originTimestamp()
  * @see RemoteOperationContext#remoteTimestamp()
- * @see ChronicleHashBuilder#removedEntryCleanupTimeout(long, TimeUnit)
+ * @see ChronicleHashBuilderPrivateAPI#removedEntryCleanupTimeout(long, TimeUnit)
  */
 public final class TimeProvider {
 

@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -34,20 +35,22 @@ import static org.junit.Assert.*;
  */
 public class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<Integer, CharSequence> newShmIntString() throws IOException {
-        return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                .replication((byte) 1)
+        ChronicleMapBuilder<Integer, CharSequence> builder = ChronicleMap
+                .of(Integer.class, CharSequence.class)
                 .entries(1000)
-                .averageValueSize(20)
-                .create();
+                .averageValueSize(20);
+        ((ChronicleHashBuilderPrivateAPI<?, ?>) builder.privateAPI()).replication((byte) 1);
+        return builder.create();
     }
 
     ChronicleMap<CharSequence, CharSequence> newShmStringString() throws IOException {
-        return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .replication((byte) 1)
+        ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMap
+                .of(CharSequence.class, CharSequence.class)
                 .entries(1000)
                 .averageKeySize(20)
-                .averageValueSize(20)
-                .create();
+                .averageValueSize(20);
+        ((ChronicleHashBuilderPrivateAPI<?, ?>) builder.privateAPI()).replication((byte) 1);
+        return builder.create();
     }
 
     /**

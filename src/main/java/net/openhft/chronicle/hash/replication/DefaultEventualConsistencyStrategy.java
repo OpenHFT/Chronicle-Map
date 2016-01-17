@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
 
@@ -25,8 +26,8 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.DISCARD;
 
 /**
- * Specifies the default eventual consistency strategy for {@link ChronicleHashBuilder#replication(
- * byte) replicated} {@link ChronicleHash}es:
+ * Specifies the default eventual consistency strategy for {@link
+ * ChronicleHashBuilderPrivateAPI#replication(byte) replicated} {@link ChronicleHash}es:
  * <i>last write wins</i>. If two writes to a single entry occurred simultaneously on different
  * nodes, the write on the node with lower identifier wins.
  * 

@@ -162,8 +162,9 @@ public abstract class VanillaChronicleHash<K,
         // Version
         dataFileVersion = BuildVersion.version();
 
-        @SuppressWarnings("deprecation")
-        ChronicleHashBuilderPrivateAPI<K> privateAPI = builder.privateAPI();
+        @SuppressWarnings({"deprecation", "unchecked"})
+        ChronicleHashBuilderPrivateAPI<K, ?> privateAPI =
+                (ChronicleHashBuilderPrivateAPI<K, ?>) builder.privateAPI();
 
         // Data model
         SerializationBuilder<K> keyBuilder = privateAPI.keyBuilder();

@@ -244,7 +244,7 @@
                         <link>http://openhft.github.io/Chronicle-Values/apidocs/</link>
                     </links>
                     <excludePackageNames>
-                        net.openhft.chronicle.hash.serialization.impl:net.openhft.xstream:net.openhft.chronicle.hash.impl:net.openhft.chronicle.map.impl
+                        net.openhft.chronicle.hash.serialization.impl:net.openhft.xstream:net.openhft.chronicle.hash.impl:net.openhft.chronicle.map.impl:**.replication
                     </excludePackageNames>
                     <sourceFileExcludes>
                         <exclude>net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java</exclude>

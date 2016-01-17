@@ -18,12 +18,16 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
+import net.openhft.chronicle.map.replication.MapRemoteOperations;
 
-class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI<K> {
+import java.util.concurrent.TimeUnit;
 
-    private ChronicleMapBuilder<K, ?> b;
+class ChronicleMapBuilderPrivateAPI<K, V>
+        implements ChronicleHashBuilderPrivateAPI<K, MapRemoteOperations<K, V, ?>> {
 
-    public ChronicleMapBuilderPrivateAPI(ChronicleMapBuilder<K, ?> b) {
+    private final ChronicleMapBuilder<K, V> b;
+
+    public ChronicleMapBuilderPrivateAPI(ChronicleMapBuilder<K, V> b) {
         this.b = b;
     }
 
@@ -85,5 +89,25 @@ class ChronicleMapBuilderPrivateAPI<K> implements ChronicleHashBuilderPrivateAPI
     @Override
     public boolean checksumEntries() {
         return b.checksumEntries();
+    }
+
+    @Override
+    public void replication(byte identifier) {
+        b.replication(identifier);
+    }
+
+    @Override
+    public void cleanupRemovedEntries(boolean cleanupRemovedEntries) {
+        b.cleanupRemovedEntries(cleanupRemovedEntries);
+    }
+
+    @Override
+    public void removedEntryCleanupTimeout(long removedEntryCleanupTimeout, TimeUnit unit) {
+        b.removedEntryCleanupTimeout(removedEntryCleanupTimeout, unit);
+    }
+
+    @Override
+    public void remoteOperations(MapRemoteOperations<K, V, ?> remoteOperations) {
+        b.remoteOperations(remoteOperations);
     }
 }

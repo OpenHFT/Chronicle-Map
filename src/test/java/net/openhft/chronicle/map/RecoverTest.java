@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -44,14 +46,17 @@ public class RecoverTest {
         File mapFile = File.createTempFile("recoverTestFile", ".map");
         mapFile.deleteOnExit();
 
-        map = (ReplicatedChronicleMap<Integer, Integer, ?>) ChronicleMap
+        ChronicleMapBuilder<Integer, Integer> builder = ChronicleMap
                 .of(Integer.class, Integer.class)
                 .entries(2)
                 .actualSegments(1)
-                .checksumEntries(true)
-                .replication((byte) 1)
-                .cleanupRemovedEntries(false)
-                .createPersistedTo(mapFile);
+                .checksumEntries(true);
+        ChronicleHashBuilderPrivateAPI<?, ?> privateAPI =
+                (ChronicleHashBuilderPrivateAPI<?, ?>) builder.privateAPI();
+        privateAPI.replication((byte) 1);
+        privateAPI.cleanupRemovedEntries(false);
+
+        map = (ReplicatedChronicleMap<Integer, Integer, ?>) builder.createPersistedTo(mapFile);
 
         map.acquireModificationIterator((byte) 2);
 
@@ -74,14 +79,8 @@ public class RecoverTest {
 
         map.close();
 
-        map = (ReplicatedChronicleMap<Integer, Integer, ?>) ChronicleMap
-                .of(Integer.class, Integer.class)
-                .entries(2)
-                .actualSegments(1)
-                .checksumEntries(true)
-                .replication((byte) 1)
-                .cleanupRemovedEntries(false)
-                .recoverPersistedTo(mapFile, true);
+        map = (ReplicatedChronicleMap<Integer, Integer, ?>)
+                builder.recoverPersistedTo(mapFile, true);
 
         // acquires read lock successfully
         assertNull(map.get(0));
@@ -101,11 +100,14 @@ public class RecoverTest {
                 for (int bit = 0; bit < 64; bit++) {
                     LOG.error("flip bit {} of word at {}", bit, offset);
                     mapBB.putLong((int) offset, mapBB.getLong((int) offset) ^ (1L << bit));
-                    try (ChronicleMap<Integer, Integer> recovered = ChronicleMap
-                            .of(Integer.class, Integer.class)
-                            .replication((byte) 1)
-                            .cleanupRemovedEntries(false)
-                            .recoverPersistedTo(mapFile, false)) {
+                    ChronicleMapBuilder<Integer, Integer> recoverBuilder = ChronicleMap
+                            .of(Integer.class, Integer.class);
+                    ChronicleHashBuilderPrivateAPI<?, ?> recoverPrivateAPI =
+                            (ChronicleHashBuilderPrivateAPI<?, ?>) recoverBuilder.privateAPI();
+                    recoverPrivateAPI.replication((byte) 1);
+                    recoverPrivateAPI.cleanupRemovedEntries(false);
+                    try (ChronicleMap<Integer, Integer> recovered =
+                                 recoverBuilder.recoverPersistedTo(mapFile, false)) {
                         recovered.put(1, 1);
                         recovered.put(2, 2);
                         recovered.remove(1);

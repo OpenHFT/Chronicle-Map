@@ -64,7 +64,7 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
  * @param <V> the map value type
  * @param <R> the return type of {@link MapEntryOperations} specified fro the queried map
  * @see DefaultEventualConsistencyStrategy
- * @see ChronicleMapBuilder#remoteOperations(MapRemoteOperations)
+ * @see ChronicleMapBuilderPrivateAPI#remoteOperations(MapRemoteOperations)
  */
 public interface MapRemoteOperations<K, V, R> {
 

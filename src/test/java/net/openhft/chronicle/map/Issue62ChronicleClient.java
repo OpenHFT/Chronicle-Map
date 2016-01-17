@@ -16,12 +16,11 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.map.Issue62ChronicleServer.MAP_FILE_B;
 import static net.openhft.chronicle.map.Issue62ChronicleServer.prepare;
@@ -37,8 +36,10 @@ public class Issue62ChronicleClient {
                 ChronicleMapBuilder.of(String.class, Long.class)
                         //.averageKeySize(100)
                         .averageKey(Issue62ChronicleServer.STR)
-                        .replication((byte) 2)
                         .entries(50_000);
+
+        ((ChronicleHashBuilderPrivateAPI<?, ?>) cityPostalCodesMapBuilder.privateAPI())
+                .replication((byte) 2);
 
         try (ChronicleMap<String, Long> map =
                 cityPostalCodesMapBuilder.createPersistedTo(MAP_FILE_B)) {
