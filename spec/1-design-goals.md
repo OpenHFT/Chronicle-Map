@@ -27,7 +27,7 @@ Chronicle Map provides some guarantees under the following assumptions:
 
 #### CPU
 
- - CPU supports atomic 32-bit compare-and-swap operations with aligned memory, i. e. if several
+ - CPU supports atomic 64-bit compare-and-swap operations with aligned memory, i. e. if several
  threads, possibly belonging to different processes, try to perform compare-and-swap operation on
  the same 4-byte block, at most one thread will succeed and all the rest will fail.
  - Aligned 32-bit or 64-bit writes are atomic, that means either all 4(8) bytes are written to
