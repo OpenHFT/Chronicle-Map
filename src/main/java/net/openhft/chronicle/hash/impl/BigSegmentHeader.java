@@ -427,7 +427,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         long end = System.nanoTime() + timeInNanos;
         registerWait(address);
         do {
-            if (LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
+            if (tryUpgradeUpdateToWriteLockAndDeregisterWait0(address))
                 return true;
             detectInterruptionAndDeregisterWait(address, interruptible);
         } while (System.nanoTime() <= end);
@@ -443,7 +443,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         long lastTime = System.currentTimeMillis();
         registerWait(address);
         do {
-            if (LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
+            if (tryUpgradeUpdateToWriteLockAndDeregisterWait0(address))
                 return true;
             detectInterruptionAndDeregisterWait(address, interruptible);
             long now = System.currentTimeMillis();
@@ -453,6 +453,22 @@ public final class BigSegmentHeader implements SegmentHeader {
             }
         } while (timeInMillis >= 0);
         deregisterWait(address);
+        return false;
+    }
+
+    private static boolean tryUpgradeUpdateToWriteLockAndDeregisterWait0(long address) {
+        try {
+            if (LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET)) {
+                return true;
+            }
+        } catch (IllegalMonitorStateException e) {
+            try {
+                deregisterWait(address);
+            } catch (Throwable suppressed) {
+                e.addSuppressed(suppressed);
+            }
+            throw e;
+        }
         return false;
     }
 
