@@ -27,19 +27,17 @@ import static net.openhft.chronicle.core.Maths.isPowerOf2;
 
 public interface HashSplitting extends Marshallable {
 
+    static HashSplitting forSegments(int segments) {
+        assert segments > 0;
+        if (segments == 1)
+            return ForSingleSegment.INSTANCE;
+        if (isPowerOf2(segments))
+            return new ForPowerOf2Segments(segments);
+        return new ForNonPowerOf2Segments(segments);
+    }
+
     int segmentIndex(long hash);
     long segmentHash(long hash);
-
-    class Splitting {
-        static HashSplitting forSegments(int segments) {
-            assert segments > 0;
-            if (segments == 1)
-                return ForSingleSegment.INSTANCE;
-            if (isPowerOf2(segments))
-                return new ForPowerOf2Segments(segments);
-            return new ForNonPowerOf2Segments(segments);
-        }
-    }
 
     enum ForSingleSegment implements HashSplitting, EnumMarshallable<ForSingleSegment> {
         INSTANCE;

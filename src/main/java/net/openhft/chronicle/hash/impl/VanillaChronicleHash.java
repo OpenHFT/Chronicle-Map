@@ -172,7 +172,7 @@ public abstract class VanillaChronicleHash<K,
         keyDataAccess = keyBuilder.dataAccess();
 
         actualSegments = privateAPI.actualSegments();
-        hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
+        hashSplitting = HashSplitting.forSegments(actualSegments);
 
         chunkSize = privateAPI.chunkSize();
         maxChunksPerEntry = privateAPI.maxChunksPerEntry();
