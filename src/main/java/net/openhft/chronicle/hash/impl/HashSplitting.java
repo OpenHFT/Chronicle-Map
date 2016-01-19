@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
@@ -61,12 +62,13 @@ public interface HashSplitting extends Marshallable {
 
     class ForPowerOf2Segments implements HashSplitting {
 
-        private int mask;
         private int bits;
+        private transient int mask;
 
         ForPowerOf2Segments(int segments) {
-            mask = segments - 1;
+            assert Maths.isPowerOf2(segments);
             bits = Integer.numberOfTrailingZeros(segments);
+            mask = segments - 1;
         }
 
         @Override
@@ -81,13 +83,12 @@ public interface HashSplitting extends Marshallable {
 
         @Override
         public void readMarshallable(@NotNull WireIn wire) {
-            mask = wire.read(() -> "mask").int32();
             bits = wire.read(() -> "bits").int32();
+            mask = (1 << bits) - 1;
         }
 
         @Override
         public void writeMarshallable(@NotNull WireOut wire) {
-            wire.write(() -> "mask").int32(mask);
             wire.write(() -> "bits").int32(bits);
         }
     }
