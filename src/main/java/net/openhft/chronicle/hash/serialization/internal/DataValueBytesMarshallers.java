@@ -78,14 +78,14 @@ public final class DataValueBytesMarshallers {
             // touch them to make sure they are loaded.
             Class clazz2 = acquireReaderClass(clazz);
         }
-        String actual = generateBytesReader(tClass);
-        if (dumpCode)
-            LoggerFactory.getLogger(DataValueGenerator.class).info(actual);
         ClassLoader classLoader = tClass.getClassLoader();
         String className = bytesReaderName(tClass, false);
         try {
             readerClass = classLoader.loadClass(className);
         } catch (ClassNotFoundException ignored) {
+            String actual = generateBytesReader(tClass);
+            if (dumpCode)
+                LoggerFactory.getLogger(DataValueGenerator.class).info(actual);
             try {
                 readerClass = CompilerUtils.CACHED_COMPILER
                         .loadFromJava(classLoader, className, actual);
@@ -107,14 +107,14 @@ public final class DataValueBytesMarshallers {
             // touch them to make sure they are loaded.
             Class clazz2 = acquireWriterClass(clazz);
         }
-        String actual = generateBytesWriter(tClass);
-        if (dumpCode)
-            LoggerFactory.getLogger(DataValueGenerator.class).info(actual);
         ClassLoader classLoader = tClass.getClassLoader();
         String className = bytesWriterName(tClass, false);
         try {
             writerClass = classLoader.loadClass(className);
         } catch (ClassNotFoundException ignored) {
+            String actual = generateBytesWriter(tClass);
+            if (dumpCode)
+                LoggerFactory.getLogger(DataValueGenerator.class).info(actual);
             try {
                 writerClass = CompilerUtils.CACHED_COMPILER
                         .loadFromJava(classLoader, className, actual);
@@ -131,14 +131,14 @@ public final class DataValueBytesMarshallers {
         if (c != null)
             return c;
         acquireReaderClass(tClass);
-        String actual = generateWithCustomFactoryClass(tClass);
-        if (dumpCode)
-            LoggerFactory.getLogger(DataValueGenerator.class).info(actual);
         ClassLoader classLoader = tClass.getClassLoader();
         String className = withCustomFactoryName(tClass);
         try {
             c = classLoader.loadClass(className);
         } catch (ClassNotFoundException ignored) {
+            String actual = generateWithCustomFactoryClass(tClass);
+            if (dumpCode)
+                LoggerFactory.getLogger(DataValueGenerator.class).info(actual);
             try {
                 c = CompilerUtils.CACHED_COMPILER
                         .loadFromJava(classLoader, className, actual);
