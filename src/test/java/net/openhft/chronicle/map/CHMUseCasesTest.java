@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import com.google.common.primitives.Chars;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.values.*;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -47,7 +48,9 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
 
+import static java.lang.Math.max;
 import static java.util.Arrays.asList;
+import static net.openhft.chronicle.core.Maths.divideRoundUp;
 import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
 import static org.junit.Assert.*;
 
@@ -122,7 +125,7 @@ public class CHMUseCasesTest {
 
     private void mapChecks() {
         if (typeOfMap == TypeOfMap.SIMPLE)
-            checkJsonSerilization();
+            checkJsonSerialization();
     }
 
     private void assertArrayValueEquals(ChronicleMap map1, ChronicleMap map2) {
@@ -153,7 +156,7 @@ public class CHMUseCasesTest {
     }
 
 
-    private void checkJsonSerilization() {
+    private void checkJsonSerialization() {
         File file = null;
         try {
             file = File.createTempFile("chronicle-map-", ".json");
@@ -167,16 +170,18 @@ public class CHMUseCasesTest {
             map1.getAll(file);
 
             VanillaChronicleMap vanillaMap = (VanillaChronicleMap) map1;
-            ChronicleMapBuilder builder = ChronicleMapBuilder.of(map1.keyClass(),
-                    map1.valueClass())
-                    .entriesPerSegment(vanillaMap.entriesPerSegment)
+            ChronicleMapBuilder builder = ChronicleMap
+                    .of(map1.keyClass(), map1.valueClass())
+                    .entriesPerSegment(
+                            max(divideRoundUp(map1.size(), vanillaMap.actualSegments), 1))
                     .actualSegments(vanillaMap.actualSegments)
                     .actualChunksPerSegmentTier(vanillaMap.actualChunksPerSegmentTier);
             if (!vanillaMap.constantlySizedEntry) {
                 builder.actualChunkSize((int) vanillaMap.chunkSize);
                 builder.worstAlignment(vanillaMap.worstAlignment);
             }
-            try (ChronicleMap<Integer, Double> actual = builder.create()) {
+
+            try (ChronicleMap actual = builder.create()) {
                 actual.putAll(file);
 
 

@@ -90,8 +90,6 @@ public abstract class VanillaChronicleHash<K,
     public int actualSegments;
     public HashSplitting hashSplitting;
 
-    public long entriesPerSegment;
-
     public long chunkSize;
     public int maxChunksPerEntry;
     public long actualChunksPerSegmentTier;
@@ -176,8 +174,6 @@ public abstract class VanillaChronicleHash<K,
         actualSegments = privateAPI.actualSegments();
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
 
-        entriesPerSegment = privateAPI.entriesPerSegment();
-
         chunkSize = privateAPI.chunkSize();
         maxChunksPerEntry = privateAPI.maxChunksPerEntry();
         actualChunksPerSegmentTier = privateAPI.actualChunksPerSegmentTier();
@@ -186,7 +182,7 @@ public abstract class VanillaChronicleHash<K,
         segmentHeaderSize = privateAPI.segmentHeaderSize();
 
         tierHashLookupValueBits = valueBits(actualChunksPerSegmentTier);
-        tierHashLookupKeyBits = keyBits(entriesPerSegment, tierHashLookupValueBits);
+        tierHashLookupKeyBits = keyBits(privateAPI.entriesPerSegment(), tierHashLookupValueBits);
         tierHashLookupEntrySize =
                 entrySize(tierHashLookupKeyBits, tierHashLookupValueBits);
         if (!privateAPI.aligned64BitMemoryOperationsAtomic() && tierHashLookupEntrySize > 4) {
@@ -244,8 +240,6 @@ public abstract class VanillaChronicleHash<K,
         actualSegments = wireIn.read(() -> "actualSegments").int32();
         hashSplitting = wireIn.read(() -> "hashSplitting").typedMarshallable();
 
-        entriesPerSegment = wireIn.read(() -> "entriesPerSegment").int64();
-
         chunkSize = wireIn.read(() -> "chunkSize").int64();
         maxChunksPerEntry = wireIn.read(() -> "maxChunksPerEntry").int32();
         actualChunksPerSegmentTier = wireIn.read(() -> "actualChunksPerSegmentTier").int64();
@@ -289,8 +283,6 @@ public abstract class VanillaChronicleHash<K,
 
         wireOut.write(() -> "actualSegments").int32(actualSegments);
         wireOut.write(() -> "hashSplitting").typedMarshallable(hashSplitting);
-
-        wireOut.write(() -> "entriesPerSegment").int64(entriesPerSegment);
 
         wireOut.write(() -> "chunkSize").int64(chunkSize);
         wireOut.write(() -> "maxChunksPerEntry").int32(maxChunksPerEntry);
