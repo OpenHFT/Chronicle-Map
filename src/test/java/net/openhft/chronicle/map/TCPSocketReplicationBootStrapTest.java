@@ -160,8 +160,8 @@ public class TCPSocketReplicationBootStrapTest {
             }
             j++;
         }
-        channelIdMap.close();
         reader.stop();
+        channelIdMap.close();
         int firstGatheredSize = reader.getFirstGatheredSize();
         assertEquals(0,reader.getFirstGatheredElement());
         assertEquals(500,firstGatheredSize);
@@ -198,8 +198,8 @@ public class TCPSocketReplicationBootStrapTest {
             j++;
         }
         Thread.sleep(10000);
-        channelIdMap.close();
         reader.stop();
+        channelIdMap.close();
         assertEquals(0,reader.getFirstGatheredElement());
     }
 
@@ -307,6 +307,10 @@ public class TCPSocketReplicationBootStrapTest {
         }
 
         public void stop() {
+            this.stop = false;
+            while (firstGatheredSize == 0){
+                this.stop = false;
+            }
             this.stop = true;
         }
 
@@ -362,7 +366,8 @@ public class TCPSocketReplicationBootStrapTest {
         }
 
         public void stop() {
-            while (mapListener.firstPuttedValue == null){
+            this.stop = false;
+            while (this.mapListener.firstPuttedValue == null){
                 this.stop = false;
             }
             this.stop = true;
@@ -386,7 +391,7 @@ public class TCPSocketReplicationBootStrapTest {
                 while (!stop) {
                     channelIdMap2.size();
                 }
-                this.firstGatheredElement = mapListener.firstPuttedValue;
+                this.firstGatheredElement = this.mapListener.firstPuttedValue;
                 this.chronicleMap.close();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -417,9 +422,11 @@ public class TCPSocketReplicationBootStrapTest {
         public void onPut(K key, V newValue, @Nullable V replacedValue, boolean replicationEvent,
                           boolean added, boolean hasValueChanged, byte identifier,
                           byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
-            if(this.firstPuttedValue == null){
-                this.firstPuttedValue = newValue;
-            }
+
+                if(this.firstPuttedValue == null){
+                    this.firstPuttedValue = newValue;
+                }
+
         }
 
         @Override
