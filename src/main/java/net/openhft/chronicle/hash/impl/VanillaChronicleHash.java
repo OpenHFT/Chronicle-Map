@@ -203,7 +203,7 @@ public abstract class VanillaChronicleHash<K,
         tierEntrySpaceOuterSize = CACHE_LINES.align(
                 tierEntrySpaceInnerOffset + tierEntrySpaceInnerSize, BYTES);
 
-        tierSize = segmentSize();
+        tierSize = tierSize();
 
         maxExtraTiers = privateAPI.maxExtraTiers();
         tiersInBulk = computeNumberOfTiersInBulk();
@@ -322,7 +322,7 @@ public abstract class VanillaChronicleHash<K,
         return globalMutableState;
     }
 
-    private long segmentSize() {
+    private long tierSize() {
         long segmentSize = tierHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE +
                 tierFreeListOuterSize + tierEntrySpaceOuterSize;
         if ((segmentSize & 63L) != 0)
