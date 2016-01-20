@@ -189,7 +189,7 @@ public class TCPSocketReplicationBootStrapTest {
         Thread t = new Thread(reader);
         t.start();
         int j = 0;
-        while (j < 1000){
+        while (j < 15000){
             i = 400;
             while (i < 500){
                 channelIdMap.update(Integer.toString(i),i+1);
@@ -198,7 +198,6 @@ public class TCPSocketReplicationBootStrapTest {
             Thread.sleep(1);
             j++;
         }
-        Thread.sleep(10000);
         reader.stop();
         channelIdMap.close();
         assertEquals(0,reader.getFirstGatheredElement());
