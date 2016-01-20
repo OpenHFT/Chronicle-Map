@@ -189,12 +189,13 @@ public class TCPSocketReplicationBootStrapTest {
         Thread t = new Thread(reader);
         t.start();
         int j = 0;
-        while (j < 100){
+        while (j < 1000){
             i = 400;
             while (i < 500){
                 channelIdMap.update(Integer.toString(i),i+1);
                 i++;
             }
+            Thread.sleep(1);
             j++;
         }
         Thread.sleep(10000);
@@ -359,17 +360,12 @@ public class TCPSocketReplicationBootStrapTest {
         private volatile ChronicleMap<java.lang.String, Integer> chronicleMap;
         private boolean stop = false;
         private int firstGatheredSize = 0;
-        private Object firstGatheredElement;
         private CacheMapListener mapListener;
 
         public MapReaderWithListener() {
         }
 
         public void stop() {
-            this.stop = false;
-            while (this.mapListener.firstPuttedValue == null){
-                this.stop = false;
-            }
             this.stop = true;
         }
 
@@ -391,7 +387,7 @@ public class TCPSocketReplicationBootStrapTest {
                 while (!stop) {
                     channelIdMap2.size();
                 }
-                this.firstGatheredElement = this.mapListener.firstPuttedValue;
+                ;
                 this.chronicleMap.close();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -404,7 +400,7 @@ public class TCPSocketReplicationBootStrapTest {
         }
 
         public Object getFirstGatheredElement() {
-            return this.firstGatheredElement;
+            return this.mapListener.firstPuttedValue;
         }
 
     }
