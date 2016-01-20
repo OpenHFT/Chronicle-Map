@@ -161,9 +161,9 @@ in a hash lookup. A positive 64-bit value, e. g. `1638`.
 
 ##### `tierHashLookupInnerSize`
 
-The size of hash lookups in bytes. A positive 64-bit value, equals to [`tierHashLookupInnerSize`](
-#tierHashLookupInnerSize) * [`tierHashLookupEntrySize`](#tierHashLookupEntrySize). A positive 64-bit
-value, e. g. `8192`.
+The size of hash lookups in bytes. A positive 64-bit value, equals to [`tierHashLookupInnerSize`
+](#tierHashLookupInnerSize) * [`tierHashLookupEntrySize`](#tierHashLookupEntrySize). A positive
+64-bit value, e. g. `8192`.
 
 ##### `tierHashLookupOuterSize`
 
@@ -217,22 +217,22 @@ The size of segment tiers' entry spaces + alignment, in bytes. A positive 64-bit
 
 The size of segment tiers in this Chronicle Map, in bytes. A positive 64-bit value, e. g. `21952`.
 
-> In the reference Java implementation, `tierSize` equals to [`tierHashLookupOuterSize`](
-> #tierHashLookupOuterSize) + 64 (*tier counters area* size) + [`tierFreeListOuterSize`](
-> #tierFreeListOuterSize) + [`tierEntrySpaceOuterSize`](#tierEntrySpaceOuterSize) + (optionally) 64.
-> The `tierSize` is a multiple of 64 (i. e. it spans integral number of cache lines). The optional
-> extra cache line is added, when the `tierSize` is too round, and there are too many segments, in
-> order to break collisions of tiers' start addresses by L1 cache banks. See e. g. [this post](
-> http://danluu.com/3c-conflict/) for more information on this effect.
+> In the reference Java implementation, `tierSize` equals to [`tierHashLookupOuterSize`
+> ](#tierHashLookupOuterSize) + 64 (*tier counters area* size) + [`tierFreeListOuterSize`
+> ](#tierFreeListOuterSize) + [`tierEntrySpaceOuterSize`](#tierEntrySpaceOuterSize) + (optionally)
+> 64. The `tierSize` is a multiple of 64 (i. e. it spans integral number of cache lines). The
+> optional extra cache line is added, when the `tierSize` is too round, and there are too many
+> segments, in order to break collisions of tiers' start addresses by L1 cache banks. See e. g.
+> [this post](http://danluu.com/3c-conflict/) for more information on this effect.
 
 ##### `maxExtraTiers`
 
 The maximum number of extra tiers could be allocated, before the Chronicle Map is full and rejects
 new insertion requests. A non-negative 64-bit value, e. g. `16`.
 
-> In the reference Java implementation, `maxExtraTiers` defaults to the [`actualSegments`](
-> #actualSegments). I. e. the Chronicle Map could nearly double the expected size, before it throws
-> `IllegalStateExceptions` upon new insertion requests.
+> In the reference Java implementation, `maxExtraTiers` defaults to the [`actualSegments`
+> ](#actualSegments). I. e. the Chronicle Map could nearly double the expected size, before it
+> throws `IllegalStateExceptions` upon new insertion requests.
 
 ##### `tierBulkSizeInBytes`
 
