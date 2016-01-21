@@ -398,10 +398,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private static long roundUpMapHeaderSize(long headerSize) {
-        long roundUp = (headerSize + 127L) & ~127L;
-        if (roundUp - headerSize < 64)
-            roundUp += 128;
-        return roundUp;
+        return CACHE_LINES.align(headerSize, BYTES);
     }
 
     public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
