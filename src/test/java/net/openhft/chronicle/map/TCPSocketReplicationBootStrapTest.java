@@ -35,7 +35,6 @@ import static net.openhft.chronicle.map.Builder.getPersistenceFile;
 import static net.openhft.chronicle.map.Builder.newTcpSocketShmBuilder;
 import static net.openhft.chronicle.map.TCPSocketReplication4WayMapTest.newTcpSocketShmIntString;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Test  ReplicatedChronicleMap where the Replicated is over a TCP Socket
@@ -97,8 +96,8 @@ public class TCPSocketReplicationBootStrapTest {
 
         SingleChronicleHashReplication replicationHubForChannelIdMap =
                 SingleChronicleHashReplication.builder().bootstrapOnlyLocalEntries(true)
-                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085,new InetSocketAddress[0]))
-                        .createWithId((byte)1);
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085, new InetSocketAddress[0]))
+                        .createWithId((byte) 1);
         replicationHubForChannelIdMap.bootstrapOnlyLocalEntries();
 
         ChronicleMap<java.lang.String, Integer> channelIdMap = ChronicleMapBuilder.of(java.lang.String.class, Integer.class)
@@ -108,11 +107,11 @@ public class TCPSocketReplicationBootStrapTest {
                 .create();
 
 
-        channelIdMap.put("1",1);
+        channelIdMap.put("1", 1);
         SingleChronicleHashReplication replicationHubForChannelIdMap2 =
                 SingleChronicleHashReplication.builder().bootstrapOnlyLocalEntries(true)
-                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5086,new InetSocketAddress("localhost",5085)))
-                        .createWithId((byte)2);
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5086, new InetSocketAddress("localhost", 5085)))
+                        .createWithId((byte) 2);
         replicationHubForChannelIdMap.bootstrapOnlyLocalEntries();
 
         ChronicleMap<java.lang.String, Integer> channelIdMap2 = ChronicleMapBuilder.of(java.lang.String.class, Integer.class)
@@ -124,10 +123,10 @@ public class TCPSocketReplicationBootStrapTest {
 
         Thread.sleep(300);
 
-        int map2Size =  channelIdMap2.size();
+        int map2Size = channelIdMap2.size();
         channelIdMap.close();
         channelIdMap2.close();
-        assertEquals(1,map2Size);
+        assertEquals(1, map2Size);
     }
 
     @Test
@@ -135,8 +134,8 @@ public class TCPSocketReplicationBootStrapTest {
 
         SingleChronicleHashReplication replicationHubForChannelIdMap =
                 SingleChronicleHashReplication.builder().bootstrapOnlyLocalEntries(true)
-                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085,new InetSocketAddress[0]))
-                        .createWithId((byte)1);
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085, new InetSocketAddress[0]))
+                        .createWithId((byte) 1);
 
         ChronicleMap<java.lang.String, Integer> channelIdMap = ChronicleMapBuilder.of(java.lang.String.class, Integer.class)
                 .entries(Short.MAX_VALUE)
@@ -145,17 +144,17 @@ public class TCPSocketReplicationBootStrapTest {
                 .create();
 
         int i;
-        for(i = 0;i < 500;i++){
-            channelIdMap.put(Integer.toString(i),i);
+        for (i = 0; i < 500; i++) {
+            channelIdMap.put(Integer.toString(i), i);
         }
         MapReader reader = new MapReader();
         Thread t = new Thread(reader);
         t.start();
         int j = 0;
-        while (j < 100){
+        while (j < 100) {
             i = 400;
-            while (i < 500){
-                channelIdMap.update(Integer.toString(i),i+1);
+            while (i < 500) {
+                channelIdMap.update(Integer.toString(i), i + 1);
                 i++;
             }
             j++;
@@ -163,8 +162,8 @@ public class TCPSocketReplicationBootStrapTest {
         reader.stop();
         channelIdMap.close();
         int firstGatheredSize = reader.getFirstGatheredSize();
-        assertEquals(0,reader.getFirstGatheredElement());
-        assertEquals(500,firstGatheredSize);
+        assertEquals(0, reader.getFirstGatheredElement());
+        assertEquals(500, firstGatheredSize);
     }
 
     @Test
@@ -172,8 +171,8 @@ public class TCPSocketReplicationBootStrapTest {
 
         SingleChronicleHashReplication replicationHubForChannelIdMap =
                 SingleChronicleHashReplication.builder()
-                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085,new InetSocketAddress[0]))
-                        .createWithId((byte)1);
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085, new InetSocketAddress[0]))
+                        .createWithId((byte) 1);
 
         ChronicleMap<java.lang.String, Integer> channelIdMap = ChronicleMapBuilder.of(java.lang.String.class, Integer.class)
                 .entries(Short.MAX_VALUE)
@@ -182,17 +181,17 @@ public class TCPSocketReplicationBootStrapTest {
                 .create();
 
         int i;
-        for(i = 0;i < 500;i++){
-            channelIdMap.put(Integer.toString(i),i);
+        for (i = 0; i < 500; i++) {
+            channelIdMap.put(Integer.toString(i), i);
         }
         MapReaderWithListener reader = new MapReaderWithListener();
         Thread t = new Thread(reader);
         t.start();
         int j = 0;
-        while (j < 15000){
+        while (j < 15000) {
             i = 400;
-            while (i < 500){
-                channelIdMap.update(Integer.toString(i),i+1);
+            while (i < 500) {
+                channelIdMap.update(Integer.toString(i), i + 1);
                 i++;
             }
             Thread.sleep(1);
@@ -200,7 +199,7 @@ public class TCPSocketReplicationBootStrapTest {
         }
         reader.stop();
         channelIdMap.close();
-        assertEquals(0,reader.getFirstGatheredElement());
+        assertEquals(0, reader.getFirstGatheredElement());
     }
 
     @Test
@@ -257,7 +256,7 @@ public class TCPSocketReplicationBootStrapTest {
 
     @After
     public void tearDown() {
-        if(map1 != null && map2 != null) {
+        if (map1 != null && map2 != null) {
             for (final Closeable closeable : new Closeable[]{map1, map2}) {
                 try {
                     closeable.close();
@@ -308,7 +307,7 @@ public class TCPSocketReplicationBootStrapTest {
 
         public void stop() {
             this.stop = false;
-            while (firstGatheredSize == 0){
+            while (firstGatheredSize == 0) {
                 this.stop = false;
             }
             this.stop = true;
@@ -377,8 +376,8 @@ public class TCPSocketReplicationBootStrapTest {
                         SingleChronicleHashReplication.builder()
                                 .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5086, new InetSocketAddress("localhost", 5085)))
                                 .createWithId((byte) 2);
-                ChronicleMap<String, Integer> channelIdMap2 = ChronicleMapBuilder.of(String.class, Integer.class).eventListener(this.mapListener)
-                        .entries(Short.MAX_VALUE)
+                ChronicleMap<String, Integer> channelIdMap2 = ChronicleMapBuilder.of(String.class, Integer.class).eventListener(
+                        (MapEventListener<String, Integer>) this.mapListener).entries(Short.MAX_VALUE)
                         .instance()
                         .replicated(replicationHubForChannelIdMap2)
                         .create();
@@ -404,7 +403,7 @@ public class TCPSocketReplicationBootStrapTest {
 
     }
 
-    public class CacheMapListener<K,V> extends MapEventListener<K,V> {
+    public class CacheMapListener<K, V> extends MapEventListener<K, V> {
 
 
         private Object firstPuttedValue = null;
@@ -418,9 +417,9 @@ public class TCPSocketReplicationBootStrapTest {
                           boolean added, boolean hasValueChanged, byte identifier,
                           byte replacedIdentifier, long timeStamp, long replacedTimeStamp) {
 
-                if(this.firstPuttedValue == null){
-                    this.firstPuttedValue = newValue;
-                }
+            if (this.firstPuttedValue == null) {
+                this.firstPuttedValue = newValue;
+            }
 
         }
 
@@ -430,7 +429,6 @@ public class TCPSocketReplicationBootStrapTest {
 
         }
     }
-
 
 
 }
