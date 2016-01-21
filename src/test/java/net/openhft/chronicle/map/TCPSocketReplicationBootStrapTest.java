@@ -133,6 +133,60 @@ public class TCPSocketReplicationBootStrapTest {
 
 
     @Test
+    public void test2() throws IOException, InterruptedException {
+
+        final ChronicleMap<java.lang.String, Integer> map1 = ChronicleMapBuilder.of(java.lang.String
+                .class, Integer.class)
+                .entries(Short.MAX_VALUE)
+                .instance()
+                .replicated(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5035))
+                        .createWithId((byte) 1))
+                .create();
+
+
+        for (int i = 0; i < 500; i++) {
+            map1.put("1st map " + Integer.toString(i), i);
+        }
+
+
+        final ChronicleMap<java.lang.String, Integer> map2 = ChronicleMapBuilder.of(java.lang.String
+                .class, Integer.class)
+                .entries(Short.MAX_VALUE)
+                .instance()
+                .replicated(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5036, new
+                                InetSocketAddress[]{new InetSocketAddress("localhost", 5035)}))
+                        .createWithId((byte) 2))
+                .create();
+
+
+        while (map2.size() != 500 || map1.size() != 500 || !map1.equals(map2)) {
+            Thread.yield();
+        }
+
+        map1.close();
+
+        final ChronicleMap<java.lang.String, Integer> map1a = ChronicleMapBuilder.of(java.lang
+                .String
+                .class, Integer.class)
+                .entries(Short.MAX_VALUE)
+                .instance()
+                .replicated(SingleChronicleHashReplication.builder()
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5039, new
+                                InetSocketAddress[]{new InetSocketAddress("localhost", 5036)}))
+                        .createWithId((byte) 1))
+                .create();
+
+        while (map2.size() != 500 || map1a.size() != 500 || !map1a.equals(map2)) {
+            Thread.yield();
+        }
+
+        Assert.assertEquals(map1a, map2);
+    }
+
+
+    @Test
     public void testReplicationWhileModifying() throws IOException, InterruptedException {
 
         final ChronicleMap<java.lang.String, Integer> map1 = ChronicleMapBuilder.of(java.lang.String
