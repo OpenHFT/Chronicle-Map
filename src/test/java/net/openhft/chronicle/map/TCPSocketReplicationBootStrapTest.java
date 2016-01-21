@@ -133,7 +133,7 @@ public class TCPSocketReplicationBootStrapTest {
 
 
     @Test
-    public void testReplicationWhileModifying2() throws IOException, InterruptedException {
+    public void testReplicationWhileModifying() throws IOException, InterruptedException {
 
         final ChronicleMap<java.lang.String, Integer> map1 = ChronicleMapBuilder.of(java.lang.String
                 .class, Integer.class)
@@ -182,78 +182,6 @@ public class TCPSocketReplicationBootStrapTest {
 
     }
 
-    @Test
-    public void testReplicationWhileModifying() throws IOException, InterruptedException {
-
-        SingleChronicleHashReplication replicationHubForChannelIdMap =
-                SingleChronicleHashReplication.builder().bootstrapOnlyLocalEntries(true)
-                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085))
-                        .createWithId((byte) 1);
-
-        ChronicleMap<java.lang.String, Integer> channelIdMap = ChronicleMapBuilder.of(java.lang.String.class, Integer.class)
-                .entries(Short.MAX_VALUE)
-                .instance()
-                .replicated(replicationHubForChannelIdMap)
-                .create();
-
-        int i;
-        for (i = 0; i < 500; i++) {
-            channelIdMap.put(Integer.toString(i), i);
-        }
-        MapReader reader = new MapReader();
-        Thread t = new Thread(reader);
-        t.start();
-        int j = 0;
-        while (j < 100) {
-            i = 400;
-            while (i < 500) {
-                channelIdMap.update(Integer.toString(i), i + 1);
-                i++;
-            }
-            j++;
-        }
-        reader.stop();
-        channelIdMap.close();
-        int firstGatheredSize = reader.getFirstGatheredSize();
-        assertEquals(0, reader.getFirstGatheredElement());
-        assertEquals(500, firstGatheredSize);
-    }
-
-    @Test
-    public void testReplicationWhileModifyingWithMapListener() throws IOException, InterruptedException {
-
-        SingleChronicleHashReplication replicationHubForChannelIdMap =
-                SingleChronicleHashReplication.builder()
-                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085))
-                        .createWithId((byte) 1);
-
-        ChronicleMap<java.lang.String, Integer> channelIdMap = ChronicleMapBuilder.of(java.lang.String.class, Integer.class)
-                .entries(Short.MAX_VALUE)
-                .instance()
-                .replicated(replicationHubForChannelIdMap)
-                .create();
-
-        int i;
-        for (i = 0; i < 500; i++) {
-            channelIdMap.put(Integer.toString(i), i);
-        }
-        MapReaderWithListener reader = new MapReaderWithListener();
-        Thread t = new Thread(reader);
-        t.start();
-        int j = 0;
-        while (j < 15000) {
-            i = 400;
-            while (i < 500) {
-                channelIdMap.update(Integer.toString(i), i + 1);
-                i++;
-            }
-            Thread.sleep(1);
-            j++;
-        }
-        reader.stop();
-        channelIdMap.close();
-        assertEquals(0, reader.getFirstGatheredElement());
-    }
 
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
