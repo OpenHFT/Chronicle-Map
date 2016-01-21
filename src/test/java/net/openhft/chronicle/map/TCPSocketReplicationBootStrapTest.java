@@ -20,6 +20,7 @@ import net.openhft.chronicle.hash.replication.SingleChronicleHashReplication;
 import net.openhft.chronicle.hash.replication.TcpTransportAndNetworkConfig;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.map.Builder.getPersistenceFile;
@@ -129,12 +131,63 @@ public class TCPSocketReplicationBootStrapTest {
         assertEquals(1, map2Size);
     }
 
+
+    @Test
+    public void testReplicationWhileModifying2() throws IOException, InterruptedException {
+
+        final ChronicleMap<java.lang.String, Integer> map1 = ChronicleMapBuilder.of(java.lang.String
+                .class, Integer.class)
+                .entries(Short.MAX_VALUE)
+                .instance()
+                .replicated(SingleChronicleHashReplication.builder().bootstrapOnlyLocalEntries(true)
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5065))
+                        .createWithId((byte) 1))
+                .create();
+
+        Executors.newSingleThreadExecutor().submit(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 500; i++) {
+                    map1.put("1st map " + Integer.toString(i), i);
+                }
+            }
+        });
+
+        final ChronicleMap<java.lang.String, Integer> map2 = ChronicleMapBuilder.of(java.lang.String
+                .class, Integer.class)
+                .entries(Short.MAX_VALUE)
+                .instance()
+                .replicated(SingleChronicleHashReplication.builder().bootstrapOnlyLocalEntries(true)
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5066, new
+                                InetSocketAddress[]{new InetSocketAddress("localhost", 5065)}))
+                        .createWithId((byte) 2))
+                .create();
+
+
+        Executors.newSingleThreadExecutor().submit(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < 500; i++) {
+                    map2.put("2nd map " + Integer.toString(i), i);
+                }
+            }
+        });
+
+
+        while (map2.size() != 1000 || map1.size() != 1000 || !map1.equals(map2)) {
+            Thread.yield();
+        }
+
+        Assert.assertEquals(map1, map2);
+
+    }
+
     @Test
     public void testReplicationWhileModifying() throws IOException, InterruptedException {
 
         SingleChronicleHashReplication replicationHubForChannelIdMap =
                 SingleChronicleHashReplication.builder().bootstrapOnlyLocalEntries(true)
-                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085, new InetSocketAddress[0]))
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085))
                         .createWithId((byte) 1);
 
         ChronicleMap<java.lang.String, Integer> channelIdMap = ChronicleMapBuilder.of(java.lang.String.class, Integer.class)
@@ -171,7 +224,7 @@ public class TCPSocketReplicationBootStrapTest {
 
         SingleChronicleHashReplication replicationHubForChannelIdMap =
                 SingleChronicleHashReplication.builder()
-                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085, new InetSocketAddress[0]))
+                        .tcpTransportAndNetwork(TcpTransportAndNetworkConfig.of(5085))
                         .createWithId((byte) 1);
 
         ChronicleMap<java.lang.String, Integer> channelIdMap = ChronicleMapBuilder.of(java.lang.String.class, Integer.class)
