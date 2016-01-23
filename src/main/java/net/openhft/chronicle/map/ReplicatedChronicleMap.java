@@ -91,7 +91,7 @@ import static net.openhft.lang.io.NativeBytes.wrap;
  * @param <K> the entries key type
  * @param <V> the entries value type
  */
-final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
+public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>
         implements Replica, EntryExternalizable, EntryResolver<K, V>, EngineReplicationLangBytes {
@@ -187,6 +187,10 @@ final class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? supe
         // purposely not volatile as this will impact performance,
         // and the worst that will happen is we'll end up loading more data on a bootstrap
         return identifierUpdatedBytes.readLong(remoteIdentifier * 8L);
+    }
+
+    public long bootStrapTime(){
+        return this.acquireModificationIterator(this.identifier()).bootStrapTimeStamp();
     }
 
     @Override
