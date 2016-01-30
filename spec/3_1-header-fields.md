@@ -133,13 +133,13 @@ allocated for the Chronicle Map's entry. A 32-bit value in [1, 63] range, e. g. 
 
 > In the reference Java implementation the number of value bits is as little as enough to encode any
 > chunk index, i. e.
-> log(2, nextPowerOf2([`actualChunksPerSegmentTier`](#actualChunksPerSegmentTier)))
+> log(2, nextPowerOf2([`actualChunksPerSegmentTier`](#actualchunkspersegmenttier)))
 
 ##### `tierHashLookupKeyBits`
 
 The number of bits of the tier hash lookup's slots, used to store parts of the Chronicle Map key's
 hash codes, playing the role of key in hash lookup tables. The part of hash codes is extracted by
-the [`hashSplitting`](#hashSplitting) algorithm. A 32-bit value is [1, 63] range, e. g. `20`.
+the [`hashSplitting`](#hashsplitting) algorithm. A 32-bit value is [1, 63] range, e. g. `20`.
 
 ##### `tierHashLookupSlotSize`
 
@@ -162,7 +162,7 @@ in a hash lookup. A positive 64-bit value, e. g. `1638`.
 ##### `tierHashLookupInnerSize`
 
 The size of hash lookups in bytes. A positive 64-bit value, equals to [`tierHashLookupInnerSize`
-](#tierHashLookupInnerSize) * [`tierHashLookupSlotSize`](#tierHashLookupSlotSize). A positive
+](#tierhashlookupinnersize) * [`tierHashLookupSlotSize`](#tierhashlookupslotsize). A positive
 64-bit value, e. g. `8192`.
 
 ##### `tierHashLookupOuterSize`
@@ -170,7 +170,7 @@ The size of hash lookups in bytes. A positive 64-bit value, equals to [`tierHash
 The size of hash lookups + alignment, in bytes. A positive 64-bit value, e. g. `8192`.
 
 > In the reference Java implementation, `tierHashLookupOuterSize` equals to the
-> [`tierHashLookupInnerSize`](#tierHashLookupInnerSize) value, rounded up to the next multiple of 64
+> [`tierHashLookupInnerSize`](#tierhashlookupinnersize) value, rounded up to the next multiple of 64
 > (i. e. a cache line boundary).
 
 ##### `tierFreeListInnerSize`
@@ -179,7 +179,7 @@ The size segment tiers' *free lists* (indexes of free chunks in entry spaces), i
 64-bit value, e. g. `416`.
 
 > In the reference Java implementation, `tierFreeListInnerSize` equals to
-> the [`actualChunksPerSegmentTier`](#actualChunksPerSegmentTier) value, rounded up to the next
+> the [`actualChunksPerSegmentTier`](#actualchunkspersegmenttier) value, rounded up to the next
 > multiple of 64, then divided by 8, i. e. the dimension of this value is bytes, and it is a
 > multiple of 8.
 
@@ -188,7 +188,7 @@ The size segment tiers' *free lists* (indexes of free chunks in entry spaces), i
 The size of free lists + alignment, in bytes. A positive 64-bit value, e. g. `448`.
 
 > In the reference Java implementation, `tierFreeListOuterSize` equals to the
-> [`tierFreeListInnerSize`](#tierFreeListInnerSize) value, rounded up to the next multiple of 64
+> [`tierFreeListInnerSize`](#tierfreelistinnersize) value, rounded up to the next multiple of 64
 > (i. e. a cache line boundary).
 
 ##### `tierEntrySpaceInnerSize`
@@ -210,7 +210,7 @@ The size of segment tiers' entry spaces + alignment, in bytes. A positive 64-bit
 `13248`.
 
 > In the reference Java implementation, `tierEntrySpaceOuterSize` equals to the
-> [`tierEntrySpaceInnerSize`](#tierEntrySpaceInnerSize) value, rounded up to the next multiple of 64
+> [`tierEntrySpaceInnerSize`](#tierentryspaceinnersize) value, rounded up to the next multiple of 64
 > (i. e. a cache line boundary).
 
 ##### `tierSize`
@@ -218,8 +218,8 @@ The size of segment tiers' entry spaces + alignment, in bytes. A positive 64-bit
 The size of segment tiers in this Chronicle Map, in bytes. A positive 64-bit value, e. g. `21952`.
 
 > In the reference Java implementation, `tierSize` equals to [`tierHashLookupOuterSize`
-> ](#tierHashLookupOuterSize) + 64 (*tier counters area* size) + [`tierFreeListOuterSize`
-> ](#tierFreeListOuterSize) + [`tierEntrySpaceOuterSize`](#tierEntrySpaceOuterSize) + (optionally)
+> ](#tierhashlookupoutersize) + 64 (*tier counters area* size) + [`tierFreeListOuterSize`
+> ](#tierfreelistoutersize) + [`tierEntrySpaceOuterSize`](#tierentryspaceoutersize) + (optionally)
 > 64. The `tierSize` is a multiple of 64 (i. e. it spans integral number of cache lines). The
 > optional extra cache line is added, when the `tierSize` is too round, and there are too many
 > segments, in order to break collisions of tiers' start addresses by L1 cache banks. See e. g.
@@ -231,7 +231,7 @@ The maximum number of extra tiers could be allocated, before the Chronicle Map i
 new insertion requests. A non-negative 64-bit value, e. g. `16`.
 
 > In the reference Java implementation, `maxExtraTiers` defaults to the [`actualSegments`
-> ](#actualSegments). I. e. the Chronicle Map could nearly double the expected size, before it
+> ](#actualsegments). I. e. the Chronicle Map could nearly double the expected size, before it
 > throws `IllegalStateExceptions` upon new insertion requests.
 
 ##### `tierBulkSizeInBytes`
@@ -240,8 +240,8 @@ The size in bytes of a *tier bulk*, a unit of memory allocation, when extra tier
 positive 64-bit value, e. g. `43904`.
 
 > In the reference Java implementation, `tierBulkSizeInBytes` equals to
-> [`tierBulkInnerOffsetToTiers`](#tierBulkInnerOffsetToTiers) + [`tiersInBulk`](#tiersInBulk) *
-> [`tierSize`](#tierSize).
+> [`tierBulkInnerOffsetToTiers`](#tierbulkinneroffsettotiers) + [`tiersInBulk`](#tiersinbulk) *
+> [`tierSize`](#tiersize).
 
 ##### `tierBulkInnerOffsetToTiers`
 
@@ -254,7 +254,7 @@ The number of tiers in the tier bulks. A positive 64-bit value, e. g. `2`.
 
 ##### `log2TiersInBulk`
 
-The value of this field equals to log(2, [`tiersInBulk`](#tiersInBulk)).
+The value of this field equals to log(2, [`tiersInBulk`](#tiersinbulk)).
 
 ##### `valueClass`
 
@@ -269,7 +269,7 @@ The marshaller for the Chronicle Map's value sizes, an instance of
 }
 ```
 
-> See the comments on [`keySizeMarshaller`](#keySizeMarshaller) for information about this field.
+> See the comments on [`keySizeMarshaller`](#keysizemarshaller) for information about this field.
 
 ##### `valueReader`
 

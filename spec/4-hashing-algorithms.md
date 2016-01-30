@@ -2,7 +2,7 @@
 
 Keys in Chronicle Map are arbitrary sequences of bytes. [xxHash
 ](https://github.com/Cyan4973/xxHash/) algorithm is applied to the key, to obtain the primary key
-hash code. Then the [`hashSplitting`](3_1-header-fields.md#hashSplitting) algorithm is applied, to
+hash code. Then the [`hashSplitting`](3_1-header-fields.md#hashsplitting) algorithm is applied, to
 determine the segment in which the key should be stored, and the part of the key hash code to be
 stored in a segment tier's hash lookup.
 

@@ -62,7 +62,7 @@ The global mutable state is 36 bytes long.
  *Tier index* is *1-counted* from the beginning of the main segments area, and counting continues in
  the extra tier bulks, i. e. the first tier of the segment #0 has *tier index* 1, the first tier of
  the segment #1 has tier index 2, ... the first tier of the last segment (it's index is
- [`actualSegments`](3_1-header-fields.md#actualSegments) &minus; 1) has tier index `actualSegments`,
+ [`actualSegments`](3_1-header-fields.md#actualsegments) &minus; 1) has tier index `actualSegments`,
  the first tier of the first extra tier bulk has tier index `actualSegments` + 1, etc. Tier indexes
  are 1-counted, because value 0 has some special meaning.
  4. Bytes 20..27 - the number of used extra segment tiers. A non-negative 64-bit value, stored in
@@ -80,7 +80,7 @@ The offset to this area is stored in the 5th field of the [global mutable state
 ](#global-mutable-state).
 
 The size (in bytes) of a segment headers area is [`actualSegments`](
-3_1-header-fields.md#actualSegments) * [`segmentHeaderSize`](3_1-header-fields.md#segmentHeaderSize
+3_1-header-fields.md#actualsegments) * [`segmentHeaderSize`](3_1-header-fields.md#segmentheadersize
 ). Each segment header starts at offsets from the start of the segment headers area, that are
 multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segmentHeaderSize` &minus;
 32 is the alignment between segment headers.
@@ -100,7 +100,7 @@ multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segment
  than 0. This field is updated on each entry allocation and deletion in the first tier of the
  segment, if the smallest index of a free chunk is changed. When all chunks in the entry space are
  allocated (i. e. the current tier becomes *full*), the value of this field is changed to
- [`actualChunksPerSegmentTier`](3_1-header-fields.md#actualChunksPerSegmentTier) (an impossible
+ [`actualChunksPerSegmentTier`](3_1-header-fields.md#actualchunkspersegmenttier) (an impossible
  chunk index, which varies from 0 to `actualChunksPerSegmentTier` &minus; 1).
  4. Bytes 16..31 - reserved for use by extensions.
 
@@ -114,8 +114,8 @@ This area contains first tiers of the Chronicle Map's segments.
 A main segments area starts immediately after the end of a segment headers area without extra
 offsets and alignments.
 
-The size of a main segments area is [`actualSegments`](3_1-header-fields.md#actualSegments) *
-[`tierSize`](3_1-header-fields.md#tierSize). Segment tiers in a main segments area doesn't have
+The size of a main segments area is [`actualSegments`](3_1-header-fields.md#actualsegments) *
+[`tierSize`](3_1-header-fields.md#tiersize). Segment tiers in a main segments area doesn't have
 extra gaps in memory between each other.
 
 ### Segment tier structure
@@ -123,7 +123,7 @@ extra gaps in memory between each other.
 See also [segment tiers design overview](2-design-overview.md#segment-tier) for more explanations
 about this structure.
 
-Segment tier is [`tierSize`](3_1-header-fields.md#tierSize) bytes long.
+Segment tier is [`tierSize`](3_1-header-fields.md#tiersize) bytes long.
 
 The segment tier structure:
 
@@ -136,19 +136,19 @@ The segment tier structure:
 
 A hash lookup area starts at the same address as a segment tier, containing it.
 
-A hash lookup consists of [`tierHashLookupCapacity`](3_1-header-fields.md#tierHashLookupCapacity)
-slots each of [`tierHashLookupSlotSize`](3_1-header-fields.md#tierHashLookupSlotSize) bytes. In each
+A hash lookup consists of [`tierHashLookupCapacity`](3_1-header-fields.md#tierhashlookupcapacity)
+slots each of [`tierHashLookupSlotSize`](3_1-header-fields.md#tierhashlookupslotsize) bytes. In each
 slot a 32-bit or 64-bit (if the `tierHashLookupSlotSize` is 4 or 8, respectively) value is stored in
 little-endian order. The slot value of 0 designates an empty slot.
 
-In [`tierHashLookupKeyBits`](3_1-header-fields.md#tierHashLookupKeyBits) lower bits of a slot value
+In [`tierHashLookupKeyBits`](3_1-header-fields.md#tierhashlookupkeybits) lower bits of a slot value
 a *hash lookup key* is stored. It is a part of a Chronicle Map's key hash code, extracted by the
-[`hashSplitting`](3_1-header-fields.md#hashSplitting) algorithm. In addition, if the `hashSplitting`
+[`hashSplitting`](3_1-header-fields.md#hashsplitting) algorithm. In addition, if the `hashSplitting`
 extracts the part of the hash code of 0, a hash lookup key of all set `tierHashLookupKeyBits` bits
 (i. e. `(1 << tierHashLookupKeyBits) - 1`) is used instead, to avoid the full hash lookup slot to
 look like an empty slot, if the *hash lookup value* is also 0.
 
-In [`tierHashLookupValueBits`](3_1-header-fields.md#tierHashLookupValueBits) bits, following after
+In [`tierHashLookupValueBits`](3_1-header-fields.md#tierhashlookupvaluebits) bits, following after
 the lower key bits (i. e. bits from `tierHashLookupKeyBits`-th to `tierHashLookupKeyBits +
 tierHashLookupValueBits - 1`-th, inclusive) of a slot value a *hash lookup value* is stored. It is
 an index of the first chunk of the range of chunks (possibly only a single chunk) in the entry space
@@ -165,7 +165,7 @@ of this segment tier, in which a Chronicle Map's entry is stored.
 #### Segment tier counters area
 
 A segment tier counters area starts with offset [`tierHashLookupOuterSize`
-](3_1-header-fields.md#tierHashLookupOuterSize) from the beginning address of a containing segment
+](3_1-header-fields.md#tierhashlookupoutersize) from the beginning address of a containing segment
 tier.
 
 The segment tier counters structure is 64 bytes long:
@@ -237,10 +237,10 @@ The segment tier counters structure is 64 bytes long:
 #### Free list
 
 A free list starts with offset [`tierHashLookupOuterSize`
-](3_1-header-fields.md#tierHashLookupOuterSize) + 64 from the beginning address of a containing
+](3_1-header-fields.md#tierhashlookupoutersize) + 64 from the beginning address of a containing
 segment tier.
 
-This is a list of [`actualChunksPerSegmentTier`](3_1-header-fields.md#actualChunksPerSegmentTier)
+This is a list of [`actualChunksPerSegmentTier`](3_1-header-fields.md#actualchunkspersegmenttier)
 bits, each corresponding to a chunk in the [entry space](#entry-space). If the chunk is allocated
 for some entry, the corresponding bit is set to 1, otherwise it is clear.
 
@@ -250,14 +250,14 @@ for some entry, the corresponding bit is set to 1, otherwise it is clear.
 #### Entry space
 
 An entry space starts with offset [`tierHashLookupOuterSize`
-](3_1-header-fields.md#tierHashLookupOuterSize) + 64 + [`tierFreeListOuterSize`
-](3_1-header-fields.md#tierFreeListOuterSize) from the beginning address of a containing segment
+](3_1-header-fields.md#tierhashlookupoutersize) + 64 + [`tierFreeListOuterSize`
+](3_1-header-fields.md#tierfreelistoutersize) from the beginning address of a containing segment
 tier.
 
 The entry space starts with an internal offset of [`tierEntrySpaceInnerOffset`
-](3_1-header-fields.md#tierEntrySpaceInnerOffset) bytes. Then [`actualChunksPerSegmentTier`
-](3_1-header-fields.md#actualChunksPerSegmentTier) *chunks* follow without gaps between each other,
-each chunk of [`chunkSize`](3_1-header-fields.md#chunkSize) bytes.
+](3_1-header-fields.md#tierentryspaceinneroffset) bytes. Then [`actualChunksPerSegmentTier`
+](3_1-header-fields.md#actualchunkspersegmenttier) *chunks* follow without gaps between each other,
+each chunk of [`chunkSize`](3_1-header-fields.md#chunksize) bytes.
 
 A chunk is the minimum allocation unit. A single or several continuous chunks are used to store the
 Chronicle Map's entries. These ranges doesn't intersect, i. e. each chunk is used to store at most
@@ -269,18 +269,18 @@ Within the given range of chunks, the entry is stored starting from the beginnin
 of the range. The stored entry structure is:
 
  1. The length of the key (in bytes), stored using the [`keySizeMarshaller`
- ](3_1-header-fields.md#keySizeMarshaller) algorithm.
+ ](3_1-header-fields.md#keysizemarshaller) algorithm.
  2. The key itself stored, a sequence of bytes of the length, determined by the previous field of
- this structure. The key is stored using the [`keyDataAccess`](3_1-header-fields.md#keyDataAccess)
+ this structure. The key is stored using the [`keyDataAccess`](3_1-header-fields.md#keydataaccess)
  strategy.
  3. The length of the value (in bytes), stored using the [`valueSizeMarshaller`
- ](3_1-header-fields.md#valueSizeMarshaller) algorithm.
+ ](3_1-header-fields.md#valuesizemarshaller) algorithm.
  4. The gap (likely 0-long, though), imposed by the value [`alignment`
  ](3_1-header-fields.md#alignment) strategy.
  5. The value itself stored, a sequence of bytes of the length, determined by the 3rd field of this
- structure. The value is stored using the [`valueDataAccess`](3_1-header-fields.md#valueDataAccess)
+ structure. The value is stored using the [`valueDataAccess`](3_1-header-fields.md#valuedataaccess)
  strategy.
- 6. (Optional field) If [`checksumEntries`](3_1-header-fields.md#checksumEntries) is `true`, there
+ 6. (Optional field) If [`checksumEntries`](3_1-header-fields.md#checksumentries) is `true`, there
  is a 4-byte checksum stored after the value bytes. See also the [checksum algorithm
  ](4-hashing-algorithms.md#checksum-algorithm.md).
 
@@ -295,7 +295,7 @@ last chunk, allocated for the entry, is unused. This is an internal fragmentatio
 ## Extra tier bulks
 
 The size of an extra tier bulks area is [`tierBulkSizeInBytes`
-](3_1-header-fields.md#tierBulkSizeInBytes), multiplied by the number of extra tier bulks, stored
+](3_1-header-fields.md#tierbulksizeinbytes), multiplied by the number of extra tier bulks, stored
 in the 2nd field of the [global mutable state](#global-mutable-state) structure. Extra tier bulks
 start immediately at the end of the main segments area (the end of the last segment tier in the main
 segments area) and doesn't have gaps between each other.
@@ -303,8 +303,8 @@ segments area) and doesn't have gaps between each other.
 ### Extra tier bulk
 
 Each extra tier bulk starts with metadata space of [`tierBulkInnerOffsetToTiers`
-](3_1-header-fields.md#tierBulkInnerOffsetToTiers) (reserved for use by extensions), after that
-[`tiersInBulk`](3_1-header-fields.md#tiersInBulk) segment tiers are located without gaps between
+](3_1-header-fields.md#tierbulkinneroffsettotiers) (reserved for use by extensions), after that
+[`tiersInBulk`](3_1-header-fields.md#tiersinbulk) segment tiers are located without gaps between
 each other.
 
 See the [segment tier structure](#segment-tier-structure) for information about the detailed
