@@ -1,13 +1,12 @@
-# The Lock Structure
+# 3.2. The Lock Structure and Locking Operations
 
 The lock structure is 8 bytes (64 bits) long.
 
- - Count word
-  - Bits 0..29 - read lock count (little-endian)
-  - Bit 30 - update lock flag
-  - Bit 31 - write lock flag
- - Wait word
-  - Bits 32..63 - wait count (little-endian)
+ 1. *Count word*:
+  1. Bits 0..29 - read lock count (little-endian)
+  2. Bit 30 - update lock flag
+  3. Bit 31 - write lock flag
+ 2. *Wait word*: bits 32..63 - wait count (little-endian)
 
 ## The *try acquire read lock* procedure
 
@@ -119,7 +118,7 @@ procedure.
 Implementations doesn't make locking attempts indefinitely [for the same reasons, as in case of
 acquiring read and update lock](#time-limited-read-or-update-lock-acquisition).
 
-> The reference Java implementation:
+> ## The reference Java implementation
 >
 > Attempt operations: [`VanillaReadWriteUpdateWithWaitsLockingStrategy`](
 > https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/locks/VanillaReadWriteUpdateWithWaitsLockingStrategy.java)

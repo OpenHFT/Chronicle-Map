@@ -84,10 +84,10 @@ public abstract class CompactOffHeapLinearHashTable {
     private final long keyMask;
     private final long valueMask;
 
-    CompactOffHeapLinearHashTable(long capacity, int entrySize, int keyBits, int valueBits) {
+    CompactOffHeapLinearHashTable(long capacity, int slotSize, int keyBits, int valueBits) {
         this.capacityMask = capacity - 1L;
 
-        this.capacityMask2 = capacityMask * entrySize;
+        this.capacityMask2 = capacityMask * slotSize;
 
         this.keyBits = keyBits;
         this.keyMask = mask(keyBits);
@@ -95,7 +95,7 @@ public abstract class CompactOffHeapLinearHashTable {
     }
 
     CompactOffHeapLinearHashTable(VanillaChronicleHash h) {
-        this(h.tierHashLookupCapacity, h.tierHashLookupEntrySize, h.tierHashLookupKeyBits,
+        this(h.tierHashLookupCapacity, h.tierHashLookupSlotSize, h.tierHashLookupKeyBits,
                 h.tierHashLookupValueBits);
     }
 

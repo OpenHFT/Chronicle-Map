@@ -100,7 +100,7 @@ public abstract class VanillaChronicleHash<K,
 
     public int tierHashLookupValueBits;
     public int tierHashLookupKeyBits;
-    public int tierHashLookupEntrySize;
+    public int tierHashLookupSlotSize;
     public long tierHashLookupCapacity;
     public long maxEntriesPerHashLookup;
     long tierHashLookupInnerSize;
@@ -183,15 +183,15 @@ public abstract class VanillaChronicleHash<K,
 
         tierHashLookupValueBits = valueBits(actualChunksPerSegmentTier);
         tierHashLookupKeyBits = keyBits(privateAPI.entriesPerSegment(), tierHashLookupValueBits);
-        tierHashLookupEntrySize =
+        tierHashLookupSlotSize =
                 entrySize(tierHashLookupKeyBits, tierHashLookupValueBits);
-        if (!privateAPI.aligned64BitMemoryOperationsAtomic() && tierHashLookupEntrySize > 4) {
+        if (!privateAPI.aligned64BitMemoryOperationsAtomic() && tierHashLookupSlotSize > 4) {
             throw new IllegalStateException("aligned64BitMemoryOperationsAtomic() == false, " +
-                    "but hash lookup slot is " + tierHashLookupEntrySize);
+                    "but hash lookup slot is " + tierHashLookupSlotSize);
         }
         tierHashLookupCapacity = privateAPI.tierHashLookupCapacity();
         maxEntriesPerHashLookup = (long) (tierHashLookupCapacity * MAX_LOAD_FACTOR);
-        tierHashLookupInnerSize = tierHashLookupCapacity * tierHashLookupEntrySize;
+        tierHashLookupInnerSize = tierHashLookupCapacity * tierHashLookupSlotSize;
         tierHashLookupOuterSize = CACHE_LINES.align(tierHashLookupInnerSize, BYTES);
 
         tierFreeListInnerSize = LONGS.align(
@@ -248,7 +248,7 @@ public abstract class VanillaChronicleHash<K,
 
         tierHashLookupValueBits = wireIn.read(() -> "tierHashLookupValueBits").int32();
         tierHashLookupKeyBits = wireIn.read(() -> "tierHashLookupKeyBits").int32();
-        tierHashLookupEntrySize = wireIn.read(() -> "tierHashLookupEntrySize").int32();
+        tierHashLookupSlotSize = wireIn.read(() -> "tierHashLookupSlotSize").int32();
         tierHashLookupCapacity = wireIn.read(() -> "tierHashLookupCapacity").int64();
         maxEntriesPerHashLookup = wireIn.read(() -> "maxEntriesPerHashLookup").int64();
         tierHashLookupInnerSize = wireIn.read(() -> "tierHashLookupInnerSize").int64();
@@ -292,7 +292,7 @@ public abstract class VanillaChronicleHash<K,
 
         wireOut.write(() -> "tierHashLookupValueBits").int32(tierHashLookupValueBits);
         wireOut.write(() -> "tierHashLookupKeyBits").int32(tierHashLookupKeyBits);
-        wireOut.write(() -> "tierHashLookupEntrySize").int32(tierHashLookupEntrySize);
+        wireOut.write(() -> "tierHashLookupSlotSize").int32(tierHashLookupSlotSize);
         wireOut.write(() -> "tierHashLookupCapacity").int64(tierHashLookupCapacity);
         wireOut.write(() -> "maxEntriesPerHashLookup").int64(maxEntriesPerHashLookup);
         wireOut.write(() -> "tierHashLookupInnerSize").int64(tierHashLookupInnerSize);
@@ -366,13 +366,13 @@ public abstract class VanillaChronicleHash<K,
     private void initOwnTransients() {
         globalMutableState = createGlobalMutableState();
         tierBulkOffsets = new ArrayList<>();
-        if (tierHashLookupEntrySize == 4) {
+        if (tierHashLookupSlotSize == 4) {
             hashLookup = new IntCompactOffHeapLinearHashTable(this);
-        } else if (tierHashLookupEntrySize == 8) {
+        } else if (tierHashLookupSlotSize == 8) {
             hashLookup = new LongCompactOffHeapLinearHashTable(this);
         } else {
             throw new AssertionError("hash lookup slot size could be 4 or 8, " +
-                    tierHashLookupEntrySize + " observed");
+                    tierHashLookupSlotSize + " observed");
         }
     }
 

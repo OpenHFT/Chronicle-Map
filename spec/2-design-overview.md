@@ -1,4 +1,4 @@
-# Chronicle Map Data Store Design Overview
+# 2. Chronicle Map Data Store Design Overview
 
 ## Logic
 
@@ -82,7 +82,8 @@ certain threshold numbers of unsuccessful attempts.
 
 ## The segment data structure
 
-Under normal conditions, a segment is represented by a single *tier*.
+Under normal conditions, a segment is represented by a single *tier*. (*Tier* and *segment tier* are
+interchangeable terms in this specification.)
 
 ### Segment tier
 

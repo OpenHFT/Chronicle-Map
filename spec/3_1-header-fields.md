@@ -1,10 +1,10 @@
-# Chronicle Map Data Store Header Fields
+# 3.1. Chronicle Map Data Store Header Fields
 
 Header of a persisted Chronicle Map instance is written once, when the instance and the file are
-created, and never changed after that. Tt is stored in
-[Binary Wire Format](
-https://github.com/OpenHFT/RFC/blob/master/Wire-Format-API/Binary/Binary-Wire-Format-API-0.1.md))
-with the following fields:
+created, and never changed after that. It is stored in [Binary Wire Format
+](https://github.com/OpenHFT/RFC/blob/master/Wire-Format-API/Binary/Binary-Wire-Format-API-0.1.md)).
+The top-level structure name is `!net.openhft.chronicle.map.VanillaChronicleMap`. It contains the
+following fields:
 
 ##### `dataFileVersion`
 
@@ -141,10 +141,10 @@ The number of bits of the tier hash lookup's slots, used to store parts of the C
 hash codes, playing the role of key in hash lookup tables. The part of hash codes is extracted by
 the [`hashSplitting`](#hashSplitting) algorithm. A 32-bit value is [1, 63] range, e. g. `20`.
 
-##### `tierHashLookupEntrySize`
+##### `tierHashLookupSlotSize`
 
 The size of the tier hash lookup's slots, in bytes. A 32-bit value, `4` or `8`. Invariant:
-`tierHashLookupKeyBits` + `tierHashLookupValueBits` = `tierHashLookupEntrySize` * 8.
+`tierHashLookupKeyBits` + `tierHashLookupValueBits` = `tierHashLookupSlotSize` * 8.
 
 ##### `tierHashLookupCapacity`
 
@@ -162,7 +162,7 @@ in a hash lookup. A positive 64-bit value, e. g. `1638`.
 ##### `tierHashLookupInnerSize`
 
 The size of hash lookups in bytes. A positive 64-bit value, equals to [`tierHashLookupInnerSize`
-](#tierHashLookupInnerSize) * [`tierHashLookupEntrySize`](#tierHashLookupEntrySize). A positive
+](#tierHashLookupInnerSize) * [`tierHashLookupSlotSize`](#tierHashLookupSlotSize). A positive
 64-bit value, e. g. `8192`.
 
 ##### `tierHashLookupOuterSize`
@@ -308,3 +308,9 @@ spaces. A positive, 32-bit, power of 2 value, e. g. `1`.
 
 The most bytes could theoretically be wasted on the value [`alignment`](#alignment). A non-negative
 32-bit value, e. g. `0`.
+
+> ## The reference Java implementation
+>
+> The described fields are defined in [`VanillaChronicleHash`
+> ](../src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHash.java) and
+> [`VanillaChronicleMap`](../src/main/java/net/openhft/chronicle/map/VanillaChronicleMap.java).

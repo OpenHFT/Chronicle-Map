@@ -1,4 +1,4 @@
-# Chronicle Map Data Store Design Goals, Assumptions and Guarantees
+# 1. Chronicle Map Data Store Design Goals, Assumptions and Guarantees
 
  - Chronicle Map is an in-memory, highly concurrent key-value store. Generally keys and values are
  arbitrary sequences of bytes.
