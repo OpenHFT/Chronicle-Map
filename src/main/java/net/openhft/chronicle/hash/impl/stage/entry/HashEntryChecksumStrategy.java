@@ -49,7 +49,7 @@ public class HashEntryChecksumStrategy implements ChecksumStrategy {
             checksum = hash8To16Bytes(e.keySize, keyHashCode, payloadChecksum);
         } else {
             // non replicated ChronicleSet has no payload
-            checksum = hash8To16Bytes(e.keySize, keyHashCode, keyHashCode);
+            checksum = keyHashCode;
         }
         return (int) ((checksum >>> 32) ^ checksum);
     }
