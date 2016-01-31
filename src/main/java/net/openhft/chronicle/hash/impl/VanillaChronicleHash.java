@@ -584,15 +584,14 @@ public abstract class VanillaChronicleHash<K,
         if (closed)
             return;
         closed = true;
-        if (file != null) {
-            try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-                raf.getChannel().force(true);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        bs.release();
+        assert bs.refCount() == 0;
+        for (TierBulkData bulkData : tierBulkOffsets) {
+            if (bulkData.bytesStore != bs) {
+                bulkData.bytesStore.release();
+                assert bulkData.bytesStore.refCount() == 0;
             }
         }
-        bs = null;
-        file = null;
     }
 
     @Override
