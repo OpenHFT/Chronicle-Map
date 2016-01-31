@@ -731,10 +731,24 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private void allocateTierBulk() {
-        int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
-        mapTierBulks(allocatedExtraTierBulks);
+        try {
+            RandomAccessFile raf = persisted() ? new RandomAccessFile(file, "rw") : null;
+            try {
+                allocateTierBulk0(raf);
+            } finally {
+                if (raf != null)
+                    raf.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        // integer overflow aware
+    private void allocateTierBulk0(RandomAccessFile raf) throws IOException {
+        int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
+
+        mapTierBulks(raf, allocatedExtraTierBulks);
+
         long firstTierIndex = extraTierIndexToTierIndex(allocatedExtraTierBulks * tiersInBulk);
         BytesStore tierBytesStore = tierBytesStore(firstTierIndex);
         long firstTierOffset = tierBytesOffset(firstTierIndex);
@@ -746,11 +760,28 @@ public abstract class VanillaChronicleHash<K,
         long lastTierIndex = firstTierIndex + tiersInBulk - 1;
         linkAndZeroOutFreeTiers(firstTierIndex, lastTierIndex);
 
-        // TODO HCOLL-397 insert msync here!
+        if (persisted()) {
+            long address = tierBytesStore.address(firstTierOffset - tierBulkInnerOffsetToTiers);
+            // address should be a multiple of page size
+            if (OS.pageAlign(address) != address) {
+                address = OS.pageAlign(address) - OS.pageSize();
+            }
+            long endAddress = tierBytesStore.address(tierBytesOffset(lastTierIndex)) + tierSize;
+            long length = endAddress - address;
+            msync(raf, address, length);
+        }
 
         // after we are sure the new bulk is initialized, update the global mutable state
         globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks + 1);
         globalMutableState.setFirstFreeTierIndex(firstTierIndex);
+    }
+
+    private static void msync(RandomAccessFile raf, long address, long length) throws IOException {
+        if (OS.isWindows()) {
+            WindowsMsync.msync(raf, address, length);
+        } else {
+            PosixMsync.msync(address, length);
+        }
     }
 
     public void linkAndZeroOutFreeTiers(long firstTierIndex, long lastTierIndex) {
@@ -822,9 +853,23 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private void mapTierBulks(int upToBulkIndex) {
+        try {
+            RandomAccessFile raf = persisted() ? new RandomAccessFile(file, "rw") : null;
+            try {
+                mapTierBulks(raf, upToBulkIndex);
+            } finally {
+                if (raf != null)
+                    raf.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void mapTierBulks(RandomAccessFile raf, int upToBulkIndex) {
         if (persisted()) {
             try {
-                mapTierBulksMapped(upToBulkIndex);
+                mapTierBulksMapped(raf, upToBulkIndex);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -834,7 +879,7 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void mapTierBulksMapped(int upToBulkIndex) throws IOException {
+    private void mapTierBulksMapped(RandomAccessFile raf, int upToBulkIndex) throws IOException {
         int firstBulkToMapIndex = tierBulkOffsets.size();
         int bulksToMap = upToBulkIndex + 1 - firstBulkToMapIndex;
         long mapSize = bulksToMap * tierBulkSizeInBytes;
@@ -852,14 +897,11 @@ public abstract class VanillaChronicleHash<K,
             // Now might need to have bigger mapSize
             mapSize += firstBulkToMapOffsetWithinMapping;
         }
-        // TODO optimize -- create a file channel not on each tier bulk creation
-        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-            // mapping by hand, because MappedFile/MappedBytesStore doesn't allow to create a BS
-            // which starts not from the beginning of the file, but has start() of 0
-            NativeBytesStore extraStore = map(raf, mapSize, mappingOffsetInFile);
-            appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore,
-                    firstBulkToMapOffsetWithinMapping);
-        }
+        // mapping by hand, because MappedFile/MappedBytesStore doesn't allow to create a BS
+        // which starts not from the beginning of the file, but has start() of 0
+        NativeBytesStore extraStore = map(raf, mapSize, mappingOffsetInFile);
+        appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore,
+                firstBulkToMapOffsetWithinMapping);
     }
 
     /**
