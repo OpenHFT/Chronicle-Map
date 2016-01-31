@@ -89,15 +89,36 @@ Chronicle Map doesn't support
  - LRU entry eviction
 
 ### Feature matrix
-| | Chronicle Map | [Chronicle Engine](https://github.com/OpenHFT/Chronicle-Engine) | [On-demand](http://chronicle.software/consultancy/) |
-| --- |:---:| :---:| :---: |
-| In-memory off-heap Map | &#10004; | | |
-| Persistence to disk | &#10004; | | |
-| Remote calls | | &#10004; | |
-| Eventually-consistent replication (100% redundancy) | | &#10004; | |
-| Partially-redundant replication | | | &#10004; |
-| Synchronous replication | | | &#10004; |
-| Entry expiration timeouts  | | | &#10004; |
+<table>
+  <tr>
+    <th align="left">Feature</th>
+    <th>Availability</th>
+  </tr>
+  <tr>
+    <td>In-memory off-heap Map</td>
+    <th rowspan="2">Chronicle Map</th>
+  </tr>
+  <tr>
+    <td>Persistence to disk</td>
+  </tr>
+  <tr>
+    <td>Remote calls</td>
+    <th rowspan="2"><a href="https://github.com/OpenHFT/Chronicle-Engine">Chronicle Engine</a></th>
+  </tr>
+  <tr>
+    <td>Eventually-consistent replication (100% redundancy)</td>
+  </tr>
+  <tr>
+    <td>Partially-redundant replication</td>
+    <th rowspan="3"><a href="http://chronicle.software/consultancy/">On-demand</a></th>
+  </tr>
+  <tr>
+    <td>Synchronous replication</td>
+  </tr>
+  <tr>
+    <td>Entry expiration timeouts</td>
+  </tr>
+</table>
 
 ### Peer projects
  - [Chronicle Engine](https://github.com/OpenHFT/Chronicle-Engine) - reactive processing framework
