@@ -25,7 +25,7 @@ import java.io.Closeable;
 /**
  * @author Rob Austin.
  */
-interface Replica extends Closeable, EngineReplicationLangBytes {
+public interface Replica extends Closeable, EngineReplicationLangBytes {
 
     /**
      * Provides the unique Identifier associated with this map instance. <p> An identifier is used
@@ -228,11 +228,10 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
          * @param entry              the entry you will receive, this does not have to be locked, as
          *                           locking is already provided from the caller.
          * @param chronicleId        only assigned when clustering
-         * @param bootStrapTimeStamp sent to the client on every update this is the timestamp
-         *                           that the remote client should bootstrap from when there has
-         *                           been a disconnection, this time maybe later than the message
-         *                           time as event are not send in chronological order from the
-         *                           bit set.
+         * @param bootStrapTimeStamp sent to the client on every update this is the timestamp that
+         *                           the remote client should bootstrap from when there has been a
+         *                           disconnection, this time maybe later than the message time as
+         *                           event are not send in chronological order from the bit set.
          * @return {@code false} if this entry should be ignored because the identifier of the
          * source node is not from one of our changes, WARNING even though we check the identifier
          * in the ModificationIterator the entry may have been updated.
