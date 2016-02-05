@@ -378,9 +378,9 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public final void initBeforeMapping(File file, FileChannel ch, long headerSize)
+    public final void initBeforeMapping(File file, FileChannel ch, long headerEnd)
             throws IOException {
-        this.headerSize = roundUpMapHeaderSize(headerSize);
+        this.headerSize = roundUpMapHeaderSize(headerEnd);
         if (!createdOrInMemory) {
             // This block is for reading segmentHeadersOffset before main mapping
             // After the mapping globalMutableState value's bytes are reassigned
@@ -772,6 +772,10 @@ public abstract class VanillaChronicleHash<K,
         // after we are sure the new bulk is initialized, update the global mutable state
         globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks + 1);
         globalMutableState.setFirstFreeTierIndex(firstTierIndex);
+    }
+
+    public void msync(RandomAccessFile raf) throws IOException {
+        msync(raf, bsAddress(), bs.capacity());
     }
 
     private static void msync(RandomAccessFile raf, long address, long length) throws IOException {

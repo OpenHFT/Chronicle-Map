@@ -69,6 +69,10 @@ Chronicle Map *doesn't* assume anything specific about how memory if flushed to 
  - The maximum fraction of dirty memory not written to the disk, i. e. Chronicle Map assumes that
  *all* the mapped memory might be dirty.
 
+#### File locking
+
+The operating system supports exclusive [file locking](https://en.wikipedia.org/wiki/File_locking).
+
 ### Guarantees
 
 If the above assumptions are met, Chronicle Map aims to satisfy the following guarantees:

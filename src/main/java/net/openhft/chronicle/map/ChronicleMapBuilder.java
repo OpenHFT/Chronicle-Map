@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.algo.MemoryUnit;
+import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
@@ -24,6 +25,8 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
+import net.openhft.chronicle.hash.impl.SizePrefixedBlob;
+import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
 import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
 import net.openhft.chronicle.hash.serialization.*;
@@ -44,6 +47,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -53,9 +57,13 @@ import java.util.concurrent.TimeUnit;
 
 import static java.lang.Double.isNaN;
 import static java.lang.Math.round;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static net.openhft.chronicle.bytes.NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity;
 import static net.openhft.chronicle.core.Maths.*;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
+import static net.openhft.chronicle.hash.impl.SizePrefixedBlob.*;
+import static net.openhft.chronicle.hash.impl.util.FileIOUtils.readFully;
+import static net.openhft.chronicle.hash.impl.util.FileIOUtils.writeFully;
 import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
 import static net.openhft.chronicle.map.DefaultSpi.mapEntryOperations;
 import static net.openhft.chronicle.map.DefaultSpi.mapRemoteOperations;
@@ -1382,65 +1390,59 @@ public final class ChronicleMapBuilder<K, V> implements
         replicated = replicationIdentifier != -1;
         persisted = true;
 
-        for (int i = 0; i < 10; i++) {
-            long fileLength = file.length();
-            if (fileLength > 0) {
-                try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
-                    FileChannel fileChannel = raf.getChannel();
-                    int headerSize = 0;
-                    if (overrideBuilderConfig) {
-                        VanillaChronicleMap<K, V, ?> mapObjectForHeaderOverwrite =
-                                newMap();
-                        headerSize = writeHeader(fileChannel, mapObjectForHeaderOverwrite);
-                    }
-                    ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
-                    while (headerBuffer.remaining() > 0 &&
-                            headerBuffer.position() < fileChannel.size()) {
-                        if (fileChannel.read(headerBuffer, headerBuffer.position()) == -1)
-                            break;
-                    }
-                    headerBuffer.flip();
-                    Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
-                    headerBytes.readLimit(headerBuffer.limit());
-                    Wire wire = new BinaryWire(headerBytes);
-                    VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
-                    long readHeaderSize = headerBytes.readPosition();
-                    if (overrideBuilderConfig && headerSize != readHeaderSize) {
-                        throw new ChronicleHashRecoveryFailedException("read header size " +
-                                readHeaderSize + " != overwritten header size " + headerSize);
-                    }
-                    map.initBeforeMapping(file, fileChannel, readHeaderSize);
-                    long expectedFileLength = map.expectedFileSize();
-                    if (!recover && expectedFileLength != fileLength) {
-                        throw new IOException("The file " + file + " the map is serialized from " +
-                                "has unexpected length " + fileLength + ", probably corrupted. " +
-                                "Expected length is " + expectedFileLength);
-                    }
-
-                    map.initTransientsFromBuilder(this);
-
-                    if (!recover) {
-                        map.createMappedStoreAndSegments(file, raf);
-                    } else {
-                        map.recover(file, raf);
-                    }
-
-                    establishReplication(map);
-
-                    fileChannel.force(true);
-                    // TODO according to Self Boostrapping Data spec, should write "init complete"
-                    // byte *after* the above force instruction, see HCOLL-396
-                    return map;
-                } catch (Exception e) {
-                    if (recover && !(e instanceof IOException))
-                        throw new ChronicleHashRecoveryFailedException(e);
-                    throw e;
-                }
-            }
+        if (!file.exists()) {
             if (recover)
                 throw new FileNotFoundException("file " + file + " should exist for recovery");
-            if (file.createNewFile() || fileLength == 0) {
-                break;
+            //noinspection ResultOfMethodCallIgnored
+            file.createNewFile();
+        }
+        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+            if (raf.length() > 0)
+                return openWithExistingFile(file, raf, recover, overrideBuilderConfig);
+
+            VanillaChronicleMap<K, V, ?> map = null;
+            ByteBuffer headerBuffer = null;
+            FileChannel fileChannel = raf.getChannel();
+            boolean newFile;
+            try (FileLock ignored = fileChannel.lock()) {
+                if (raf.length() == 0) {
+                    map = newMap();
+                    headerBuffer = writeHeader(fileChannel, map);
+                    newFile = true;
+                } else {
+                    newFile = false;
+                }
+            }
+
+            if (newFile) {
+                return createWithNewFile(map, file, raf, headerBuffer, headerBuffer.remaining());
+            } else {
+                return openWithExistingFile(file, raf, recover, overrideBuilderConfig);
+            }
+        }
+    }
+
+    /**
+     * @return size of the self bootstrapping header
+     */
+    private int waitUntilReady(RandomAccessFile raf) throws IOException {
+        ByteBuffer sizeWordBuffer = ByteBuffer.allocate(4);
+        sizeWordBuffer.order(LITTLE_ENDIAN);
+
+        // 60 * 10, 100 ms wait = 1 minute total wait
+        int attempts = 60 * 10;
+        for (int attempt = 0; attempt < attempts; attempt++) {
+            if (raf.length() >= SELF_BOOTSTRAPPING_HEADER_OFFSET) {
+                FileChannel fileChannel = raf.getChannel();
+                sizeWordBuffer.clear();
+                readFully(fileChannel, SIZE_WORD_OFFSET, sizeWordBuffer);
+                if (sizeWordBuffer.remaining() == 0) {
+                    int sizeWord = sizeWordBuffer.getInt(0);
+                    if (SizePrefixedBlob.isReady(sizeWord))
+                        return SizePrefixedBlob.extractSize(sizeWord);
+                }
+                // The only possible reason why not 4 bytes are read, is that the file is
+                // truncated between length() and read() calls, then continue to wait
             }
             try {
                 Thread.sleep(100);
@@ -1448,36 +1450,151 @@ public final class ChronicleMapBuilder<K, V> implements
                 throw new IOException(e);
             }
         }
-        // new file
-        if (!file.exists())
-            throw new FileNotFoundException("Unable to create " + file);
+        throw new IOException("Unable to wait until the file is ready, likely the process " +
+                "which created the file crashed or hung for more than 1 minute");
+    }
 
-        VanillaChronicleMap<K, V, ?> map = newMap();
+    /**
+     * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
+     */
+    private ByteBuffer checkSumSelfBootstrappingHeader(
+            RandomAccessFile raf, int headerSize) throws IOException {
+        if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
+            throw new IOException("The file is shorter than the header size: " +
+                    headerSize + ", file size: " + raf.length());
+        }
+        FileChannel fileChannel = raf.getChannel();
+        ByteBuffer headerBuffer = ByteBuffer.allocate(
+                SELF_BOOTSTRAPPING_HEADER_OFFSET + headerSize);
+        headerBuffer.order(LITTLE_ENDIAN);
+        readFully(fileChannel, 0, headerBuffer);
+        if (headerBuffer.remaining() > 0) {
+            throw new IOException("Unable to read the header fully, " + headerBuffer.remaining() +
+                    " is remaining to read, likely the file was truncated");
+        }
+        int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
+        if (!SizePrefixedBlob.isReady(sizeWord))
+            throw new IOException("sizeWord is not ready: " + sizeWord);
+        long checkSum = headerChecksum(headerBuffer, headerSize);
+        long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
+        if (storedChecksum != checkSum) {
+            throw new IOException("Self Bootstrapping Header checksum doesn't match the stored " +
+                    "checksum: " + storedChecksum + ", computed: " + checkSum);
+        }
+        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        return headerBuffer;
+    }
 
-        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+    private static long headerChecksum(ByteBuffer headerBuffer, int headerSize) {
+        return LongHashFunction.xx_r39().hashBytes(headerBuffer, SIZE_WORD_OFFSET, headerSize + 4);
+    }
+
+    private ChronicleMap<K, V> createWithNewFile(
+            VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
+            ByteBuffer headerBuffer, int headerSize) throws IOException {
+        FileChannel fileChannel = raf.getChannel();
+        map.initBeforeMapping(file, fileChannel, headerBuffer.limit());
+        map.createMappedStoreAndSegments(file, raf);
+        establishReplication(map);
+        writeReady(map, raf, headerBuffer, headerSize);
+        return map;
+    }
+
+    private ChronicleMap<K, V> openWithExistingFile(
+            File file, RandomAccessFile raf, boolean recover, boolean overrideBuilderConfig)
+            throws IOException {
+        try {
+            int headerSize = waitUntilReady(raf);
             FileChannel fileChannel = raf.getChannel();
-            int headerSize = writeHeader(fileChannel, map);
-            map.initBeforeMapping(file, fileChannel, headerSize);
-
-            map.createMappedStoreAndSegments(file, raf);
+            ByteBuffer headerBuffer;
+            if (overrideBuilderConfig) {
+                VanillaChronicleMap<K, V, ?> mapObjectForHeaderOverwrite = newMap();
+                headerBuffer = writeHeader(fileChannel, mapObjectForHeaderOverwrite);
+                headerSize = headerBuffer.remaining();
+            } else {
+                headerBuffer = checkSumSelfBootstrappingHeader(raf, headerSize);
+                assert headerSize == headerBuffer.remaining();
+            }
+            Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
+            headerBytes.readPosition(headerBuffer.position());
+            headerBytes.readLimit(headerBuffer.limit());
+            Wire wire = new BinaryWire(headerBytes);
+            VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
+            assert map != null;
+            map.initBeforeMapping(file, fileChannel, headerBuffer.limit());
+            long expectedFileLength = map.expectedFileSize();
+            if (!recover && expectedFileLength != file.length()) {
+                throw new IOException("The file " + file + " the map is serialized from " +
+                        "has unexpected length " + file.length() + ", probably corrupted. " +
+                        "Expected length is " + expectedFileLength);
+            }
+            map.initTransientsFromBuilder(this);
+            if (!recover) {
+                map.createMappedStoreAndSegments(file, raf);
+            } else {
+                if (!overrideBuilderConfig) {
+                    //noinspection PointlessBitwiseExpression
+                    headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_READY | DATA | headerSize);
+                    headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
+                    writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
+                }
+                // if overrideBuilderConfig = true, readiness bit is already set
+                // in writeHeader() call
+                map.recover(file, raf);
+            }
             establishReplication(map);
+            writeReady(map, raf, headerBuffer, headerSize);
             return map;
+        } catch (Exception e) {
+            if (recover && !(e instanceof IOException))
+                throw new ChronicleHashRecoveryFailedException(e);
+            throw e;
         }
     }
 
-    private static <K, V> int writeHeader(FileChannel fileChannel, VanillaChronicleMap<K, V, ?> map)
-            throws IOException {
-        ByteBuffer headerBuffer = ByteBuffer.allocate(MAX_BOOTSTRAPPING_HEADER_SIZE);
+    /**
+     * @return ByteBuffer, with self bootstrapping header in [position, limit) range
+     */
+    private static <K, V> ByteBuffer writeHeader(
+            FileChannel fileChannel, VanillaChronicleMap<K, V, ?> map) throws IOException {
+        ByteBuffer headerBuffer = ByteBuffer.allocate(
+                SELF_BOOTSTRAPPING_HEADER_OFFSET + MAX_BOOTSTRAPPING_HEADER_SIZE);
+        headerBuffer.order(LITTLE_ENDIAN);
+        headerBuffer.putLong(HEADER_OFFSET, 0);
+        //noinspection PointlessBitwiseExpression
+        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_READY | DATA);
         Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
+        headerBytes.writePosition(SELF_BOOTSTRAPPING_HEADER_OFFSET);
         Wire wire = new BinaryWire(headerBytes);
         wire.getValueOut().typedMarshallable(map);
 
-        int headerSize = (int) headerBytes.writePosition();
-        headerBuffer.limit(headerSize);
-        while (headerBuffer.remaining() > 0) {
-            fileChannel.write(headerBuffer, headerBuffer.position());
-        }
-        return headerSize;
+        int headerLimit = (int) headerBytes.writePosition();
+        headerBuffer.position(0).limit(headerLimit);
+        writeFully(fileChannel, 0, headerBuffer);
+        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        return headerBuffer;
+    }
+
+    private static void writeReady(
+            VanillaChronicleHash map, RandomAccessFile raf, ByteBuffer headerBuffer, int headerSize)
+            throws IOException {
+        //noinspection PointlessBitwiseExpression
+        headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
+
+        long checksum = headerChecksum(headerBuffer, headerSize);
+        headerBuffer.putLong(HEADER_OFFSET, checksum);
+
+        // write checksum into file
+        headerBuffer.position(HEADER_OFFSET);
+        headerBuffer.limit(HEADER_OFFSET + 8);
+        FileChannel fileChannel = raf.getChannel();
+        writeFully(fileChannel, HEADER_OFFSET, headerBuffer);
+
+        map.msync(raf);
+        fileChannel.force(false);
+
+        headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
+        writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
 
     ChronicleMap<K, V> createWithoutFile() {
