@@ -238,6 +238,23 @@ final class ChannelProvider implements Closeable {
                         }
                         notifier0 = modificationNotifier;
                     }
+
+                    /**
+                     *
+                     * @return the earliest bootstrap timestamp across all the channels
+                     */
+                    @Override
+                    public long bootStrapTimeStamp() {
+                        long boostapTimeStamp = Long.MAX_VALUE;
+
+                        for (int i = 0, len = chronicleChannelList.size(); i < len; i++) {
+                            Replica chronicleChannel = chronicleChannelList.get(i);
+                            boostapTimeStamp = Math.min(boostapTimeStamp, chronicleChannel
+                                    .acquireModificationIterator(remoteIdentifier).bootStrapTimeStamp());
+                        }
+
+                        return boostapTimeStamp;
+                    }
                 };
 
                 modificationIterator.set((int) remoteIdentifier, result0);
@@ -526,6 +543,11 @@ final class ChannelProvider implements Closeable {
                     @Override
                     public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
                         modificationNotifier0 = modificationNotifier;
+                    }
+
+                    @Override
+                    public long bootStrapTimeStamp() {
+                        return 0;
                     }
 
                     @Override

@@ -247,6 +247,10 @@ public class TCPSocketReplicationBootStrapTest {
         map1 = (ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?>) ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .replication((byte) 1, map1Config).create();
 
+        final long bootStrapTimeStamp = map1.acquireModificationIterator((byte) 1).bootStrapTimeStamp();
+        System.out.println("bootStrapTimeStamp=" + bootStrapTimeStamp);
+
+
         File persistenceFile = getPersistenceFile();
 
         TcpTransportAndNetworkConfig map2Config = TcpTransportAndNetworkConfig.of(8067)

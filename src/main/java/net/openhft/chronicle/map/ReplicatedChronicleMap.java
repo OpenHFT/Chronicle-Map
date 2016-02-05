@@ -88,10 +88,9 @@ import static net.openhft.lang.io.NativeBytes.wrap;
  * dilemma by using a node identifier, each node will have a unique identifier, the update from the
  * node with the smallest identifier wins. </p>
  *
- * @param <K> the entries key type
- * @param <V> the entries value type
+ * @param <K> the entries key type § * @param <V> the entries value type
  */
-public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
+class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         V, VI, MVI extends MetaBytesInterop<V, ? super VI>>
         extends VanillaChronicleMap<K, KI, MKI, V, VI, MVI>
         implements Replica, EntryExternalizable, EntryResolver<K, V>, EngineReplicationLangBytes {
@@ -122,13 +121,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
 
         if (localIdentifier == -1) {
             throw new IllegalStateException("localIdentifier should not be -1");
-        }
-    }
-
-    private static void writeTo(Bytes destination, Bytes source) {
-
-        while (destination.remaining() > 0 && source.remaining() > 0) {
-            destination.writeByte(source.readByte());
         }
     }
 
@@ -187,10 +179,6 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
         // purposely not volatile as this will impact performance,
         // and the worst that will happen is we'll end up loading more data on a bootstrap
         return identifierUpdatedBytes.readLong(remoteIdentifier * 8L);
-    }
-
-    public long bootStrapTime(){
-        return this.acquireModificationIterator(this.identifier()).bootStrapTimeStamp();
     }
 
     @Override
@@ -1793,7 +1781,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
             changes = ATSDirectBitSet.wrap(bytes);
         }
 
-        public void setModificationNotifier(ModificationNotifier modificationNotifier) {
+        public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
             this.modificationNotifier = modificationNotifier;
         }
 
@@ -1934,7 +1922,7 @@ public class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? sup
          * disconnection, this time maybe later than the message time as event are not send in
          * chronological order from the bit set.
          */
-        private long bootStrapTimeStamp() {
+        public long bootStrapTimeStamp() {
             final long timeStamp = bootStrapTimeStamp.get();
             long result = (timeStamp == 0) ? this.lastBootStrapTimeStamp : timeStamp;
             this.lastBootStrapTimeStamp = result;

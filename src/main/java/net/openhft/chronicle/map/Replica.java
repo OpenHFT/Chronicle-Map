@@ -125,6 +125,13 @@ interface Replica extends Closeable, EngineReplicationLangBytes {
          * @param modificationNotifier gets notified when a change occurs
          */
         void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier);
+
+        /**
+         * @return the timestamp  that the remote client should bootstrap from when there has been a
+         * disconnection, this time maybe later than the message time as event are not send in
+         * chronological order from the bit set.
+         */
+        long bootStrapTimeStamp();
     }
 
     /**
