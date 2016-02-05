@@ -35,7 +35,7 @@ import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.ValueModel;
-import net.openhft.chronicle.wire.BinaryWire;
+import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -1518,7 +1518,7 @@ public final class ChronicleMapBuilder<K, V> implements
             Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
             headerBytes.readPosition(headerBuffer.position());
             headerBytes.readLimit(headerBuffer.limit());
-            Wire wire = new BinaryWire(headerBytes);
+            Wire wire = new TextWire(headerBytes);
             VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
             assert map != null;
             map.initBeforeMapping(file, fileChannel, headerBuffer.limit());
@@ -1565,7 +1565,7 @@ public final class ChronicleMapBuilder<K, V> implements
         headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_READY | DATA);
         Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
         headerBytes.writePosition(SELF_BOOTSTRAPPING_HEADER_OFFSET);
-        Wire wire = new BinaryWire(headerBytes);
+        Wire wire = new TextWire(headerBytes);
         wire.getValueOut().typedMarshallable(map);
 
         int headerLimit = (int) headerBytes.writePosition();

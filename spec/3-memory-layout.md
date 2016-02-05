@@ -36,7 +36,7 @@ takes one big continuous block of memory. Its structure, from lower addresses to
 
 It's structure and initialization order are described in the [Self Bootstrapping Data](
 https://github.com/OpenHFT/RFC/blob/master/Self-Bootstrapping-Data/Self-Bootstraping-Data-0.1.md)
-specification. It is encoded in Binary Wire format. Once created, this header is never changed. It
+specification. It is encoded in Text Wire format. Once created, this header is never changed. It
 contains all configurations, immutable for Chronicle Map during the instance lifetime: number of
 segments, various sizes, offsets, etc. See the specification of the fields on [Map Header
 Fields](3_1-header-fields.md) page.
