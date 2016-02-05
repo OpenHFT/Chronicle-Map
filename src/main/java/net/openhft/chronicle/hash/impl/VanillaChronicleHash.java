@@ -762,6 +762,7 @@ public abstract class VanillaChronicleHash<K,
         long lastTierIndex = firstTierIndex + tiersInBulk - 1;
         linkAndZeroOutFreeTiers(firstTierIndex, lastTierIndex);
 
+        // see HCOLL-397
         if (persisted()) {
             long address = tierBytesStore.address(firstTierOffset - tierBulkInnerOffsetToTiers);
             long endAddress = tierBytesStore.address(tierBytesOffset(lastTierIndex)) + tierSize;
