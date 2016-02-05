@@ -14,17 +14,21 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl;
+package net.openhft.chronicle.hash.impl.util.jna;
 
 import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.platform.win32.BaseTSD.SIZE_T;
+import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.Kernel32Util;
+import com.sun.jna.win32.W32APIOptions;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 
 import static com.sun.jna.platform.win32.WinError.ERROR_LOCK_VIOLATION;
 
-final class WindowsMsync {
+public final class WindowsMsync {
 
     public static void msync(RandomAccessFile raf, long addr, long length)
             throws IOException {
@@ -35,8 +39,8 @@ final class WindowsMsync {
         // pages to disk. As there is no way to synchronize the flushing then we retry a limited
         // number of times.
         do {
-            if ((success = FlushViewOfFile(addr, length)) ||
-                    (lastError = GetLastError()) != ERROR_LOCK_VIOLATION)
+            success = KERNEL_32.FlushViewOfFile(new Pointer(addr), new SIZE_T(length));
+            if (success || (lastError = KERNEL_32.GetLastError()) != ERROR_LOCK_VIOLATION)
                 break;
             retry++;
         } while (retry < 3);
@@ -49,13 +53,12 @@ final class WindowsMsync {
         }
     }
 
-    private static native boolean FlushViewOfFile(long addr, long length);
-
-    private static native int GetLastError();
-
-    static {
-        Native.register(WindowsMsync.class, "kernel32");
+    public interface Kernel32Ex extends Kernel32 {
+        boolean FlushViewOfFile(Pointer addr, SIZE_T length);
     }
+
+    private static final Kernel32Ex KERNEL_32 = (Kernel32Ex)
+            Native.loadLibrary("kernel32", Kernel32Ex.class, W32APIOptions.UNICODE_OPTIONS);
 
     private WindowsMsync() {}
 }

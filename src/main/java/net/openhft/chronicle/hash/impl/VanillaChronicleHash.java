@@ -24,6 +24,8 @@ import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
+import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
+import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
@@ -762,10 +764,6 @@ public abstract class VanillaChronicleHash<K,
 
         if (persisted()) {
             long address = tierBytesStore.address(firstTierOffset - tierBulkInnerOffsetToTiers);
-            // address should be a multiple of page size
-            if (OS.pageAlign(address) != address) {
-                address = OS.pageAlign(address) - OS.pageSize();
-            }
             long endAddress = tierBytesStore.address(tierBytesOffset(lastTierIndex)) + tierSize;
             long length = endAddress - address;
             msync(raf, address, length);
@@ -777,6 +775,12 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private static void msync(RandomAccessFile raf, long address, long length) throws IOException {
+        // address should be a multiple of page size
+        if (OS.pageAlign(address) != address) {
+            long oldAddress = address;
+            address = OS.pageAlign(address) - OS.pageSize();
+            length += oldAddress - address;
+        }
         if (OS.isWindows()) {
             WindowsMsync.msync(raf, address, length);
         } else {

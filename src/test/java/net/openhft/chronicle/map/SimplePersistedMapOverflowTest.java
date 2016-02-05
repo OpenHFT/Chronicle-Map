@@ -14,29 +14,24 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.hash.impl;
+package net.openhft.chronicle.map;
 
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
+import net.openhft.chronicle.set.Builder;
+import org.junit.Test;
 
 import java.io.IOException;
 
-final class PosixMsync {
+public class SimplePersistedMapOverflowTest {
 
-    private static final int MS_SYNC = 4;
-
-    public static void msync(long addr, long length) throws IOException {
-        if (msync(addr, length, MS_SYNC) == -1)
-            throw new IOException(strerror_r(Native.getLastError(), null, 0));
+    @Test
+    public void simplePersistedMapOverflowTest() throws IOException {
+        try (ChronicleMap<Integer, Integer> map = ChronicleMap
+                .of(Integer.class, Integer.class)
+                .entries(1_000)
+                .createPersistedTo(Builder.getPersistenceFile())) {
+            for (int i = 0; i < 2_000; i++) {
+                map.put(i, i);
+            }
+        }
     }
-
-    private static native String strerror_r(int errnum, char[] buf, int buflen);
-
-    private static native int msync(long addr, long length, int flags);
-
-    static {
-        Native.register(PosixMsync.class, Platform.C_LIBRARY_NAME);
-    }
-
-    private PosixMsync() {}
 }
