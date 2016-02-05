@@ -21,6 +21,7 @@ import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
@@ -51,6 +52,7 @@ import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -151,6 +153,38 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
+
+    private static final ConcurrentHashMap<File, ChronicleMap>
+            concurrentPersistedChronicleMapCreationControl = new ConcurrentHashMap<>(128);
+
+    interface CreateMap<K, V> {
+        ChronicleMap<K, V> createMap() throws IOException;
+    }
+
+    /**
+     * When Chronicle Maps are created using {@link #createPersistedTo(File)} or
+     * {@link #recoverPersistedTo(File, boolean)} or {@link #createOrRecoverPersistedTo(File)}
+     * methods, file lock on the Chronicle Map's lock is acquired, that shouldn't be done from
+     * concurrent threads within the same JVM process. So creation of Chronicle Maps
+     * persisted to the same File should be synchronized across JVM's threads. Simple way would be
+     * to synchronize on some static (lock) object, but would serialize all Chronicle Maps creations
+     * (persisted to any files), ConcurrentHashMap#compute() gives more scalability.
+     * ConcurrentHashMap is used effectively for lock striping only, the entries are removed
+     * immediately after compute() returns.
+     */
+    private static <K, V> ChronicleMap<K, V> createMapFileSynchronized(
+            File file, CreateMap<K, V> createMap) throws IOException {
+        ChronicleMap map = concurrentPersistedChronicleMapCreationControl.compute(file, (k, v) -> {
+            try {
+                return createMap.createMap();
+            } catch (IOException e) {
+                throw Jvm.rethrow(e);
+            }
+        });
+        concurrentPersistedChronicleMapCreationControl.remove(file);
+        //noinspection unchecked
+        return map;
+    }
 
     // not final because of cloning
     private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
@@ -1361,7 +1395,7 @@ public final class ChronicleMapBuilder<K, V> implements
         // clone() to make this builder instance thread-safe, because createWithFile() method
         // computes some state based on configurations, but doesn't synchronize on configuration
         // changes.
-        return clone().createWithFile(file, false, false);
+        return createMapFileSynchronized(file, () -> clone().createWithFile(file, false, false));
     }
 
     @Override
@@ -1372,7 +1406,8 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMap<K, V> recoverPersistedTo(File file, boolean sameBuilderConfig)
             throws IOException {
-        return clone().createWithFile(file, true, sameBuilderConfig);
+        return createMapFileSynchronized(file,
+                () -> clone().createWithFile(file, true, sameBuilderConfig));
     }
 
     @Override
