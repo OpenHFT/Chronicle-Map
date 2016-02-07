@@ -29,6 +29,7 @@ import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.SizePrefixedBlob;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
+import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
@@ -1430,9 +1431,11 @@ public final class ChronicleMapBuilder<K, V> implements
             //noinspection ResultOfMethodCallIgnored
             file.createNewFile();
         }
-        try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+        ChronicleMap<K, V> result = null;
+        RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file);
+        try {
             if (raf.length() > 0)
-                return openWithExistingFile(file, raf, recover, overrideBuilderConfig);
+                return result = openWithExistingFile(file, raf, recover, overrideBuilderConfig);
 
             @SuppressWarnings("unchecked")
             VanillaChronicleMap<K, V, ?>[] map = new VanillaChronicleMap[1];
@@ -1452,10 +1455,13 @@ public final class ChronicleMapBuilder<K, V> implements
 
             if (newFile[0]) {
                 int headerSize = headerBuffer[0].remaining();
-                return createWithNewFile(map[0], file, raf, headerBuffer[0], headerSize);
+                return result = createWithNewFile(map[0], file, raf, headerBuffer[0], headerSize);
             } else {
-                return openWithExistingFile(file, raf, recover, overrideBuilderConfig);
+                return result = openWithExistingFile(file, raf, recover, overrideBuilderConfig);
             }
+        } finally {
+            if (result == null)
+                CanonicalRandomAccessFiles.release(file);
         }
     }
 
@@ -1668,7 +1674,7 @@ public final class ChronicleMapBuilder<K, V> implements
             throws IOException {
         FileChannel fileChannel = raf.getChannel();
         // see HCOLL-396
-        map.msync(raf);
+        map.msync();
 
         //noinspection PointlessBitwiseExpression
         headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);

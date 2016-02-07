@@ -24,6 +24,7 @@ import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
+import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
 import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -38,6 +39,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.misc.Cleaner;
 
 import java.io.File;
 import java.io.IOException;
@@ -126,6 +128,8 @@ public abstract class VanillaChronicleHash<K,
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     private transient File file;
+    private transient RandomAccessFile raf;
+    private transient Cleaner releaseRaf;
     protected transient BytesStore bs;
 
     public static class TierBulkData {
@@ -394,6 +398,7 @@ public abstract class VanillaChronicleHash<K,
                 }
             }
             globalMutableStateBuffer.flip();
+            //noinspection unchecked
             globalMutableState.bytesStore(BytesStore.wrap(globalMutableStateBuffer), 0,
                     globalMutableState.maxSize());
         }
@@ -436,30 +441,54 @@ public abstract class VanillaChronicleHash<K,
                     bytesStore.start() + ", 0 expected");
         }
         this.bs = bytesStore;
+        //noinspection unchecked
         globalMutableState.bytesStore(bs, headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET,
                 globalMutableState.maxSize());
 
         onHeaderCreated();
     }
 
+    private void setFile(File file, RandomAccessFile raf) {
+        this.file = file;
+        this.raf = raf;
+        this.releaseRaf = Cleaner.create(this, new RafRelease(file));
+    }
+
+    private static class RafRelease implements Runnable {
+        final File file;
+
+        private RafRelease(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public void run() {
+            try {
+                CanonicalRandomAccessFiles.release(file);
+            } catch (IOException e) {
+                LOG.error("error on releasing RAF for file {}: {}", file, e);
+            }
+        }
+    }
+
     public final void createMappedStoreAndSegments(File file, RandomAccessFile raf)
             throws IOException {
         // TODO this method had been moved -- not clear where
         //OS.warnOnWindows(sizeInBytesWithoutTiers());
-        this.file = file;
+        setFile(file, raf);
         long mapSize = expectedFileSize();
-        createMappedStoreAndSegments(map(raf, mapSize, 0));
+        createMappedStoreAndSegments(map(mapSize, 0));
     }
 
     public final void basicRecover(File file, RandomAccessFile raf) throws IOException {
-        this.file = file;
+        setFile(file, raf);
         long segmentHeadersOffset = computeSegmentHeadersOffset();
         long sizeInBytesWithoutTiers = computeSizeInBytesWithoutTiers(segmentHeadersOffset);
         long sizeBeyondSegments = Math.max(raf.length() - sizeInBytesWithoutTiers, 0);
         int allocatedExtraTierBulks = (int) (sizeBeyondSegments / tierBulkSizeInBytes);
         long mapSize = pageAlign(sizeInBytesWithoutTiers +
                 allocatedExtraTierBulks * tierBulkSizeInBytes);
-        initBytesStoreAndHeadersViews(map(raf, mapSize, 0));
+        initBytesStoreAndHeadersViews(map(mapSize, 0));
 
         resetGlobalMutableStateLock(file);
         recoverAllocatedExtraTierBulks(file, allocatedExtraTierBulks);
@@ -594,6 +623,8 @@ public abstract class VanillaChronicleHash<K,
                 assert bulkData.bytesStore.refCount() == 0;
             }
         }
+        if (releaseRaf != null)
+            releaseRaf.clean();
     }
 
     @Override
@@ -724,7 +755,11 @@ public abstract class VanillaChronicleHash<K,
                     globalMutableState.setFirstFreeTierIndex(nextFreeTierIndex);
                     return firstFreeTierIndex;
                 } else {
-                    allocateTierBulk();
+                    try {
+                        allocateTierBulk();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
         } finally {
@@ -732,24 +767,10 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void allocateTierBulk() {
-        try {
-            RandomAccessFile raf = persisted() ? new RandomAccessFile(file, "rw") : null;
-            try {
-                allocateTierBulk0(raf);
-            } finally {
-                if (raf != null)
-                    raf.close();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void allocateTierBulk0(RandomAccessFile raf) throws IOException {
+    private void allocateTierBulk() throws IOException {
         int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
 
-        mapTierBulks(raf, allocatedExtraTierBulks);
+        mapTierBulks(allocatedExtraTierBulks);
 
         long firstTierIndex = extraTierIndexToTierIndex(allocatedExtraTierBulks * tiersInBulk);
         BytesStore tierBytesStore = tierBytesStore(firstTierIndex);
@@ -767,7 +788,7 @@ public abstract class VanillaChronicleHash<K,
             long address = tierBytesStore.address(firstTierOffset - tierBulkInnerOffsetToTiers);
             long endAddress = tierBytesStore.address(tierBytesOffset(lastTierIndex)) + tierSize;
             long length = endAddress - address;
-            msync(raf, address, length);
+            msync(address, length);
         }
 
         // after we are sure the new bulk is initialized, update the global mutable state
@@ -775,11 +796,11 @@ public abstract class VanillaChronicleHash<K,
         globalMutableState.setFirstFreeTierIndex(firstTierIndex);
     }
 
-    public void msync(RandomAccessFile raf) throws IOException {
-        msync(raf, bsAddress(), bs.capacity());
+    public void msync() throws IOException {
+        msync(bsAddress(), bs.capacity());
     }
 
-    private static void msync(RandomAccessFile raf, long address, long length) throws IOException {
+    private void msync(long address, long length) throws IOException {
         // address should be a multiple of page size
         if (OS.pageAlign(address) != address) {
             long oldAddress = address;
@@ -862,23 +883,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private void mapTierBulks(int upToBulkIndex) {
-        try {
-            RandomAccessFile raf = persisted() ? new RandomAccessFile(file, "rw") : null;
-            try {
-                mapTierBulks(raf, upToBulkIndex);
-            } finally {
-                if (raf != null)
-                    raf.close();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void mapTierBulks(RandomAccessFile raf, int upToBulkIndex) {
         if (persisted()) {
             try {
-                mapTierBulksMapped(raf, upToBulkIndex);
+                mapTierBulksMapped(upToBulkIndex);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -888,7 +895,7 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void mapTierBulksMapped(RandomAccessFile raf, int upToBulkIndex) throws IOException {
+    private void mapTierBulksMapped(int upToBulkIndex) throws IOException {
         int firstBulkToMapIndex = tierBulkOffsets.size();
         int bulksToMap = upToBulkIndex + 1 - firstBulkToMapIndex;
         long mapSize = bulksToMap * tierBulkSizeInBytes;
@@ -908,7 +915,7 @@ public abstract class VanillaChronicleHash<K,
         }
         // mapping by hand, because MappedFile/MappedBytesStore doesn't allow to create a BS
         // which starts not from the beginning of the file, but has start() of 0
-        NativeBytesStore extraStore = map(raf, mapSize, mappingOffsetInFile);
+        NativeBytesStore extraStore = map(mapSize, mappingOffsetInFile);
         appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore,
                 firstBulkToMapOffsetWithinMapping);
     }
@@ -916,8 +923,7 @@ public abstract class VanillaChronicleHash<K,
     /**
      * @see net.openhft.chronicle.bytes.MappedFile#acquireByteStore(long, MappedBytesStoreFactory)
      */
-    private static NativeBytesStore map(
-            RandomAccessFile raf, long mapSize, long mappingOffsetInFile) throws IOException {
+    private NativeBytesStore map(long mapSize, long mappingOffsetInFile) throws IOException {
         long minFileSize = mappingOffsetInFile + mapSize;
         FileChannel fileChannel = raf.getChannel();
         if (fileChannel.size() < minFileSize) {
