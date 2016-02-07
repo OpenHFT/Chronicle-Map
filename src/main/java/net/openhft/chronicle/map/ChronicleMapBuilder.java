@@ -154,11 +154,11 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
 
-    private static final ConcurrentHashMap<File, ChronicleMap>
-            concurrentPersistedChronicleMapCreationControl = new ConcurrentHashMap<>(128);
+    private static final ConcurrentHashMap<File, Void> fileLockingControl =
+            new ConcurrentHashMap<>(128);
 
-    interface CreateMap<K, V> {
-        ChronicleMap<K, V> createMap() throws IOException;
+    interface FileIOAction {
+        void fileIOAction() throws IOException;
     }
 
     /**
@@ -169,21 +169,21 @@ public final class ChronicleMapBuilder<K, V> implements
      * persisted to the same File should be synchronized across JVM's threads. Simple way would be
      * to synchronize on some static (lock) object, but would serialize all Chronicle Maps creations
      * (persisted to any files), ConcurrentHashMap#compute() gives more scalability.
-     * ConcurrentHashMap is used effectively for lock striping only, the entries are removed
-     * immediately after compute() returns.
+     * ConcurrentHashMap is used effectively for lock striping only, because the entries are not
+     * even landing the map, because compute() always returns null.
      */
-    private static <K, V> ChronicleMap<K, V> createMapFileSynchronized(
-            File file, CreateMap<K, V> createMap) throws IOException {
-        ChronicleMap map = concurrentPersistedChronicleMapCreationControl.compute(file, (k, v) -> {
+    private static void fileLockedIO(
+            File file, FileChannel fileChannel, FileIOAction fileIOAction) throws IOException {
+        fileLockingControl.compute(file, (k, v) -> {
             try {
-                return createMap.createMap();
+                try (FileLock ignored = fileChannel.lock()) {
+                    fileIOAction.fileIOAction();
+                }
+                return null;
             } catch (IOException e) {
                 throw Jvm.rethrow(e);
             }
         });
-        concurrentPersistedChronicleMapCreationControl.remove(file);
-        //noinspection unchecked
-        return map;
     }
 
     // not final because of cloning
@@ -1395,7 +1395,7 @@ public final class ChronicleMapBuilder<K, V> implements
         // clone() to make this builder instance thread-safe, because createWithFile() method
         // computes some state based on configurations, but doesn't synchronize on configuration
         // changes.
-        return createMapFileSynchronized(file, () -> clone().createWithFile(file, false, false));
+        return clone().createWithFile(file, false, false);
     }
 
     @Override
@@ -1406,8 +1406,7 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMap<K, V> recoverPersistedTo(File file, boolean sameBuilderConfig)
             throws IOException {
-        return createMapFileSynchronized(file,
-                () -> clone().createWithFile(file, true, sameBuilderConfig));
+        return clone().createWithFile(file, true, sameBuilderConfig);
     }
 
     @Override
@@ -1435,23 +1434,25 @@ public final class ChronicleMapBuilder<K, V> implements
             if (raf.length() > 0)
                 return openWithExistingFile(file, raf, recover, overrideBuilderConfig);
 
-            VanillaChronicleMap<K, V, ?> map = null;
-            ByteBuffer headerBuffer = null;
-            boolean newFile;
+            @SuppressWarnings("unchecked")
+            VanillaChronicleMap<K, V, ?>[] map = new VanillaChronicleMap[1];
+            ByteBuffer[] headerBuffer = new ByteBuffer[1];
+            boolean[] newFile = new boolean[1];
             FileChannel fileChannel = raf.getChannel();
-            try (FileLock ignored = fileChannel.lock()) {
-                if (raf.length() == 0) {
-                    map = newMap();
-                    headerBuffer = writeHeader(fileChannel, map);
-                    newFile = true;
-                } else {
-                    newFile = false;
-                }
-            }
 
-            if (newFile) {
-                int headerSize = headerBuffer.remaining();
-                return createWithNewFile(map, file, raf, headerBuffer, headerSize);
+            fileLockedIO(file, fileChannel, () -> {
+                if (raf.length() == 0) {
+                    map[0] = newMap();
+                    headerBuffer[0] = writeHeader(fileChannel, map[0]);
+                    newFile[0] = true;
+                } else {
+                    newFile[0] = false;
+                }
+            });
+
+            if (newFile[0]) {
+                int headerSize = headerBuffer[0].remaining();
+                return createWithNewFile(map[0], file, raf, headerBuffer[0], headerSize);
             } else {
                 return openWithExistingFile(file, raf, recover, overrideBuilderConfig);
             }
