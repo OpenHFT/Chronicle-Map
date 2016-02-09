@@ -1432,7 +1432,7 @@ public final class ChronicleMapBuilder<K, V> implements
             //noinspection ResultOfMethodCallIgnored
             file.createNewFile();
         }
-        ChronicleMap<K, V> result = null;
+        VanillaChronicleMap<K, V, ?> result = null;
         RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file);
         try {
             if (raf.length() > 0)
@@ -1461,8 +1461,11 @@ public final class ChronicleMapBuilder<K, V> implements
                 return result = openWithExistingFile(file, raf, recover, overrideBuilderConfig);
             }
         } finally {
-            if (result == null)
+            if (result != null) {
+                result.registerRafReleaser();
+            } else {
                 CanonicalRandomAccessFiles.release(file);
+            }
         }
     }
 
@@ -1558,7 +1561,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return LongHashFunction.xx_r39().hashBytes(headerBuffer, SIZE_WORD_OFFSET, headerSize + 4);
     }
 
-    private ChronicleMap<K, V> createWithNewFile(
+    private VanillaChronicleMap<K, V, ?> createWithNewFile(
             VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
             ByteBuffer headerBuffer, int headerSize) throws IOException {
         FileChannel fileChannel = raf.getChannel();
@@ -1569,7 +1572,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return map;
     }
 
-    private ChronicleMap<K, V> openWithExistingFile(
+    private VanillaChronicleMap<K, V, ?> openWithExistingFile(
             File file, RandomAccessFile raf, boolean recover, boolean overrideBuilderConfig)
             throws IOException {
         try {

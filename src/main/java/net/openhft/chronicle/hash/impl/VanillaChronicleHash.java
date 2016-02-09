@@ -129,7 +129,7 @@ public abstract class VanillaChronicleHash<K,
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     private transient File file;
     private transient RandomAccessFile raf;
-    private transient Cleaner releaseRaf;
+    private transient Cleaner rafCleaner;
     protected transient BytesStore bs;
 
     public static class TierBulkData {
@@ -459,13 +459,16 @@ public abstract class VanillaChronicleHash<K,
     private void setFile(File file, RandomAccessFile raf) {
         this.file = file;
         this.raf = raf;
-        this.releaseRaf = Cleaner.create(this, new RafRelease(file));
     }
 
-    private static class RafRelease implements Runnable {
+    public void registerRafReleaser() {
+        this.rafCleaner = Cleaner.create(this, new RafReleaser(file));
+    }
+
+    private static class RafReleaser implements Runnable {
         final File file;
 
-        private RafRelease(File file) {
+        private RafReleaser(File file) {
             this.file = file;
         }
 
@@ -631,8 +634,8 @@ public abstract class VanillaChronicleHash<K,
                 assert bulkData.bytesStore.refCount() == 0;
             }
         }
-        if (releaseRaf != null)
-            releaseRaf.clean();
+        if (rafCleaner != null)
+            rafCleaner.clean();
     }
 
     @Override
