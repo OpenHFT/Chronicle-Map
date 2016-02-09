@@ -1564,9 +1564,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private VanillaChronicleMap<K, V, ?> createWithNewFile(
             VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
             ByteBuffer headerBuffer, int headerSize) throws IOException {
-        FileChannel fileChannel = raf.getChannel();
-        map.initBeforeMapping(file, fileChannel, headerBuffer.limit(), false);
-        map.createMappedStoreAndSegments(file, raf);
+        map.initBeforeMapping(file, raf, headerBuffer.limit(), false);
+        map.createMappedStoreAndSegments();
         commitChronicleMapReady(map, raf, headerBuffer, headerSize);
         establishReplication(map);
         return map;
@@ -1593,7 +1592,7 @@ public final class ChronicleMapBuilder<K, V> implements
             Wire wire = new TextWire(headerBytes);
             VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
             assert map != null;
-            map.initBeforeMapping(file, fileChannel, headerBuffer.limit(), recover);
+            map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
             long expectedFileLength = map.expectedFileSize();
             if (!recover && expectedFileLength != file.length()) {
                 throw new IOException("The file " + file + " the map is serialized from " +
@@ -1602,13 +1601,13 @@ public final class ChronicleMapBuilder<K, V> implements
             }
             map.initTransientsFromBuilder(this);
             if (!recover) {
-                map.createMappedStoreAndSegments(file, raf);
+                map.createMappedStoreAndSegments();
             } else {
                 if (!overrideBuilderConfig)
                     writeNotReady(fileChannel, headerBuffer, headerSize);
                 // if overrideBuilderConfig = true, readiness bit is already set
                 // in writeHeader() call
-                map.recover(file, raf);
+                map.recover();
                 commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
             establishReplication(map);

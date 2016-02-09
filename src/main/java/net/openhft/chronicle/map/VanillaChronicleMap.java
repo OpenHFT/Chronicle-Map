@@ -147,8 +147,8 @@ public class VanillaChronicleMap<K, V, R>
         initOwnTransients();
     }
 
-    public void recover(File file, RandomAccessFile raf) throws IOException {
-        basicRecover(file, raf);
+    public void recover() throws IOException {
+        basicRecover();
         iterationContext().recoverSegments();
     }
 

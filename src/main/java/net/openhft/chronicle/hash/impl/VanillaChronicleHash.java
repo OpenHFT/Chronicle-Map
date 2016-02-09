@@ -382,16 +382,19 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public final void initBeforeMapping(File file, FileChannel ch, long headerEnd, boolean recover)
-            throws IOException {
+    public final void initBeforeMapping(
+            File file, RandomAccessFile raf, long headerEnd, boolean recover) throws IOException {
+        this.file = file;
+        this.raf = raf;
         this.headerSize = roundUpMapHeaderSize(headerEnd);
         if (!createdOrInMemory) {
             // This block is for reading segmentHeadersOffset before main mapping
             // After the mapping globalMutableState value's bytes are reassigned
             ByteBuffer globalMutableStateBuffer =
                     ByteBuffer.allocate((int) globalMutableState.maxSize());
+            FileChannel fileChannel = raf.getChannel();
             while (globalMutableStateBuffer.remaining() > 0) {
-                if (ch.read(globalMutableStateBuffer,
+                if (fileChannel.read(globalMutableStateBuffer,
                         this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET +
                                 globalMutableStateBuffer.position()) == -1) {
                     throw throwRecoveryOrReturnIOException(file + " truncated", recover);
@@ -456,11 +459,6 @@ public abstract class VanillaChronicleHash<K,
         onHeaderCreated();
     }
 
-    private void setFile(File file, RandomAccessFile raf) {
-        this.file = file;
-        this.raf = raf;
-    }
-
     public void registerRafReleaser() {
         this.rafCleaner = Cleaner.create(this, new RafReleaser(file));
     }
@@ -482,17 +480,14 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public final void createMappedStoreAndSegments(File file, RandomAccessFile raf)
-            throws IOException {
+    public final void createMappedStoreAndSegments() throws IOException {
         // TODO this method had been moved -- not clear where
         //OS.warnOnWindows(sizeInBytesWithoutTiers());
-        setFile(file, raf);
         long mapSize = expectedFileSize();
         createMappedStoreAndSegments(map(mapSize, 0));
     }
 
-    public final void basicRecover(File file, RandomAccessFile raf) throws IOException {
-        setFile(file, raf);
+    public final void basicRecover() throws IOException {
         long segmentHeadersOffset = computeSegmentHeadersOffset();
         long sizeInBytesWithoutTiers = computeSizeInBytesWithoutTiers(segmentHeadersOffset);
         long sizeBeyondSegments = Math.max(raf.length() - sizeInBytesWithoutTiers, 0);
@@ -501,13 +496,13 @@ public abstract class VanillaChronicleHash<K,
                 allocatedExtraTierBulks * tierBulkSizeInBytes);
         initBytesStoreAndHeadersViews(map(mapSize, 0));
 
-        resetGlobalMutableStateLock(file);
-        recoverAllocatedExtraTierBulks(file, allocatedExtraTierBulks);
-        recoverSegmentHeadersOffset(file, segmentHeadersOffset);
+        resetGlobalMutableStateLock();
+        recoverAllocatedExtraTierBulks(allocatedExtraTierBulks);
+        recoverSegmentHeadersOffset(segmentHeadersOffset);
         initOffsetsAndBulks();
     }
 
-    private void resetGlobalMutableStateLock(File file) {
+    private void resetGlobalMutableStateLock() {
         long lockAddr = globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET;
         LockingStrategy lockingStrategy = globalMutableStateLockingStrategy;
         long lockState = lockingStrategy.getState(nativeAccess(), null, lockAddr);
@@ -518,7 +513,7 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void recoverAllocatedExtraTierBulks(File file, int allocatedExtraTierBulks) {
+    private void recoverAllocatedExtraTierBulks(int allocatedExtraTierBulks) {
         if (globalMutableState.getAllocatedExtraTierBulks() != allocatedExtraTierBulks) {
             LOG.error("allocated extra tier bulks counter corrupted, or the map file {} " +
                     "is truncated. stored: {}, should be: {}", file,
@@ -527,7 +522,7 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void recoverSegmentHeadersOffset(File file, long segmentHeadersOffset) {
+    private void recoverSegmentHeadersOffset(long segmentHeadersOffset) {
         if (globalMutableState.getSegmentHeadersOffset() != segmentHeadersOffset) {
             LOG.error("segment headers offset of map at {} corrupted. stored: {}, should be: {}",
                     file, globalMutableState.getSegmentHeadersOffset(), segmentHeadersOffset);
