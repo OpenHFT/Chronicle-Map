@@ -1571,8 +1571,8 @@ public final class ChronicleMapBuilder<K, V> implements
         FileChannel fileChannel = raf.getChannel();
         map.initBeforeMapping(file, fileChannel, headerBuffer.limit());
         map.createMappedStoreAndSegments(file, raf);
-        establishReplication(map);
         commitChronicleMapReady(map, raf, headerBuffer, headerSize);
+        establishReplication(map);
         return map;
     }
 
@@ -1613,9 +1613,9 @@ public final class ChronicleMapBuilder<K, V> implements
                 // if overrideBuilderConfig = true, readiness bit is already set
                 // in writeHeader() call
                 map.recover(file, raf);
+                commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
             establishReplication(map);
-            commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             return map;
         } catch (Exception e) {
             if (recover && !(e instanceof IOException) &&
