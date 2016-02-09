@@ -65,6 +65,7 @@ import static net.openhft.chronicle.bytes.NativeBytesStore.lazyNativeBytesStoreW
 import static net.openhft.chronicle.core.Maths.*;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
 import static net.openhft.chronicle.hash.impl.SizePrefixedBlob.*;
+import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.throwRecoveryOrReturnIOException;
 import static net.openhft.chronicle.hash.impl.util.FileIOUtils.readFully;
 import static net.openhft.chronicle.hash.impl.util.FileIOUtils.writeFully;
 import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
@@ -1553,14 +1554,6 @@ public final class ChronicleMapBuilder<K, V> implements
         return headerBuffer;
     }
 
-    private IOException throwRecoveryOrReturnIOException(String message, boolean recover) {
-        if (recover) {
-            throw new ChronicleHashRecoveryFailedException(message);
-        } else {
-            return new IOException(message);
-        }
-    }
-
     private static long headerChecksum(ByteBuffer headerBuffer, int headerSize) {
         return LongHashFunction.xx_r39().hashBytes(headerBuffer, SIZE_WORD_OFFSET, headerSize + 4);
     }
@@ -1569,7 +1562,7 @@ public final class ChronicleMapBuilder<K, V> implements
             VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
             ByteBuffer headerBuffer, int headerSize) throws IOException {
         FileChannel fileChannel = raf.getChannel();
-        map.initBeforeMapping(file, fileChannel, headerBuffer.limit());
+        map.initBeforeMapping(file, fileChannel, headerBuffer.limit(), false);
         map.createMappedStoreAndSegments(file, raf);
         commitChronicleMapReady(map, raf, headerBuffer, headerSize);
         establishReplication(map);
@@ -1597,7 +1590,7 @@ public final class ChronicleMapBuilder<K, V> implements
             Wire wire = new TextWire(headerBytes);
             VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
             assert map != null;
-            map.initBeforeMapping(file, fileChannel, headerBuffer.limit());
+            map.initBeforeMapping(file, fileChannel, headerBuffer.limit(), recover);
             long expectedFileLength = map.expectedFileSize();
             if (!recover && expectedFileLength != file.length()) {
                 throw new IOException("The file " + file + " the map is serialized from " +

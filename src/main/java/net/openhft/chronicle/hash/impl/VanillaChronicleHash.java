@@ -382,7 +382,7 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public final void initBeforeMapping(File file, FileChannel ch, long headerEnd)
+    public final void initBeforeMapping(File file, FileChannel ch, long headerEnd, boolean recover)
             throws IOException {
         this.headerSize = roundUpMapHeaderSize(headerEnd);
         if (!createdOrInMemory) {
@@ -394,13 +394,21 @@ public abstract class VanillaChronicleHash<K,
                 if (ch.read(globalMutableStateBuffer,
                         this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET +
                                 globalMutableStateBuffer.position()) == -1) {
-                    throw new RuntimeException(file + " truncated");
+                    throw throwRecoveryOrReturnIOException(file + " truncated", recover);
                 }
             }
             globalMutableStateBuffer.flip();
             //noinspection unchecked
             globalMutableState.bytesStore(BytesStore.wrap(globalMutableStateBuffer), 0,
                     globalMutableState.maxSize());
+        }
+    }
+
+    public static IOException throwRecoveryOrReturnIOException(String message, boolean recover) {
+        if (recover) {
+            throw new ChronicleHashRecoveryFailedException(message);
+        } else {
+            return new IOException(message);
         }
     }
 
