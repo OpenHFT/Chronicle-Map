@@ -30,6 +30,7 @@ enum Objects {
         return Arrays.hashCode(values);
     }
 
+    // use the same API as Java 8's Objects.equals
     static boolean equals(@Nullable Object a, @Nullable Object b) {
         return a != null ? a.equals(b) : b == null;
     }
