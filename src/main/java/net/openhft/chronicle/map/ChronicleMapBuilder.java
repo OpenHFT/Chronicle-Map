@@ -1056,11 +1056,11 @@ public final class ChronicleMapBuilder<K, V> implements
     int segmentHeaderSize() {
         int segments = actualSegments();
 
-        long pageSize = 4096;
-        if (segments * (64 * 3) < (2 * pageSize)) // i. e. <= 42 segments
+        long pageSize = OS.pageSize();
+        if (segments * (64 * 3) < (2 * pageSize)) // i. e. <= 42 segments, if page size is 4K
             return 64 * 3; // cache line per header, plus one CL to the left, plus one to the right
 
-        if (segments * (64 * 2) < (3 * pageSize)) // i. e. <= 96 segments
+        if (segments * (64 * 2) < (3 * pageSize)) // i. e. <= 96 segments, if page size is 4K
             return 64 * 2;
 
         // reduce false sharing unless we have a lot of segments.
