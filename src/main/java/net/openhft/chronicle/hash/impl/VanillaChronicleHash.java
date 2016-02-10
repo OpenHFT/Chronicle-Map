@@ -728,14 +728,13 @@ public abstract class VanillaChronicleHash<K,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
-    public long allocateTier(int forSegmentIndex, int tier) {
-        LOG.debug("Allocate tier for segment # {}, tier {}", forSegmentIndex, tier);
+    public long allocateTier() {
         globalMutableStateLock();
         try {
             long tiersInUse = globalMutableState.getExtraTiersInUse();
-            if (tiersInUse == maxExtraTiers) {
-                throw new IllegalStateException("Attempt to allocate " + (maxExtraTiers + 1) +
-                        "th extra segment tier, " + maxExtraTiers + " is maximum.\n" +
+            if (tiersInUse >= maxExtraTiers) {
+                throw new IllegalStateException("Attempt to allocate #" + (tiersInUse + 1) +
+                        " extra segment tier, " + maxExtraTiers + " is maximum.\n" +
                         "Possible reasons include:\n" +
                         " - you have forgotten to configure (or configured wrong) " +
                         "builder.entries() number\n" +
@@ -744,30 +743,31 @@ public abstract class VanillaChronicleHash<K,
                         " - keys, inserted into the ChronicleHash, are distributed suspiciously " +
                         "bad. This might be a DOS attack");
             }
-            while (true) {
-                long firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
-                if (firstFreeTierIndex > 0) {
-                    globalMutableState.setExtraTiersInUse(tiersInUse + 1);
-                    BytesStore allocatedTierBytes = tierBytesStore(firstFreeTierIndex);
-                    long allocatedTierOffset = tierBytesOffset(firstFreeTierIndex);
-                    long tierBaseAddr = allocatedTierBytes.address(0) + allocatedTierOffset;
-                    long tierCountersAreaAddr = tierBaseAddr + tierHashLookupOuterSize;
-                    long nextFreeTierIndex = TierCountersArea.nextTierIndex(tierCountersAreaAddr);
-                    // now, when this tier will be a part of the map, the next tier designates
-                    // the next tier in the data store, should be 0
-                    TierCountersArea.nextTierIndex(tierCountersAreaAddr, 0);
-                    TierCountersArea.segmentIndex(tierCountersAreaAddr, forSegmentIndex);
-                    TierCountersArea.tier(tierCountersAreaAddr, tier);
-                    globalMutableState.setFirstFreeTierIndex(nextFreeTierIndex);
-                    return firstFreeTierIndex;
-                } else {
-                    try {
-                        allocateTierBulk();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+            long firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
+            if (firstFreeTierIndex < 0) {
+                throw new RuntimeException("unexpected firstFreeTierIndex value " +
+                        firstFreeTierIndex);
+            }
+            if (firstFreeTierIndex == 0) {
+                try {
+                    allocateTierBulk();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
+                if (firstFreeTierIndex <= 0) {
+                    throw new RuntimeException("unexpected firstFreeTierIndex value " +
+                            firstFreeTierIndex);
                 }
             }
+            globalMutableState.setExtraTiersInUse(tiersInUse + 1);
+            BytesStore allocatedTierBytes = tierBytesStore(firstFreeTierIndex);
+            long allocatedTierOffset = tierBytesOffset(firstFreeTierIndex);
+            long tierBaseAddr = allocatedTierBytes.address(0) + allocatedTierOffset;
+            long tierCountersAreaAddr = tierBaseAddr + tierHashLookupOuterSize;
+            long nextFreeTierIndex = TierCountersArea.nextTierIndex(tierCountersAreaAddr);
+            globalMutableState.setFirstFreeTierIndex(nextFreeTierIndex);
+            return firstFreeTierIndex;
         } finally {
             globalMutableStateUnlock();
         }

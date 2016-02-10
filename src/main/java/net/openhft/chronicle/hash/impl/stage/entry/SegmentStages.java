@@ -27,6 +27,7 @@ import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.chronicle.map.impl.IterationContext;
@@ -46,6 +47,7 @@ import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.TIER_COUNTERS
 @Staged
 public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
+    @StageRef LogHolder log;
     @StageRef Chaining chaining;
     @StageRef public VanillaChronicleHashHolder<?> hh;
     @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
@@ -558,11 +560,17 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         long nextTierIndex = nextTierIndex();
         if (nextTierIndex == 0) {
-            nextTierIndex = h.allocateTier(segmentIndex, tier + 1);
+            log.LOG.debug("Allocate tier for segment # {}, tier {}", segmentIndex, tier + 1);
+            nextTierIndex = h.allocateTier();
             nextTierIndex(nextTierIndex);
-            long currentTierIndex = tierIndex;
+            long prevTierIndex = tierIndex;
+
             initSegmentTier(tier + 1, nextTierIndex);
-            prevTierIndex(currentTierIndex);
+
+            TierCountersArea.segmentIndex(tierCountersAreaAddr(), segmentIndex);
+            TierCountersArea.tier(tierCountersAreaAddr(), tier);
+            nextTierIndex(0);
+            prevTierIndex(prevTierIndex);
         } else {
             initSegmentTier(tier + 1, nextTierIndex);
         }
