@@ -8,7 +8,7 @@ The lock structure is 8 bytes (64 bits) long.
   3. Bit 31 - write lock flag
  2. *Wait word*: bits 32..63 - wait count (little-endian)
 
-## The *try acquire read lock* procedure
+## Try acquire read lock
 
  1. Read the lock state.
  2. If the write lock flag is set, or the wait count is non-zero, or the read lock count is
@@ -16,16 +16,40 @@ The lock structure is 8 bytes (64 bits) long.
  3. Make a copy of the count word, with the read lock count incremented.
  4. Perform a *compare-and-swap* (CAS) operation on the count word, comparing with the state that
  was read and swapping with the updated, made on the previous step. If the CAS operation succeeds,
- the procedure succeeds. If the operations fails, the procedure fails.
+ the procedure succeeds. If the CAS operation fails, the procedure fails.
 
-## The *try acquire update lock* procedure
+## Release read lock
+
+ 1. Read the lock state.
+ 2. If the read lock count is 0, then the procedure fails.
+ 3. Make a copy of the count word, with the read lock count decremented.
+ 4. Perform a CAS operation on the count word, comparing with the state that was read on the 1st
+ step and swapping with the updated, made on the previous step. If the CAS operation succeeds,
+ the procedure succeeds. If the CAS operation fails, continue this procedure, starting from the 1st
+ step
+
+> There is formally an infinite loop in this procedure, but if implemented correctly (and only
+> such implementations alter the lock structure) it should either fail or succeed in some finite
+> number of iterations.
+
+## Try acquire update lock
 
  1. Read the lock state.
  2. If the update or write lock flag is set or the wait count is non-zero, then the procedure fails.
  3. Make a copy of the count word, with the update lock flag set.
  4. Perform a CAS operation on the count word, comparing with the state that was read and swapping
  with the updated, made on the previous step. If the CAS operation succeeds, the procedure succeeds.
- If the operations fails, the procedure fails.
+ If the CAS operation fails, the procedure fails.
+
+## Release update lock
+
+ 1. Read the lock state.
+ 2. If the update lock flag is not set, then the procedure fails.
+ 3. Make a copy of the count word, with the update lock flag unset.
+ 4. Perform a CAS operation on the count word, comparing with the state that was read on the 1st
+ step and swapping with the updated, made on the previous step. If the CAS operation succeeds, the
+ procedure succeeds. If the CAS operation fails, continue this procedure, starting form the 1st
+ step.
 
 ## Time-limited read or update lock acquisition
 
@@ -40,13 +64,16 @@ implementation may vary for the read and update locks as well.
 > The reference Java implementation doesn't insert any resources yielding directives after failed
 > try acquire attempts, for both read and update lock acquisition.
 
-Implementations doesn't try to acquire the read or update lock indefinitely, after some finite
+Implementations must not try to acquire the read or update lock indefinitely, after some finite
 number of failed attempts or some finite time elapsed since the time-limited lock acquisition
-procedure starts, the procedure fails.
+procedure starts, the procedure must fail.
 
 > Indefinite lock acquisition is dead lock prone.
 
-## The *try acquire write lock* procedure
+> The reference Java implementation makes attempts to acquire the lock for 1 minute, then throws
+> an exception.
+
+## Try acquire write lock
 
  1. (Optional step) Read the count word of the lock state.
  2. (Optional step) If the count word is non-zero, the procedure fails.
@@ -70,7 +97,17 @@ procedure and call one depending on the context.
 > The reference Java implementation uses only the version of this procedure without the first two
 > steps.
 
-## The *try upgrade update to write lock* procedure
+<a name="release-write-lock" />
+<a name="write-to-update-lock-downgrade" />
+<a name="write-to-read-lock-downgrade" />
+## Release write lock, or write to update lock downgrade, or write to read lock downgrade
+
+Perform a CAS operation on the count word of the lock state, comparing 0x80000000 (i. e. a count
+word with the write lock flag set) and swapping with 0 (in case of releasing write lock), or
+0x40000000 (in case of write to update lock downgrade), or 1 (in case of write to read lock
+downgrade). The result of the CAS operation is the result of the procedure.
+
+## Try upgrade update to write lock
 
 Perform a CAS operation on the count word of the lock state, comparing 0x40000000 (i. e. a count
 word with the update lock flag set, the write lock flag not set, the read lock count of zero) and
@@ -78,7 +115,7 @@ swapping with 0x80000000, i. e. a count word with the write lock flag set, the u
 set, and the read lock count of zero. The result of the CAS operation is the result of the
 procedure.
 
-### The *register wait* procedure
+### Register wait
 
  1. Read the wait word of the lock structure.
  2. If the wait count is 2<sup>31</sup> &minus; 1, the procedure fails: *wait count overflow*.
@@ -86,7 +123,7 @@ procedure.
  read with a wait word with the wait count incremented. If the CAS operation fails, begin the
  register wait procedure from the start. If the CAS operation succeeds, the procedure succeeds.
 
-### The *deregister wait* procedure
+### Deregister wait
 
  1. Read the wait word of the lock structure.
  2. If the wait count is 0, the procedure fails: *wait count underflow*.
@@ -94,14 +131,15 @@ procedure.
  read with a wait word with the wait count decremented. If the CAS operation fails, begin the
  deregister wait procedure from the start. If the CAS operation succeeds, the procedure succeeds.
 
+<a name="time-limited-write-lock-acquisition" />
+<a name="time-limited-update-to-write-lock-upgrade" />
 ## Time-limited write lock acquisition or update to write upgrade
 
- 1. Perform the corresponding *try acquire* procedure ([write lock](
- #the-try-acquire-write-lock-procedure) or [upgrade update to write lock](
- #the-try-upgrade-update-to-write-lock-procedure)). If the attempt succeeds, this procedure
- succeeds. If the attempt fails, continue with the following steps.
- 2. [Register a wait](#the-register-wait-procedure). If the register wait procedure fails, this
- time-limited procedure fails.
+ 1. Perform the corresponding *try acquire* procedure ([write lock](#try-acquire-write-lock) or
+ [upgrade update to write lock](#try-upgrade-update-to-write-lock)). If the attempt succeeds, this
+ procedure succeeds. If the attempt fails, continue with the following steps.
+ 2. [Register a wait](#register-wait). If the register wait procedure fails, this time-limited
+ procedure fails.
  3. Read the lock state.
  4. If the count word of the lock state is not equal to 0 (in case of acquiring the write lock) or
  0x40000000 (in case of upgrading update to write lock), go to the step 7.
@@ -111,9 +149,9 @@ procedure.
  flag set). If the CAS operation succeeds, the time-limited acquisition succeeds. If the CAS
  operation fails, continue with the step 7.
  7. Check if this time-limited procedure has run out of the time limit or the number of attempts.
- If it is, the time-limited acquisition fails, [deregister a wait](#the-deregister-wait-procedure)
- before exiting from this procedure (the result of the deregister wait procedure doesn't matter).
- Otherwise, continue from the step 3 of this procedure.
+ If it is, the time-limited acquisition fails, [deregister a wait](#deregister-wait) before exiting
+ from this procedure (the result of the deregister wait procedure doesn't matter). Otherwise,
+ continue from the step 3 of this procedure.
 
 Implementations doesn't make locking attempts indefinitely [for the same reasons, as in case of
 acquiring read and update lock](#time-limited-read-or-update-lock-acquisition).
@@ -121,7 +159,7 @@ acquiring read and update lock](#time-limited-read-or-update-lock-acquisition).
 > ## The reference Java implementation
 >
 > Attempt operations: [`VanillaReadWriteUpdateWithWaitsLockingStrategy`](
-> https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/locks/VanillaReadWriteUpdateWithWaitsLockingStrategy.java)
+> https://github.com/OpenHFT/Chronicle-Algorithms/blob/master/src/main/java/net/openhft/chronicle/algo/locks/VanillaReadWriteUpdateWithWaitsLockingStrategy.java)
 >
 > Time-limited operations: [`BigSegmentHeader`](
 > ../src/main/java/net/openhft/chronicle/hash/impl/BigSegmentHeader.java)

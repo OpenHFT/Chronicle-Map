@@ -32,14 +32,25 @@ takes one big continuous block of memory. Its structure, from lower addresses to
  6. [The main segments area](#main-segments-area).
  7. Zero or several [extra tier bulks](#extra-tier-bulks).
 
+The process of initialization of the Chronicle Map's memory is described on [Initialization Order](
+5-initialization.md) page.
+
 ## Self-bootstrapping header
 
-It's structure and initialization order are described in the [Self Bootstrapping Data](
+The concept is described in [Self Bootstrapping Data](
 https://github.com/OpenHFT/RFC/blob/master/Self-Bootstrapping-Data/Self-Bootstraping-Data-0.1.md)
-specification. It is encoded in Text Wire format. Once created, this header is never changed. It
-contains all configurations, immutable for Chronicle Map during the instance lifetime: number of
-segments, various sizes, offsets, etc. See the specification of the fields on [Map Header
-Fields](3_1-header-fields.md) page.
+specification.
+
+The structure of this area is described in [Size Prefixed Blob](
+https://github.com/OpenHFT/RFC/blob/master/Size-Prefixed-Blob/Size-Prefixed-Blob-0.1.md)
+specification. The first 8 bytes contains the hash value of bytes sequence from 9th byte to the end
+of this size-prefixed blob, computed by [xxHash](https://github.com/Cyan4973/xxHash/) algorithm
+(XXH64 version). The "message" is marked as user data (i. e. the user/meta data bit is set to 0).
+
+The self-bootstrapping header itself (i. e. the "message" of the size-prefixed blob) is encoded in
+Text Wire format. Once created, this header is never changed. It contains all configurations,
+immutable for Chronicle Map during the instance lifetime: number of segments, various sizes,
+offsets, etc. See the specification of the fields on [Map Header Fields](3_1-header-fields.md) page.
 
 ## Global mutable state
 
@@ -53,6 +64,9 @@ The global mutable state is 36 bytes long.
 
  2. Bytes 8..11 - the number of allocated [extra tier bulks](#extra-tier-bulks). A non-negative
  32-bit value, stored in the little-endian order.
+
+ See also the [extra tier bulk allocation](5-initialization.md#entra-tier-bulk-allocation)
+ operation.
  3. Bytes 12..19 - the index of the first *free* segment tier. A non-negative 64-bit value, stored
  in the little-endian order. Extra segment tiers are allocated in bulks, so there is usually a chain
  of allocated, but unused yet segment tiers. This field points to the head of this chain, or has

@@ -1,16 +1,16 @@
-# The Chronicle Map Key Hashing and Checksum Algorithms
+# 4. The Chronicle Map Key Hashing and Checksum Algorithms
 
 Keys in Chronicle Map are arbitrary sequences of bytes. [xxHash
-](https://github.com/Cyan4973/xxHash/) algorithm is applied to the key, to obtain the primary key
-hash code. Then the [`hashSplitting`](3_1-header-fields.md#hashsplitting) algorithm is applied, to
-determine the segment in which the key should be stored, and the part of the key hash code to be
-stored in a segment tier's hash lookup.
+](https://github.com/Cyan4973/xxHash/) algorithm (XXH64 version) is applied to the key, to obtain
+the primary key hash code. Then the [`hashSplitting`](3_1-header-fields.md#hashsplitting) algorithm
+is applied, to determine the segment in which the key should be stored, and the part of the key hash
+code to be stored in a segment tier's hash lookup.
 
-> The reference Java implementation: [XxHash_r39
-> ](https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/hashing/XxHash_r39.java).
+> The reference Java implementation: [`XxHash_r39`](
+> https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/hashing/XxHash_r39.java).
 > Although the Java implementation class has `_r39` suffix, the xxHash algorithm is stable since r3
-> and [won't change in the future
-> ](https://github.com/Cyan4973/xxHash/issues/34#issuecomment-169176338). A different version of
+> and [won't change in the future](
+> https://github.com/Cyan4973/xxHash/issues/34#issuecomment-169176338). A different version of
 > the algorithm could have a different name.
 
 ## Checksum algorithm
@@ -24,10 +24,10 @@ If the 2nd field of the [stored entry structure
 structure starts, i. e. the value size is 0, and the size itself is stored using 0 bytes, and there
 is no value alignment, the key hash code *is* the primary checksum.
 
-Otherwise, the [xxHash](https://github.com/Cyan4973/xxHash/) algorithm is applied to the memory
-range between the end of the 2nd field of the stored entry structure and the end of the 5th field,
-i. e. between the end of the stored key and the end of the stored value. The resulting hash value
-is called *payload checksum*.
+Otherwise, the [xxHash](https://github.com/Cyan4973/xxHash/) algorithm (XXH64 version) is applied to
+the memory range between the end of the 2nd field of the stored entry structure and the end of the
+5th field, i. e. between the end of the stored key and the end of the stored value. The resulting
+hash value is called *payload checksum*.
 
 > xxHash is used to compute the payload checksum instead of CRC32, because the Java implementation
 > of CRC32 appears to be slower than xxHash while having the same (if not worse) quality, and the
@@ -48,11 +48,18 @@ where the `keySize` is the key sequence length in bytes, `keyHashCode` is the ke
 the `payloadChecksum` is the payload checksum, computed on the previous step. The given procedure
 code is in [Java language](https://docs.oracle.com/javase/specs/jls/se8/html/index.html).
 
+> The above procedure is actually the [CityHash](https://github.com/google/cityhash) and [FarmHash](
+> https://github.com/google/farmhash) algorithm for bytes sequences of lengths between 8 and 16 (
+> CityHash and FarmHash are equivalent for such input lengths), where `keySize` is the length of the
+> input sequence, `keyHashCode` value is the starting 8 bytes of the sequence, `payloadChecksum` is
+> the ending 8 bytes of the sequence. This procedure presumably has good hashing properties, however
+> it was not checked for the changed semantics of the three parameters.
+
 ### Entry checksum
 
 Entry checksum is 4 bytes long, it is obtained by XOR-ing lowest and highest 32 bits of the [primary
-checksum[#primary-checksum]. The entry checksum is stored in the 6th field of the [stored entry
+checksum](#primary-checksum). The entry checksum is stored in the 6th field of the [stored entry
 structure](3-memory-layout.md#stored-entry-structure).
 
-> The reference Java implementation: [`HashEntryChecksumStrategy`
-> ](../src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryChecksumStrategy.java).
+> The reference Java implementation: [`HashEntryChecksumStrategy`](
+> ../src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryChecksumStrategy.java).

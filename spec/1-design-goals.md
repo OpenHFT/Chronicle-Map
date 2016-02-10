@@ -71,7 +71,8 @@ Chronicle Map *doesn't* assume anything specific about how memory if flushed to 
 
 #### File locking
 
-The operating system supports exclusive [file locking](https://en.wikipedia.org/wiki/File_locking).
+The operating system supports *advisory* exclusive [file locking](
+https://en.wikipedia.org/wiki/File_locking).
 
 ### Guarantees
 
