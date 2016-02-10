@@ -24,12 +24,13 @@ import java.util.Arrays;
 /**
  * java.util.Objects since Java 7
  */
-final class Objects {
+enum Objects {
+    ;
     static int hash(Object... values) {
         return Arrays.hashCode(values);
     }
 
-    static boolean equal(@Nullable Object a, @Nullable Object b) {
+    static boolean equals(@Nullable Object a, @Nullable Object b) {
         return a != null ? a.equals(b) : b == null;
     }
 
