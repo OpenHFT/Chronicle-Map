@@ -119,14 +119,14 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         switch (reader.getNodeName()) {
 
             case "java.util.Collections$EmptySet":
-                return (E) Collections.EMPTY_SET;
+                return (E) Collections.emptySet();
 
             case "java.util.Collections$EmptyList":
-                return (E) Collections.EMPTY_LIST;
+                return (E) Collections.emptyList();
 
             case "java.util.Collections$EmptyMap":
             case "java.util.Collections.EmptyMap":
-                return (E) Collections.EMPTY_MAP;
+                return (E) Collections.emptyMap();
 
         }
 
