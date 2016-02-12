@@ -21,6 +21,7 @@ import shaded.org.apache.maven.model.Model;
 import shaded.org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 /**
  * gets the version of the current build
@@ -46,7 +47,7 @@ public final class BuildVersion {
             // the best way to get the version is to read the map.version file
             InputStream resource = BuildVersion.class.getClassLoader().getResourceAsStream("map" +
                     ".version");
-            BufferedReader in = new BufferedReader(new InputStreamReader(resource));
+            BufferedReader in = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8));
 
             version = in.readLine().trim();
             if (!"${project.version}".equals(version()))
@@ -95,7 +96,7 @@ public final class BuildVersion {
 
         final File file = new File(absolutePath + "/pom.xml");
 
-        try (Reader reader = new FileReader(file)) {
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
 
             final MavenXpp3Reader xpp3Reader = new MavenXpp3Reader();
             Model model = xpp3Reader.read(reader);
