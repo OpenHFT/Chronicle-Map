@@ -19,6 +19,10 @@
 package net.openhft.chronicle.hash.impl.util.math;
 
 class Precision {
+    
+    private Precision() {
+        
+    }
 
     /** Offset to order signed double numbers lexicographically. */
     private static final long SGN_MASK = 0x8000000000000000L;

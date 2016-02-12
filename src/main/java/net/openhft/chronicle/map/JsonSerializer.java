@@ -32,6 +32,10 @@ import java.util.zip.GZIPOutputStream;
  * @author Rob Austin.
  */
 class JsonSerializer {
+    
+    private JsonSerializer() {
+        
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonSerializer.class);
 
