@@ -182,9 +182,8 @@ public class UpdateLock implements InterProcessLock {
                 return;
             case UPDATE_LOCKED:
                 entry.closeDelayedUpdateChecksum();
-                if (s.decrementUpdate() == 0) {
-                    if (s.writeZero())
-                        s.segmentHeader.downgradeUpdateToReadLock(s.segmentHeaderAddress);
+                if (s.decrementUpdate() == 0 && s.writeZero()) {
+                    s.segmentHeader.downgradeUpdateToReadLock(s.segmentHeaderAddress);
                 }
                 break;
             case WRITE_LOCKED:
