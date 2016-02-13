@@ -63,6 +63,11 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     }
 
     @Override
+    public boolean isNative() {
+        return false;
+    }
+
+    @Override
     public ZeroBytesStore copy() {
         throw new UnsupportedOperationException();
     }
