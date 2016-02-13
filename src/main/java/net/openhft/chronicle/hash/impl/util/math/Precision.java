@@ -69,7 +69,7 @@ class Precision {
         final long yInt = Double.doubleToRawLongBits(y);
 
         final boolean isEqual;
-        if (((xInt ^ yInt) & SGN_MASK) == 0l) {
+        if (((xInt ^ yInt) & SGN_MASK) == 0L) {
             // number have same sign, there is no risk of overflow
             isEqual = Math.abs(xInt - yInt) <= maxUlps;
         } else {
