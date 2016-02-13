@@ -1593,11 +1593,11 @@ public final class ChronicleMapBuilder<K, V> implements
             VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
             assert map != null;
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
-            long expectedFileLength = map.expectedFileSize();
-            if (!recover && expectedFileLength != file.length()) {
+            long dataStoreSize = map.globalMutableState().getDataStoreSize();
+            if (!recover && dataStoreSize > file.length()) {
                 throw new IOException("The file " + file + " the map is serialized from " +
                         "has unexpected length " + file.length() + ", probably corrupted. " +
-                        "Expected length is " + expectedFileLength);
+                        "Data store size is " + dataStoreSize);
             }
             map.initTransientsFromBuilder(this);
             if (!recover) {
@@ -1683,11 +1683,6 @@ public final class ChronicleMapBuilder<K, V> implements
 
         try {
             VanillaChronicleMap<K, V, ?> map = newMap();
-            // TODO this method had been moved
-//            if(OS.warnOnWindows(map.sizeInBytesWithoutTiers())){
-//                throw new IllegalStateException("Windows cannot support this configuration");
-//            }
-
             BytesStore bytesStore =
                     lazyNativeBytesStoreWithFixedCapacity(map.sizeInBytesWithoutTiers());
             map.createMappedStoreAndSegments(bytesStore);

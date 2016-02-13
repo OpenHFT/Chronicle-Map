@@ -50,10 +50,12 @@ existing Map, persisted to some file).
  3-memory-layout.md#entry-space), i. e. zero out this tier's hash lookup, segment tier counters area
  and free list.
  6. White the segment headers offset into the 5th field of the global mutable state.
- 7. If the Chronicle Map is persisted, ensure all data written to the file is flushed to the disk.
+ 7. Write the offset to the end of the main segments area into the 6th field of the global mutable
+ state.
+ 8. If the Chronicle Map is persisted, ensure all data written to the file is flushed to the disk.
  For example on Linux, this could be done with `msync` and `fdatasync` calls, on Windows - with
  `FlushFileBuffers` system call.
- 8. If the Chronicle Map is persisted, write the readiness bit into the header, i. e. the highest
+ 9. If the Chronicle Map is persisted, write the readiness bit into the header, i. e. the highest
  bit of the 32-bit word by offset 8 from the beginning of the file, read and written in the
  little-endian order. Read the [Size Prefix Blob](
  https://github.com/OpenHFT/RFC/blob/master/Size-Prefixed-Blob/Size-Prefixed-Blob-0.1.md)
@@ -125,6 +127,8 @@ by [global mutable state](3-memory-layout.md#global-mutable-state) lock.
  7. Write the [index](3-memory-layout.md#tier-index) of the first tier in this extra tier bulk into
  the 3rd field (the index of the first *free* segment tier) of this Chronicle Map's global mutable
  state.
+ 8. Increment the value in the 6th field (the data store size) of the global mutable state by
+ [`tierBulkSizeInBytes`](3_1-header-fields.md#tierbulksizeinbytes).
 
 ## Tier allocation
 

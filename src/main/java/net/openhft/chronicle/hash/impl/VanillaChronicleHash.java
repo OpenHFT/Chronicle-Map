@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
@@ -434,6 +435,7 @@ public abstract class VanillaChronicleHash<K,
             zeroOutNewlyMappedChronicleMapBytes();
             // write the segment headers offset after zeroing out
             globalMutableState.setSegmentHeadersOffset(segmentHeadersOffset);
+            globalMutableState.setDataStoreSize(sizeInBytesWithoutTiers());
         } else {
             initBulks();
         }
@@ -481,24 +483,32 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public final void createMappedStoreAndSegments() throws IOException {
-        // TODO this method had been moved -- not clear where
-        //OS.warnOnWindows(sizeInBytesWithoutTiers());
-        long mapSize = expectedFileSize();
-        createMappedStoreAndSegments(map(mapSize, 0));
+        createMappedStoreAndSegments(map(dataStoreSize(), 0));
     }
 
     public final void basicRecover() throws IOException {
-        long segmentHeadersOffset = computeSegmentHeadersOffset();
+        long segmentHeadersOffset = globalMutableState().getSegmentHeadersOffset();
+        if (segmentHeadersOffset <= 0 || segmentHeadersOffset % 4096 != 0 ||
+                segmentHeadersOffset > GIGABYTES.toBytes(1)) {
+            segmentHeadersOffset = computeSegmentHeadersOffset();
+        }
         long sizeInBytesWithoutTiers = computeSizeInBytesWithoutTiers(segmentHeadersOffset);
         long sizeBeyondSegments = Math.max(raf.length() - sizeInBytesWithoutTiers, 0);
-        int allocatedExtraTierBulks = (int) (sizeBeyondSegments / tierBulkSizeInBytes);
-        long mapSize = pageAlign(sizeInBytesWithoutTiers +
-                allocatedExtraTierBulks * tierBulkSizeInBytes);
-        initBytesStoreAndHeadersViews(map(mapSize, 0));
+        long dataStoreSize = globalMutableState().getDataStoreSize();
+        int allocatedExtraTierBulks = globalMutableState().getAllocatedExtraTierBulks();
+        if (dataStoreSize < sizeInBytesWithoutTiers ||
+                ((dataStoreSize - sizeInBytesWithoutTiers) % tierBulkSizeInBytes != 0)) {
+            dataStoreSize = sizeInBytesWithoutTiers + allocatedExtraTierBulks * tierBulkSizeInBytes;
+        } else {
+            allocatedExtraTierBulks =
+                    (int) ((dataStoreSize - sizeInBytesWithoutTiers) / tierBulkSizeInBytes);
+        }
+        initBytesStoreAndHeadersViews(map(dataStoreSize, 0));
 
         resetGlobalMutableStateLock();
         recoverAllocatedExtraTierBulks(allocatedExtraTierBulks);
         recoverSegmentHeadersOffset(segmentHeadersOffset);
+        recoverDataStoreSize(dataStoreSize);
         initOffsetsAndBulks();
     }
 
@@ -527,6 +537,14 @@ public abstract class VanillaChronicleHash<K,
             LOG.error("segment headers offset of map at {} corrupted. stored: {}, should be: {}",
                     file, globalMutableState.getSegmentHeadersOffset(), segmentHeadersOffset);
             globalMutableState.setSegmentHeadersOffset(segmentHeadersOffset);
+        }
+    }
+
+    private void recoverDataStoreSize(long dataStoreSize) {
+        if (globalMutableState.getDataStoreSize() != dataStoreSize) {
+            LOG.error("data store size of map at {} corrupted. stored: {}, should be: {}",
+                    file, globalMutableState.getDataStoreSize(), dataStoreSize);
+            globalMutableState.setDataStoreSize(dataStoreSize);
         }
     }
 
@@ -609,11 +627,11 @@ public abstract class VanillaChronicleHash<K,
         return segmentHeadersOffset + actualSegments * (segmentHeaderSize + tierSize);
     }
 
-    public final long expectedFileSize() {
+    public final long dataStoreSize() {
         long sizeInBytesWithoutTiers = sizeInBytesWithoutTiers();
         int allocatedExtraTierBulks = !createdOrInMemory ?
                 globalMutableState.getAllocatedExtraTierBulks() : 0;
-        return pageAlign(sizeInBytesWithoutTiers + allocatedExtraTierBulks * tierBulkSizeInBytes);
+        return sizeInBytesWithoutTiers + allocatedExtraTierBulks * tierBulkSizeInBytes;
     }
 
     @Override
@@ -800,6 +818,7 @@ public abstract class VanillaChronicleHash<K,
         // after we are sure the new bulk is initialized, update the global mutable state
         globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks + 1);
         globalMutableState.setFirstFreeTierIndex(firstTierIndex);
+        globalMutableState.addDataStoreSize(tierBulkSizeInBytes);
     }
 
     public void msync() throws IOException {
@@ -930,6 +949,7 @@ public abstract class VanillaChronicleHash<K,
      * @see net.openhft.chronicle.bytes.MappedFile#acquireByteStore(long, MappedBytesStoreFactory)
      */
     private NativeBytesStore map(long mapSize, long mappingOffsetInFile) throws IOException {
+        mapSize = pageAlign(mapSize);
         long minFileSize = mappingOffsetInFile + mapSize;
         FileChannel fileChannel = raf.getChannel();
         if (fileChannel.size() < minFileSize) {

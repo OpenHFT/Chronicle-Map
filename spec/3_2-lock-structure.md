@@ -158,7 +158,7 @@ acquiring read and update lock](#time-limited-read-or-update-lock-acquisition).
 
 > ## The reference Java implementation
 >
-> Attempt operations: [`VanillaReadWriteUpdateWithWaitsLockingStrategy`](
+> Attempt, release and downgrade operations: [`VanillaReadWriteUpdateWithWaitsLockingStrategy`](
 > https://github.com/OpenHFT/Chronicle-Algorithms/blob/master/src/main/java/net/openhft/chronicle/algo/locks/VanillaReadWriteUpdateWithWaitsLockingStrategy.java)
 >
 > Time-limited operations: [`BigSegmentHeader`](

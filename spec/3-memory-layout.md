@@ -54,7 +54,7 @@ offsets, etc. See the specification of the fields on [Map Header Fields](3_1-hea
 
 ## Global mutable state
 
-The global mutable state is 36 bytes long.
+The global mutable state is 33 bytes long.
 
  1. Bytes 0..7 - the global mutable state lock, a [lock structure](3_2-lock-structure.md).
 
@@ -62,12 +62,12 @@ The global mutable state is 36 bytes long.
  > (the write lock) level is used. This is done for sharing the lock implementation for the
  > global mutable state and segment headers (see below).
 
- 2. Bytes 8..11 - the number of allocated [extra tier bulks](#extra-tier-bulks). A non-negative
- 32-bit value, stored in the little-endian order.
+ 2. Bytes 8..10 - the number of allocated [extra tier bulks](#extra-tier-bulks). An unsigned 24-bit
+ value, stored in the little-endian order.
 
  See also the [extra tier bulk allocation](5-initialization.md#entra-tier-bulk-allocation)
  operation.
- 3. Bytes 12..19 - the index of the first *free* segment tier. A non-negative 64-bit value, stored
+ 3. Bytes 11..15 - the index of the first *free* segment tier. An unsigned 40-bit value, stored
  in the little-endian order. Extra segment tiers are allocated in bulks, so there is usually a chain
  of allocated, but unused yet segment tiers. This field points to the head of this chain, or has
  value `0`, if there are no free segment tiers.
@@ -79,11 +79,15 @@ The global mutable state is 36 bytes long.
  [`actualSegments`](3_1-header-fields.md#actualsegments) &minus; 1) has tier index `actualSegments`,
  the first tier of the first extra tier bulk has tier index `actualSegments` + 1, etc. Tier indexes
  are 1-counted, because value 0 has some special meaning.
- 4. Bytes 20..27 - the number of used extra segment tiers. A non-negative 64-bit value, stored in
+ 4. Bytes 16..20 - the number of used extra segment tiers. An unsigned 40-bit value, stored in
  the little-endian order.
- 5. Bytes 28..35 - the offset of the segment headers area from the beginning of the memory of this
- Chronicle Map instance. This field determines the size of [the 4th area of the general Chronicle
- Map structure](#segment-headers-alignment).
+ 5. Bytes 21..24 - the offset of the segment headers area from the beginning of the memory of this
+ Chronicle Map instance. An unsigned 32-bit value, stored in the little-endian ordered. This field
+ determines the size of [the 4th area of the general Chronicle Map structure](
+ #segment-headers-alignment).
+ 6. Bytes 25..32 - the Chronicle Map data store size, the offset to the end of the [main segments
+ area](#main-segments area) or the last [extra tier bulk](#extra-tier-bulks). A non-negative 64-bit
+ value, stored in the little-endian order.
 
 > The reference Java implementation: [`VanillaGlobalMutableState`
 > ](../src/main/java/net/openhft/chronicle/hash/VanillaGlobalMutableState.java).
