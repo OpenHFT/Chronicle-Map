@@ -38,8 +38,8 @@ class Precision {
      * @return {@code true} if the values are two adjacent floating point
      * numbers or they are within range of each other.
      */
-    public static boolean equals(double x, double y, double eps) {
-        return equals(x, y, 1) || Math.abs(y - x) <= eps;
+    public static boolean isEquals(double x, double y, double eps) {
+        return isEquals(x, y, 1) || Math.abs(y - x) <= eps;
     }
 
     /**
@@ -63,7 +63,7 @@ class Precision {
      * @return {@code true} if there are fewer than {@code maxUlps} floating
      * point values between {@code x} and {@code y}.
      */
-    public static boolean equals(final double x, final double y, final int maxUlps) {
+    public static boolean isEquals(final double x, final double y, final int maxUlps) {
 
         final long xInt = Double.doubleToRawLongBits(x);
         final long yInt = Double.doubleToRawLongBits(y);

@@ -79,7 +79,7 @@ abstract class ContinuedFraction {
         double hPrev = getA(0, x);
 
         // use the value of small as epsilon criteria for zero checks
-        if (Precision.equals(hPrev, 0.0, small)) {
+        if (Precision.isEquals(hPrev, 0.0, small)) {
             hPrev = small;
         }
 
@@ -93,11 +93,11 @@ abstract class ContinuedFraction {
             final double b = getB(n, x);
 
             double dN = a + b * dPrev;
-            if (Precision.equals(dN, 0.0, small)) {
+            if (Precision.isEquals(dN, 0.0, small)) {
                 dN = small;
             }
             double cN = a + b / cPrev;
-            if (Precision.equals(cN, 0.0, small)) {
+            if (Precision.isEquals(cN, 0.0, small)) {
                 cN = small;
             }
 
