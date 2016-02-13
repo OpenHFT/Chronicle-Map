@@ -215,9 +215,10 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         boolean tierHasChanged = allocatedChunks.initEntryAndKeyCopying(
                 entrySize, valueSizeOffset - keySizeOffset, pos, entrySizeInChunks);
 
-        // implicitly inits key search, locating hashLookupPos on the empty slot
-        if (tierHasChanged && !ks.searchStateAbsent()) {
-            throw new AssertionError();
+        if (tierHasChanged) {
+            // implicitly inits key search, locating hashLookupPos on the empty slot
+            if (!ks.searchStateAbsent())
+                throw new AssertionError();
         }
 
         initValue(newValue);
