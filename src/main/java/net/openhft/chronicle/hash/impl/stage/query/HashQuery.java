@@ -71,11 +71,9 @@ public abstract class HashQuery<K> implements SetEntry<K> {
             if (s.nestedContextsLockedOnSameSegment &&
                     s.rootContextLockedOnThisSegment.latestSameThreadSegmentModCount() !=
                             s.contextModCount) {
-                if (ks.keySearchInit()) {
-                    if (ks.searchState == PRESENT) {
-                        if (!hashLookupSearch.checkSlotContainsExpectedKeyAndValue(entry.pos))
-                            hlp.closeHashLookupPos();
-                    }
+                if (ks.keySearchInit() && ks.searchState == PRESENT &&
+                        !hashLookupSearch.checkSlotContainsExpectedKeyAndValue(entry.pos)) {
+                    hlp.closeHashLookupPos();
                 }
             }
         }
