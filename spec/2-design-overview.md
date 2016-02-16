@@ -36,9 +36,9 @@ the segment lock.
 
 ### Lock levels
 
-The **read level** is shared, several threads and processes could hold the segment lock on the read
-level at the same time. This level is used for read queries on a single or multiple keys, like
-simple value reading by the key. This level couldn't be upgraded to the update or write level.
+The **read level** is shared, several threads (across OS processes) could hold the segment lock on
+the read level at the same time. This level is used for read queries on a single or multiple keys,
+like simple value reading by the key. This level couldn't be upgraded to the update or write level.
 
 > The read level couldn't upgrade to the higher levels, because this is dead-lock prone. Two threads
 > could acquire the same lock on the read level, then both try to upgrade to the write level - and
@@ -46,8 +46,8 @@ simple value reading by the key. This level couldn't be upgraded to the update o
 > this issue, too.)
 
 The **update level** is partially exclusive: a thread could hold the segment lock on the update
-level while some other threads or processes are holding the same lock on the read level, but not
-the update or write level.
+level while some other threads (across OS processes) are holding the same lock on the read level,
+but not the update or write level.
 
 This level is used for "typically read" types of queries, which occasionally should be able to write
 to the data store, hence need to upgrade to the write level without releasing the lock, for example,
@@ -58,10 +58,10 @@ level, even if they never perform writes.
 A segment lock acquired on the update level could be upgraded to the write level.
 
 The **write level** is totally exclusive: when a thread holds the segment lock on the write level,
-no other thread or process could hold the same lock on any level. The write level is used for write
-queries.
+no other thread (across OS processes) could hold the same lock on any level. The write level is used
+for write queries.
 
-## Lock implementation
+## [Lock implementation](3_2-lock-structure.md)
 
 Each lock is represented by two 32-bit words in the Chronicle Map memory. *Count word* holds the
 numbers of threads holding the lock at the moment on the read, update and write levels. *Wait word*
@@ -77,8 +77,8 @@ and conditional wake-ups. Threads acquire locks in a spin loop, yielding and/or 
 certain threshold numbers of unsuccessful attempts.
 
 > Chronicle Map implementations specialized for single-process access to instances may implement
-> some kind of thread queues and wake-ups on their runtime level; certain lock acquisition strategy
-> is out of scope of the Chronicle Map data store specification.
+> some kind of thread queues, wake-ups and cooperative scheduling on the runtime level; certain lock
+> acquisition strategy is out of scope of the Chronicle Map data store specification.
 
 ## The segment data structure
 

@@ -28,9 +28,9 @@ existing Map, persisted to some file).
  > This step follows [double-checked locking](https://en.wikipedia.org/wiki/Double-checked_locking)
  > pattern to avoid file locking in most cases when an already existing Chronicle Map is opened.
 
- This step is serialized for the persistence file among threads within the current process, because
- file locking mechanism in operating systems is per-process, not per-thread. I. e. concurrent
- threads within the same process don't lock the same file at the same time.
+ This step is serialized for the persistence file among threads within the current OS process,
+ because file locking mechanism in operating systems is per-process, not per-thread. I. e.
+ concurrent threads within the same OS process don't lock the same file at the same time.
 
  Concurrent threads perform any initialization operations (Chronicle Map creation and [extra tier
  bulk allocation](#extra-tier-bulk-allocation)) with canonicalized file descriptor, that is closed
@@ -59,8 +59,8 @@ existing Map, persisted to some file).
  bit of the 32-bit word by offset 8 from the beginning of the file, read and written in the
  little-endian order. Read the [Size Prefix Blob](
  https://github.com/OpenHFT/RFC/blob/master/Size-Prefixed-Blob/Size-Prefixed-Blob-0.1.md)
- specification for details. This step is the event threads and processes [waiting until Chronicle
- Map is ready](#wait-until-chronicle-map-is-ready) actually wait for.
+ specification for details. This step is the event that is actually awaited by the threads (across
+ OS processes) [waiting until Chronicle Map is ready](#wait-until-chronicle-map-is-ready).
 
 ### Wait until Chronicle Map is ready
 
@@ -68,7 +68,7 @@ Check until the readiness bit is set to 0. The readiness bit it the highest bit 
 offset 8 from the beginning of the Chronicle Map persistence file, read in the little-endian order.
 
 Optionally yield processor resources after failed checks, e. g. make the waiting thread sleep for
-some time. The exact yielding operation (or if it is making the current process sleeping, the exact
+some time. The exact yielding operation (or if it is making the current thread sleeping, the exact
 sleep interval) is unspecified.
 
 > The reference Java implementations turns the waiting thread to sleep for 100 ms after failed
@@ -77,8 +77,7 @@ sleep interval) is unspecified.
 Implementations must not wait until the Chronicle Map is ready indefinitely, after some finite
 number of failed checks, or some finite time elapsed since the start, the wait procedure must fail.
 
-> Indefinite wait is dead lock prone, if the concurrent process or thread doing the initialization
-> fails itself.
+> Indefinite wait is dead lock prone, if the thread doing the initialization fails itself.
 
 > The reference Java implementation checks until the Chronicle Map is ready for approximately 1
 > minute, then throws an exception.

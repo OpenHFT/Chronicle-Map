@@ -25,6 +25,14 @@
 
 Chronicle Map provides some guarantees under the following assumptions:
 
+#### Threads
+
+Throughout this specification, the term *thread* means the execution thread of the runtime of the
+Chronicle Map implementation. It might be an OS thread or a "greener" thread.
+
+ - Operations declared for execution in some threads are performed sequentially in the same order,
+ with full memory visibility between operations.
+
 #### CPU
 
  - CPU supports atomic 64-bit compare-and-swap operations with aligned memory, i. e. if several
@@ -35,6 +43,8 @@ Chronicle Map provides some guarantees under the following assumptions:
  etc.).
 
 The two above points are true for CPUs with x86 and x86_64 architectures.
+
+#### Memory ordering
 
  - If some values X<sub>i</sub> are written at addresses A<sub>i</sub>, then 32- or 64-bit value Y
  is written at address B, there is a way to ensure some memory order. In particular, if a
@@ -102,8 +112,9 @@ Therefore, *some entries updated shortly before the failure could be lost.*
 
 The ultimate goal of Chronicle Map design is efficiency:
 
- - If the number of entries in Chronicle Map is much greater than the number of accessor hardware
- threads, it scales well up to the total number of hardware threads present in the system.
+ - If the number of entries in Chronicle Map is much greater than the number of accessor CPUs, it
+ scales (i. e. adding the last CPU still adds to the total throughput) up to the total number of
+ CPUs present in the system.
  - Chronicle Map is a low-latency key-value store, meaning that for any particular percentile (90%,
  99%, 99.9% etc.) the latency of Chronicle Map operations should be the best or among the best
  compared to latencies of other key-value stores filled with the same data and providing the same or

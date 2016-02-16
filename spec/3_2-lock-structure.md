@@ -55,14 +55,21 @@ The lock structure is 8 bytes (64 bits) long.
 
 Attempt to acquire the read or update lock using the corresponding *try acquire* procedure, until it
 succeeds, optionally inserting some directives aimed to yield the resources after failed attempts,
-for example, x86's `PAUSE` instruction, or an operation system command to schedule another thread to
-the current CPU, or a command to clock down the current CPU, etc.
+for example, x86's `PAUSE` instruction, or an OS command to schedule another OS thread to the
+current CPU, or a runtime command to schedule another green thread to the current OS thread, or a
+command to clock down the current CPU, etc.
+
+If the runtime of the Chronicle Map implementation has cooperative (rather than preemptive)
+scheduling of [threads](1-design-goals.md#threads), thread switch must be enabled after failed
+attempts. Some explicit command is executed, letting the runtime to switch between green threads.
+
+> Possibility for thread switch is required to avoid dead locks between threads.
 
 There is no single exact scheme that implementations should follow, it is unspecified. The
 implementation may vary for the read and update locks as well.
 
 > The reference Java implementation doesn't insert any resources yielding directives after failed
-> try acquire attempts, for both read and update lock acquisition.
+> acquisition attempts, for both read and update lock acquisition.
 
 Implementations must not try to acquire the read or update lock indefinitely, after some finite
 number of failed attempts or some finite time elapsed since the time-limited lock acquisition
@@ -142,16 +149,23 @@ procedure.
  procedure fails.
  3. Read the lock state.
  4. If the count word of the lock state is not equal to 0 (in case of acquiring the write lock) or
- 0x40000000 (in case of upgrading update to write lock), go to the step 7.
+ 0x40000000 (in case of upgrading update to write lock), go to the 7th step.
  5. If the wait count is 0, this procedure fails.
- 6. Perform a CAS operation on the whole lock structure, comparing the state, read on the step 3,
+ 6. Perform a CAS operation on the whole lock structure, comparing the state, read on the 3rd step,
  with an updated state with the wait count decremented, and count word of 0x80000000 (the write lock
  flag set). If the CAS operation succeeds, the time-limited acquisition succeeds. If the CAS
- operation fails, continue with the step 7.
+ operation fails, continue with the 7th step.
  7. Check if this time-limited procedure has run out of the time limit or the number of attempts.
  If it is, the time-limited acquisition fails, [deregister a wait](#deregister-wait) before exiting
  from this procedure (the result of the deregister wait procedure doesn't matter). Otherwise,
- continue from the step 3 of this procedure.
+ continue from the 3rd step of this procedure, optionally performing some directives aimed to yield
+ the resources at first, as described in the section about [time-limited read or update lock
+ acquisition](#time-limited-read-or-update-lock-acquisition).
+
+ If the runtime of the Chronicle Map implementation has cooperative (rather than preemptive)
+ scheduling of [threads](1-design-goals.md#threads), thread switch must be enabled before continuing
+ with the 3rd step. Some explicit command is executed, letting the runtime to switch between green
+ threads.
 
 Implementations doesn't make locking attempts indefinitely [for the same reasons, as in case of
 acquiring read and update lock](#time-limited-read-or-update-lock-acquisition).

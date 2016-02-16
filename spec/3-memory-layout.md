@@ -254,16 +254,16 @@ The segment tier counters structure is 64 bytes long:
 
 #### Free list
 
-A free list starts with offset [`tierHashLookupOuterSize`
-](3_1-header-fields.md#tierhashlookupoutersize) + 64 from the beginning address of a containing
+A free list starts with offset [`tierHashLookupOuterSize`](
+3_1-header-fields.md#tierhashlookupoutersize) + 64 from the beginning address of a containing
 segment tier.
 
 This is a list of [`actualChunksPerSegmentTier`](3_1-header-fields.md#actualchunkspersegmenttier)
 bits, each corresponding to a chunk in the [entry space](#entry-space). If the chunk is allocated
 for some entry, the corresponding bit is set to 1, otherwise it is clear.
 
-> The reference Java implementation: [`SingleThreadedFlatBitSetFrame`
-> ](https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/bitset/SingleThreadedFlatBitSetFrame.java).
+> The reference Java implementation: [`SingleThreadedFlatBitSetFrame`](
+> https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/bitset/SingleThreadedFlatBitSetFrame.java).
 
 #### Entry space
 
