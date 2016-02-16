@@ -603,7 +603,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     @Stage("Segment") public final ReusableBitSet freeList = new ReusableBitSet(
             new SingleThreadedFlatBitSetFrame(LONGS.align(hh.h().actualChunksPerSegmentTier, BITS)),
             Access.nativeAccess(), null, 0);
-    @Stage("Segment") long entrySpaceOffset = 0;
+    @Stage("Segment") public long entrySpaceOffset = 0;
 
     boolean segmentInit() {
         return entrySpaceOffset > 0;

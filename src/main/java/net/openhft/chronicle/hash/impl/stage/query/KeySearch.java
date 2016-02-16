@@ -16,11 +16,13 @@
 
 package net.openhft.chronicle.hash.impl.stage.query;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
+import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -31,6 +33,7 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 @Staged
 public abstract class KeySearch<K> {
 
+    @StageRef VanillaChronicleMapHolder<?, ?, ?> mh;
     @StageRef public SegmentStages s;
     @StageRef public HashLookupSearch hashLookupSearch;
     @StageRef public HashEntryStages<K> entry;
@@ -65,29 +68,27 @@ public abstract class KeySearch<K> {
             // the current segment, and insertion into the tiered segment requires to locate
             // an empty slot in the hashLookup.
             if (inputKeyInit()) {
-                entry.readExistingEntry(pos);
-                if (!keyEquals())
+                long keySizeOffset = s.entrySpaceOffset + pos * mh.m().chunkSize;
+                Bytes segmentBytes = s.segmentBytesForRead();
+                segmentBytes.readPosition(keySizeOffset);
+                long keySize = mh.h().keySizeMarshaller.readSize(segmentBytes);
+                long keyOffset = segmentBytes.readPosition();
+                if (!keyEquals(keySize, keyOffset))
                     continue;
                 hashLookupSearch.found();
-                keyFound();
+                entry.readFoundEntry(pos, keySizeOffset, keySize, keyOffset);
+                searchState = PRESENT;
                 return;
             }
         }
         searchState = SearchState.ABSENT;
     }
 
-    boolean keyEquals() {
-        return inputKey.size() == entry.keySize &&
-                BytesUtil.bytesEqual(s.segmentBS, entry.keyOffset,
-                        inputKey.bytes(), inputKey.offset(), entry.keySize);
+    boolean keyEquals(long keySize, long keyOffset) {
+        return inputKey.size() == keySize &&
+                BytesUtil.bytesEqual(s.segmentBS, keyOffset,
+                        inputKey.bytes(), inputKey.offset(), keySize);
     }
-
-    @Stage("KeySearch")
-    void keyFound() {
-        searchState = PRESENT;
-    }
-
-    abstract void closeKeySearch();
 
     public boolean searchStatePresent() {
         return searchState == PRESENT;

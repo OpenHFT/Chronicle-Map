@@ -54,6 +54,10 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
 
     public abstract boolean entryOffsetInit();
 
+    public void initEntryOffset(long keySizeOffset) {
+        this.keySizeOffset = keySizeOffset;
+    }
+
     public void initEntryOffset() {
         keySizeOffset = s.entrySpaceOffset + pos * hh.h().chunkSize;
     }
@@ -78,6 +82,13 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
         segmentBytes.readPosition(keySizeOffset);
         initKeySize(hh.h().keySizeMarshaller.readSize(segmentBytes));
         initKeyOffset(segmentBytes.readPosition());
+    }
+
+    public void readFoundEntry(long pos, long keySizeOffset, long keySize, long keyOffset) {
+        initPos(pos);
+        initEntryOffset(keySizeOffset);
+        initKeySize(keySize);
+        initKeyOffset(keyOffset);
     }
 
     public void writeNewEntry(long pos, Data<?> key) {
