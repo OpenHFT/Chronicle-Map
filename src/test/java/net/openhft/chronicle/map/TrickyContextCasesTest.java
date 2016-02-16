@@ -16,14 +16,21 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.Values;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
+import static net.openhft.chronicle.algo.hashing.LongHashFunction.xx_r39;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class TrickyContextCasesTest {
@@ -74,4 +81,47 @@ public class TrickyContextCasesTest {
         }
     }
 
+    @Test
+    public void testHashCollision() {
+        try (ChronicleMap<ByteBuffer, Integer> map = ChronicleMap
+                .of(ByteBuffer.class, Integer.class)
+                .constantKeySizeBySample(ByteBuffer.allocate(128))
+                .entries(2)
+                .create()) {
+            ByteBuffer key1 = ByteBuffer.allocate(128).order(LITTLE_ENDIAN);
+            key1.putLong(0, 1);
+            key1.putLong(32, 2);
+
+            ByteBuffer key2 = ByteBuffer.allocate(128).order(LITTLE_ENDIAN);
+            key2.putLong(0, 1 + 0xBA79078168D4BAFL);
+            key2.putLong(32, 2 + 0x9C90005B80000000L);
+
+            ByteBuffer key3 = ByteBuffer.allocate(128).order(LITTLE_ENDIAN);
+            key3.putLong(0, 1 + 0xBA79078168D4BAFL * 2);
+            key3.putLong(32, 2 + 0x9C90005B80000000L * 2);
+
+            assertEquals(xx_r39().hashBytes(key1), xx_r39().hashBytes(key2));
+            assertEquals(xx_r39().hashBytes(key1), xx_r39().hashBytes(key3));
+
+            try (ExternalMapQueryContext<ByteBuffer, Integer, ?> c1 = map.queryContext(key1)) {
+                c1.writeLock().lock();
+                c1.insert(c1.absentEntry(), c1.wrapValueAsData(1));
+
+                try (ExternalMapQueryContext<ByteBuffer, Integer, ?> c2 = map.queryContext(key2)) {
+                    c2.writeLock().lock();
+                    c2.insert(c2.absentEntry(), c2.wrapValueAsData(2));
+
+                    c1.remove(c1.entry());
+
+                    map.put(key3, 3);
+
+                    c2.replaceValue(c2.entry(), c2.wrapValueAsData(22));
+                }
+            }
+
+            assertEquals(2, map.size());
+            assertEquals((Integer) 22, map.get(key2));
+            assertEquals((Integer) 3, map.get(key3));
+        }
+    }
 }
