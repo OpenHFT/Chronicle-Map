@@ -27,7 +27,7 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.DELETED;
+import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.ABSENT;
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
@@ -48,7 +48,6 @@ public abstract class KeySearch<K> {
 
     public enum SearchState {
         PRESENT,
-        DELETED,
         ABSENT
     }
 
@@ -94,12 +93,7 @@ public abstract class KeySearch<K> {
         return searchState == PRESENT;
     }
 
-    public boolean searchStateDeleted() {
-        return searchState == DELETED && !s.nestedContextsLockedOnSameSegment &&
-                s.innerUpdateLock.isHeldByCurrentThread();
-    }
-
     public boolean searchStateAbsent() {
-        return !searchStatePresent() && !searchStateDeleted();
+        return searchState == ABSENT;
     }
 }

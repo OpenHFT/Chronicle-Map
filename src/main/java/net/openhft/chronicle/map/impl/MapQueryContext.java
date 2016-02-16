@@ -27,8 +27,12 @@ import net.openhft.chronicle.map.impl.stage.data.DummyValueZeroData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.EntryValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.bytes.WrappedValueBytesData;
 import net.openhft.chronicle.map.impl.stage.data.instance.WrappedValueInstanceDataHolder;
+import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.map.impl.stage.map.*;
-import net.openhft.chronicle.map.impl.stage.query.*;
+import net.openhft.chronicle.map.impl.stage.query.AcquireHandle;
+import net.openhft.chronicle.map.impl.stage.query.MapAbsent;
+import net.openhft.chronicle.map.impl.stage.query.MapQuery;
+import net.openhft.chronicle.map.impl.stage.query.QueryCheckOnEachPublicOperation;
 import net.openhft.chronicle.map.impl.stage.ret.DefaultReturnValue;
 import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
 import net.openhft.sg.Context;
@@ -53,7 +57,7 @@ import net.openhft.sg.Staged;
         QueryCheckOnEachPublicOperation.class,
         SearchAllocatedChunks.class,
 
-        QueryMapEntryStages.class,
+        MapEntryStages.class,
         MapEntryOperationsDelegation.class,
         WrappedValueInstanceDataHolderAccess.class,
         WrappedValueBytesDataAccess.class,

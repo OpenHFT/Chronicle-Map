@@ -49,6 +49,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     
     public long valueSizeOffset = -1;
 
+    @SuppressWarnings("unused")
     void initValueSizeOffset() {
         valueSizeOffset = countValueSizeOffset();
     }
@@ -69,6 +70,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         valueOffset = segmentBytes.writePosition();
     }
 
+    @SuppressWarnings("unused")
     void initValueSize() {
         Bytes segmentBytes = s.segmentBytesForRead();
         segmentBytes.readPosition(valueSizeOffset);
@@ -76,11 +78,6 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         valueOffset = segmentBytes.readPosition();
     }
 
-    void initValueSize_EqualToOld(long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
-        valueSize = oldValueSize;
-        valueOffset = valueSizeOffset + (oldValueOffset - oldValueSizeOffset);
-    }
-    
     public void initValue(Data<?> value) {
         initValueSize(value.size());
         writeValue(value);
@@ -104,13 +101,6 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         value.writeTo(s.segmentBS, valueOffset);
     }
 
-    public void initValue_WithoutSize(
-            Data<?> value, long oldValueSizeOffset, long oldValueSize, long oldValueOffset) {
-        assert oldValueSize == value.size();
-        initValueSize_EqualToOld(oldValueSizeOffset, oldValueSize, oldValueOffset);
-        writeValue(value);
-    }
-
     @Override
     public long entryEnd() {
         return valueOffset + valueSize;
@@ -123,17 +113,6 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     public Data<V> value() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return entryValue;
-    }
-
-    public void putValueDeletedEntry(Data<V> newValue) {
-        throw new AssertionError("putValueDeletedEntry() might be called only from " +
-                "non-Replicated Map query context");
-    }
-
-    public void writeValueAndPutPos(Data<V> value) {
-        initValue(value);
-        freeExtraAllocatedChunks();
-        hlp.putValueVolatile(pos);
     }
 
     public long newSizeOfEverythingBeforeValue(Data<V> newValue) {

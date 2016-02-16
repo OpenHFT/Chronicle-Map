@@ -69,11 +69,7 @@ public abstract class MapAbsent<K, V> implements Absent<K, V> {
     public void doInsert(Data<V> value) {
         q.putPrefix();
         if (!q.entryPresent()) {
-            if (ks.searchStateDeleted()) {
-                e.putValueDeletedEntry(value);
-            } else {
-                putEntry(value);
-            }
+            putEntry(value);
             s.incrementModCount();
             ks.setSearchState(PRESENT);
             q.initPresenceOfEntry(EntryPresence.PRESENT);

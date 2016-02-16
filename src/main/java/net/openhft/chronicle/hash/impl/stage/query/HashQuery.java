@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.impl.stage.query;
 
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.HashEntry;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupPos;
@@ -30,7 +29,7 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.DELETED;
+import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.ABSENT;
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
@@ -137,7 +136,7 @@ public abstract class HashQuery<K> implements SetEntry<K> {
             s.innerWriteLock.lock();
             hashLookupSearch.remove();
             entry.innerRemoveEntryExceptHashLookupUpdate();
-            ks.setSearchState(DELETED);
+            ks.setSearchState(ABSENT);
             initPresenceOfEntry(EntryPresence.ABSENT);
         } else {
             throw new IllegalStateException("Entry is absent when doRemove() is called");
