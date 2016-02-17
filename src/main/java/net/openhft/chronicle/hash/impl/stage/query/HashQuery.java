@@ -30,7 +30,6 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.ABSENT;
-import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
 public abstract class HashQuery<K> implements SetEntry<K> {
@@ -70,7 +69,7 @@ public abstract class HashQuery<K> implements SetEntry<K> {
             if (s.nestedContextsLockedOnSameSegment &&
                     s.rootContextLockedOnThisSegment.latestSameThreadSegmentModCount() !=
                             s.contextModCount) {
-                if (ks.keySearchInit() && ks.searchState == PRESENT &&
+                if (ks.keySearchInit() && ks.searchStatePresent() &&
                         !hashLookupSearch.checkSlotContainsExpectedKeyAndValue(entry.pos)) {
                     hlp.closeHashLookupPos();
                 }

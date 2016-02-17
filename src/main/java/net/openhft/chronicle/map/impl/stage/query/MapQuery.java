@@ -91,13 +91,14 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     
     protected void putPrefix() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        boolean underUpdatedLockIsHeld = !s.innerUpdateLock.isHeldByCurrentThread();
-        if (underUpdatedLockIsHeld)
+        if (!s.innerUpdateLock.isHeldByCurrentThread())
             s.innerUpdateLock.lock();
-        boolean searchResultsNotTrusted = underUpdatedLockIsHeld ||
-                s.nestedContextsLockedOnSameSegment;
-        if (hlp.hashLookupPosInit() && ks.searchStateAbsent() && searchResultsNotTrusted)
-            hlp.closeHashLookupPos();
+        if (s.nestedContextsLockedOnSameSegment &&
+                s.rootContextLockedOnThisSegment.latestSameThreadSegmentModCount() !=
+                        s.contextModCount) {
+            if (hlp.hashLookupPosInit() && ks.searchStateAbsent())
+                hlp.closeHashLookupPos();
+        }
     }
 
     @Override
