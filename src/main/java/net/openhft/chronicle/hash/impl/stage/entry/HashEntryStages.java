@@ -62,11 +62,15 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
         keySizeOffset = s.entrySpaceOffset + pos * hh.h().chunkSize;
     }
 
+    public abstract void closeEntryOffset();
+
     public long keySize = -1;
 
     public void initKeySize(long keySize) {
         this.keySize = keySize;
     }
+
+    public abstract void closeKeySize();
 
     public long keyOffset = -1;
 
@@ -89,6 +93,13 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
         initEntryOffset(keySizeOffset);
         initKeySize(keySize);
         initKeyOffset(keyOffset);
+    }
+
+    public void closeEntry() {
+        closePos();
+        closeEntryOffset();
+        closeKeySize();
+        closeKeyOffset();
     }
 
     public void writeNewEntry(long pos, Data<?> key) {

@@ -108,8 +108,7 @@ public class ReadLock implements InterProcessLock {
         if (s.localLockState != UNLOCKED) {
             // TODO what should close here?
             hlp.closeHashLookupPos();
-            entry.closePos();
-            entry.closeKeyOffset();
+            entry.closeEntry();
         }
         s.readUnlockAndDecrementCount();
         s.setLocalLockState(UNLOCKED);
