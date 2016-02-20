@@ -54,7 +54,9 @@ public abstract class HashLookupSearch {
     public long nextPos() {
         long pos = hlp.hashLookupPos;
         while (true) {
-            long entry = hl().readEntry(addr(), pos);
+            // read volatile to make a happens-before edge between entry insertion from concurrent
+            // thread under update lock and this thread (reading the entry)
+            long entry = hl().readEntryVolatile(addr(), pos);
             if (hl().empty(entry)) {
                 hlp.setHashLookupPos(pos);
                 return -1L;
@@ -96,6 +98,8 @@ public abstract class HashLookupSearch {
     }
     
     public boolean checkSlotContainsExpectedKeyAndValue(long value) {
+        // volatile read not needed here because this method is for verifying within-thread
+        // invariants
         long entry = hl().readEntry(addr(), hlp.hashLookupPos);
         return hl().key(entry) == searchKey && hl().value(entry) == value;
     }

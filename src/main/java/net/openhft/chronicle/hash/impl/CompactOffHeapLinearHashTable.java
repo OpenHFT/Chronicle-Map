@@ -133,7 +133,16 @@ public abstract class CompactOffHeapLinearHashTable {
 
     public abstract long stepBack(long pos);
 
+    /**
+     * Used when we assume we are holding at least update lock, and during recovery (because we
+     * don't care about concurrency during recovery)
+     */
     public abstract long readEntry(long addr, long pos);
+
+    /**
+     * Used when we are under read lock and aware of possible concurrent insertions
+     */
+    public abstract long readEntryVolatile(long addr, long pos);
 
     public abstract void writeEntryVolatile(long addr, long pos, long key, long value);
 
@@ -148,6 +157,7 @@ public abstract class CompactOffHeapLinearHashTable {
         long posToShift = posToRemove;
         while (true) {
             posToShift = step(posToShift);
+            // volatile read not needed because removed is performed under exclusive lock
             long entryToShift = readEntry(addr, posToShift);
             if (empty(entryToShift))
                 break;

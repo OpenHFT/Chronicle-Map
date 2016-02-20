@@ -105,6 +105,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         boolean interrupted = false;
         long startPos = 0L;
         CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
+        // volatile read not needed because iteration is performed at least under update lock
         while (!hashLookup.empty(hashLookup.readEntry(currentTierBaseAddr, startPos))) {
             startPos = hashLookup.step(startPos);
         }
@@ -119,6 +120,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             currentHashLookupPos = hashLookup.step(hlp.hashLookupPos);
             steps++;
             hlp.setHashLookupPos(currentHashLookupPos);
+            // volatile read not needed because iteration is performed at least under update lock
             long entry = hashLookup.readEntry(currentTierBaseAddr, currentHashLookupPos);
             initHashLookupEntry(entry);
             if (!hashLookup.empty(entry)) {

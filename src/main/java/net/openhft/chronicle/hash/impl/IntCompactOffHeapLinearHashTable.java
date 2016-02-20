@@ -47,6 +47,11 @@ public final class IntCompactOffHeapLinearHashTable extends CompactOffHeapLinear
     }
 
     @Override
+    public long readEntryVolatile(long addr, long pos) {
+        return OS.memory().readVolatileInt(addr + pos);
+    }
+
+    @Override
     public void writeEntryVolatile(long addr, long pos, long key, long value) {
         OS.memory().writeVolatileInt(null, addr + pos, (int) entry(key, value));
     }

@@ -205,9 +205,10 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         freeExtraAllocatedChunks();
 
         CompactOffHeapLinearHashTable hl = hh.h().hashLookup;
-        long oldEntry = hl.readEntry(oldHashLookupAddr, oldHashLookupPos);
+        long hashLookupKey = hl.key(hl.readEntry(oldHashLookupAddr, oldHashLookupPos));
         hl.checkValueForPut(pos);
-        hl.writeEntryVolatile(s.tierBaseAddr, hlp.hashLookupPos, hl.key(oldEntry), pos);
+        // volatile not needed, because we are in write lock context
+        hl.writeEntry(s.tierBaseAddr, hlp.hashLookupPos, hl.entry(hashLookupKey, pos));
         if (tierHasChanged)
             hl.remove(oldHashLookupAddr, oldHashLookupPos);
     }
