@@ -43,7 +43,8 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     static final long ENTRIES_OFFSET = LOCK_OFFSET + 8L; // 32-bit
     static final long LOWEST_POSSIBLY_FREE_CHUNK_OFFSET = ENTRIES_OFFSET + 4L;
-    static final long DELETED_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
+    static final long NEXT_TIER_INDEX_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
+    static final long DELETED_OFFSET = NEXT_TIER_INDEX_OFFSET + 8L;
 
     private static final int TRY_LOCK_NANOS_THRESHOLD = 2_000_000;
 
@@ -124,6 +125,16 @@ public final class BigSegmentHeader implements SegmentHeader {
     public void lowestPossiblyFreeChunk(long address, long lowestPossiblyFreeChunk) {
         OS.memory().writeInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET,
                 (int) lowestPossiblyFreeChunk);
+    }
+
+    @Override
+    public long nextTierIndex(long address) {
+        return OS.memory().readLong(address + NEXT_TIER_INDEX_OFFSET);
+    }
+
+    @Override
+    public void nextTierIndex(long address, long nextTierIndex) {
+        OS.memory().writeLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
     }
 
     @Override

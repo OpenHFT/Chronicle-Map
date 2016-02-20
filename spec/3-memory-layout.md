@@ -120,7 +120,13 @@ multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segment
  allocated (i. e. the current tier becomes *full*), the value of this field is changed to
  [`actualChunksPerSegmentTier`](3_1-header-fields.md#actualchunkspersegmenttier) (an impossible
  chunk index, which varies from 0 to `actualChunksPerSegmentTier` &minus; 1).
- 4. Bytes 16..31 - reserved for use by extensions.
+ 4. Bytes 16..23 - the [index](#tier-index) of the next segment tier, chained after the first tier
+ of the segment. I. e. this field points to the second tier in the chain for the segment, if any.
+
+ It is a 64-bit value, stored in the little-endian order. If the value of this field is 0, this
+ means there is no chained segment tier in this segment yet after the first tier, in other words,
+ the first tier is the only one in the chain for the current segment.
+ 5. Bytes 24..31 - reserved for use by extensions.
 
 > The reference Java implementation: [`BigSegmentHeader`
 > ](../src/main/java/net/openhft/chronicle/hash/impl/BigSegmentHeader.java)
@@ -159,6 +165,8 @@ slots each of [`tierHashLookupSlotSize`](3_1-header-fields.md#tierhashlookupslot
 slot a 32-bit or 64-bit (if the `tierHashLookupSlotSize` is 4 or 8, respectively) value is stored in
 little-endian order. The slot value of 0 designates an empty slot.
 
+##### Hash lookup key
+
 In [`tierHashLookupKeyBits`](3_1-header-fields.md#tierhashlookupkeybits) lower bits of a slot value
 a *hash lookup key* is stored. It is a part of a Chronicle Map's key hash code, extracted by the
 [`hashSplitting`](3_1-header-fields.md#hashsplitting) algorithm. In addition, if the `hashSplitting`
@@ -188,10 +196,15 @@ tier.
 
 The segment tier counters structure is 64 bytes long:
 
- 1. Bytes 0..7 - the [index](#tier-index) of the next segment tier, chained after this segment tier.
- In tiers, which are first in their segments (i. e. they reside the [main segments area
- ](#main-segments-area)) this index points to the second tier in the chain, this field value in the
- second tier in the chain - to the third tier in the chain, and so on.
+ 1. Bytes 0..7 - for tiers from extra tier bulks (i. e. tiers that are not first in chains of
+ their segments), this field is the [index](#tier-index) of the next segment tier, chained after
+ this segment tier. I. e. this field value in the second tier in the chain - to the third tier in
+ the chain, and so on. For tiers from the main segment area (i. e. first in chains of their
+ segments), this field is unused, the 4th field of the [segment header
+ structure](#segment-header-structure) is used instead. This field and the 4th field in the segment
+ header structure have the same semantics, with the only difference that this field serves chained
+ tiers (tiers from extra tier bulks), while the 4th field in the segment header structure serves
+ first tiers in chains of their segments.
 
  It is a 64-bit value, stored in the little-endian order. If the value of this field is 0, this
  means there is no chained segment tier in this segment yet after the current tier, in other words,
@@ -200,6 +213,11 @@ The segment tier counters structure is 64 bytes long:
  When the tier is in the *free* state, i. e. allocated in the extra tier bulk, but not yet assigned
  to some segment, the value of this field is the index of the next *free* tier. The index of the
  first free tier is pointed by the 3rd field of the [global mutable state](#global-mutable-state).
+
+ > This field is effectively "pulled" from the tier counters structure to the segment header
+ > structure for tiers in the main segment area, because if there is only one tier in the chain
+ > (that should be true for the majority of (or all) segments), the tier counters area is not
+ > touched, reducing the number of accessed cache lines and pollution of caches.
 
  2. Bytes 8..15 - the [index](#tier-index) of the previous segment tier, chained before this segment
  tier. It is a 64-bit value, stored in the little-endian order. In tiers in the main segments area,
@@ -220,10 +238,8 @@ The segment tier counters structure is 64 bytes long:
 
  A 64-bit non-negative value, stored in the little-endian order.
 
- > This field is effectively "pulled" from the tier counters structure to the segment header
- > structure for tiers in the main segment area, because if there is only one tier in the chain
- > (that should be true for the majority of (or all) segments), the tier counters area is not
- > touched, reducing the number of accessed cache lines and pollution of caches.
+ > Like the 1st field of this structure, this field is "pulled" to the segment headers in order to
+ > avoid accessing tier counters area altogether, when there is only one tier in a segment chain.
 
  4. Bytes 24..27 - the index of the segment, to which this tier belongs. A 32-bit non-negative
  value, stored in the little-endian order.
@@ -243,7 +259,7 @@ The segment tier counters structure is 64 bytes long:
 
  A 32-bit unsigned value, stored in the little-endian order.
 
- > Again, like the 3rd field of this structure, this field is "pulled" to the segment headers in
+ > Like the 1st and 3rd field of this structure, this field is "pulled" to the segment headers in
  > order to avoid accessing tier counters area altogether, when there is only one tier in a segment
  > chain.
 

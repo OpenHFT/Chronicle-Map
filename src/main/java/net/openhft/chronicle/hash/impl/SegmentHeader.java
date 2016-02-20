@@ -28,6 +28,9 @@ public interface SegmentHeader {
     long lowestPossiblyFreeChunk(long address);
     void lowestPossiblyFreeChunk(long address, long lowestPossiblyFreeChunk);
 
+    long nextTierIndex(long address);
+    void nextTierIndex(long address, long nextTierIndex);
+
     void readLock(long address);
     void readLockInterruptibly(long address) throws InterruptedException;
     boolean tryReadLock(long address);

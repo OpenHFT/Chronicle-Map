@@ -117,6 +117,22 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         }
     }
 
+    public long nextTierIndex() {
+        if (tier == 0) {
+            return segmentHeader.nextTierIndex(segmentHeaderAddress);
+        } else {
+            return TierCountersArea.nextTierIndex(tierCountersAreaAddr());
+        }
+    }
+
+    public void nextTierIndex(long nextTierIndex) {
+        if (tier == 0) {
+            segmentHeader.nextTierIndex(segmentHeaderAddress, nextTierIndex);
+        } else {
+            TierCountersArea.nextTierIndex(tierCountersAreaAddr(), nextTierIndex);
+        }
+    }
+
     public long size() {
         goToFirstTier();
         long size = tierEntries() - tierDeleted();
@@ -538,14 +554,6 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     public long tierCountersAreaAddr() {
         return tierBaseAddr + hh.h().tierHashLookupOuterSize;
-    }
-
-    public long nextTierIndex() {
-        return TierCountersArea.nextTierIndex(tierCountersAreaAddr());
-    }
-
-    public void nextTierIndex(long nextTierIndex) {
-        TierCountersArea.nextTierIndex(tierCountersAreaAddr(), nextTierIndex);
     }
 
     public long prevTierIndex() {
