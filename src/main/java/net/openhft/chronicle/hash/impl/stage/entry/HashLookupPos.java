@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
-import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
-import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -26,6 +24,7 @@ import net.openhft.sg.Staged;
 public abstract class HashLookupPos {
 
     @StageRef HashLookupSearch hls;
+    @StageRef SegmentStages s;
 
     public long hashLookupPos = -1;
 
@@ -52,13 +51,4 @@ public abstract class HashLookupPos {
     }
     
     public abstract void closeHashLookupPos();
-
-    @StageRef VanillaChronicleHashHolder<?> hh;
-    @StageRef SegmentStages s;
-
-    public void putValueVolatile(long newValue) {
-        CompactOffHeapLinearHashTable hashLookup = hh.h().hashLookup;
-        hashLookup.checkValueForPut(newValue);
-        hashLookup.putValueVolatile(s.tierBaseAddr, hashLookupPos, newValue);
-    }
 }

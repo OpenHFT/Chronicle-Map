@@ -136,12 +136,6 @@ public abstract class CompactOffHeapLinearHashTable {
     public abstract long readEntry(long addr, long pos);
 
     public abstract void writeEntryVolatile(long addr, long pos, long key, long value);
-    
-    public void putValueVolatile(long addr, long pos, long value) {
-        checkValueForPut(value);
-        long currentEntry = readEntry(addr, pos);
-        writeEntryVolatile(addr, pos, key(currentEntry), value);
-    }
 
     public abstract void writeEntry(long addr, long pos, long newEntry);
 
@@ -175,18 +169,5 @@ public abstract class CompactOffHeapLinearHashTable {
         }
         clearEntry(addr, posToRemove);
         return posToRemove;
-    }
-
-    public void insert(long addr, long key, long value) {
-        long startPos = hlPos(key);
-        long pos = startPos;
-        do {
-            if (empty(readEntry(addr, pos))) {
-                writeEntry(addr, pos, entry(key, value));
-                return;
-            }
-            pos = step(pos);
-        } while (pos != startPos);
-        throw new AssertionError("HashLookup overflow should never occur");
     }
 }
