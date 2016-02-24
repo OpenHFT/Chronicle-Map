@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
@@ -493,7 +492,6 @@ public abstract class VanillaChronicleHash<K,
             segmentHeadersOffset = computeSegmentHeadersOffset();
         }
         long sizeInBytesWithoutTiers = computeSizeInBytesWithoutTiers(segmentHeadersOffset);
-        long sizeBeyondSegments = Math.max(raf.length() - sizeInBytesWithoutTiers, 0);
         long dataStoreSize = globalMutableState().getDataStoreSize();
         int allocatedExtraTierBulks = globalMutableState().getAllocatedExtraTierBulks();
         if (dataStoreSize < sizeInBytesWithoutTiers ||
