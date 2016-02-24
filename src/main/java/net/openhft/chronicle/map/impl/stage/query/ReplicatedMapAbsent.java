@@ -43,8 +43,6 @@ public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
     @Override
     public void doInsert(Data<V> value) {
         q.putPrefix();
-        // TODO relax locks only after spec completion and analysis
-        s.innerUpdateLock.lock();
         if (!q.entryPresent()) {
             if (!ks.searchStatePresent()) {
                 putEntry(value);
