@@ -184,7 +184,6 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     protected void relocation(Data<V> newValue, long newSizeOfEverythingBeforeValue) {
-        s.innerWriteLock.lock();
         long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
         // need to copy, because in initEntryAndKeyCopying(), in alloc(), nextTier() called ->
         // hashLookupPos cleared, as a dependant
@@ -207,8 +206,10 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         CompactOffHeapLinearHashTable hl = hh.h().hashLookup;
         long hashLookupKey = hl.key(hl.readEntry(oldHashLookupAddr, oldHashLookupPos));
         hl.checkValueForPut(pos);
-        // volatile not needed, because we are in write lock context
-        hl.writeEntry(s.tierBaseAddr, hlp.hashLookupPos, hl.entry(hashLookupKey, pos));
+        hl.writeEntryVolatile(s.tierBaseAddr, hlp.hashLookupPos, hashLookupKey, pos);
+        // write lock is needed anyway (see testPutShouldBeWriteLocked()) but the scope is reduced
+        // as much as possible
+        s.innerWriteLock.lock();
         if (tierHasChanged)
             hl.remove(oldHashLookupAddr, oldHashLookupPos);
     }
