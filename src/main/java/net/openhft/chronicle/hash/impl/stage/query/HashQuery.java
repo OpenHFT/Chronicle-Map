@@ -129,15 +129,12 @@ public abstract class HashQuery<K> implements SetEntry<K> {
     @Override
     public void doRemove() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        s.innerUpdateLock.lock();
+        s.innerWriteLock.lock();
         if (ks.searchStatePresent()) {
             entry.innerRemoveEntryExceptHashLookupUpdate();
+            hashLookupSearch.remove();
             ks.setSearchState(ABSENT);
             initPresenceOfEntry(EntryPresence.ABSENT);
-
-            // write lock scope is reduced as much as possible
-            s.innerWriteLock.lock();
-            hashLookupSearch.remove();
         } else {
             throw new IllegalStateException("Entry is absent when doRemove() is called");
         }
