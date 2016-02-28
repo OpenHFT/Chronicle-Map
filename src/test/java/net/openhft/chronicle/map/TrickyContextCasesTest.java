@@ -16,14 +16,11 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.Values;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;

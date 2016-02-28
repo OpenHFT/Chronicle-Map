@@ -306,8 +306,12 @@ spaces. A positive, 32-bit, power of 2 value, e. g. `1`.
 
 ##### `worstAlignment`
 
-The most bytes could theoretically be wasted on the value [`alignment`](#alignment). A non-negative
-32-bit value, e. g. `0`.
+The most bytes could theoretically be wasted on the value [`alignment`](#alignment). The value
+alignment waste might vary, if the [`chunkSize`](#chunksize) is not a multiple of
+[`alignment`](#alignment), and/or due to amount of memory before value in the [stored entry
+structure](3-memory-layout.md#stored-entry-structure) might vary.
+
+A non-negative 32-bit value, e. g. `0`.
 
 > ## The reference Java implementation
 >

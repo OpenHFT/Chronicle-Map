@@ -684,6 +684,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         if (fromPos + newChunks < hh.h().actualChunksPerSegmentTier &&
                 freeList.isRangeClear(fromPos + oldChunks, fromPos + newChunks)) {
             freeList.setRange(fromPos + oldChunks, fromPos + newChunks);
+            // checking and updating lowestPossiblyFreeChunk is omitted because adds computational
+            // complexity for seemingly very small gain
             return true;
         } else {
             return false;

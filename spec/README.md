@@ -9,6 +9,7 @@ This is currently work-in-progress.
    2. [Lock structure and locking operations](3_2-lock-structure.md)
  4. [Key hashing and checksum algorithms](4-hashing-algorithms.md)
  5. [Initialization operations](5-initialization.md)
+ 6. [Query operations](6-queries.md)
 
 ## Rational behind this Specification
 
