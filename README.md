@@ -15,16 +15,16 @@ Chronicle Map is an in-memory key-value store designed for low-latency and/or mu
 applications. Notably trading, financial market applications.
 
 **Features**
- - *Ultra low latency:* Chronicle Map targets median latency of both read and write queries of less
+ - **Ultra low latency**: Chronicle Map targets median latency of both read and write queries of less
  than 1 *micro*second in [certain tests](
  https://github.com/OpenHFT/Chronicle-Map/search?l=java&q=perf&type=Code).
- - *High concurrency:* write queries scale well up to the number of hardware execution threads in
+ - **High concurrency**: write queries scale well up to the number of hardware execution threads in
  the server. Read queries never block each other.
- - (Optional) persistence to disk.
- - (Optional) eventually-consistent, fully-redundant, asynchronous replication across servers,
- "last write wins" strategy by default, allows to implement custom [state-based CRDT](
+ - (Optional) **persistence to disk**
+ - **Multi-key queries**
+ - (Optional, closed-source) eventually-consistent, fully-redundant, asynchronous replication across
+ servers, "last write wins" strategy by default, allows to implement custom [state-based CRDT](
  https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type) strategy.
- - Multi-key queries.
 
 **Unique features**
  - Multiple processes could access a Chronicle Map instance concurrently. At the same time,
@@ -88,7 +88,7 @@ Chronicle Map doesn't support
  sorted.
  - LRU entry eviction
 
-### Feature matrix
+### Features
 <table>
   <tr>
     <th align="left">Feature</th>
@@ -96,21 +96,21 @@ Chronicle Map doesn't support
   </tr>
   <tr>
     <td>In-memory off-heap Map</td>
-    <th rowspan="2">Chronicle Map</th>
+    <th rowspan="2">Open-source<brChronicle Map</th>
   </tr>
   <tr>
     <td>Persistence to disk</td>
   </tr>
   <tr>
     <td>Remote calls</td>
-    <th rowspan="2"><a href="https://github.com/OpenHFT/Chronicle-Engine">Chronicle Engine</a></th>
+    <th rowspan="5"><a href="http://chronicle.software/consultancy/">
+    Closed-source,<br>on-demand</a></th>
   </tr>
   <tr>
     <td>Eventually-consistent replication (100% redundancy)</td>
   </tr>
   <tr>
     <td>Partially-redundant replication</td>
-    <th rowspan="3"><a href="http://chronicle.software/consultancy/">On-demand</a></th>
   </tr>
   <tr>
     <td>Synchronous replication</td>
