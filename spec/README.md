@@ -1,4 +1,4 @@
-# The Chronicle Map Data Store Specification, revision 1-pre
+# The Chronicle Map Data Store Specification, revision 1
 
 This is currently work-in-progress.
 
