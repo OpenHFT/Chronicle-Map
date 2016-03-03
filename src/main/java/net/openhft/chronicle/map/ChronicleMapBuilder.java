@@ -71,26 +71,21 @@ import static net.openhft.lang.model.DataValueGenerator.firstPrimitiveFieldType;
  * <p>
  * ChronicleMap<Key, Value> map1 = builder.create();
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
- * i. e. created {@code ChronicleMap} instances don't depend on the builder.
- * <p>
- * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
- * documentation.
- * <p>
- * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
- * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide
- * {@code ChronicleMap} implementations with completely different properties.
- * <p>
- * <p>{@code ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently
- * doesn't support resizing. That is why you <i>must</i> configure {@linkplain #entries(long) number
- * of entries} you are going to insert into the created map <i>at most</i>. See {@link
- * #entries(long)} method documentation for more information on this.
- * <p>
- * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
- * e. it is not a boxed primitive, data value generated interface, {@link Byteable}, etc. (see the
- * complete list TODO insert the link to the complete list), you <i>must</i> provide the {@code
- * ChronicleHashBuilder} with some information about you keys or values: if they are
- * constantly-sized, call {@link #constantKeySizeBySample(Object)}, otherwise {@link
- * ChronicleHashBuilder#averageKeySize(double)} method, accordingly for values.
+ * i. e. created {@code ChronicleMap} instances don't depend on the builder. <p> <p>{@code
+ * ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
+ * documentation. <p> <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created
+ * by {@code ChronicleMapBuilder}", unless specified different, because theoretically someone might
+ * provide {@code ChronicleMap} implementations with completely different properties. <p> <p>{@code
+ * ChronicleMap} ("ChronicleMaps, created by {@code ChronicleMapBuilder}") currently doesn't support
+ * resizing. That is why you <i>must</i> configure {@linkplain #entries(long) number of entries} you
+ * are going to insert into the created map <i>at most</i>. See {@link #entries(long)} method
+ * documentation for more information on this. <p> <p>If you key or value type is not constantly
+ * sized and known to {@code ChronicleHashBuilder}, i. e. it is not a boxed primitive, data value
+ * generated interface, {@link Byteable}, etc. (see the complete list TODO insert the link to the
+ * complete list), you <i>must</i> provide the {@code ChronicleHashBuilder} with some information
+ * about you keys or values: if they are constantly-sized, call {@link
+ * #constantKeySizeBySample(Object)}, otherwise {@link ChronicleHashBuilder#averageKeySize(double)}
+ * method, accordingly for values.
  *
  * @param <K> key type of the maps, produced by this builder
  * @param <V> value type of the maps, produced by this builder
@@ -206,6 +201,15 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     private static long divideUpper(long dividend, long divisor) {
         return ((dividend - 1L) / divisor) + 1L;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public ChronicleMapBuilder name(String name) {
+        this.name = name;
+        return this;
     }
 
     private static String pretty(int value) {
@@ -325,9 +329,8 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * {@inheritDoc}
-     * <p>
-     * <p>Example: if keys in your map(s) are English words in {@link String} form, average English
+     * {@inheritDoc} <p> <p>Example: if keys in your map(s) are English words in {@link String}
+     * form, average English
      * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
      *     .of(String.class, LongValue.class)
@@ -354,8 +357,7 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     }
 
     /**
-     * {@inheritDoc}
-     * <p>
+     * {@inheritDoc} <p>
      * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Map<byte[], String> gitCommitMessagesByHash =
      *     ChronicleMapBuilder.of(byte[].class, String.class)
@@ -379,17 +381,15 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     /**
      * Configures the average number of bytes, taken by serialized form of values, put into maps,
      * created by this builder. If value size is always the same, call {@link
-     * #constantValueSizeBySample(Object)} method instead of this one.
-     * <p>
-     * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
-     * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
-     * that, however, might result to quite high internal fragmentation, i. e. losses because only
-     * integral number of chunks could be allocated for the entry. If you want to avoid this, you
-     * should manually configure the actual chunk size in addition to this average value size
-     * configuration, which is anyway needed.
-     * <p>
-     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
-     * known statically, it is automatically accounted and shouldn't be specified by user.
+     * #constantValueSizeBySample(Object)} method instead of this one. <p> <p>{@code
+     * ChronicleHashBuilder} implementation heuristically chooses {@linkplain #actualChunkSize(int)
+     * the actual chunk size} based on this configuration and the key size, that, however, might
+     * result to quite high internal fragmentation, i. e. losses because only integral number of
+     * chunks could be allocated for the entry. If you want to avoid this, you should manually
+     * configure the actual chunk size in addition to this average value size configuration, which
+     * is anyway needed. <p> <p>If values are of boxed primitive type or {@link Byteable} subclass,
+     * i. e. if value size is known statically, it is automatically accounted and shouldn't be
+     * specified by user.
      *
      * @param averageValueSize number of bytes, taken by serialized form of values
      * @return this builder back
@@ -410,13 +410,11 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
     /**
      * Configures the constant number of bytes, taken by serialized form of values, put into maps,
      * created by this builder. This is done by providing the {@code sampleValue}, all values should
-     * take the same number of bytes in serialized form, as this sample object.
-     * <p>
-     * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
-     * known statically, it is automatically accounted and this method shouldn't be called.
-     * <p>
-     * <p>If value size varies, method {@link #averageValueSize(double)} should be called instead of
-     * this one.
+     * take the same number of bytes in serialized form, as this sample object. <p> <p>If values are
+     * of boxed primitive type or {@link Byteable} subclass, i. e. if value size is known
+     * statically, it is automatically accounted and this method shouldn't be called. <p> <p>If
+     * value size varies, method {@link #averageValueSize(double)} should be called instead of this
+     * one.
      *
      * @param sampleValue the sample value
      * @return this builder back
@@ -600,18 +598,14 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
 
     /**
      * Configures alignment strategy of address in memory of entries and independently of address in
-     * memory of values within entries in ChronicleMaps, created by this builder.
-     * <p>
-     * <p>Useful when values of the map are updated intensively, particularly fields with volatile
-     * access, because it doesn't work well if the value crosses cache lines. Also, on some
-     * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
-     * <p>
-     * <p>If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or "data
-     * value generated"), alignment configuration makes no sense and forbidden.
-     * <p>
-     * <p>Default is {@link Alignment#NO_ALIGNMENT} if values couldn't reference off-heap memory,
-     * otherwise chosen heuristically (configure explicitly for being sure and to compare
-     * performance in your case).
+     * memory of values within entries in ChronicleMaps, created by this builder. <p> <p>Useful when
+     * values of the map are updated intensively, particularly fields with volatile access, because
+     * it doesn't work well if the value crosses cache lines. Also, on some (nowadays rare)
+     * architectures any misaligned memory access is more expensive than aligned. <p> <p>If values
+     * couldn't reference off-heap memory (i. e. it is not {@link Byteable} or "data value
+     * generated"), alignment configuration makes no sense and forbidden. <p> <p>Default is {@link
+     * Alignment#NO_ALIGNMENT} if values couldn't reference off-heap memory, otherwise chosen
+     * heuristically (configure explicitly for being sure and to compare performance in your case).
      *
      * @param alignment the new alignment of the maps constructed by this builder
      * @return this {@code ChronicleMapOnHeapUpdatableBuilder} back

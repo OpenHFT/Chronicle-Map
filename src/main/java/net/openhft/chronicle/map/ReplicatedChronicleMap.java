@@ -174,6 +174,11 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
     @Override
     public long lastModificationTime(byte remoteIdentifier) {
+
+        if (remoteIdentifier == this.identifier()) {
+            System.out.println("remoteIdentifier=" + remoteIdentifier);
+        }
+
         assert remoteIdentifier != this.identifier();
 
         // purposely not volatile as this will impact performance,

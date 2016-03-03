@@ -93,6 +93,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
     private final long lockTimeOutNS;
     private final int segmentHeaderSize;
     private final HashSplitting hashSplitting;
+    private final String name;
 
     transient MapEventListener<K, V> eventListener;
     transient BytesMapEventListener bytesEventListener;
@@ -174,9 +175,13 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
         this.metaDataBytes = builder.metaDataBytes();
         this.segmentHeaderSize = builder.segmentHeaderSize(replicated);
         this.maxChunksPerEntry = builder.maxChunksPerEntry();
-
+        this.name = builder.name();
         hashSplitting = HashSplitting.Splitting.forSegments(actualSegments);
         initTransients(builder);
+    }
+
+    public String name() {
+        return name;
     }
 
     static <T> T newInstance(Class<T> aClass, boolean isKey) {

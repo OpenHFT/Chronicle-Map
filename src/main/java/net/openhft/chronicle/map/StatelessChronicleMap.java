@@ -198,6 +198,11 @@ class StatelessChronicleMap<K, V> implements ChronicleMap<K, V>, Closeable, Clon
         return vClass;
     }
 
+    @Override
+    public String name() {
+        throw new UnsupportedOperationException("todo");
+    }
+
     private void checkTimeout(long timeoutTime) {
         if (timeoutTime < System.currentTimeMillis())
             throw new RemoteCallTimeoutException();
