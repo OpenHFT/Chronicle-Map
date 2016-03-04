@@ -16,31 +16,18 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesUtil;
-import net.openhft.chronicle.hash.serialization.SizedWriter;
-import org.jetbrains.annotations.NotNull;
+import net.openhft.chronicle.hash.serialization.DataAccess;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @deprecated use one of {@link AbstractCharSequenceUtf8DataAccess} subclasses instead
- */
-@Deprecated
-public enum CharSequenceSizedWriter
-        implements SizedWriter<CharSequence>, EnumMarshallable<CharSequenceSizedWriter> {
-    INSTANCE;
+public final class StringUtf8DataAccess extends AbstractCharSequenceUtf8DataAccess<String> {
 
     @Override
-    public long size(@NotNull CharSequence toWrite) {
-        return BytesUtil.utf8Length(toWrite);
+    public String getUsing(@Nullable String using) {
+        return cs;
     }
 
     @Override
-    public void write(@NotNull Bytes out, long size, @NotNull CharSequence toWrite) {
-        BytesUtil.appendUtf8(out, toWrite);
-    }
-
-    @Override
-    public CharSequenceSizedWriter readResolve() {
-        return INSTANCE;
+    public DataAccess<String> copy() {
+        return new StringUtf8DataAccess();
     }
 }

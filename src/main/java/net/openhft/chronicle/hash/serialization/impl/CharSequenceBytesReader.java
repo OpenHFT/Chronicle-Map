@@ -30,8 +30,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 
 /**
- * {@link BytesReader} implementation for {@code CharSequence}, for the primary ChronicleMap's key
- * of value type {@link CharSequenceSizedReader} + {@link CharSequenceSizedWriter} are more
+ * {@link BytesReader} implementation for {@code CharSequence}. For the primary ChronicleMap's key
+ * or value type {@link CharSequenceSizedReader} + {@link CharSequenceUtf8DataAccess} are more
  * efficient (because don't store the size twice), so this reader is useful in conjunction with
  * {@link ListMarshaller} or {@link SetMarshaller}.
  *

@@ -23,8 +23,8 @@ import net.openhft.chronicle.hash.serialization.SetMarshaller;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@link BytesWriter} implementation for {@link CharSequence}, for the primary ChronicleMap's
- * key or value type {@link CharSequenceSizedWriter} + {@link StringSizedReader} are more
+ * {@link BytesWriter} implementation for {@link CharSequence}, for the primary ChronicleMap's key
+ * or value type {@link CharSequenceUtf8DataAccess} + {@link CharSequenceSizedReader} are more
  * efficient (because don't store the size twice), so this writer is useful in conjunction with
  * {@link ListMarshaller} or {@link SetMarshaller}.
  *

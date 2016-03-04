@@ -17,59 +17,73 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.ListMarshaller;
-import net.openhft.chronicle.hash.serialization.SetMarshaller;
-import net.openhft.chronicle.hash.serialization.StatefulCopyable;
+import net.openhft.chronicle.bytes.BytesUtil;
+import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.hash.AbstractData;
+import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-/**
- * {@link BytesReader} implementation for String, for the primary ChronicleMap's key or value type
- * {@link StringSizedReader} + {@link StringUtf8DataAccess} are more efficient (because don't
- * store the size twice), so this reader is useful in conjunction with {@link ListMarshaller} or
- * {@link SetMarshaller}.
- *
- * @see CharSequenceBytesWriter
- */
-public class StringBytesReader implements BytesReader<String>, StatefulCopyable<StringBytesReader> {
+abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extends AbstractData<T>
+        implements DataAccess<T>, Data<T> {
 
     /** Cache field */
-    private transient StringBuilder sb;
+    private transient Bytes bytes;
 
-    public StringBytesReader() {
+    /** State field */
+    transient T cs;
+
+    AbstractCharSequenceUtf8DataAccess() {
         initTransients();
     }
 
     private void initTransients() {
-        sb = new StringBuilder();
-    }
-
-    @NotNull
-    @Override
-    public String read(Bytes in, @Nullable String using) {
-        if (in.readUtf8(sb)) {
-            return sb.toString();
-        } else {
-            throw new NullPointerException("BytesReader couldn't read null");
-        }
+        bytes = Bytes.allocateElasticDirect(1);
     }
 
     @Override
-    public StringBytesReader copy() {
-        return new StringBytesReader();
+    public Data<T> getData(@NotNull T cs) {
+        this.cs = cs;
+        bytes.clear();
+        BytesUtil.appendUtf8(bytes, cs);
+        return this;
+    }
+
+    @Override
+    public void uninit() {
+        cs = null;
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
-        // no fields to read
+        // no config fields to read
         initTransients();
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
-        // no fields to write
+        // no config fields to write
+    }
+
+    @Override
+    public RandomDataInput bytes() {
+        return bytes.bytesStore();
+    }
+
+    @Override
+    public long offset() {
+        return 0;
+    }
+
+    @Override
+    public long size() {
+        return bytes.readRemaining();
+    }
+
+    @Override
+    public T get() {
+        return cs;
     }
 }

@@ -82,13 +82,13 @@ public final class SerializationBuilder<T> implements Cloneable {
             sizeMarshaller(constant(((Byteable) OS.memory().allocateInstance(tClass)).maxSize()));
         } else if (tClass == CharSequence.class) {
             reader((SizedReader<T>) CharSequenceSizedReader.INSTANCE);
-            writer((SizedWriter<T>) CharSequenceSizedWriter.INSTANCE);
+            dataAccess((DataAccess<T>) new CharSequenceUtf8DataAccess());
         } else if (tClass == StringBuilder.class) {
             reader((SizedReader<T>) StringBuilderSizedReader.INSTANCE);
-            writer((SizedWriter<T>) CharSequenceSizedWriter.INSTANCE);
+            dataAccess((DataAccess<T>) new StringBuilderUtf8DataAccess());
         } else if (tClass == String.class) {
             reader((SizedReader<T>) new StringSizedReader());
-            notReusingWriter((SizedWriter<T>) CharSequenceSizedWriter.INSTANCE);
+            dataAccess((DataAccess<T>) new StringUtf8DataAccess());
         } else if (tClass == Boolean.class) {
             reader((SizedReader<T>) BooleanMarshaller.INSTANCE);
             notReusingWriter((SizedWriter<T>) BooleanMarshaller.INSTANCE);
