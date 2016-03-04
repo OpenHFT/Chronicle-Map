@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 public class CharSequenceSizedReader implements SizedReader<CharSequence>,
         StatefulCopyable<CharSequenceSizedReader>, ReadResolvable<CharSequenceSizedReader> {
 
-    private static final long serialVersionUID = 3949878688964423946L;
-
     public static final CharSequenceSizedReader INSTANCE = new CharSequenceSizedReader();
 
     /**
