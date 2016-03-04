@@ -34,7 +34,7 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAcce
  * <p>In most cases, each particular value wraps either some object or some bytes. Object
  * is marshalled to bytes lazily on demand, and bytes are lazily deserialized to object,
  * accordingly. 
- *  
+ *
  * @param <T> type of the accessed objects
  */
 public interface Data<T> {

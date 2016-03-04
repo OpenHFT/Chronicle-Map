@@ -238,7 +238,7 @@ public interface MapMethods<K, V, R> {
         // as in putIfAbsent()/acquireUsing(), start with update lock:
         q.updateLock().lock();
         MapEntry<K, V> entry = q.entry();
-        if (entry != null && bytesEquivalent(entry.value(), value)) {
+        if (entry != null && bytesEquivalent(value, entry.value())) {
             q.remove(entry);
             return true;
         } else {
@@ -298,7 +298,7 @@ public interface MapMethods<K, V, R> {
         // as in putIfAbsent()/acquireUsing(), start with update lock:
         q.updateLock().lock();
         MapEntry<K, V> entry = q.entry();
-        if (entry != null && bytesEquivalent(((MapEntry<K, V>) entry).value(), oldValue)) {
+        if (entry != null && bytesEquivalent(oldValue, entry.value())) {
             q.replaceValue(entry, newValue);
             return true;
         } else {

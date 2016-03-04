@@ -84,9 +84,7 @@ public abstract class KeySearch<K> {
     }
 
     boolean keyEquals(long keySize, long keyOffset) {
-        return inputKey.size() == keySize &&
-                BytesUtil.bytesEqual(s.segmentBS, keyOffset,
-                        inputKey.bytes(), inputKey.offset(), keySize);
+        return inputKey.size() == keySize && inputKey.equivalent(s.segmentBS, keyOffset);
     }
 
     public boolean searchStatePresent() {
