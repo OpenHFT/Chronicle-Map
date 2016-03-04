@@ -95,15 +95,15 @@ public final class SerializationBuilder<T> implements Cloneable {
             sizeMarshaller(constant(1));
         } else if (tClass == Long.class) {
             reader((SizedReader<T>) LongMarshaller.INSTANCE);
-            notReusingWriter((SizedWriter<T>) LongMarshaller.INSTANCE);
+            dataAccess((DataAccess<T>) new LongDataAccess());
             sizeMarshaller(constant(8));
         } else if (tClass == Double.class) {
             reader((SizedReader<T>) DoubleMarshaller.INSTANCE);
-            notReusingWriter((SizedWriter<T>) DoubleMarshaller.INSTANCE);
+            dataAccess((DataAccess<T>) new DoubleDataAccess());
             sizeMarshaller(constant(8));
         } else if (tClass == Integer.class) {
             reader((SizedReader<T>) IntegerMarshaller.INSTANCE);
-            notReusingWriter((SizedWriter<T>) IntegerMarshaller.INSTANCE);
+            dataAccess((DataAccess<T>) new IntegerDataAccess());
             sizeMarshaller(constant(4));
         } else if (tClass == byte[].class) {
             reader((SizedReader<T>) ByteArraySizedReader.INSTANCE);

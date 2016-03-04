@@ -17,13 +17,15 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.hash.serialization.BytesReader;
-import net.openhft.chronicle.hash.serialization.BytesWriter;
-import net.openhft.chronicle.hash.serialization.SizedReader;
-import net.openhft.chronicle.hash.serialization.SizedWriter;
+import net.openhft.chronicle.hash.serialization.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * As a writer for top-level Chronicle Map's key or value type (Long), {@code DoubleMarshaller} is
+ * deprecated in favor of {@link DoubleDataAccess}. As reader and element writer for {@link
+ * ListMarshaller} and similar composite marshallers, {@code DoubleMarshaller} is not deprecated.
+ */
 public enum DoubleMarshaller
         implements SizedReader<Double>, BytesReader<Double>,
         SizedWriter<Double>, BytesWriter<Double>, EnumMarshallable<DoubleMarshaller> {
