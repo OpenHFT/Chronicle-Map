@@ -76,7 +76,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
             using = ByteBuffer.allocate(bb.remaining());
         } else {
             using.position(0);
-            using.limit(bb.capacity());
+            using.limit(bb.remaining());
         }
         bytes.bytesStore(bytesStore, bb.position(), bb.remaining());
         bytes.read(using);
