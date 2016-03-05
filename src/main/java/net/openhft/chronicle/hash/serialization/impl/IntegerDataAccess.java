@@ -32,7 +32,7 @@ public final class IntegerDataAccess extends AbstractData<Integer>
         implements DataAccess<Integer>, Data<Integer> {
 
     // Cache fields
-    private boolean bsInit;
+    private transient boolean bsInit;
     private transient BytesStore bs;
 
     /** State field */
@@ -49,8 +49,8 @@ public final class IntegerDataAccess extends AbstractData<Integer>
     @Override
     public RandomDataInput bytes() {
         if (!bsInit) {
-            bsInit = true;
             bs.writeInt(0, instance);
+            bsInit = true;
         }
         return bs;
     }
@@ -93,13 +93,13 @@ public final class IntegerDataAccess extends AbstractData<Integer>
     @Override
     public Data<Integer> getData(@NotNull Integer instance) {
         this.instance = instance;
+        bsInit = false;
         return this;
     }
 
     @Override
     public void uninit() {
         instance = null;
-        bsInit = false;
     }
 
     @Override

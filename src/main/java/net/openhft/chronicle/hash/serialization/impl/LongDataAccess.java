@@ -32,7 +32,7 @@ public final class LongDataAccess extends AbstractData<Long>
         implements DataAccess<Long>, Data<Long> {
 
     // Cache fields
-    private boolean bsInit;
+    private transient boolean bsInit;
     private transient BytesStore bs;
 
     /** State field */
@@ -49,8 +49,8 @@ public final class LongDataAccess extends AbstractData<Long>
     @Override
     public RandomDataInput bytes() {
         if (!bsInit) {
-            bsInit = true;
             bs.writeLong(0, instance);
+            bsInit = true;
         }
         return bs;
     }

@@ -32,7 +32,7 @@ public final class DoubleDataAccess extends AbstractData<Double>
         implements DataAccess<Double>, Data<Double> {
 
     // Cache fields
-    private boolean bsInit;
+    private transient boolean bsInit;
     private transient BytesStore bs;
 
     /** State field */
@@ -49,8 +49,8 @@ public final class DoubleDataAccess extends AbstractData<Double>
     @Override
     public RandomDataInput bytes() {
         if (!bsInit) {
-            bsInit = true;
             bs.writeDouble(0, instance);
+            bsInit = true;
         }
         return bs;
     }
