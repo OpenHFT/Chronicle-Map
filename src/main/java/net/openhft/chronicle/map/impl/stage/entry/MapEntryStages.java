@@ -93,11 +93,13 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         // the off-heap bytes. This condition avoids in-place data copy.
         // TODO would be nice to reduce scope of this check, i. e. check only when it could be
         // true, and avoid when it surely false (fresh value put, relocating put etc.)
-        RandomDataInput valueBytes = value.bytes();
-        if (valueBytes instanceof NativeBytesStore &&
-                valueBytes.address(value.offset()) == s.segmentBS.address(valueOffset)) {
-            return;
-        }
+        // TODO this optimization is now disabled, because it calls value.bytes() that forces double
+        // data copy, if sizedReader/Writer configured for the value.
+//        RandomDataInput valueBytes = value.bytes();
+//        if (valueBytes instanceof NativeBytesStore &&
+//                valueBytes.address(value.offset()) == s.segmentBS.address(valueOffset)) {
+//            return;
+//        }
         value.writeTo(s.segmentBS, valueOffset);
     }
 

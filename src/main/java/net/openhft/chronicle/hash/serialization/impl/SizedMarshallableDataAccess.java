@@ -16,8 +16,7 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.bytes.*;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizedReader;
@@ -36,8 +35,11 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
     private SizedReader<T> sizedReader;
     private SizedWriter<? super T> sizedWriter;
 
-    /** Cache field */
+    // Cache fields
+    private transient boolean bytesInit;
     private transient Bytes bytes;
+    private transient long size;
+    private transient VanillaBytes targetBytes;
 
     /** State field */
     private transient T instance;
@@ -60,10 +62,16 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
 
     private void initTransients() {
         bytes = Bytes.allocateElasticDirect(1);
+        targetBytes = VanillaBytes.vanillaBytes();
     }
 
     @Override
     public RandomDataInput bytes() {
+        if (!bytesInit) {
+            bytes.clear();
+            sizedWriter.write(bytes, size, instance);
+            bytesInit = true;
+        }
         return bytes.bytesStore();
     }
 
@@ -74,7 +82,18 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
 
     @Override
     public long size() {
-        return bytes.readRemaining();
+        return size;
+    }
+
+    @Override
+    public void writeTo(RandomDataOutput target, long targetOffset) {
+        if (bytesInit || !(target instanceof BytesStore)) {
+            target.write(targetOffset, bytes(), offset(), size);
+        } else {
+            targetBytes.bytesStore((BytesStore) target, targetOffset, size);
+            sizedWriter.write(targetBytes, size, instance);
+            targetBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+        }
     }
 
     @Override
@@ -109,8 +128,8 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
     @Override
     public Data<T> getData(@NotNull T instance) {
         this.instance = instance;
-        bytes.clear();
-        sizedWriter.write(bytes, sizedWriter.size(instance), instance);
+        this.size = sizedWriter.size(instance);
+        bytesInit = false;
         return this;
     }
 
