@@ -62,14 +62,8 @@
 
         <dependency>
             <groupId>net.openhft</groupId>
-            <artifactId>compiler</artifactId>
-            <version>2.2.1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
             <artifactId>chronicle-values</artifactId>
-            <version>1.0.4-alpha</version>
+            <version>1.0.5-alpha-SNAPSHOT</version>
         </dependency>
 
         <dependency>
