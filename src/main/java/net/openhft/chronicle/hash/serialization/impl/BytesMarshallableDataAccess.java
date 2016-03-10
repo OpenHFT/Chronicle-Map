@@ -16,9 +16,7 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesMarshallable;
-import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.bytes.*;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.wire.WireIn;
@@ -28,8 +26,10 @@ import org.jetbrains.annotations.Nullable;
 public class BytesMarshallableDataAccess<T extends BytesMarshallable>
         extends InstanceCreatingMarshaller<T> implements DataAccess<T>, Data<T> {
 
-    /** Cache field */
+    // Cache fields
+    private transient boolean bytesInit;
     private transient Bytes bytes;
+    private transient VanillaBytes targetBytes;
 
     /** State field */
     private transient T instance;
@@ -47,11 +47,21 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
 
     private void initTransients() {
         bytes = Bytes.allocateElasticDirect(1);
+        targetBytes = VanillaBytes.vanillaBytes();
     }
 
     @Override
     public RandomDataInput bytes() {
+        initBytes();
         return bytes.bytesStore();
+    }
+
+    private void initBytes() {
+        if (!bytesInit) {
+            bytes.clear();
+            instance.writeMarshallable(bytes);
+            bytesInit = true;
+        }
     }
 
     @Override
@@ -61,7 +71,21 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
 
     @Override
     public long size() {
+        initBytes();
         return bytes.readRemaining();
+    }
+
+    @Override
+    public void writeTo(RandomDataOutput target, long targetOffset) {
+        if (bytesInit) {
+            target.write(targetOffset, bytes(), offset(), size());
+        } else {
+            targetBytes.bytesStore((BytesStore) target, targetOffset,
+                    target.capacity() - targetOffset);
+            targetBytes.writePosition(targetOffset);
+            instance.writeMarshallable(targetBytes);
+            targetBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+        }
     }
 
     @Override
@@ -73,6 +97,7 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
     public T getUsing(@Nullable T using) {
         if (using == null)
             using = createInstance();
+        initBytes();
         using.readMarshallable(bytes);
         bytes.readPosition(0);
         return using;
@@ -96,8 +121,7 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
     @Override
     public Data<T> getData(@NotNull T instance) {
         this.instance = instance;
-        bytes.clear();
-        instance.writeMarshallable(bytes);
+        bytesInit = false;
         return this;
     }
 
