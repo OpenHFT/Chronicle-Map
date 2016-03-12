@@ -37,6 +37,7 @@ import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.ValueModel;
+import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
@@ -787,7 +788,11 @@ public final class ChronicleMapBuilder<K, V> implements
         if (alignment != UNDEFINED_ALIGNMENT_CONFIG)
             return alignment;
         try {
-            return ValueModel.acquire(valueBuilder.tClass).recommendedOffsetAlignment();
+            if (Values.isValueInterfaceOrImplClass(valueBuilder.tClass)) {
+                return ValueModel.acquire(valueBuilder.tClass).recommendedOffsetAlignment();
+            } else {
+                return NO_ALIGNMENT;
+            }
         } catch (Exception e) {
             return NO_ALIGNMENT;
         }

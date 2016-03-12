@@ -55,7 +55,7 @@ public final class SerializationBuilder<T> implements Cloneable {
     @SuppressWarnings("unchecked")
     private void configureByDefault(Class<T> tClass) {
 
-        if (tClass.isInterface()) {
+        if (tClass.isInterface() && Values.isValueInterfaceOrImplClass(tClass)) {
             try {
                 // Acquire a model before assigning readers/writers
                 // if the interface is not
