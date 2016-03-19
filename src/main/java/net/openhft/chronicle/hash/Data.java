@@ -134,7 +134,7 @@ public interface Data<T> {
 
     /**
      * {@code Data} implementations should override {@link Object#hashCode()} with delegation to
-     * this method. Computes value's hash code by applying a hash function to {@code Data}'s
+     * this method. Computes {@code Data}'s hash code by applying a hash function to {@code Data}'s
      * <i>bytes</i> representation.
      */
     default int dataHashCode() {
@@ -149,5 +149,29 @@ public interface Data<T> {
         return obj != null &&
                 obj instanceof Data &&
                 Data.bytesEquivalent(this, (Data<?>) obj);
+    }
+
+    /**
+     * {@code Data} implementations should override {@link Object#toString()} with delegation to
+     * this method. Delegates to {@code Data}'s <i>object</i> {@code toString()}, i. e. equivalent
+     * to calling {@code get().toString()} on this {@code Data} instance with some fallback, if
+     * {@code get()} method throws an exception.
+     */
+    default String dataToString() {
+        T object;
+        try {
+            object = get();
+        } catch (Exception e) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("failed to deserialize object from data with bytes: [");
+            RandomDataInput bs = bytes();
+            for (long off = offset(), lim = offset() + size(); off < lim; off++) {
+                sb.append(bs.printable(off));
+            }
+            sb.append("], exception: ");
+            sb.append(e);
+            return sb.toString();
+        }
+        return object.toString();
     }
 }

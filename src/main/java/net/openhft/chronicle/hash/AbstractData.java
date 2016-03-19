@@ -34,6 +34,8 @@ public abstract class AbstractData<T> implements Data<T> {
     /**
      * Computes value's hash code by applying a hash function to {@code Data}'s <i>bytes</i>
      * representation.
+     *
+     * @implNote delegates to {@link #dataHashCode()}.
      */
     @Override
     public int hashCode() {
@@ -42,6 +44,8 @@ public abstract class AbstractData<T> implements Data<T> {
 
     /**
      * Compares {@code Data}s' <i>bytes</i> representations.
+     *
+     * @implNote delegates to {@link #dataEquals(Object)}.
      */
     @Override
     public boolean equals(Object obj) {
@@ -52,23 +56,11 @@ public abstract class AbstractData<T> implements Data<T> {
      * Delegates to {@code Data}'s <i>object</i> {@code toString()}. If deserialization fails with
      * exception (e. g. if data bytes are corrupted, and represent not a valid serialized form of
      * an object), traces the data's bytes and the exception.
+     *
+     * @implNote delegates to {@link #dataToString()}.
      */
     @Override
     public String toString() {
-        T object;
-        try {
-            object = get();
-        } catch (Exception e) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("failed to deserialize object from data with bytes: [");
-            RandomDataInput bs = bytes();
-            for (long off = offset(), lim = offset() + size(); off < lim; off++) {
-                sb.append(bs.printable(off));
-            }
-            sb.append("], exception: ");
-            sb.append(e);
-            return sb.toString();
-        }
-        return object.toString();
+        return dataToString();
     }
 }
