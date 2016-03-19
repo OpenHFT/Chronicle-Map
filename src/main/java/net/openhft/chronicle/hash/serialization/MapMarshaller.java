@@ -60,6 +60,14 @@ public final class MapMarshaller<K, V> implements BytesReader<Map<K, V>>, BytesW
     private transient Deque<K> orderedKeys;
     private transient Deque<V> orderedValues;
 
+    /**
+     * Constructs a {@code MapMarshaller} with the given map keys' and values' serializers.
+     *
+     * @param keyReader map keys' reader
+     * @param keyWriter map keys' writer
+     * @param valueReader map values' reader
+     * @param valueWriter map values' writer
+     */
     public MapMarshaller(
             BytesReader<K> keyReader, BytesWriter<? super K> keyWriter,
             BytesReader<V> valueReader, BytesWriter<? super V> valueWriter) {

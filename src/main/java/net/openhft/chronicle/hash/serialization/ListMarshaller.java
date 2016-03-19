@@ -59,11 +59,31 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 public final class ListMarshaller<T>
         implements BytesReader<List<T>>, BytesWriter<List<T>>, StatefulCopyable<ListMarshaller<T>> {
 
+    /**
+     * Returns a {@code ListMarshaller} which uses the given list elements' serializers.
+     *
+     * @param elementReader list elements' reader
+     * @param elementWriter list elements' writer
+     * @param <T> type of list elements
+     * @return a {@code ListMarshaller} which uses the given list elements' serializers
+     */
     public static <T> ListMarshaller<T> of(
             BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
         return new ListMarshaller<>(elementReader, elementWriter);
     }
 
+    /**
+     * Returns a {@code ListMarshaller} which uses the given marshaller as both reader and writer of
+     * list elements. Example: <pre><code>
+     * ChronicleMap
+     *     .of(String.class,{@code (Class<List<Integer>>)} ((Class) List.class))
+     *     .valueMarshaller(ListMarshaller.of(IntegerMarshaller.INSTANCE))
+     *     ...</code></pre>
+     * @param elementMarshaller list elements' marshaller
+     * @param <T> type of list elements
+     * @param <M> type of list elements' marshaller
+     * @return a {@code ListMarshaller} which uses the given list elements' marshaller
+     */
     public static <T, M extends BytesReader<T> & BytesWriter<? super T>> ListMarshaller<T> of(
             M elementMarshaller) {
         return of(elementMarshaller, elementMarshaller);
@@ -73,6 +93,15 @@ public final class ListMarshaller<T>
     private BytesReader<T> elementReader;
     private BytesWriter<? super T> elementWriter;
 
+    /**
+     * Constructs a {@code ListMarshaller} with the given list elements' serializers.
+     *
+     * <p>Use static factory {@link #of(BytesReader, BytesWriter)} instead of this constructor
+     * directly.
+     *
+     * @param elementReader list elements' reader
+     * @param elementWriter list elements' writer
+     */
     public ListMarshaller(BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
         this.elementReader = elementReader;
         this.elementWriter = elementWriter;

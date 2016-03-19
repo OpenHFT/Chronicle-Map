@@ -18,14 +18,24 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.WriteBytesMarshallable;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * External version of {@link WriteBytesMarshallable}.
+ * Serializer of objects to bytes, pairing {@link BytesReader}.
+ *
+ * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#byteswriter-and-bytesreader">{@code
+ * BytesWriter} and {@code BytesReader}</a> and
+ * <a href="https://github.com/OpenHFT/Chronicle-Map#custom-serialization-checklist">custom
+ * serialization checklist</a> sections in the Chronicle Map tutorial for more information on this
+ * interface, how to implement and use it properly.
  *
  * @param <T> the type of objects serialized
  * @see BytesReader
+ * @see ChronicleHashBuilder#keyMarshallers(BytesReader, BytesWriter)
+ * @see ChronicleMapBuilder#valueMarshallers(BytesReader, BytesWriter)
  */
 public interface BytesWriter<T> extends Marshallable {
 

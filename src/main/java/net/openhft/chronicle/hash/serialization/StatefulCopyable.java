@@ -16,36 +16,20 @@
 
 package net.openhft.chronicle.hash.serialization;
 
-import net.openhft.chronicle.hash.serialization.impl.StringBytesReader;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
 
 /**
- * Stateful implementations of marshaller interfaces ({@link SizedReader}, {@link SizedWriter},
- * {@link BytesReader}, {@link BytesWriter}, {@link DataAccess}), configured for {@link
+ * {@link Cloneable}-like interface used by Chronicle Map to populate stateful serializer
+ * implementations for each isolated site (thread + Chronicle Map instance + objects domain).
+ * Stateful implementations of serialization interfaces ({@link SizedReader}, {@link SizedWriter},
+ * {@link BytesReader}, {@link BytesWriter} or {@link DataAccess}), configured for {@link
  * ChronicleMap} or {@link ChronicleSet} in builder, should implement the {@code StatefulCopyable}
- * interface. The marshaller instance is populated for each site by {@link #copy()} method.
+ * interface.
  *
- * <p>For example, see {@link StringBytesReader} implementation: <pre><code>
- * public class StringBytesReader
- *         implements{@code BytesReader<String>, StatefulCopyable<StringBytesReader>} {
- *
- *     private final StringBuilder sb = new StringBuilder();
- *
- *    {@literal @}NotNull
- *    {@literal @}Override
- *     public String read(Bytes in,{@literal @}Nullable String using) {
- *         sb.setLength(0);
- *         in.readUtf8(sb);
- *         return sb.toString();
- *     }
- *
- *    {@literal @}Override
- *     public StringBytesReader copy() {
- *         return new StringBytesReader();
- *     }
- * }
- * </code></pre>
+ * <p>See <a href="https://github.com/OpenHFT/Chronicle-Map#understanding-statefulcopyable">
+ * Understanding {@code StatefulCopyable}</a> section in the Chronicle Map tutorial for more info
+ * on how to implement and use this interface properly, and for examples.
  *
  * @param <T> the type of marshaller, implementing this interface
  */

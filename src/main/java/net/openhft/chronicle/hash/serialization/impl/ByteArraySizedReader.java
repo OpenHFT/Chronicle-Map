@@ -17,29 +17,28 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public enum ByteArraySizedReader
         implements SizedReader<byte[]>, EnumMarshallable<ByteArraySizedReader> {
+
     INSTANCE;
 
     @NotNull
     @Override
     public byte[] read(@NotNull Bytes in, long size, @Nullable byte[] using) {
-        int resLen = resLen(size);
-        if (using == null || resLen != using.length)
-            using = new byte[resLen];
+        if (size < 0L || size > (long) Integer.MAX_VALUE) {
+            throw new IORuntimeException("byte[] size should be non-negative int, " +
+                    size + " given. Memory corruption?");
+        }
+        int arrayLength = (int) size;
+        if (using == null || arrayLength != using.length)
+            using = new byte[arrayLength];
         in.read(using);
         return using;
-    }
-
-    private int resLen(long size) {
-        if (size < 0L || size > (long) Integer.MAX_VALUE)
-            throw new IllegalArgumentException("byte[] size should be non-negative int, " +
-                    size + " given. Memory corruption?");
-        return (int) size;
     }
 
     @Override

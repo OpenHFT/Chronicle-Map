@@ -40,8 +40,8 @@ public class DefaultValueTest {
             defaultValue.add(42);
             try (ChronicleMap<String, List<Integer>> map = ChronicleMap
                     .of(String.class, (Class<List<Integer>>) ((Class) List.class))
-                    .entries(3)
                     .valueMarshaller(ListMarshaller.of(IntegerMarshaller.INSTANCE))
+                    .entries(3)
                     .averageKey("a").averageValue(Arrays.asList(1, 2))
                     .defaultValueProvider(absentEntry ->
                             absentEntry.context().wrapValueAsData(defaultValue))

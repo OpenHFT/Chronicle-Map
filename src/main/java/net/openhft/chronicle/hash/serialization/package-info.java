@@ -15,8 +15,13 @@
  */
 
 /**
- * The package contains interfaces for serializing objects and values between Java heap and {@link
- * net.openhft.chronicle.bytes.Bytes} or {@link net.openhft.chronicle.bytes.BytesStore}.
+ * The package contains interfaces for serializing objects between Java heap and {@link
+ * net.openhft.chronicle.bytes.Bytes} or {@link net.openhft.chronicle.bytes.BytesStore}, used by
+ * Chronicle Map to store objects off-heap, and read them back from off-heap memory to on-heap
+ * objects.
+ *
+ * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#custom-serializers">Custom serializers
+ * </a> section in the Chronicle Map tutorial for more information.
  *
  * <p>Reading methods in the interfaces in this package could use {@link
  * net.openhft.chronicle.bytes.StreamingDataInput} as the "input" parameter type and {@link

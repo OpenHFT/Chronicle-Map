@@ -137,6 +137,9 @@ Chronicle Map doesn't support
  - [Download the library](#download-the-library)
  - [Create a `ChronicleMap` Instance](#create-a-chroniclemap-instance)
    - [Key and Value Types](#key-and-value-types)
+     - [Custom serializers](#custom-serializers)
+       - [Custom `CharSequence` encoding](#custom-charsequence-encoding)
+       - [Custom serialization checklist](#custom-serialization-checklist)
  - [`ChronicleMap` instance usage patterns](#chroniclemap-instance-usage-patterns)
    - [Single-key queries](#single-key-queries)
    - [Multi-key queries](#multi-key-queries)
@@ -303,15 +306,28 @@ accessed concurrently the same way as e. g. `ConcurrentHashMap`.
 
 Either key or value type of `ChronicleMap<K, V>` could be:
 
- - Boxed primitive: `Integer`, `Long`, `Double`, etc.
- - `String` or `CharSequence`
- - Array of Java primitives, e. g. `byte[]`, `char[]` or `int[]`
- - Any type implementing `BytesMarshallable` from [Chronicle Bytes](
- https://github.com/OpenHFT/Chronicle-Bytes)
- - Any [value interface](https://github.com/OpenHFT/Chronicle-Values)
- - Any Java type implementing `Serializable` or `Externalizable` interface
- - *Any other type*, if `.keyMarshaller()` or `.valueMarshaller()` (for the key or value type
- respectively) is additionally configured in the `ChronicleMapBuilder`.
+ - Types with best possible out of the box support:
+   - Any [value interface](https://github.com/OpenHFT/Chronicle-Values)
+   - Any class implementing [`Byteable`](
+   http://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/Byteable.html)
+   interface from [Chronicle Bytes](https://github.com/OpenHFT/Chronicle-Bytes)
+   - Any class implementing [`BytesMarshallable`](
+   http://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/BytesMarshallable.html)
+   interface from Chronicle Bytes. The implementation class should have a public no-arg constructor.
+   - `byte[]` and `ByteBuffer`
+   - `CharSequence`, `String` and `StringBuilder`. Note that these char sequence types are
+   serialized using UTF-8 encoding by default. If you need a different encoding, refer to the
+   example in the [custom `CharSequence` encoding](#custom-charsequence-encoding) section.
+   - `Integer`, `Long` and `Double`
+
+ - Types supported out of the box, but not particularly efficiently. You might want to implement
+ more efficient [custom serializers](#custom-serializers) for them:
+   - Any class implementing `java.io.Externalizable`. The implementation class should have a public
+   no-arg constructor.
+   - Any type implementing `java.io.Serializable`, including boxed primitive types (except listed
+   above) and array types
+
+ - Any other type, if [custom serializers](#custom-serializers) are provided.
 
 **Prefer [value interfaces](https://github.com/OpenHFT/Chronicle-Values).** They don't generate
 garbage and have close to zero serialization/deserialization costs. Prefer them even to boxed
@@ -352,6 +368,835 @@ ChronicleSet<UUID> uuids =
         .entries(1_000_000)
         .create();
 ```
+
+#### Custom serializers
+
+Chronicle Map allows to configure custom marshallers for key or value types which are not supported
+out of the box, or serialize supported types like `String` in some custom way (i. e. in encoding,
+different from UTF-8), or serialize supported types more efficiently than it is done by default.
+
+There are three pairs of serialization interfaces, only one of them should be implemented and
+provided to the `ChronicleMapBuilder` for the key or value type:
+
+##### `BytesWriter` and `BytesReader`
+
+This pair of interfaces is configured via `ChronicleMapBuilder.keyMarshallers()` or
+`valueMarshallers()` for the key or value type of the map, respectively.
+
+This pair of interfaces is the most suitable, if the size of the serialized form is not known
+in advance, i. e. the easiest way to compute the size of the serialized form of some object of the
+type, is performing serialization itself and looking at the number of written bytes.
+
+This pair of interfaces is the least efficient and the simplest to implement, so it should also be
+used when efficiency is not the top priority, or when gains of using other pairs of interfaces
+(which are more complicated to implement) are marginal.
+
+Basically you should implement two serialization methods:
+
+ - `void write(Bytes out, @NotNull T toWrite)` from `BytesWriter` interface, which writes the given
+ `toWrite` instance of the serialized type to the given `out` bytes sink.
+ - `T read(Bytes in, @Nullable T using)` from `BytesReader` interface, which reads the serialized
+ object into the given `using` instance (if the serialized type is reusable, the `using` object is
+ not `null`, and suitable for reusing for this particular serialized object), or a newly created
+ instance. The returned object contains the serialized data; it may be identical or not identical to
+ the passed `using` instance.
+
+For example, here is the implementation of `BytesWriter` and `BytesReader` for `CharSequence[]`
+value type (array of CharSequences):
+
+```java
+public enum CharSequenceArrayBytesMarshaller
+        implements BytesWriter<CharSequence[]>, BytesReader<CharSequence[]>,
+        ReadResolvable<CharSequenceArrayBytesMarshaller> {
+
+    INSTANCE;
+
+    @Override
+    public void write(Bytes out, @NotNull CharSequence[] toWrite) {
+        out.writeInt(toWrite.length);
+        for (CharSequence cs : toWrite) {
+            // Assume elements non-null for simplicity
+            Objects.requireNonNull(cs);
+            out.writeUtf8(cs);
+        }
+    }
+
+    @NotNull
+    @Override
+    public CharSequence[] read(Bytes in, @Nullable CharSequence[] using) {
+        int len = in.readInt();
+        if (using == null)
+            using = new CharSequence[len];
+        if (using.length != len)
+            using = Arrays.copyOf(using, len);
+        for (int i = 0; i < len; i++) {
+            CharSequence cs = using[i];
+            if (cs instanceof StringBuilder) {
+                in.readUtf8((StringBuilder) cs);
+            } else {
+                StringBuilder sb = new StringBuilder(0);
+                in.readUtf8(sb);
+                using[i] = sb;
+            }
+        }
+        return using;
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) {
+        // no fields to read
+    }
+
+    @Override
+    public CharSequenceArrayBytesMarshaller readResolve() {
+        return INSTANCE;
+    }
+}
+```
+
+Usage example:
+
+```java
+try (ChronicleMap<String, CharSequence[]> map = ChronicleMap
+        .of(String.class, CharSequence[].class)
+        .averageKey("fruits")
+        .valueMarshaller(CharSequenceArrayBytesMarshaller.INSTANCE)
+        .averageValue(new CharSequence[]{"banana", "pineapple"})
+        .entries(2)
+        .create()) {
+    map.put("fruits", new CharSequence[]{"banana", "pineapple"});
+    map.put("vegetables", new CharSequence[] {"carrot", "potato"});
+    Assert.assertEquals(2, map.get("fruits").length);
+    Assert.assertEquals(2, map.get("vegetables").length);
+}
+```
+
+The total size of serialization form for some `CharSequence[]` array is 4 bytes for storing the
+array length, plus the sum of sizes of all CharSequences, in UTF-8 encoding. Computing this size
+without actual encoding has comparable computational cost with performing actual encoding, that
+makes `CharSequence[]` type to meet the second criteria (see above) which makes `BytesWriter` and
+`BytesReader` the most suitable pair of serialization interfaces to implement for the type.
+
+Note how `read()` implementation attempts to reuse not only the array object, but also the elements,
+minimizing the amount of produced garbage. This is a recommended practice.
+
+Some additional notes:
+
+ - If the reader or writer interface implementation is not configurable and doesn't have
+ per-instance cache or state fields, i. e. it doesn't have instance fields at all, there is
+ a convention to make such implementations `enum`s with a single `INSTANCE` constant.
+   - For `enum` serialization interface implementations, don't forget to implement `ReadResolvable`
+   interface and return `INSTANCE`, otherwise you have no guarantee that `INSTANCE` constant is the
+   only alive instance of this implementation in the JVM.
+ - If *both* writer and reader interface implementations have no fields, it might be a good idea
+ to merge them into a single `enum` type, in order to keep writing and reading logic together.
+
+###### Custom `CharSequence` encoding
+
+Another example shows how to serialize `CharSequence`s using custom encoding (rather than UTF-8):
+
+Writer:
+
+```java
+public final class CharSequenceCustomEncodingBytesWriter
+        implements BytesWriter<CharSequence>,
+        StatefulCopyable<CharSequenceCustomEncodingBytesWriter> {
+
+    // config fields, non-final because read in readMarshallable()
+    private Charset charset;
+    private int inputBufferSize;
+
+    // cache fields
+    private transient CharsetEncoder charsetEncoder;
+    private transient CharBuffer inputBuffer;
+    private transient ByteBuffer outputBuffer;
+
+    public CharSequenceCustomEncodingBytesWriter(Charset charset, int inputBufferSize) {
+        this.charset = charset;
+        this.inputBufferSize = inputBufferSize;
+        initTransients();
+    }
+
+    private void initTransients() {
+        charsetEncoder = charset.newEncoder();
+        inputBuffer = CharBuffer.allocate(inputBufferSize);
+        int outputBufferSize = (int) (inputBufferSize * charsetEncoder.averageBytesPerChar());
+        outputBuffer = ByteBuffer.allocate(outputBufferSize);
+    }
+
+    @Override
+    public void write(Bytes out, @NotNull CharSequence cs) {
+        // Write the actual cs length for accurate StringBuilder.ensureCapacity() while reading
+        out.writeStopBit(cs.length());
+        long encodedSizePos = out.writePosition();
+        out.writeSkip(4);
+        charsetEncoder.reset();
+        inputBuffer.clear();
+        outputBuffer.clear();
+        int csPos = 0;
+        boolean endOfInput = false;
+        // this loop inspired by the CharsetEncoder.encode(CharBuffer) implementation
+        while (true) {
+            if (!endOfInput) {
+                int nextCsPos = Math.min(csPos + inputBuffer.remaining(), cs.length());
+                append(inputBuffer, cs, csPos, nextCsPos);
+                inputBuffer.flip();
+                endOfInput = nextCsPos == cs.length();
+                csPos = nextCsPos;
+            }
+
+            CoderResult cr = inputBuffer.hasRemaining() ?
+                    charsetEncoder.encode(inputBuffer, outputBuffer, endOfInput) :
+                    CoderResult.UNDERFLOW;
+
+            if (cr.isUnderflow() && endOfInput)
+                cr = charsetEncoder.flush(outputBuffer);
+
+            if (cr.isUnderflow()) {
+                if (endOfInput) {
+                    break;
+                } else {
+                    inputBuffer.compact();
+                    continue;
+                }
+            }
+
+            if (cr.isOverflow()) {
+                outputBuffer.flip();
+                out.write(outputBuffer);
+                outputBuffer.clear();
+                continue;
+            }
+
+            try {
+                cr.throwException();
+            } catch (CharacterCodingException e) {
+                throw new IORuntimeException(e);
+            }
+        }
+        outputBuffer.flip();
+        out.write(outputBuffer);
+
+        out.writeInt(encodedSizePos, (int) (out.writePosition() - encodedSizePos - 4));
+    }
+
+    /**
+     * Need this method because {@link CharBuffer#append(CharSequence, int, int)} produces garbage
+     */
+    private void append(CharBuffer charBuffer, CharSequence cs, int start, int end) {
+        for (int i = start; i < end; i++) {
+            charBuffer.put(cs.charAt(i));
+        }
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) {
+        charset = (Charset) wireIn.read(() -> "charset").object();
+        inputBufferSize = wireIn.read(() -> "inputBufferSize").int32();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "charset").object(charset);
+        wireOut.write(() -> "inputBufferSize").int32(inputBufferSize);
+    }
+
+    @Override
+    public CharSequenceCustomEncodingBytesWriter copy() {
+        return new CharSequenceCustomEncodingBytesWriter(charset, inputBufferSize);
+    }
+}
+```
+
+Reader:
+
+```java
+public final class CharSequenceCustomEncodingBytesReader
+        implements BytesReader<CharSequence>,
+        StatefulCopyable<CharSequenceCustomEncodingBytesReader> {
+
+    // config fields, non-final because read in readMarshallable()
+    private Charset charset;
+    private int inputBufferSize;
+
+    // cache fields
+    private transient CharsetDecoder charsetDecoder;
+    private transient ByteBuffer inputBuffer;
+    private transient CharBuffer outputBuffer;
+
+    public CharSequenceCustomEncodingBytesReader(Charset charset, int inputBufferSize) {
+        this.charset = charset;
+        this.inputBufferSize = inputBufferSize;
+        initTransients();
+    }
+
+    private void initTransients() {
+        charsetDecoder = charset.newDecoder();
+        inputBuffer = ByteBuffer.allocate(inputBufferSize);
+        int outputBufferSize = (int) (inputBufferSize * charsetDecoder.averageCharsPerByte());
+        outputBuffer = CharBuffer.allocate(outputBufferSize);
+    }
+
+    @NotNull
+    @Override
+    public CharSequence read(Bytes in, @Nullable CharSequence using) {
+        long csLengthAsLong = in.readStopBit();
+        if (csLengthAsLong > Integer.MAX_VALUE) {
+            throw new IORuntimeException("cs len shouldn't be more than " + Integer.MAX_VALUE +
+                    ", " + csLengthAsLong + " read");
+        }
+        int csLength = (int) csLengthAsLong;
+        StringBuilder sb;
+        if (using instanceof StringBuilder) {
+            sb = (StringBuilder) using;
+            sb.setLength(0);
+            sb.ensureCapacity(csLength);
+        } else {
+            sb = new StringBuilder(csLength);
+        }
+
+        int remainingBytes = in.readInt();
+        charsetDecoder.reset();
+        inputBuffer.clear();
+        outputBuffer.clear();
+        boolean endOfInput = false;
+        // this loop inspired by the CharsetDecoder.decode(ByteBuffer) implementation
+        while (true) {
+            if (!endOfInput) {
+                int inputChunkSize = Math.min(inputBuffer.remaining(), remainingBytes);
+                inputBuffer.limit(inputBuffer.position() + inputChunkSize);
+                in.read(inputBuffer);
+                inputBuffer.flip();
+                remainingBytes -= inputChunkSize;
+                endOfInput = remainingBytes == 0;
+            }
+
+            CoderResult cr = inputBuffer.hasRemaining() ?
+                    charsetDecoder.decode(inputBuffer, outputBuffer, endOfInput) :
+                    CoderResult.UNDERFLOW;
+
+            if (cr.isUnderflow() && endOfInput)
+                cr = charsetDecoder.flush(outputBuffer);
+
+            if (cr.isUnderflow()) {
+                if (endOfInput) {
+                    break;
+                } else {
+                    inputBuffer.compact();
+                    continue;
+                }
+            }
+
+            if (cr.isOverflow()) {
+                outputBuffer.flip();
+                sb.append(outputBuffer);
+                outputBuffer.clear();
+                continue;
+            }
+
+            try {
+                cr.throwException();
+            } catch (CharacterCodingException e) {
+                throw new IORuntimeException(e);
+            }
+        }
+        outputBuffer.flip();
+        sb.append(outputBuffer);
+
+        return sb;
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) throws IORuntimeException {
+        charset = (Charset) wireIn.read(() -> "charset").object();
+        inputBufferSize = wireIn.read(() -> "inputBufferSize").int32();
+        initTransients();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        wireOut.write(() -> "charset").object(charset);
+        wireOut.write(() -> "inputBufferSize").int32(inputBufferSize);
+    }
+
+    @Override
+    public CharSequenceCustomEncodingBytesReader copy() {
+        return new CharSequenceCustomEncodingBytesReader(charset, inputBufferSize);
+    }
+}
+```
+
+Usage example:
+
+```java
+Charset charset = Charset.forName("GBK");
+int charBufferSize = 100;
+int bytesBufferSize = 200;
+CharSequenceCustomEncodingBytesWriter writer =
+        new CharSequenceCustomEncodingBytesWriter(charset, charBufferSize);
+CharSequenceCustomEncodingBytesReader reader =
+        new CharSequenceCustomEncodingBytesReader(charset, bytesBufferSize);
+try (ChronicleMap<String, CharSequence> englishToChinese = ChronicleMap
+        .of(String.class, CharSequence.class)
+        .valueMarshallers(reader, writer)
+        .averageKey("hello")
+        .averageValue("你好")
+        .entries(10)
+        .create()) {
+    englishToChinese.put("hello", "你好");
+    englishToChinese.put("bye", "再见");
+
+    Assert.assertEquals("你好", englishToChinese.get("hello").toString());
+    Assert.assertEquals("再见", englishToChinese.get("bye").toString());
+}
+```
+
+Some notes on this case of custom serialization:
+
+ - Both `CharSequenceCustomEncodingBytesWriter` and `CharSequenceCustomEncodingBytesReader` have
+ configurations (charset and input buffer size), hence they are implemented as normal classes rather
+ than enums with a single `INSTANCE` constant.
+ - Both writer and reader classes have some "cache" fields, their contents are mutated during
+ writing and reading. That is why they have to implement `StatefulCopyable` interface. See
+ [Understanding `StatefulCopyable`](#understanding-statefulcopyable) section for more infromation on
+ this.
+
+##### `SizedWriter` and `SizedReader`
+
+This pair of interfaces is configured via `ChronicleMapBuilder.keyMarshallers()` or
+`valueMarshallers()` for the key or value type of the map, respectively (overloaded methods, those
+for [`BytesWriter` and `BytesReader`](#byteswriter-and-bytesreader) interfaces have the same names).
+
+The main two methods to implement in `SizedWriter` interface:
+
+ - `long size(@NotNull T toWrite);` returns the number of bytes, which is written by the subsequent
+ `write()` method given the same `toWrite` instance of the serialized type.
+ - `void write(Bytes out, long size, @NotNull T toWrite);` writes the given `toWrite` instance to
+ the given `out` bytes sink. Additionally `size` is provided, which is the value computed for the
+ same `toWrite` instance by calling `size()` method. Hence, when `SizedWriter` is used internally,
+ `size()` method is always called before `write()`, caching logic in `SizedWriter` implementation
+ may rely on this. This method should advance `writePosition()` of the given out `Bytes` exactly by
+ the given `size` number of bytes.
+
+`SizedReader`'s `T read(Bytes in, long size, @Nullable T using);` method is similar to the
+corresponding `read()` method in `BytesReader` interface, except the size of the serialized object
+is provided.
+
+This pair of interfaces is suitable, if
+
+ - The serialized form of the type effectively includes the size of the rest of the serialized form
+ in the beginning,
+ - But the type is not a plain sequence of bytes like `byte[]` or `ByteBuffer` (for those types
+ [`DataAccess` and `SizedReader`](#dataaccess-and-sizedreader) pair of interfaces is a much better
+ choice).
+
+Examples of such types include lists and arrays of constant-sized elements.
+
+Compared to `BytesWriter` and `BytesReader`, this pair of interfaces allows to share the information
+about the serialized form between serialization logic and the Chronicle Map, saving a few bytes by
+storing the serialization size only once rather than twice. This pair of interfaces is not much more
+difficult to implement, but the gains are also not big.
+
+Example: serializing lists of simple `Point` structures:
+
+```java
+public final class Point {
+
+    public static Point of(double x, double y) {
+        Point p = new Point();
+        p.x = x;
+        p.y = y;
+        return p;
+    }
+
+    double x, y;
+}
+```
+
+Serializer implementation:
+
+```java
+public enum PointListSizedMarshaller
+        implements SizedReader<List<Point>>, SizedWriter<List<Point>>,
+        ReadResolvable<PointListSizedMarshaller> {
+
+    INSTANCE;
+
+    /** A point takes 16 bytes in serialized form: 8 bytes for both x and y value */
+    private static final long ELEMENT_SIZE = 16;
+
+    @Override
+    public long size(@NotNull List<Point> toWrite) {
+        return toWrite.size() * ELEMENT_SIZE;
+    }
+
+    @Override
+    public void write(Bytes out, long size, @NotNull List<Point> toWrite) {
+        toWrite.forEach(point -> {
+            out.writeDouble(point.x);
+            out.writeDouble(point.y);
+        });
+    }
+
+    @NotNull
+    @Override
+    public List<Point> read(@NotNull Bytes in, long size, List<Point> using) {
+        if (size % ELEMENT_SIZE != 0) {
+            throw new IORuntimeException("Bytes size should be a multiple of " + ELEMENT_SIZE +
+                    ", " + size + " read");
+        }
+        long listSizeAsLong = size / ELEMENT_SIZE;
+        if (listSizeAsLong > Integer.MAX_VALUE) {
+            throw new IORuntimeException("List size couldn't be more than " + Integer.MAX_VALUE +
+                    ", " + listSizeAsLong + " read");
+        }
+        int listSize = (int) listSizeAsLong;
+        if (using == null) {
+            using = new ArrayList<>(listSize);
+            for (int i = 0; i < listSize; i++) {
+                using.add(null);
+            }
+        } else if (using.size() < listSize) {
+            while (using.size() < listSize) {
+                using.add(null);
+            }
+        } else if (using.size() > listSize) {
+            using.subList(listSize, using.size()).clear();
+        }
+        for (int i = 0; i < listSize; i++) {
+            Point point = using.get(i);
+            if (point == null)
+                using.set(i, point = new Point());
+            point.x = in.readDouble();
+            point.y = in.readDouble();
+        }
+        return using;
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) {
+        // no fields to read
+    }
+
+    @Override
+    public PointListSizedMarshaller readResolve() {
+        return INSTANCE;
+    }
+}
+```
+
+Usage example:
+
+```java
+try (ChronicleMap<String, List<Point>> objects = ChronicleMap
+        .of(String.class, (Class<List<Point>>) (Class) List.class)
+        .averageKey("range")
+        .valueMarshaller(PointListSizedMarshaller.INSTANCE)
+        .averageValue(asList(of(0, 0), of(1, 1)))
+        .entries(10)
+        .create()) {
+    objects.put("range", asList(of(0, 0), of(1, 1)));
+    objects.put("square", asList(of(0, 0), of(0, 100), of(100, 100), of(100, 0)));
+
+    Assert.assertEquals(2, objects.get("range").size());
+    Assert.assertEquals(4, objects.get("square").size());
+}
+```
+
+##### `DataAccess` and `SizedReader`
+
+This pair of interfaces is configured via `ChronicleMapBuilder.keyReaderAndDataAccess()` or
+`valueReaderAndDataAccess()` for the key or value type of the map, respectively.
+
+The reader part, `SizedReader`, is the same as in [`SizedWriter` and
+`SizedReader`](#sizedwriter-and-sizedreader) pair, so `DataAccess` is an "advanced" interface to
+replace `SizedWriter`.
+
+The main method in `DataAccess` is `Data<T> getData(@NotNull T instance)`, it returns a `Data`
+accessor which is used to write "serialized" form of the instance to off-heap memory. `Data.size()`
+on the returned `Data` object is used for the same purpose as `SizedWriter.size()` method in
+[`SizedWriter` and `SizedReader`](#sizedwriter-and-sizedreader) pair interfaces. `Data.writeTo()`
+is used instead of `SizedWriter.write()`.
+
+`DataAccess` assumes that the `Data` object, returned from the `getData()` method is cached in some
+way, that is why it also has `uninit()` method to clear references to the serialized object after
+query operation to a Chronicle Map is over (to prevent memory leaks). This, in its turn, implies
+that `DataAccess` implementation is stateful, therefore `DataAccess` is made a subinterface of
+`StatefulCopyable` to force all `DataAccess` implementations to implement `StatefulCopyable` as
+well. See [Understanding `StatefulCopyable`](#understanding-statefulcopyable) for more infromation
+on this. If your `DataAccess` implementation is not actually stateful, it is free to return `this`
+from `StatefulCopyable.copy()` method.
+
+`DataAccess` interface is primarily intended for "serializing" objects that are already sequences
+of bytes and in fact doesn't require serialization, like `byte[]`, `ByteBuffer`, arrays of Java
+primitives. For such types of objects, `DataAccess` allows to bypass intermediate buffering, copying
+data directly from objects to Chronicle Map's off-heap memory.
+
+For example, look at the `DataAccess` implementation for `byte[]`:
+
+```java
+public final class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAccess<byte[]> {
+
+    /** Cache field */
+    private transient HeapBytesStore<byte[]> bs;
+
+    /** State field */
+    private transient byte[] array;
+
+    public ByteArrayDataAccess() {
+        initTransients();
+    }
+
+    private void initTransients() {
+        bs = HeapBytesStore.uninitialized();
+    }
+
+    @Override
+    public RandomDataInput bytes() {
+        return bs;
+    }
+
+    @Override
+    public long offset() {
+        return bs.start();
+    }
+
+    @Override
+    public long size() {
+        return bs.capacity();
+    }
+
+    @Override
+    public byte[] get() {
+        return array;
+    }
+
+    @Override
+    public byte[] getUsing(@Nullable byte[] using) {
+        if (using == null || using.length != array.length)
+            using = new byte[array.length];
+        System.arraycopy(array, 0, using, 0, array.length);
+        return using;
+    }
+
+    @Override
+    public Data<byte[]> getData(@NotNull byte[] instance) {
+        array = instance;
+        bs.init(instance);
+        return this;
+    }
+
+    @Override
+    public void uninit() {
+        array = null;
+        bs.uninit();
+    }
+
+    @Override
+    public DataAccess<byte[]> copy() {
+        return new ByteArrayDataAccess();
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) {
+        // no fields to read
+        initTransients();
+    }
+}
+```
+
+Note that `getData()` method returns `this`, and the `DataAccess` implementation implements `Data`
+interface as well. This is a recommended practice, because it reduces the number of objects involved
+(hence pointer chasing), and keeps `DataAccess` and `Data` logic together.
+
+`Data` interface puts constrains on `equals()`, `hashCode()` and `toString()` implementations, this
+is why `ByteArrayDataAccess` subclasses `AbstractData` and inherits proper implementations from it.
+This is OK to serializer strategy implementation to have `equals()`, `hashCode()` and `toString()`
+from a very different domain, because those methods are never called on serializers inside Chronicle
+Map.
+
+The easiest way to implement `equals()`, `hashCode()` and `toString()` is to extend `AbstractData`
+class, if it is not possible (the `Data` implementation already extends some other class), do this
+by delegating to `dataEquals()`, `dataHashCode()` and `dataToString()` default methods, provided
+right in `Data` interface.
+
+Corresponding `SizedReader` for `byte[]`:
+
+```java
+public enum ByteArraySizedReader
+        implements SizedReader<byte[]>, Marshallable, ReadResolvable<ByteArraySizedReader> {
+
+    INSTANCE;
+
+    @NotNull
+    @Override
+    public byte[] read(@NotNull Bytes in, long size, @Nullable byte[] using) {
+        if (size < 0L || size > (long) Integer.MAX_VALUE) {
+            throw new IORuntimeException("byte[] size should be non-negative int, " +
+                    size + " given. Memory corruption?");
+        }
+        int arrayLength = (int) size;
+        if (using == null || arrayLength != using.length)
+            using = new byte[arrayLength];
+        in.read(using);
+        return using;
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) {
+        // no fields to read
+    }
+
+    @Override
+    public ByteArraySizedReader readResolve() {
+        return INSTANCE;
+    }
+}
+```
+
+(Nothing is required to use this pair of serializers with `byte[]` keys of values in Chronicle Map,
+it is used by default, if you configure `byte[]` key or value type.)
+
+##### Understanding `StatefulCopyable`
+
+**Problems:**
+
+ 1. Sometimes on writing, reading or in other methods, defined in serialization interfaces, it is
+ needed to operate with intermediate objects, holding some writing/reading state.
+
+ In the simplest and most common case, those objects are of some kind of buffers between serialized
+ or deserialized instances and output or input `Bytes`: for example, see writer and reader
+ implementations in the [custom `CharSequence` encoding](#custom-charsequence-encoding) section.
+
+ To avoid producing a lot of garbage, those intermediate objects should be cached.
+
+ 2. `Data` object, returned from `getData()` method of `DataAccess` serialization interface, should
+ be cached in order to avoid producing garbage.
+
+ 3. `SizedWriter` and `DataAccess` serialization interfaces, and the `Data` object, returned from
+ `DataAccess.getData()` method, since it is cached (see the previous point) have several methods:
+ `size()` and `write()` in `SizedWriter`, `getData()` and `uninit()` in `DataAccess`, many methods
+ in `Data`. It is usually essential to save some computation results between calls to those methods
+ from inside Chronicle Map implementation, while working some key or value during some query to
+ Chronicle Map, because otherwise expensive computations are performed several times, that is very
+ inefficient.
+
+All these problems require to access some mutable, context-dependant fields from within serializer
+interface implementations. But, only a *single instance* of serializer implementation is configured
+for a Chronicle Map (either by `keyMarshallers()` or `valueMarshallers()` or
+`keyReaderAndDataAccess()` or `valueReaderAndDataAccess()` method in `ChronicleMapBuilder`). On the
+other hand, `ChronicleMap` is a `ConcurrentMap`, i. e. serializer implementations could be accessed
+from multiple threads concurrently. Moreover, a single `ChronicleMapBuilder` (with a single pair
+of serializer instances configured for keys and values) could be used to construct many independent
+`ChronicleMap`s, which could also be accessed concurrently.
+
+Inefficient and fragile solution: a single instance of serialization interface, static `ThreadLocal`
+fields in serializer implementation class.
+
+It is inefficient, because `ThreadLocal`s are accessed each time a serializer interface method is
+called, that is much slower than accessing vanilla object fields.
+
+It is fragile, because if you need `ThreadLocal` fields for preserving some state between calls to
+multiple methods in serializer interfaces over a single query to a Chronicle Map (the 3rd point in
+the problems list above), you should consider that a single serializer instance could be used for
+both keys and values of the same Chronicle Map (calls to some methods of serializer interface for
+serializing the key and the value over a Chronicle Map query are interspersed in unspecified order).
+Plus, you should consider that a single serializer instance could be used to access multiple
+independent Chronicle Map instances in the same thread, calls to serializers within maps could be
+interspersed via [contexts access](#working-with-an-entry-within-a-context-section). So,
+`ThreadLocal` fields should be isolated not just per accessing thread, but also per serialized
+object domain (is the serialized object a key or a value in Chronicle Map), and per accessing
+Chronicle Map instance, that is hard to implement correctly.
+
+**Recommended solution: `StatefulCopyable`.** A serializer implementation has ordinary instance
+fields for caching anything and preserving state between calls to different methods. It implements
+`StatefulCopyable` interface with a single method `copy()`, that is like `Object.clone()`, but
+copies only configuration fields of the serializer instance, not cache or state fields.
+
+Call to `copy()` method at any point of a serializer instance lifetime should return an instance of
+the same serializer implementation in the state, exactly equal to the state of the current instance
+at the moment after construction and initial configuration. I. e. with "empty" cache and state.
+As a consequence, `copy()` method is transitive, i. e. `serializer.copy().copy().copy()` should
+return an object in exactly the same state, as after a single `copy()` call.
+
+Chronicle Map implementation recognizes that configured `BytesWriter`, `BytesReader`, `SizedWriter`,
+`SizedReader` or `DataAccess` instance implements `StatefulCopyable`, and "populates" it internally
+via `copy()` for each thread, Chronicle Map instance and serialized object domain (keys or values).
+
+See examples of implementing this interface in the [custom `CharSequence`
+encoding](#custom-charsequence-encoding) section above.
+
+It is allowed to return `this` from the `copy()` method, if with some configurations the
+serializer implementation doesn't have state. Typically this is the case when serializer is
+configured with sub-serializers which might be `StatefulCopyable` or not, for example
+[`ListMarshaller`](src\main\java\net\openhft\chronicle\hash\serialization\ListMarshaller.java)
+class.
+
+##### Custom serialization checklist
+
+ 1. Choose the most suitable pair of serialization interfaces: [`BytesWriter` and
+ `BytesReader`](#byteswriter-and-bytesreader), [`SizedWriter` and
+ `SizedReader`](#sizedwriter-and-sizedreader) or [`DataAccess` and
+ `SizedReader`](#dataaccess-and-sizedreader). Recommendations on which pair to choose are given in
+ the linked sections, describing each pair.
+ 2. If implementation of the writer or reader part is configuration-less, make it a `enum` with
+ a single `INSTANCE` constant. Implement `ReadResolvable` and return `INSTANCE` from `readResolve()`
+ method.
+ 3. If both the writer and reader are configuration-less, merge them into a single `-Marshaller`
+ `enum` implementation.
+ 4. Make best effort in reusing `using` objects on the reader side (`BytesReader` or `SizedReader`),
+ including nesting objects.
+ 5. Make best effort in caching intermediate serialization results on writer side while working with
+ some object, e. g. try not to make expensive computations in both `size()` and `write()` methods
+ of `SizedWriter` implementation, but rather lazily compute them and cache in an serializer instance
+ field.
+ 6. Make best effort in reusing intermediate objects, used for reading or writing. Store them in
+ instance fields of serializer implementation.
+ 7. If a serializer implementation is stateful or have cache fields, implement `StatefulCopyable`.
+ See [Understanding `StatefulCopyable`](#understanding-statefulcopyable) section for more info.
+ 8. Implement `writeMarshallable()` and `readMarshallable()` by writing and reading configuration
+ fields (but not state or cache fields) of the serializer instance one-by-one, using the given
+ `WireOut`/`WireIn` object. See [Custom `CharSequence` encoding](#custom-charsequence-encoding)
+ section for some non-trivial example of implementing these methods. See also [Wire tutorial](
+ https://github.com/OpenHFT/Chronicle-Wire#using-wire).
+ 9. *Don't forget to initialize transient/cache/state fileds of the instance in the end of
+ `readMarshallable()` implementation.* This is needed, because fefore calling `readMarshallable()`,
+ Wire framework creates a serializer instance by means of `Unsafe.allocateInstance()` rather than
+ calling any constructor.
+ 10. If implementing `DataAccess`, consider implementation to be `Data` also, and return `this` from
+ `getData()` method.
+ 11. Don't forget to implement `equals()`, `hashCode()` and `toString()` in `Data` implementation,
+ returned from `DataAccess.getData()` method, regardless if this is actually the same `DataAccess`
+ object, or a separate object.
+ 12. Except `DataAccess` which is also a `Data`, serializers shouldn't override Object's `equals()`,
+ `hashCode()` and `toString()` (these methods are never called on serializers inside Chronicle Map
+ library); they shouldn't implement `Serializable` or `Externalizable` (but have to implement
+ `net.openhft.chronicle.wire.Marshallable`); shouldn't implement `Cloneable` (but have to implement
+ `StatefulCopyable`, if they are stateful or have cache fields).
+ 13. After implementing custom serializers, don't forget to actually apply them to
+ `ChronicleMapBuilder` by `keyMarshallers()`, `keyReaderAndDataAccess()`, `valueMarshallers()` or
+ `valueReaderAndDataAccess()` methods.
 
 ### `ChronicleMap` instance usage patterns
 
@@ -475,7 +1320,7 @@ at most - corrupt the `ChronicleMap` memory.
 
 For accessing the `ChronicleMap` value memory directly use the following technique:
 
-##### Working with the entry within a context section
+##### Working with an entry within a context section
 
 ```java
 try (ExternalMapQueryContext<CharSequence, PostalCodeRange, ?> c =

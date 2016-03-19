@@ -18,44 +18,27 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Serializer (object to bytes writer) which 1) knows the length of serialized
+ * Serializer of objects to bytes, pairing {@link SizedReader}, which knows the length of serialized
  * form of any object before actual serialization 2) doesn't include that length in the serialized
  * form itself, assuming it will be passed by the {@link ChronicleHash} into {@link
  * SizedReader#read} deserialization method.
  *
- * <p>Implementation example: <pre><code>
- * class LongPair { long first, second; }
- *
- * enum LongPairArrayWriter
- *         implements{@code SizedWriter<LongPair[]>, EnumMarshallable<LongPairArrayWriter>} {
- *     INSTANCE;
- *
- *    {@literal @}Override
- *     public long{@literal size(@}NotNull LongPair[] toWrite) {
- *         return toWrite.length * 16L;
- *     }
- *
- *    {@literal @}Override
- *     public void{@literal write(@}NotNull Bytes out, long size,
- *            {@literal @}NotNull LongPair[] toWrite) {
- *         for (LongPair pair : toWrite) {
- *             out.writeLong(pair.first);
- *             out.writeLong(pair.second);
- *         }
- *     }
- *
- *    {@literal @}Override
- *     public LongPairArrayWriter readResolve() {
- *         return INSTANCE;
- *     }
- * }</code></pre>
+ * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#sizedwriter-and-sizedreader">{@code
+ * SizedWriter} and {@code SizedReader}</a> and
+ * <a href="https://github.com/OpenHFT/Chronicle-Map#custom-serialization-checklist">custom
+ * serialization checklist</a> sections in the Chronicle Map tutorial for more information on this
+ * interface, how to implement and use it properly.
  *
  * @param <T> the type of the object marshalled
  * @see SizedReader
+ * @see ChronicleHashBuilder#keyMarshallers(SizedReader, SizedWriter)
+ * @see ChronicleMapBuilder#valueMarshallers(SizedReader, SizedWriter)
  */
 public interface SizedWriter<T> extends Marshallable {
 

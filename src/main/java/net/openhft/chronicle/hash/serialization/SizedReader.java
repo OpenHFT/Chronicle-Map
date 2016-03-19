@@ -18,57 +18,31 @@ package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.Marshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Deserializer of objects from bytes, mirroring the {@link SizedWriter}, i. e. assuming the length
+ * Deserializer of objects from bytes, pairing {@link SizedWriter}, i. e. assuming the length
  * of the serialized form isn't written in the beginning of the serialized form itself, but managed
  * by {@link ChronicleHash} implementation and passed to the reading methods.
  *
- * <p>Implementation example:<pre><code>
- * class LongPair { long first, second; }
- * 
- * enum LongPairArrayReader
- *         implements{@code SizedReader<LongPair[]>, EnumMarshallable<LongPairArrayReader>} {
- *     INSTANCE;
- *
- *    {@literal @}Override
- *    {@literal @}NotNull
- *     public LongPair[]{@literal read(@}NotNull Bytes in, long size,
- *            {@literal @}Nullable LongPair[] using) {
- *         if (size{@code >} Integer.MAX_VALUE * 16L)
- *             throw new IllegalStateException("LongPair[] size couldn't be " + (size / 16L));
- *         int resLen = (int) (size / 16L);
- *         LongPair[] res;
- *         if (using != null) {
- *             if (using.length == resLen) {
- *                 res = using;
- *             } else {
- *                 res = Arrays.copyOf(using, resLen);
- *             }
- *         } else {
- *             res = new LongPair[resLen];
- *         }
- *         for (int i = 0; i{@code <} resLen; i++) {
- *             LongPair pair = res[i];
- *             if (pair == null)
- *                 res[i] = pair = new LongPair();
- *             pair.first = in.readLong();
- *             pair.second = in.readLong();
- *         }
- *         return res;
- *     }
- *
- *    {@literal @}Override
- *     public LongPairArrayReader readResolve() {
- *         return INSTANCE;
- *     }
- * }</code></pre>
+ * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#sizedwriter-and-sizedreader">{@code
+ * SizedWriter} and {@code SizedReader}</a>,
+ * <a href="https://github.com/OpenHFT/Chronicle-Map#dataaccess-and-sizedreader">{@link DataAccess}
+ * and {@code SizedReader}</a> and
+ * <a href="https://github.com/OpenHFT/Chronicle-Map#custom-serialization-checklist">custom
+ * serialization checklist</a> sections in the Chronicle Map tutorial for more information on this
+ * interface, how to implement and use it properly.
  *
  * @param <T> the type of the object deserialized
  * @see SizedWriter
+ * @see ChronicleHashBuilder#keyMarshallers(SizedReader, SizedWriter)
+ * @see ChronicleHashBuilder#keyReaderAndDataAccess(SizedReader, DataAccess)
+ * @see ChronicleMapBuilder#valueMarshallers(SizedReader, SizedWriter)
+ * @see ChronicleMapBuilder#valueReaderAndDataAccess(SizedReader, DataAccess)
  */
 public interface SizedReader<T> extends Marshallable {
 

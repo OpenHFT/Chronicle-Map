@@ -89,13 +89,13 @@ public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAcc
     }
 
     @Override
-    public void readMarshallable(@NotNull WireIn wireIn) {
-        // no fields to read
-        initTransients();
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
     }
 
     @Override
-    public void writeMarshallable(@NotNull WireOut wireOut) {
-        // no fields to write
+    public void readMarshallable(@NotNull WireIn wireIn) {
+        // no fields to read
+        initTransients();
     }
 }

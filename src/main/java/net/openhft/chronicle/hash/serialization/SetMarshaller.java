@@ -61,11 +61,31 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 public final class SetMarshaller<T>
         implements BytesReader<Set<T>>, BytesWriter<Set<T>>, StatefulCopyable<SetMarshaller<T>> {
 
+    /**
+     * Returns a {@code SetMarshaller} which uses the given set elements' serializers.
+     *
+     * @param elementReader set elements' reader
+     * @param elementWriter set elements' writer
+     * @param <T> type of set elements
+     * @return a {@code SetMarshaller} which uses the given set elements' serializers
+     */
     public static <T> SetMarshaller<T> of(
             BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
         return new SetMarshaller<>(elementReader, elementWriter);
     }
 
+    /**
+     * Returns a {@code SetMarshaller} which uses the given marshaller as both reader and writer of
+     * set elements. Example: <pre><code>
+     * ChronicleMap
+     *     .of(String.class,{@code (Class<Set<Integer>>)} ((Class) Set.class))
+     *     .valueMarshaller(SetMarshaller.of(IntegerMarshaller.INSTANCE))
+     *     ...</code></pre>
+     * @param elementMarshaller set elements' marshaller
+     * @param <T> type of set elements
+     * @param <M> type of set elements' marshaller
+     * @return a {@code SetMarshaller} which uses the given set elements' marshaller
+     */
     public static <T, M extends BytesReader<T> & BytesWriter<? super T>> SetMarshaller<T> of(
             M elementMarshaller) {
         return of(elementMarshaller, elementMarshaller);
@@ -78,6 +98,15 @@ public final class SetMarshaller<T>
     /** Cache field */
     private transient Deque<T> orderedElements;
 
+    /**
+     * Constructs a {@code SetMarshaller} with the given set elements' serializers.
+     *
+     * <p>Use static factory {@link #of(BytesReader, BytesWriter)} instead of this constructor
+     * directly.
+     *
+     * @param elementReader set elements' reader
+     * @param elementWriter set elements' writer
+     */
     public SetMarshaller(BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
         this.elementReader = elementReader;
         this.elementWriter = elementWriter;

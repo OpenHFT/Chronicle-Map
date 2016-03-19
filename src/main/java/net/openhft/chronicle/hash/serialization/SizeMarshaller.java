@@ -17,8 +17,10 @@
 package net.openhft.chronicle.hash.serialization;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.serialization.impl.ConstantSizeMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.StopBitSizeMarshaller;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.wire.Marshallable;
 
 /**
@@ -26,7 +28,7 @@ import net.openhft.chronicle.wire.Marshallable;
  * the same bytes store). Normal number storing (4 bytes for {@code int}, 8 bytes for {@code long}
  * is rather wasteful for marshalling purposes, when the number (size) to store is usually very
  * small, and 1-2 bytes could be enough to encode it (this is how {@link #stopBit()} marshaller
- * work). Also, this interface allows to generalize storing constantly-sized and variable-sized
+ * works). Also, this interface allows to generalize storing constantly-sized and variable-sized
  * blocks of data. Constantly-sized don't require to store the size actually, the corresponding
  * {@link #constant} {@code SizeMarshaller} consumes 0 bytes.
  *
@@ -34,13 +36,34 @@ import net.openhft.chronicle.wire.Marshallable;
  * example each {@link #constant} {@code SizeMarshaller} is able to "store" only a single specific
  * value (it's constant size). If the marshaller is fed with the size it is not able store, it could
  * throw an {@code IllegalArgumentException}.
+ *
+ * @see ChronicleHashBuilder#keySizeMarshaller(SizeMarshaller)
+ * @see ChronicleMapBuilder#valueSizeMarshaller(SizeMarshaller)
  */
 public interface SizeMarshaller extends Marshallable {
 
+    /**
+     * Returns a {@code SizeMarshaller} which stores number using so-called <a
+     * href="https://github.com/OpenHFT/RFC/blob/master/Stop-Bit-Encoding/Stop-Bit-Encoding-0.1.md#signed-integers"
+     * >stop bit encoding</a>. This marshaller is used as the default marshaller for keys' and
+     * values' sizes in Chronicle Map, unless Chronicle Map could figure out (or hinted in {@code
+     * ChronicleMapBuilder}) that keys or values are constant-sized, in which case {@link
+     * #constant(long)} {@code SizeMarshaller} is used.
+     */
     static SizeMarshaller stopBit() {
         return StopBitSizeMarshaller.INSTANCE;
     }
 
+    /**
+     * Returns a {@code SizeMarshaller}, that consumes 0 bytes and is above to "store" only a single
+     * constant number, provided to this factory method. This size marshaller is used in Chronicle
+     * Map to serialize keys' or values' sizes, when Chronicle Map could figure out (or was hinted
+     * in {@code ChronicleMapBuilder}) that keys or values are constant-sized.
+     *
+     * @param constantSize the single constant size the returned {@code SizeMarshaller} is able to
+     *                     "store"
+     * @return a {@code SizeMarshaller}, that is able to "store" only the given constant size
+     */
     static SizeMarshaller constant(long constantSize) {
         return new ConstantSizeMarshaller(constantSize);
     }

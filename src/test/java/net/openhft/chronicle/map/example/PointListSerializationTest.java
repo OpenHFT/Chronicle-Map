@@ -29,7 +29,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ComplexSerializationTest {
+public class PointListSerializationTest {
 
     static class A {
         String str_;
