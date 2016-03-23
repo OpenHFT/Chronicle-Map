@@ -69,6 +69,8 @@ queries*.
  Chronicle Map project, there are projects *on top* of Chronicle Map which address these questions,
  e. g. [Chronicle Enterprise](http://chronicle.software/products/chronicle-enterprise/).
 
+**Project status: ready for production.**
+
 **What is the Chronicle Map's data structure?** In one sentence and simplified, a Chronicle Map
 data store is a big chunk of shared memory (optionally mapped to disk), split into independent
 segments, each segment has an independent memory allocation for storing the entries, a hash table
