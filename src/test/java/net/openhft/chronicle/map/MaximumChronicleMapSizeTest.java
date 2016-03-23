@@ -17,9 +17,13 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.set.Builder;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
 
 public class MaximumChronicleMapSizeTest {
 
@@ -29,11 +33,39 @@ public class MaximumChronicleMapSizeTest {
     }
 
     @Test
-    public void maximumChronicleMapSizeTest() {
-        ChronicleMap<Long, Long> map = ChronicleMap
-                .of(Long.class, Long.class)
-                .entries(1000_000_000_000L)
-                .create();
-        map.put(1L, 1L);
+    public void maximumInMemoryChronicleMapSizeTest() {
+        long maxSize = 1 << 30;
+        for (; ; maxSize *= 2) {
+            try (ChronicleMap<Long, Long> map = ChronicleMap
+                    .of(Long.class, Long.class)
+                    .entries(maxSize)
+                    .create()) {
+                map.put(1L, 1L);
+            } catch (Throwable e) {
+                e.printStackTrace();
+                break;
+            }
+        }
+        System.out.println("Max in-memory chronicle map size is " + (maxSize / 2));
+    }
+
+    @Test
+    public void maximumPersistedChronicleMapSizeTest() throws IOException {
+        File file = Builder.getPersistenceFile();
+        long maxSize = 1 << 30;
+        for (; ; maxSize *= 2) {
+            try (ChronicleMap<Long, Long> map = ChronicleMap
+                    .of(Long.class, Long.class)
+                    .entries(maxSize)
+                    .createPersistedTo(file)) {
+                map.put(1L, 1L);
+            } catch (Throwable e) {
+                e.printStackTrace();
+                break;
+            } finally {
+                file.delete();
+            }
+        }
+        System.out.println("Max persisted chronicle map size is " + (maxSize / 2));
     }
 }
