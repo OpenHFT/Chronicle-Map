@@ -289,7 +289,7 @@ contain some entries. No special action with the data is performed during such o
 want to clean up corrupted entries and ensure that the data store is in correct state, see
 [Recovery](#recovery) section.
 
- > ##### ""`ChronicleMap` instance" vs "Chronicle Map data store"
+ > ##### "`ChronicleMap` instance" vs "Chronicle Map data store"
  >
  > In this tutorial, *`ChronicleMap` instance* (or simply *`ChronicleMap`*) term is used to refer to
  > *on-heap object*, providing access to a *Chronicle Map data store* (or *Chronicle Map key-value
