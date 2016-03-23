@@ -55,6 +55,15 @@ public final class ChronicleSetBuilder<K>
                         chronicleMapBuilder.privateAPI());
     }
 
+    /**
+     * Returns a new {@code ChronicleSetBuilder} instance which is able to {@linkplain #create()
+     * create} sets with the specified key class.
+     *
+     * @param keyClass   class object used to infer key type and discover it's properties via
+     *                   reflection
+     * @param <K>        key type of the sets, created by the returned builder
+     * @return a new builder for the given key class
+     */
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
         return new ChronicleSetBuilder<>(keyClass);
     }
@@ -250,6 +259,14 @@ public final class ChronicleSetBuilder<K>
         return this;
     }
 
+    /**
+     * Inject your SPI code around basic {@code ChronicleSet}'s operations with entries:
+     * removing entries and inserting new entries.
+     *
+     * <p>This affects behaviour of ordinary set.add(), set.remove(), calls, as well as removes
+     * <i>during iterations</i>, updates during <i>remote calls</i> and
+     * <i>internal replication operations</i>.
+     */
     public ChronicleSetBuilder<K> entryOperations(SetEntryOperations<K, ?> entryOperations) {
         chronicleMapBuilder.entryOperations(new MapEntryOperations<K, DummyValue, Object>() {
             @Override

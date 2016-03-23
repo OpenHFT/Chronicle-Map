@@ -41,9 +41,9 @@ public class SetEntryOperationsTest {
                     }
 
                     @Override
-                    public Void insert(@NotNull SetAbsentEntry<String> entry) {
+                    public Void insert(@NotNull SetAbsentEntry<String> absentEntry) {
                         insertCounter.addAndGet(1);
-                        entry.doInsert();
+                        absentEntry.doInsert();
                         return null;
                     }
                 })

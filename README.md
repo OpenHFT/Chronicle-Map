@@ -1,13 +1,14 @@
 # Chronicle Map
 <img align="right" src="http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png">
 
-<h4>Documentation: <a href="#chronicle-map-3-tutorial">Tutorial</a>,
-<a href="http://www.javadoc.io/doc/net.openhft/chronicle-map/">Javadoc</a></h4>
+#### Quick links
+**Documentation: <a href="#chronicle-map-3-tutorial">Tutorial</a>,
+<a href="http://www.javadoc.io/doc/net.openhft/chronicle-map/">Javadoc</a>**
 
-<h4>Community support: <a href="https://github.com/OpenHFT/Chronicle-Map/issues">Issues</a>,
+**Community support: <a href="https://github.com/OpenHFT/Chronicle-Map/issues">Issues</a>,
 <a href="https://groups.google.com/forum/#!forum/java-chronicle">Chronicle
 mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle">Stackoverflow</a>,
-<a href="https://plus.google.com/communities/111431452027706917722">Chronicle User's group</a></h4>
+<a href="https://plus.google.com/communities/111431452027706917722">Chronicle User's group</a>**
 
 ### 3 min to understand everything about Chronicle Map
 
@@ -37,7 +38,7 @@ applications. Notably trading, financial market applications.
 <b><i>Chronicle Map</i> has two meanings:</b> [the language-agnostic data store](spec) and [the
 implementation of this data store for the JVM](src). Currently, this is the only implementation.
 
-**From Java perspective,** Chronicle Map is a `ConcurrentMap` implementation which stores the
+**From Java perspective,** `ChronicleMap` is a `ConcurrentMap` implementation which stores the
 entries *off-heap*, serializing/deserializing key and value objects to/from off-heap memory
 transparently. Chronicle Map supports
  - Key and value objects caching/reusing for making *zero allocations (garbage) on
@@ -136,13 +137,17 @@ Chronicle Map doesn't support
  - [Difference between Chronicle Map 2 and 3](#difference-between-chronicle-map-2-and-3)
  - [Download the library](#download-the-library)
  - [Create a `ChronicleMap` Instance](#create-a-chroniclemap-instance)
+   - [In-memory Chronicle Map](#in-memory-chronicle-map)
+   - [Persisted Chronicle Map](#persisted-chronicle-map)
+   - [Recovery](#recovery)
    - [Key and Value Types](#key-and-value-types)
      - [Custom serializers](#custom-serializers)
-       - [Custom `CharSequence` encoding](#custom-charsequence-encoding)
-       - [Custom serialization checklist](#custom-serialization-checklist)
- - [`ChronicleMap` instance usage patterns](#chroniclemap-instance-usage-patterns)
+        - [Custom `CharSequence` encoding](#custom-charsequence-encoding)
+        - [Custom serialization checklist](#custom-serialization-checklist)
+ - [`ChronicleMap` usage patterns](#chroniclemap-usage-patterns)
    - [Single-key queries](#single-key-queries)
    - [Multi-key queries](#multi-key-queries)
+   - [Entry checksums](#entry-checksums)
  - [Close `ChronicleMap`](#close-chroniclemap)
  - [Behaviour Customization](#behaviour-customization)
    - [Example - Simple logging](#example---simple-logging)
@@ -153,6 +158,9 @@ Chronicle Map doesn't support
 
 Functional changes in Chronicle Map 3:
 
+ - Chronicle Map 3 has [formal data store specification](spec), that verbalizes [the guarantees
+ which the data store provides](spec/1-design-goals.md#guarantees-2) and gives a way to verify those
+ guarantees.
  - Added support for multi-key queries.
  - "Listeners" mechanism fully reworked, see the [Behaviour Customization](#behaviour-customization)
  section. This has a number of important consequences, most notable is:
@@ -166,13 +174,16 @@ Functional changes in Chronicle Map 3:
  limitation is removed, though the number of entries still has to be configured on the Chronicle Map
  instance creation, exceeding this configured limit is possible, but discouraged. See the
  [Number of entries configuration](#number-of-entries-configuration) section.
+ - Chronicle Map 3 supports [entry checksums](#entry-checksums) that allows to detect data
+ corruption, hence brings additional safety.
+ - Chronicle Map 3 allows to [recover](#recovery) after failures and corruptions.
  - A number of smaller improvements and fixes.
 
 Non-functional changes:
 
  - Chronicle Map 3 requires Java version 8 or newer, while Chronicle Map 2 supports Java 7.
- - Chronicle Map 3 has [specification](spec), [versioning policy](docs/versioning.md) and
- [compatibility policy](docs/compatibility.md). Chronicle Map 2 doesn't have such documents.
+ - Chronicle Map 3 has [versioning policy](docs/versioning.md) and [compatibility policy](
+ docs/compatibility.md). Chronicle Map 2 doesn't have such documents.
 
 If you use Chronicle Map 2, you might be looking for [Chronicle Map 2 Tutorial](
 https://github.com/OpenHFT/Chronicle-Map/tree/2.1#contents) or [Chronicle Map 2 Javadoc](
@@ -218,8 +229,10 @@ and define the snapshot version in your pom.xml, for example:
 
 ### Create a `ChronicleMap` Instance
 
-Creating an instance of ChronicleMap is a little more complex than just calling a constructor.
+Creating an instance of `ChronicleMap` is a little more complex than just calling a constructor.
 To create an instance you have to use the `ChronicleMapBuilder`.
+
+#### In-memory Chronicle Map
 
 ``` java
 import net.openhft.chronicle.map.*
@@ -249,15 +262,18 @@ ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
     .create();
 ```
 
-This snippet creates a `ChronicleMap`, supposed to store about 50 000 city name -> postal code
-mappings. It is accessible within a single Java process - the process it is created within. The
-data is accessible while the process is alive.
+This snippet creates an in-memory Chronicle Map store, supposed to store about 50 000 *city name ->
+postal code* mappings. It is accessible within a single JVM process - the process it is created
+within. The data is accessible while the process is alive, when the process is terminated, the data
+is vanished.
+
+#### Persisted Chronicle Map
 
 Replace `.create()` calls with `.createPersistedTo(cityPostalCodesFile)`, if you want the Chronicle
 Map to either
 
- - Outlive the process it was created within, e. g. to support hot Java application redeploy
- - Be accessible from multiple processes on the same server
+ - Outlive the process it was created within, e. g. to support hot application redeploy
+ - Be accessible from *multiple concurrent processes* on the same server
  - Persist the data to disk
 
 The `cityPostalCodesFile` has to represent the same location on your server among all Java
@@ -265,6 +281,26 @@ processes, wishing to access this Chronicle Map instance, e. g.
 `System.getProperty("java.io.tmpdir") + "/cityPostalCodes.dat"`.
 
 The name and location of the file is entirely up to you.
+
+Note than when you create a `ChronicleMap` instance with `.createPersistedTo(file)`, and the given
+file already exists in the system, you *open a view to the existing Chronicle Map data store from
+this JVM process* rather than creating a new Chronicle Map data store. I. e. it could already
+contain some entries. No special action with the data is performed during such operation. If you
+want to clean up corrupted entries and ensure that the data store is in correct state, see
+[Recovery](#recovery) section.
+
+ > ##### ""`ChronicleMap` instance" vs "Chronicle Map data store"
+ >
+ > In this tutorial, *`ChronicleMap` instance* (or simply *`ChronicleMap`*) term is used to refer to
+ > *on-heap object*, providing access to a *Chronicle Map data store* (or *Chronicle Map key-value
+ > store*, or *Chronicle Map store*, or simply *Chronicle Map*, with space between two words in
+ > contrast to `ChronicleMap`), which could be purely in-memory, or persisted to disk. Currently
+ > Java implementation doesn't allow to create multiple accessor `ChronicleMap` objects to a single
+ > *in-memory Chronicle Map store*, i. e. there is always a one-to-one correspondence, that may lead
+ > to confusion. *Persisted Chronicle Map store*, however, allows to create multiple accessor
+ > *`ChronicleMap` instances* either within a single JVM process (though [it is not recommended to
+ > do that](#single-chroniclemap-instance-per-jvm)), or from concurrent JVM processes, that is
+ > perfectly OK.
 
 When no processes access the file, it could be freely moved to another location in the system, and
 even to another server, even running different operating system, opened from another location and
@@ -297,10 +333,85 @@ though the `ChronicleMapBuilder` instance.**
 
 ---
 
-**Single `ChronicleMap` instance per JVM.** If you want to access the Chronicle Map instance
-concurrently within the Java process, you should *not* create a separate `ChronicleMap` instance per
+<a name="single-chroniclemap-instance-per-jvm"></a>
+**Single `ChronicleMap` instance per JVM.** If you want to access a Chronicle Map data store
+concurrently within a Java process, you should *not* create a separate `ChronicleMap` instance per
 thread. Within the JVM environment, `ChronicleMap` instance *is* a `ConcurrentMap`, and could be
 accessed concurrently the same way as e. g. `ConcurrentHashMap`.
+
+#### Recovery
+
+If a process, accessing a persisted Chronicle Map, terminated abnormally: crashed, `SIGKILL`ed, or
+terminated because the host operating system crashed, or the machine lost power, the Chronicle Map
+might remain in an inaccessible or corrupted state. When the Chronicle Map is opened next time from
+another process, it should be done via `.recoverPersistedTo()` method in `ChronicleMapBuilder`.
+Unlike `createPersistedTo()`, this method scans all memory of Chronicle Map store for
+inconsistencies, if some found, it cleans them up.
+
+*`.recoverPersistedTo()` needs to access the Chronicle Map exclusively. If a concurrent process is
+accessing the Chronicle Map while another process is attempting to perform recovery, result of
+operations on the accessing process side, and results of recovery are unspecified. The data could be
+corrupted further. You* must *ensure no other process is accessing the Chronicle Map store when
+calling for `.recoverPersistedTo()` on this store.*
+
+Example:
+
+```java
+ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
+    .of(CharSequence.class, PostalCodeRange.class)
+    .averageKey("Amsterdam")
+    .entries(50_000)
+    .recoverPersistedTo(cityPostalCodesFile, true);
+// or
+ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
+    .of(CharSequence.class, PostalCodeRange.class)
+    // assuming ChronicleMapBuilder configurations at the moment of
+    // cityPostalCodes Chronicle Map creation are not known
+    .recoverPersistedTo(cityPostalCodesFile, false);
+```
+
+The second parameter in `recoverPersistedTo()` method is called `sameBuilderConfig`, it should be
+`true` if `ChronicleMapBuilder` is configured in exactly the same way, as when the Chronicle Map was
+created, and using the same version of Chronicle Map library, or `false`, if initial configurations
+are not known, of current version of Chronicle Map library differs from the version, used to create
+this Chronicle Map initially.
+
+If `sameBuilderConfig` is `true`, `recoverPersistedTo()` checks that the recovered Chronicle Map's
+header memory (containing serialized configurations) is not corrupted, because it "knows" all the
+right configurations and what should be written to the header. If the header is corrupted, it
+recovers it.
+
+If `sameBuilderConfig` is `false`, `recoverPersistedTo()` relies on the configurations written to
+the Chronicle Map's header, assuming it is not corrupted. If it is corrupted, at best it will lead
+to a runtime exception thrown from `recoverPersistedTo()` without touching the data, stored in the
+Chronicle Map (but this effectively means inability to recover the Chronicle Map), at worst it will
+proceed "successfully" but will corrupt the Chronicle Map further.
+
+However, the subject header memory is never updated on ordinary operations with Chronicle Map, so it
+couldn't be corrupted if an accessing process crashed, or the operating system crashed, or even the
+machine lost power. Only hardware memory or disk corruption or a bug in the file system could lead
+to Chronicle Map header memory corruption.
+
+`.recoverPersistedTo()` is harmless if the previous process accessing the Chronicle Map terminated
+normally, however this is a computationally expensive procedure that should generally be avoided.
+
+To share configuration, Chronicle Map creation and recovery code you could use
+`.createOrRecoverPersistedTo(persistenceFile)` method in `ChronicleMapBuilder`, which is equivalent
+to `createPersistedTo(persistenceFile)` call, if the persistence file doesn't yet exist, and to
+`recoverPersistedTo(persistenceFile, true)`, if the file already exists, e. g.:
+
+```java
+ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
+    .of(CharSequence.class, PostalCodeRange.class)
+    .averageKey("Amsterdam")
+    .entries(50_000)
+    .createOrRecoverPersistedTo(cityPostalCodesFile);
+```
+
+If the Chronicle Map is configured to store entry checksums along with entries, recovery procedure
+checks for each entry that the checksums is correct, otherwise it assumes the entry is corrupted and
+deletes it from the Chronicle Map. If checksums are to stored, recovery procedure cannot guarantee
+correctness of entry data. See [Entry checksums](#entry-checksums) section for more information.
 
 #### Key and Value Types
 
@@ -322,10 +433,10 @@ Either key or value type of `ChronicleMap<K, V>` could be:
 
  - Types supported out of the box, but not particularly efficiently. You might want to implement
  more efficient [custom serializers](#custom-serializers) for them:
-   - Any class implementing `java.io.Externalizable`. The implementation class should have a public
-   no-arg constructor.
-   - Any type implementing `java.io.Serializable`, including boxed primitive types (except listed
-   above) and array types
+    - Any class implementing `java.io.Externalizable`. The implementation class should have a public
+    no-arg constructor.
+    - Any type implementing `java.io.Serializable`, including boxed primitive types (except listed
+    above) and array types
 
  - Any other type, if [custom serializers](#custom-serializers) are provided.
 
@@ -1198,7 +1309,7 @@ class.
  `ChronicleMapBuilder` by `keyMarshallers()`, `keyReaderAndDataAccess()`, `valueMarshallers()` or
  `valueReaderAndDataAccess()` methods.
 
-### `ChronicleMap` instance usage patterns
+### `ChronicleMap` usage patterns
 
 #### Single-key queries
 
@@ -1830,4 +1941,69 @@ System.out.println(map2.get("1"));
             }
         }
     }
+```
+
+### Entry checksums
+
+Chronicle Map 3 is able to store entry checksums along with entries. With entry checksums it is
+possible to identify partially written entries (in case of operating system or power failure while)
+and corrupted entries (in case of hardware memory or disk corruption) and clean them up during
+[recovery](#recovery) procedure.
+
+Entry checksums are 32-bit numbers, computed by a hash function with good avalanche effect.
+Theoretically there is still about a one-billionth chance that after entry corruption it passes the
+sum check.
+
+By default, entry checksums are ON if the Chronicle Map is persisted to disk (i. e. created via
+`createPersistedTo()` method), and OFF if the Chronicle Map is purely in-memory. Storing checksums
+for a purely in-memory Chronicle Map hardly makes any practical sense, but you might want to disable
+storing checksums for a persisted Chronicle Map by calling `.checksumEntries(false)` on the
+`ChronicleMapBuilder` used to create a map. It makes sense if you don't need extra safety checksums
+provide.
+
+Entry checksums are computed automatically when an entry is inserted into a Chronicle Map, and
+re-computed automatically on operations which update the whole value, e. g. `map.put()`,
+`map.replace()`, `map.compute()`, `mapEntry.doReplaceValue()` (See `MapEntry` interface in
+[Javadocs](http://www.javadoc.io/doc/net.openhft/chronicle-map/). But if you update values directly,
+bypassing Chronicle Map logic, keeping entry checksum up-to-date is also your responsibility.
+
+It is strongly recommended to update off-heap memory of values directly only within a
+[context](#working-with-an-entry-within-a-context-section) and update or write lock held. Within a
+context, you are provided with an *entry* object of `MapEntry` type. To re-compute entry checksum
+manually, cast that object to `ChecksumEntry` type and call `.updateChecksum()` method on it:
+
+```java
+try (ChronicleMap<Integer, LongValue> map = ChronicleMap
+        .of(Integer.class, LongValue.class)
+        .entries(1)
+        // Entry checksums make sense only for persisted Chronicle Maps, and are ON by
+        // default for such maps
+        .createPersistedTo(file)) {
+
+    LongValue value = Values.newHeapInstance(LongValue.class);
+    value.setValue(42);
+    map.put(1, value);
+
+    try (ExternalMapQueryContext<Integer, LongValue, ?> c = map.queryContext(1)) {
+        // Update lock required for calling ChecksumEntry.checkSum()
+        c.updateLock().lock();
+        MapEntry<Integer, LongValue> entry = c.entry();
+        Assert.assertNotNull(entry);
+        ChecksumEntry checksumEntry = (ChecksumEntry) entry;
+        Assert.assertTrue(checksumEntry.checkSum());
+
+        // to access off-heap bytes, should call value().getUsing() with Native value
+        // provided. Simple get() return Heap value by default
+        LongValue nativeValue =
+                entry.value().getUsing(Values.newNativeReference(LongValue.class));
+        // This value bytes update bypass Chronicle Map internals, so checksum is not
+        // updated automatically
+        nativeValue.setValue(43);
+        Assert.assertFalse(checksumEntry.checkSum());
+
+        // Restore correct checksum
+        checksumEntry.updateChecksum();
+        Assert.assertTrue(checksumEntry.checkSum());
+    }
+}
 ```

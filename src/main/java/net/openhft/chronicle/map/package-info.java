@@ -15,7 +15,7 @@
  */
 
 /**
- * Contains {@link net.openhft.chronicle.set.ChronicleSet} interface, {@code ChronicleSet} context
- * interfaces and {@link net.openhft.chronicle.set.ChronicleSetBuilder} class.
+ * Contains {@link net.openhft.chronicle.map.ChronicleMap} interface, {@code ChronicleMap} context
+ * interfaces, {@link net.openhft.chronicle.map.ChronicleMapBuilder} class and related stuff.
  */
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.map;

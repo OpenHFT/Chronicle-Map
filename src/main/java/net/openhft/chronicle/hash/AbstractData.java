@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.bytes.RandomDataInput;
-
 /**
  * Defines reasonable defaults for {@code Data}'s {@code equals()}, {@code hashCode()} and
  * {@code toString()}. They should be default implementations in the {@code Data} interface itself,

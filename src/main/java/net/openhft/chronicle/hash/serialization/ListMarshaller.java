@@ -36,14 +36,12 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * README section</a>.
  *
  * <p>Usage: <pre>{@code
- * ListMarshaller<Integer> valueMarshaller = new ListMarshaller<>(
- *     IntegerMarshaller.INSTANCE, IntegerMarshaller.INSTANCE);
  * ChronicleMap<String, List<Integer>> regNumbers = ChronicleMap
  *     .of(String.class, (Class<List<Integer>>) (Class) List.class)
- *     .entries(10_000)
  *     .averageKey("John Smith")
- *     .valueMarshaller(valueMarshaller)
+ *     .valueMarshaller(ListMarshaller.of(IntegerMarshaller.INSTANCE))
  *     .averageValue(ImmutableList.of(1, 2, 3))
+ *     .entries(10_000)
  *     .create();
  * }</pre>
  *

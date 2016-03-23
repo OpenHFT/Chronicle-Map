@@ -29,8 +29,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
- * This interface defines common {@link ChronicleMap} and {@link ChronicleSet}, related to off-heap
- * memory management and file-mapping. Not usable by itself.
+ * Common base interface for {@link ChronicleMap} and {@link ChronicleSet}.
  */
 public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         EQC extends ExternalHashQueryContext<K>> extends Closeable {
@@ -45,6 +44,11 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      */
     File file();
 
+    /**
+     * Returns the number of entries in this store.
+     *
+     * @return the number of entries in this store
+     */
     long longSize();
 
     /**
@@ -53,13 +57,16 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
     Class<K> keyClass();
 
     /**
-     * Returns the context to perform arbitrary operations with the given key in this map.
-     * Conventionally, try-with-resources block should wrap the returned context: <pre>{@code
+     * Returns a context to perform arbitrary operations with the given key in this store.
+     * Conventionally, should be used in a try-with-resources block: <pre>{@code
      * try (ExternalHashQueryContext<K> q = hash.queryContext(key)) {
      *     // ... do something
      * }}</pre>
-     * See {@link HashQueryContext} and {@link MapMethods} for a lot of inspiration about using this
-     * functionality.
+     *
+     * <p>See documentation to {@link HashQueryContext} interface and methods in {@link MapMethods}
+     * interface for examples of using contexts. Also see <a href="
+     * https://github.com/OpenHFT/Chronicle-Map#working-with-an-entry-within-a-context-section">
+     * Working with an entry within a context</a> section in the Chronicle Map tutorial.
      *
      * @param key the queried key
      * @return the context to perform operations with the key
@@ -72,9 +79,16 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
     EQC queryContext(K key);
 
     /**
-     * Equivalent to {@link #queryContext(Object)}, but accepts {@code Data} instead of key as
-     * an object. Useful, when you already have {@code Data}, calling this method instead of {@link
-     * #queryContext(Object)} might help to avoid unnecessary deserialization.
+     * Returns a context to perform arbitrary operations with the given key, provided in
+     * {@link Data} form. Equivalent to {@link #queryContext(Object)}, but accepts {@code Data}
+     * instead of object key. This method is useful, when you already have {@code Data}, calling
+     * this method instead of {@link #queryContext(Object)} might help to avoid unnecessary
+     * deserialization.
+     *
+     * <p>See documentation to {@link HashQueryContext} interface and methods in {@link MapMethods}
+     * interface for examples of using contexts. Also see <a href="
+     * https://github.com/OpenHFT/Chronicle-Map#working-with-an-entry-within-a-context-section">
+     * Working with an entry within a context</a> section in the Chronicle Map tutorial.
      *
      * @param key the queried key as {@code Data}
      * @return the context to perform operations with the key
@@ -82,19 +96,19 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
     @NotNull EQC queryContext(Data<K> key);
 
     /**
-     * Returns the context to perform arbitrary operations with the given key, provided in the
+     * Returns a context to perform arbitrary operations with the given key, provided in the
      * serialized form. See {@link #queryContext(Object)} and {@link #queryContext(Data)} for more
      * information on contexts semantics and usage patterns.
      *
      * @param keyBytes the bytes store with the key bytes to query
      * @param offset actual offset of the key bytes within the given BytesStore
-     * @param size length of the key bytes sequence
+     * @param size length of the key bytes sequence within the given BytesStore
      * @return the context to perform operations with the key
      */
     @NotNull EQC queryContext(BytesStore keyBytes, long offset, long size);
 
     /**
-     * Returns the context of the segment with the given index. Segments are indexed from 0 to
+     * Returns a context of the segment with the given index. Segments are indexed from 0 to
      * {@link #segments()}{@code - 1}.
      *
      * @see HashSegmentContext
@@ -149,10 +163,6 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * <p>If you won't call this method, memory would be held at least until next garbage
      * collection. This could be a problem if, for example, you target rare garbage collections,
      * but load and drop {@code ChronicleHash}es regularly.
-     *
-     * <p>
-     * TODO what about commit guarantees, when ChronicleMap is used with memory-mapped files, if
-     * {@code ChronicleMap}/{@code ChronicleSet} closed/not?
      *
      * <p>After this method call behaviour of <i>all</i> methods of {@code ChronicleMap}
      * or {@code ChronicleSet} is undefined. <i>Any</i> method call on the map might throw

@@ -38,14 +38,14 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * README section</a>.
  *
  * <p>Usage: <pre>{@code
- * SetMarshaller<String> valueMarshaller = new SetMarshaller<>(
+ * SetMarshaller<String> valueMarshaller = SetMarshaller.of(
  *     new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
  * ChronicleMap<String, Set<String>> map = ChronicleMap
  *     .of(String.class, (Class<Set<String>>) (Class) Set.class)
- *     .entries(10_000)
  *     .averageKey("fruits")
  *     .valueMarshaller(valueMarshaller)
  *     .averageValue(ImmutableSet.of("apples", "bananas", "grapes"))
+ *     .entries(10_000)
  *     .create();
  * }</pre>
  *

@@ -1777,7 +1777,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     /**
      * Inject your SPI code around basic {@code ChronicleMap}'s operations with entries:
-     * removing entries, replacing the entries' value and inserting the new entry.
+     * removing entries, replacing entries' value and inserting new entries.
      * 
      * <p>This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
      * and replacing values <i>during iterations</i>, <i>remote map calls</i> and

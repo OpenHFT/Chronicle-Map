@@ -15,7 +15,6 @@
  */
 
 /**
- * Contains {@link net.openhft.chronicle.set.ChronicleSet} interface, {@code ChronicleSet} context
- * interfaces and {@link net.openhft.chronicle.set.ChronicleSetBuilder} class.
+ * Contains abstractions of <i>inter-process</i> locks, used in Chronicle Map.
  */
-package net.openhft.chronicle.set;
+package net.openhft.chronicle.hash.locks;

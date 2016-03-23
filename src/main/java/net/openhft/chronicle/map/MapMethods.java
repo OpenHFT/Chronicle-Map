@@ -32,6 +32,13 @@ import static net.openhft.chronicle.map.MapMethodsSupport.tryReturnCurrentValueI
  */
 public interface MapMethods<K, V, R> {
 
+    /**
+     * Backing {@link ChronicleMap#containsKey(Object)} method.
+     *
+     * @implNote the default implementation is equivalent to <pre>{@code
+     * return q.entry() != null;
+     * }</pre>
+     */
     default boolean containsKey(MapQueryContext<K, V, R> q) {
         return q.entry() != null;
     }

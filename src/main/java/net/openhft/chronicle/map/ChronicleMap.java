@@ -28,7 +28,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Extension of {@link ConcurrentMap} interface, stores the data off-heap.
+ * {@code ChronicleMap} provides concurrent access to a <i>Chronicle Map key-value store</i> from a
+ * JVM process.
  *
  * <p>For information on <ul> <li>how to construct a {@code ChronicleMap}</li> <li>{@code
  * ChronicleMap} flavors and properties</li> <li>available configurations</li> </ul> see {@link

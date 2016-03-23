@@ -18,10 +18,16 @@ package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapEntry;
+import net.openhft.chronicle.set.SetEntry;
 
 /**
  * Abstracts entries of hash containers, created by {@link ChronicleHashBuilder}s
- * with {@link ChronicleHashBuilder#checksumEntries(boolean)} configured to {@code true}.
+ * with {@link ChronicleHashBuilder#checksumEntries(boolean)} configured to {@code true}. There is
+ * no method that returns {@code ChecksumEntry}, {@link MapEntry} or {@link SetEntry} could be
+ * <i>casted</i> to {@code ChecksumEntry} to access it's methods.
+ *
+ * <p>See <a href="https://github.com/OpenHFT/Chronicle-Map#entry-checksums">Entry checksums</a>
+ * section in the Chronicle Map tutorial for usage examples of this interface.
  */
 public interface ChecksumEntry {
 

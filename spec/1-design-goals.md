@@ -106,7 +106,8 @@ Chronicle Map first, which identifies and purges corrupted entries from the Chro
 Therefore, *some entries updated shortly before the failure could be lost.*
 
  > The aforementioned *special recovery procedure* is `ChronicleHashBuilder.recoverPersistedTo()`
- > or `ChronicleHashInstanceBuilder.recover()` in the reference Java implementation.
+ > or `ChronicleHashInstanceBuilder.recover()` in the reference Java implementation. See
+ > [Recovery](../README.md#recovery) section in the Chronicle Map tutorial for more information.
 
 ## Goals
 

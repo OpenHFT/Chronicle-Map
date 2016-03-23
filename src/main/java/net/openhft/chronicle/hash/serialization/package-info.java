@@ -15,7 +15,7 @@
  */
 
 /**
- * The package contains interfaces for serializing objects between Java heap and {@link
+ * Contains interfaces for serializing objects between Java heap and {@link
  * net.openhft.chronicle.bytes.Bytes} or {@link net.openhft.chronicle.bytes.BytesStore}, used by
  * Chronicle Map to store objects off-heap, and read them back from off-heap memory to on-heap
  * objects.
