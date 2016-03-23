@@ -1,7 +1,7 @@
 # 3. Chronicle Map Data Store Memory Layout
 
-A newly created Chronicle Map instance (or just mapped from an already existing persistence file)
-takes one big continuous block of memory. Its structure, from lower addresses to higher:
+A newly created Chronicle Map store (or just mapped from an already existing persistence file) takes
+one big continuous block of memory. Its structure, from lower addresses to higher:
 
  1. [The self-bootstrapping header](#self-bootstrapping-header).
  2. The alignment to the next cache line boundary (to the next multiple of 64) by addresses.
@@ -24,7 +24,7 @@ takes one big continuous block of memory. Its structure, from lower addresses to
  > it spans almost always reside in TLB cache and always need to be flushed to the disk.
 
  > The alignment (more precisely, the offset to the next area, the segment headers area) is stored
- > in the global mutable state, rather then computed each time a mapped Chronicle Map instance is
+ > in the global mutable state, rather then computed each time a mapped Chronicle Map store is
  > accessed, because other accessing file systems, operation systems and Chronicle Map
  > implementations may use a different page size for memory mapping.
 
@@ -49,7 +49,7 @@ of this size-prefixed blob, computed by [xxHash](https://github.com/Cyan4973/xxH
 
 The self-bootstrapping header itself (i. e. the "message" of the size-prefixed blob) is encoded in
 Text Wire format. Once created, this header is never changed. It contains all configurations,
-immutable for Chronicle Map during the instance lifetime: number of segments, various sizes,
+immutable for Chronicle Map during the data store lifetime: number of segments, various sizes,
 offsets, etc. See the specification of the fields on [Map Header Fields](3_1-header-fields.md) page.
 
 ## Global mutable state
@@ -82,7 +82,7 @@ The global mutable state is 33 bytes long.
  4. Bytes 16..20 - the number of used extra segment tiers. An unsigned 40-bit value, stored in
  the little-endian order.
  5. Bytes 21..24 - the offset of the segment headers area from the beginning of the memory of this
- Chronicle Map instance. An unsigned 32-bit value, stored in the little-endian ordered. This field
+ Chronicle Map store. An unsigned 32-bit value, stored in the little-endian ordered. This field
  determines the size of [the 4th area of the general Chronicle Map structure](
  #segment-headers-alignment).
  6. Bytes 25..32 - the Chronicle Map data store size, the offset to the end of the [main segments

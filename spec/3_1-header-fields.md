@@ -1,6 +1,6 @@
 # 3.1. Chronicle Map Data Store Header Fields
 
-Header of a persisted Chronicle Map instance is written once, when the instance and the file are
+Header of a persisted Chronicle Map store is written once, when the instance and the file are
 created, and never changed after that. It is stored in [Text Wire Format
 ](https://github.com/OpenHFT/RFC/blob/master/Wire-Format-API/Text/Text-Wire-Format-API-0.1.md)).
 The top-level structure name is `!net.openhft.chronicle.map.VanillaChronicleMap`. It contains the

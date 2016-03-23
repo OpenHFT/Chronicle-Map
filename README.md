@@ -28,8 +28,8 @@ applications. Notably trading, financial market applications.
  https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type) strategy.
 
 **Unique features**
- - Multiple processes could access a Chronicle Map instance concurrently. At the same time,
- the instance is *in-process for each of the accessing processes*. (Out-of-process approach to IPC
+ - Multiple processes could access a Chronicle Map concurrently. At the same time,
+ the data store is *in-process for each of the accessing processes*. (Out-of-process approach to IPC
  is simply incompatible with Chronicle Map's median latency target of < 1 μs.)
 
  - Replication *without logs*, with constant footprint cost, guarantees progress even if the network
@@ -70,7 +70,7 @@ queries*.
  e. g. [Chronicle Enterprise](http://chronicle.software/products/chronicle-enterprise/).
 
 **What is the Chronicle Map's data structure?** In one sentence and simplified, a Chronicle Map
-instance is a big chunk of shared memory (optionally mapped to disk), split into independent
+data store is a big chunk of shared memory (optionally mapped to disk), split into independent
 segments, each segment has an independent memory allocation for storing the entries, a hash table
 for search, and a lock in shared memory (implemented via CAS loops) for managing concurrent access.
 Read [the Chronicle Map data store design overview](spec/2-design-overview.md) for more.
@@ -159,7 +159,7 @@ Chronicle Map doesn't support
 Functional changes in Chronicle Map 3:
 
  - Chronicle Map 3 has [formal data store specification](spec), that verbalizes [the guarantees
- which the data store provides](spec/1-design-goals.md#guarantees-2) and gives a way to verify those
+ which the data store provides](spec/1-design-goals.md#guarantees-1) and gives a way to verify those
  guarantees.
  - Added support for multi-key queries.
  - "Listeners" mechanism fully reworked, see the [Behaviour Customization](#behaviour-customization)
@@ -169,11 +169,11 @@ Functional changes in Chronicle Map 3:
  - "Stateless clients" functionality (i. e. remote calls) is moved to [Chronicle Engine](
  https://github.com/OpenHFT/Chronicle-Engine).
  - Replication is done via [Chronicle Engine](https://github.com/OpenHFT/Chronicle-Engine).
- - Chronicle Map 2 has hard creation-time limit on the number of entries storable in the Chronicle
- Map instance. If the size exceeds this limit, an exception is thrown. In Chronicle Map 3, this
- limitation is removed, though the number of entries still has to be configured on the Chronicle Map
- instance creation, exceeding this configured limit is possible, but discouraged. See the
- [Number of entries configuration](#number-of-entries-configuration) section.
+ - Chronicle Map 2 has hard creation-time limit on the number of entries storable in a Chronicle
+ Map. If the size exceeds this limit, an exception is thrown. In Chronicle Map 3, this limitation
+ is removed, though the number of entries still has to be configured on the Chronicle Map creation,
+ exceeding this configured limit is possible, but discouraged. See the [Number of entries
+ configuration](#number-of-entries-configuration) section.
  - Chronicle Map 3 supports [entry checksums](#entry-checksums) that allows to detect data
  corruption, hence brings additional safety.
  - Chronicle Map 3 allows to [recover](#recovery) after failures and corruptions.

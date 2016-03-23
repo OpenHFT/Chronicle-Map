@@ -21,7 +21,7 @@ This is currently work-in-progress.
 
  - To provide the ability to write a Chronicle Map implementation in a non-JVM language e.g. C, C++,
  C#, or Go. As Chronicle Map is designed for concurrent inter-process access, performance-critical
- operations on a Chronicle Map instance could be done from a C++ process, while a concurrent process
+ operations on a Chronicle Map store could be done from a C++ process, while a concurrent process
  running the Java implementation is doing some duty tasks such as backup to a rational database.
 
  - This specification is the source of truth to reason about the Chronicle Map data store behaviour

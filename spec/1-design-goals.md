@@ -11,10 +11,10 @@
  - Chronicle Map supports fully-featured concurrent access from multiple processes, mapping the same
  file.
  - Chronicle Map supports *isolated* multi-key operations, either on a single key-value domain
- (a single Chronicle Map instance) or several ones. But multi-key updates to persisted Chronicle
- Map(s) are *not* atomic (basically, *isolated* and *atomic* terms used in the sense of
- [ACID](https://en.wikipedia.org/wiki/ACID) here; see the detailed definition below
- in [Guarantees](#guarantees-1) section).
+ (a single Chronicle Map store) or several ones. But multi-key updates to persisted Chronicle Map(s)
+ are *not* atomic (basically, *isolated* and *atomic* terms used in the sense of [ACID](
+ https://en.wikipedia.org/wiki/ACID) here; see the detailed definition below in
+ [Guarantees](#guarantees-1) section).
  - Chronicle Map runs only on little-endian architectures.
  - Chronicle Map is *not* distributed: the whole data store resides the memory of a single machine
  (a single file, if persisted).
@@ -89,25 +89,25 @@ https://en.wikipedia.org/wiki/File_locking).
 If the above assumptions are met, Chronicle Map aims to satisfy the following guarantees:
 
  - Single-key and multi-key accesses and updates to the Chronicle Map (multi-key updates could span
- several Chronicle Map instances) are concurrently isolated, i. e. accesses involving a certain key
+ several Chronicle Map stores) are concurrently isolated, i. e. accesses involving a certain key
  are totally ordered across accessing threads and processes. All updates made to the entry during
  the previous update are visible during the subsequent accesses. After a multi-key update,
  a subsequent multi-key query involving a subset of the updated keys (and possibly some more keys)
  observes all updates made to all the entries corresponding to the keys from that subset.
  - Under any conditions (concurrent access, inter-process access) and using any type of access
  (querying the entry by the key or iteration), only entries that were ever stored in the Chronicle
- Map instance are observed. Reading corrupted or half written values by some keys, or observing some
+ Map store are observed. Reading corrupted or half written values by some keys, or observing some
  keys that were never stored during the iteration is impossible.
 
-If the Chronicle Map instance is persisted to the file and the operating system fails to flush all
+If the Chronicle Map store is persisted to the file and the operating system fails to flush all
 the dirty memory to the disk due to a power-off or any other failure, when the file is mapped to
 the memory and accessed again, it is required to perform a *special recovery procedure* on the
 Chronicle Map first, which identifies and purges corrupted entries from the Chronicle Map.
 Therefore, *some entries updated shortly before the failure could be lost.*
 
  > The aforementioned *special recovery procedure* is `ChronicleHashBuilder.recoverPersistedTo()`
- > or `ChronicleHashInstanceBuilder.recover()` in the reference Java implementation. See
- > [Recovery](../README.md#recovery) section in the Chronicle Map tutorial for more information.
+ > in the reference Java implementation. See [Recovery](../README.md#recovery) section in the
+ > Chronicle Map tutorial for more information.
 
 ## Goals
 

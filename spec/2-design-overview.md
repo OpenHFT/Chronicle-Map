@@ -19,7 +19,7 @@ performing a query to a Chronicle Map:
 For multi-key queries,
 
  1. Identify all the segments in which the involved keys should be held.
- 2. Acquire the locks of all the involved segments. Within each involved Chronicle Map instance,
+ 2. Acquire the locks of all the involved segments. Within each involved Chronicle Map store,
  acquire the segment locks in the order of their segments.
 
  > Acquiring segment locks always in the same order is needed to avoid dead-locks, e. g. when the
@@ -76,7 +76,7 @@ an operation system, Chronicle Map doesn't implement queues of threads, waiting 
 and conditional wake-ups. Threads acquire locks in a spin loop, yielding and/or sleeping after a
 certain threshold numbers of unsuccessful attempts.
 
-> Chronicle Map implementations specialized for single-process access to instances may implement
+> Chronicle Map implementations specialized for single-process access to stores may implement
 > some kind of thread queues, wake-ups and cooperative scheduling on the runtime level; certain lock
 > acquisition strategy is out of scope of the Chronicle Map data store specification.
 

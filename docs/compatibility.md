@@ -23,12 +23,12 @@ the following rules, they might be changed in any way, or removed.
 Semantics and actual effects of API calls might change between Chronicle Map versions with
 [different "minor" number](versioning.md), e. g. default serialization forms of key or value objects
 of some types could change, "high level" configurations in `ChronicleMapBuilder` could produce
-Chronicle Map instances with different properties, etc. Such changes should be documented in release
-notes.
+Chronicle Maps with different "low level" configurations, etc. Such changes should be documented in
+release notes.
 
 ### Persistence File Binary Form
 
-A persisted Chronicle Map instance (a binary file), produced by a production release of the library,
+A persisted Chronicle Map store (a binary file), produced by a production release of the library,
 should be accessible and updatable by any subsequent production release of the library in 3.x
 branch, unless the older version has bugs that lead to data corruption.
 
@@ -51,7 +51,7 @@ Though this might lead to failures, but not to data corruption on either of the 
 
 The Chronicle Map Data Store Specification could be updated without changing the revision while it
 remains backward compatible, i. e. the implementation of the newer version of the specification
-could access and update any persisted Chronicle Map instance, produced by an older version.
+could access and update any persisted Chronicle Map store, produced by an older version.
 In addition, potential *concurrent* accessing implementations of older versions ("within" the same
 revision) shouldn't lose correctness and corrupt the data.
 

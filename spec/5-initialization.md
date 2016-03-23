@@ -7,7 +7,7 @@
 
 ## Chronicle Map creation
 
-This section describes the process of creation of a new Chronicle Map instance (or opening the
+This section describes the process of creation of a new Chronicle Map data store (or opening the
 existing Map, persisted to some file).
 
  1. If the Chronicle Map should be persisted to some file, and this file does not exist, this file
