@@ -34,31 +34,32 @@ public class MaximumChronicleMapSizeTest {
 
     @Test
     public void maximumInMemoryChronicleMapSizeTest() {
-        long maxSize = 1 << 30;
+        long maxSize = 1 << 20;
         for (; ; maxSize *= 2) {
             try (ChronicleMap<Long, Long> map = ChronicleMap
                     .of(Long.class, Long.class)
                     .entries(maxSize)
                     .create()) {
                 map.put(1L, 1L);
+                System.out.println("In-memory chronicle map size is " + maxSize);
             } catch (Throwable e) {
                 e.printStackTrace();
                 break;
             }
         }
-        System.out.println("Max in-memory chronicle map size is " + (maxSize / 2));
     }
 
     @Test
     public void maximumPersistedChronicleMapSizeTest() throws IOException {
         File file = Builder.getPersistenceFile();
-        long maxSize = 1 << 30;
+        long maxSize = 1 << 20;
         for (; ; maxSize *= 2) {
             try (ChronicleMap<Long, Long> map = ChronicleMap
                     .of(Long.class, Long.class)
                     .entries(maxSize)
                     .createPersistedTo(file)) {
                 map.put(1L, 1L);
+                System.out.println("Persisted chronicle map size is " + maxSize);
             } catch (Throwable e) {
                 e.printStackTrace();
                 break;
@@ -66,6 +67,6 @@ public class MaximumChronicleMapSizeTest {
                 file.delete();
             }
         }
-        System.out.println("Max persisted chronicle map size is " + (maxSize / 2));
+
     }
 }
