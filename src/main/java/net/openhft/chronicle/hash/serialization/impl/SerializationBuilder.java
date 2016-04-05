@@ -54,6 +54,11 @@ public final class SerializationBuilder<T> implements Cloneable {
 
     @SuppressWarnings("unchecked")
     private void configureByDefault(Class<T> tClass) {
+        if (tClass.isPrimitive()) {
+            throw new IllegalArgumentException(
+                    "Chronicle Map's key or value type cannot be primitive, " + tClass +
+                            " type is given");
+        }
 
         if (tClass.isInterface() && Values.isValueInterfaceOrImplClass(tClass)) {
             try {
