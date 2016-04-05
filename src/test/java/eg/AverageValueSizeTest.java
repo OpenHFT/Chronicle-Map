@@ -26,18 +26,19 @@ import java.util.LongSummaryStatistics;
 public class AverageValueSizeTest {
 
     public static <V> double averageValueSize(Class<V> valueClass, Iterable<V> values) {
-        ChronicleMap<Integer, V> testMap = ChronicleMap.of(Integer.class, valueClass)
+        try (ChronicleMap<Integer, V> testMap = ChronicleMap.of(Integer.class, valueClass)
                 // doesn't matter, anyway not a single value will be written to a map
                 .averageValueSize(1)
                 .entries(1)
-                .create();
-        LongSummaryStatistics statistics = new LongSummaryStatistics();
-        for (V value : values) {
-            try (MapSegmentContext<Integer, V, ?> c = testMap.segmentContext(0)) {
-                statistics.accept(c.wrapValueAsData(value).size());
+                .create()) {
+            LongSummaryStatistics statistics = new LongSummaryStatistics();
+            for (V value : values) {
+                try (MapSegmentContext<Integer, V, ?> c = testMap.segmentContext(0)) {
+                    statistics.accept(c.wrapValueAsData(value).size());
+                }
             }
+            return statistics.getAverage();
         }
-        return statistics.getAverage();
     }
 
     @Test
