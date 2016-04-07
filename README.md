@@ -1263,7 +1263,7 @@ encoding](#custom-charsequence-encoding) section above.
 It is allowed to return `this` from the `copy()` method, if with some configurations the
 serializer implementation doesn't have state. Typically this is the case when serializer is
 configured with sub-serializers which might be `StatefulCopyable` or not, for example
-[`ListMarshaller`](src\main\java\net\openhft\chronicle\hash\serialization\ListMarshaller.java)
+[`ListMarshaller`](src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java)
 class.
 
 ##### Custom serialization checklist
