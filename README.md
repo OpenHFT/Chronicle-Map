@@ -701,7 +701,7 @@ public final class CharSequenceCustomEncodingBytesWriter
     /**
      * Need this method because {@link CharBuffer#append(CharSequence, int, int)} produces garbage
      */
-    private void append(CharBuffer charBuffer, CharSequence cs, int start, int end) {
+    private static void append(CharBuffer charBuffer, CharSequence cs, int start, int end) {
         for (int i = start; i < end; i++) {
             charBuffer.put(cs.charAt(i));
         }
