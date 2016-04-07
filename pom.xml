@@ -255,6 +255,23 @@
                         <link>http://openhft.github.io/Chronicle-Algorithms/apidocs/</link>
                         <link>http://openhft.github.io/Chronicle-Values/apidocs/</link>
                     </links>
+                    <tags>
+                        <tag>
+                            <name>apiNote</name>
+                            <placement>tcm</placement>
+                            <head>API Note:</head>
+                        </tag>
+                        <tag>
+                            <name>implSpec</name>
+                            <placement>tcm</placement>
+                            <head>Implementation Requirements:</head>
+                        </tag>
+                        <tag>
+                            <name>implNote</name>
+                            <placement>tcm</placement>
+                            <head>Implementation Note:</head>
+                        </tag>
+                    </tags>
                     <excludePackageNames>
                         net.openhft.chronicle.hash.serialization.impl:net.openhft.xstream:net.openhft.chronicle.hash.impl:net.openhft.chronicle.map.impl:**.replication
                     </excludePackageNames>
