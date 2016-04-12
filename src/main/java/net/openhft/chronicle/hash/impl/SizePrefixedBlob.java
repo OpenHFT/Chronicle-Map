@@ -23,7 +23,7 @@ public final class SizePrefixedBlob {
     public static final int SELF_BOOTSTRAPPING_HEADER_OFFSET = 12;
 
     public static final int READY = 0;
-    public static final int NOT_READY = 0x80000000;
+    public static final int NOT_COMPLETE = 0x80000000;
 
     public static final int DATA = 0;
     public static final int META_DATA = 0x40000000;

@@ -1544,7 +1544,7 @@ public final class ChronicleMapBuilder<K, V> implements
         int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
         if (!SizePrefixedBlob.isReady(sizeWord)) {
             if (recover) {
-                LOG.error("size-prefixed blob readiness bit is set to NOT_READY");
+                LOG.error("size-prefixed blob readiness bit is set to NOT_COMPLETE");
                 // the bit will be overwritten to READY in the end of recovery procedure, so nothing
                 // to fix right here
             } else {
@@ -1609,7 +1609,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 map.createMappedStoreAndSegments();
             } else {
                 if (!overrideBuilderConfig)
-                    writeNotReady(fileChannel, headerBuffer, headerSize);
+                    writeNotComplete(fileChannel, headerBuffer, headerSize);
                 // if overrideBuilderConfig = true, readiness bit is already set
                 // in writeHeader() call
                 map.recover();
@@ -1625,10 +1625,10 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    private static void writeNotReady(
+    private static void writeNotComplete(
             FileChannel fileChannel, ByteBuffer headerBuffer, int headerSize) throws IOException {
         //noinspection PointlessBitwiseExpression
-        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_READY | DATA | headerSize);
+        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
         headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
         writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
@@ -1656,10 +1656,10 @@ public final class ChronicleMapBuilder<K, V> implements
         long checksum = headerChecksum(headerBuffer, headerSize);
         headerBuffer.putLong(HEADER_OFFSET, checksum);
 
-        // Set readiness bit to NOT_READY, because the Chronicle Map instance is not actually
+        // Set readiness bit to NOT_COMPLETE, because the Chronicle Map instance is not actually
         // ready yet
         //noinspection PointlessBitwiseExpression
-        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_READY | DATA | headerSize);
+        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
 
         // Write the size-prefixed blob to the file
         headerBuffer.position(0).limit(headerLimit);
