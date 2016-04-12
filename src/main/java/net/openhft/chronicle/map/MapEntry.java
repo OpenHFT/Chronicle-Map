@@ -21,7 +21,7 @@ import net.openhft.chronicle.hash.HashEntry;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A context of a <i>present</i> entry in the {@code ChronicleHash}.
+ * A context of a <i>present</i> entry in the {@link ChronicleMap}.
  * 
  * @param <K> the map key type
  * @param <V> the map value type

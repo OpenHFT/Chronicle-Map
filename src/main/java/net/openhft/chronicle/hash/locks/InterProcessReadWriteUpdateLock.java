@@ -24,7 +24,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 /**
- * Tri-level lock, for efficient handling of concurrent accesses, that requre different privileges.
+ * Tri-level lock, for efficient handling of concurrent accesses, that require different privileges.
  * For grasping multi-level lock concept and basic semantic principles, please read
  * {@link ReadWriteLock} documentation.
  *
