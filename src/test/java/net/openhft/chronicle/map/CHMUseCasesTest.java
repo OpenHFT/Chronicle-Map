@@ -115,7 +115,7 @@ public class CHMUseCasesTest {
             if (map1.equals(map2))
                 break;
             try {
-                Thread.sleep(1);
+                Jvm.pause(1);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

@@ -59,14 +59,14 @@ public class Builder {
             // not map1.equals(map2), the reason is described above
             if (map1.equals(map2)) {
                 numberOfTimesTheSame++;
-                Thread.sleep(1);
+                Jvm.pause(1);
                 if (numberOfTimesTheSame == 10) {
                     System.out.println("same");
                     break;
                 }
 
             }
-            Thread.sleep(1);
+            Jvm.pause(1);
             if (System.currentTimeMillis() - startTime > timeOutMs)
                 break;
         }

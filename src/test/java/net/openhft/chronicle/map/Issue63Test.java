@@ -39,7 +39,7 @@ import static org.junit.Assert.assertEquals;
 public class Issue63Test {
 
     @Test
-    public void issue63Test() throws Exception {
+    public void issue63test()  {
         Path path = Paths.get(System.getProperty("java.io.tmpdir") + "/test-vectors1.dat");
         if (Files.exists(path)) Files.delete(path);
         File mapFile = path.toFile();
@@ -148,7 +148,7 @@ public class Issue63Test {
         new Issue63Test().testChronicleMap();
     }
 
-    void testChronicleMap() throws Exception {
+    void testChronicleMap()  {
         int num = 1_000_000;
         testChronicleMap(System.getProperty("java.io.tmpdir"), num, num);
         ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -307,7 +307,7 @@ public class Issue63Test {
     }
 
     @Test
-    public void testKnownItems() throws Exception {
+    public void testKnownItems()  {
 
         ArrayList<CharSequence> averageKnownItems = new ArrayList<>();
         for (int i = 0; i < 100; i++) {

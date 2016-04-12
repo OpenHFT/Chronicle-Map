@@ -233,7 +233,7 @@ public class CHMTest5 {
         long elapsedTime;
         while ((elapsedTime = System.currentTimeMillis() - start) < pause) {
             try {
-                Thread.sleep(pause - elapsedTime);
+                Jvm.pause(pause - elapsedTime);
             } catch (InterruptedException e) {
             }
         }

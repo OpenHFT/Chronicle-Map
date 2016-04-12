@@ -144,7 +144,7 @@ public class CHMLatencyTestMain {
         public void run() {
             while (running) {
                 try {
-                    Thread.sleep(1);
+                    Jvm.pause(1);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                     break;

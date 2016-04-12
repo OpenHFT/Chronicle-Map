@@ -107,7 +107,7 @@ public class ChronicleMapSanityCheckTest {
 
             }, 0, consumerPeriod, consumerTimeUnit);
 
-            Thread.sleep(totalTestTimeMS);
+            Jvm.pause(totalTestTimeMS);
 
             consumerExecutor.shutdown();
             try {

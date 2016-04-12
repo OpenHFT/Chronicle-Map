@@ -1501,7 +1501,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 // truncated between length() and read() calls, then continue to wait
             }
             try {
-                Thread.sleep(100);
+                Jvm.pause(100);
             } catch (InterruptedException e) {
                 if (recover) {
                     break;

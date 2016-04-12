@@ -60,7 +60,7 @@ public class ProcessInstanceLimiterMain implements Runnable {
         ProcessInstanceLimiterMain limiter = new ProcessInstanceLimiterMain("test", callback);
         limiter.setMaxNumberOfProcessesOfType("x", 2);
         limiter.startingProcessOfType("x");
-        Thread.sleep(60L * 1000L);
+        Jvm.pause(60L * 1000L);
     }
 
     public static void pause(long pause) {
@@ -68,7 +68,7 @@ public class ProcessInstanceLimiterMain implements Runnable {
         long elapsedTime;
         while ((elapsedTime = System.currentTimeMillis() - start) < pause) {
             try {
-                Thread.sleep(pause - elapsedTime);
+                Jvm.pause(pause - elapsedTime);
             } catch (InterruptedException e) {
             }
         }

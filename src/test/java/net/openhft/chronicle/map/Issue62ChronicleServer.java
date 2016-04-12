@@ -63,7 +63,7 @@ public class Issue62ChronicleServer {
         }
 
         LOGGER.info("Map created");
-        Thread.sleep(15000);
+        Jvm.pause(15000);
 
     }
 

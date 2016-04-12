@@ -101,7 +101,7 @@ public class PointListSerializationTest {
     }
 
     @Test
-    public void testComplexSerialization() throws Exception {
+    public void testComplexSerialization()  {
         try (ChronicleMap<String, A> map = ChronicleMapBuilder
                 .of(String.class, A.class)
                 .valueMarshaller(AMarshaller.INSTANCE)

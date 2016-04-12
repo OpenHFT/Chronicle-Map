@@ -157,7 +157,7 @@ public class LargeEntriesTest {
                 sb.append(thisThread).append("\n");
                 try {
                     while (!Thread.currentThread().isInterrupted()) {
-                        Thread.sleep(50);
+                        Jvm.pause(50);
                         StackTraceElement[] stackTrace = thisThread.getStackTrace();
                         for (int i = 0; i < 4 && i < stackTrace.length; i++)
                             sb.append("\tat ").append(stackTrace[i]).append("\n");

@@ -151,7 +151,7 @@ public class ProcessInstanceLimiter implements Runnable {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         ProcessInstanceLimiter.limitTo(2);
-        Thread.sleep(60L * 1000L);
+        Jvm.pause(60L * 1000L);
     }
 
     /**
@@ -224,7 +224,7 @@ public class ProcessInstanceLimiter implements Runnable {
         long elapsedTime;
         while ((elapsedTime = System.currentTimeMillis() - start) < pause) {
             try {
-                Thread.sleep(pause - elapsedTime);
+                Jvm.pause(pause - elapsedTime);
             } catch (InterruptedException e) {
             }
         }
@@ -336,7 +336,7 @@ public class ProcessInstanceLimiter implements Runnable {
             this.callback.tooManyProcessesOfType(processType);
             return;
         }
-        //try {Thread.sleep(60L*1000L);} catch (InterruptedException e) {}
+        //try {Jvm.pause(60L*1000L);} catch (InterruptedException e) {}
         //we've got the lock, now copy the array
         try {
             for (int i = 0; i < times1.length; i++) {
