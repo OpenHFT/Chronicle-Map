@@ -19,7 +19,7 @@ package net.openhft.chronicle.map;
 import com.google.common.primitives.Chars;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesMarshallable;
-import net.openhft.chronicle.core.Maths;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.values.*;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -54,6 +54,103 @@ import static net.openhft.chronicle.core.Maths.divideRoundUp;
 import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
 import static org.junit.Assert.*;
 
+enum ToString implements SerializableFunction<Object, String> {
+    INSTANCE;
+
+    @Override
+    public String apply(Object o) {
+        return String.valueOf(o);
+    }
+
+}
+
+interface IData extends BytesMarshallable {
+    String getText();
+
+    void setText(@MaxUtf8Length(64) String text);
+
+    int getNumber();
+
+    void setNumber(int number);
+
+    class Data implements IData, BytesMarshallable {
+        static final long MAGIC = 0x8081828384858687L;
+        static final long MAGIC2 = 0xa0a1a2a3a4a5a6a7L;
+
+        String text;
+        int number;
+
+        @Override
+        public String getText() {
+            return text;
+        }
+
+        @Override
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        @Override
+        public int getNumber() {
+            return number;
+        }
+
+        @Override
+        public void setNumber(int number) {
+            this.number = number;
+        }
+
+        @Override
+        public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
+            long magic = in.readLong();
+            if (magic != MAGIC)
+                throw new AssertionError("Start " + Long.toHexString(magic));
+            text = in.readUTFΔ();
+            number = in.readInt();
+            long magic2 = in.readLong();
+            if (magic2 != MAGIC2)
+                throw new AssertionError("End " + Long.toHexString(magic2));
+        }
+
+        @Override
+        public void writeMarshallable(@NotNull Bytes out) {
+            out.writeLong(MAGIC);
+            out.writeUTFΔ(text);
+            out.writeInt(number);
+            out.writeLong(MAGIC2);
+        }
+    }
+}
+
+interface IBean {
+    long getLong();
+
+    void setLong(long num);
+
+    double getDouble();
+
+    void setDouble(double d);
+
+    int getInt();
+
+    void setInt(int i);
+
+    @Array(length = 7)
+    void setInnerAt(int index, Inner inner);
+
+    Inner getInnerAt(int index);
+
+    /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”
+    as array[ ] value */
+    interface Inner {
+
+        String getMessage();
+
+        void setMessage(@MaxUtf8Length(20) String px);
+
+    }
+}
+
 /**
  * This test enumerates common use cases for keys and values.
  */
@@ -61,14 +158,45 @@ import static org.junit.Assert.*;
 public class CHMUseCasesTest {
 
 
-    enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED}
-
+    static volatile int i = 0;
     private final TypeOfMap typeOfMap;
 
     Collection<Closeable> closeables = new ArrayList<Closeable>();
+    ChronicleMap map1;
+    ChronicleMap map2;
 
     public CHMUseCasesTest(TypeOfMap typeOfMap) {
         this.typeOfMap = typeOfMap;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return asList(new Object[][]{
+                {
+                        TypeOfMap.SIMPLE
+                },
+
+                {
+                        TypeOfMap.SIMPLE_PERSISTED
+                }
+        });
+
+    }
+
+    private static void appendMode(ByteBuffer valueA) {
+        valueA.position(valueA.limit());
+        valueA.limit(valueA.capacity());
+    }
+
+    public static <K, V> Map<K, V> mapOf(K k, V v, Object... keysAndValues) {
+        Map<K, V> ret = new LinkedHashMap<>();
+        ret.put(k, v);
+        for (int i = 0; i < keysAndValues.length - 1; i += 2) {
+            Object key = keysAndValues[i];
+            Object value = keysAndValues[i + 1];
+            ret.put((K) key, (V) value);
+        }
+        return ret;
     }
 
     @After
@@ -86,24 +214,6 @@ public class CHMUseCasesTest {
         map1 = null;
     }
 
-    ChronicleMap map1;
-    ChronicleMap map2;
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return asList(new Object[][]{
-                {
-                        TypeOfMap.SIMPLE
-                },
-
-                {
-                        TypeOfMap.SIMPLE_PERSISTED
-                }
-        });
-
-    }
-
-
     /**
      * * waits until map1 and map2 show the same value
      *
@@ -114,14 +224,9 @@ public class CHMUseCasesTest {
         for (; t < timeOutMs; t++) {
             if (map1.equals(map2))
                 break;
-            try {
-                Thread.sleep(1);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+                Jvm.pause(1);
         }
     }
-
 
     private void mapChecks() {
         if (typeOfMap == TypeOfMap.SIMPLE)
@@ -154,7 +259,6 @@ public class CHMUseCasesTest {
 
         }
     }
-
 
     private void checkJsonSerialization() {
         File file = null;
@@ -201,8 +305,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    static volatile int i = 0;
-
     private <X, Y> ChronicleMap<X, Y> newInstance(ChronicleMapBuilder<X, Y> builder) throws
             IOException {
         if (!builder.constantlySizedKeys() && builder.averageKey == null)
@@ -236,38 +338,6 @@ public class CHMUseCasesTest {
             default:
                 throw new IllegalStateException();
         }
-    }
-
-    static class PrefixStringFunction implements SerializableFunction<String, String> {
-        private final String prefix;
-
-        public PrefixStringFunction(@NotNull String prefix) {
-            this.prefix = prefix;
-        }
-
-        @Override
-        public String apply(String s) {
-            return prefix + s;
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            return obj instanceof PrefixStringFunction &&
-                    prefix.equals(((PrefixStringFunction) obj).prefix);
-        }
-
-        @Override
-        public String toString() {
-            return prefix;
-        }
-    }
-
-
-
-    interface I1 {
-        @Array(length = 10)
-        String getStrAt(int i);
-        void setStrAt(int i, @MaxUtf8Length(10) String str);
     }
 
     @Test
@@ -312,7 +382,6 @@ public class CHMUseCasesTest {
             // mapChecks();
         }
     }
-
 
     @Test
     public void testCharArrayValue() throws ExecutionException, InterruptedException, IOException {
@@ -401,7 +470,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testEntrySpanningSeveralChunks()
             throws ExecutionException, InterruptedException, IOException {
@@ -424,10 +492,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
-
-
-
     @Test
     public void testKeyValueSizeBySample() throws ExecutionException, InterruptedException,
             IOException {
@@ -443,7 +507,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
 
     @Test
     public void testLargeCharSequenceValue()
@@ -482,23 +545,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
-
-    private static class StringPrefixUnaryOperator
-            implements BiFunction<String, String, String>, Serializable {
-
-        private String prefix;
-
-        StringPrefixUnaryOperator(final String prefix1) {
-            prefix = prefix1;
-        }
-
-        @Override
-        public String apply(String k, String v) {
-            return prefix + v;
-        }
-    }
-
 
     @Test
     public void testStringStringMapMutableValue() throws ExecutionException, InterruptedException, IOException {
@@ -548,7 +594,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     /**
      * CharSequence is more efficient when object creation is avoided.
      * * The key can only be on heap and variable length serialised.
@@ -597,7 +642,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
 
     @Test
     public void testAcquireUsingWithCharSequence() throws IOException {
@@ -714,12 +758,6 @@ public class CHMUseCasesTest {
             assertEquals("Hello", map.get(key).toString());
             mapChecks();
         }
-    }
-
-    interface StringValue {
-        CharSequence getValue();
-        void getUsingValue(StringBuilder using);
-        void setValue(@net.openhft.chronicle.values.NotNull @MaxUtf8Length(64) CharSequence value);
     }
 
     /**
@@ -1050,7 +1088,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testByteBufferByteBufferDefaultKeyValueMarshaller() throws ExecutionException,
             InterruptedException, IOException {
@@ -1079,7 +1116,6 @@ public class CHMUseCasesTest {
             mapChecks();
         }
     }
-
 
     @Test
     public void testByteBufferByteBufferMap()
@@ -1191,11 +1227,6 @@ public class CHMUseCasesTest {
 
             mapChecks();
         }
-    }
-
-    private static void appendMode(ByteBuffer valueA) {
-        valueA.position(valueA.limit());
-        valueA.limit(valueA.capacity());
     }
 
     @Test
@@ -1351,12 +1382,6 @@ public class CHMUseCasesTest {
             mapChecks();
 
         }
-    }
-
-    interface UnsignedIntValue {
-        long getValue();
-        void setValue(@Range(min = 0, max = (1L << 32) - 1) long value);
-        long addValue(long addition);
     }
 
     /**
@@ -1583,12 +1608,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    interface UnsignedShortValue {
-        int getValue();
-        void setValue(@Range(min = 0, max = Character.MAX_VALUE) int value);
-        int addValue(int addition);
-    }
-
     /**
      * For int -> unsigned short values, the key can be on heap or off heap.
      */
@@ -1792,12 +1811,6 @@ public class CHMUseCasesTest {
                 assertEquals('[', entry.value().get().getValue());
             }
         }
-    }
-
-    interface UnsignedByteValue {
-        int getValue();
-        void setValue(@Range(min = 0, max = 255) int value);
-        int addValue(int addition);
     }
 
     /**
@@ -2114,7 +2127,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     /**
      * For double values, the key can be on heap or off heap.
      */
@@ -2422,7 +2434,6 @@ public class CHMUseCasesTest {
         }
     }
 
-
     @Test
     public void testMapStringStringValue() throws IOException {
 
@@ -2523,17 +2534,6 @@ public class CHMUseCasesTest {
         }
     }
 
-    public static <K, V> Map<K, V> mapOf(K k, V v, Object... keysAndValues) {
-        Map<K, V> ret = new LinkedHashMap<>();
-        ret.put(k, v);
-        for (int i = 0; i < keysAndValues.length - 1; i += 2) {
-            Object key = keysAndValues[i];
-            Object value = keysAndValues[i + 1];
-            ret.put((K) key, (V) value);
-        }
-        return ret;
-    }
-
     @Test
     public void testGeneratedDataValue() throws IOException {
 
@@ -2599,6 +2599,87 @@ public class CHMUseCasesTest {
         }
     }
 
+    enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED}
+
+
+    interface I1 {
+        @Array(length = 10)
+        String getStrAt(int i);
+
+        void setStrAt(int i, @MaxUtf8Length(10) String str);
+    }
+
+    interface StringValue {
+        CharSequence getValue();
+
+        void setValue(@net.openhft.chronicle.values.NotNull @MaxUtf8Length(64) CharSequence value);
+
+        void getUsingValue(StringBuilder using);
+    }
+
+    interface UnsignedIntValue {
+        long getValue();
+
+        void setValue(@Range(min = 0, max = (1L << 32) - 1) long value);
+
+        long addValue(long addition);
+    }
+
+    interface UnsignedShortValue {
+        int getValue();
+
+        void setValue(@Range(min = 0, max = Character.MAX_VALUE) int value);
+
+        int addValue(int addition);
+    }
+
+    interface UnsignedByteValue {
+        int getValue();
+
+        void setValue(@Range(min = 0, max = 255) int value);
+
+        int addValue(int addition);
+    }
+
+    static class PrefixStringFunction implements SerializableFunction<String, String> {
+        private final String prefix;
+
+        public PrefixStringFunction(@NotNull String prefix) {
+            this.prefix = prefix;
+        }
+
+        @Override
+        public String apply(String s) {
+            return prefix + s;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj instanceof PrefixStringFunction &&
+                    prefix.equals(((PrefixStringFunction) obj).prefix);
+        }
+
+        @Override
+        public String toString() {
+            return prefix;
+        }
+    }
+
+    private static class StringPrefixUnaryOperator
+            implements BiFunction<String, String, String>, Serializable {
+
+        private String prefix;
+
+        StringPrefixUnaryOperator(final String prefix1) {
+            prefix = prefix1;
+        }
+
+        @Override
+        public String apply(String k, String v) {
+            return prefix + v;
+        }
+    }
+
     private static class DataDataAccess extends BytesMarshallableDataAccess<IData.Data> {
         public DataDataAccess() {
             super(IData.Data.class);
@@ -2624,102 +2705,5 @@ public class CHMUseCasesTest {
         protected IData.Data createInstance() {
             return new IData.Data();
         }
-    }
-}
-
-interface IData extends BytesMarshallable {
-    void setText(@MaxUtf8Length(64) String text);
-
-    void setNumber(int number);
-
-    String getText();
-
-    int getNumber();
-
-    class Data implements IData, BytesMarshallable {
-        static final long MAGIC = 0x8081828384858687L;
-        static final long MAGIC2 = 0xa0a1a2a3a4a5a6a7L;
-
-        String text;
-        int number;
-
-        @Override
-        public String getText() {
-            return text;
-        }
-
-        @Override
-        public void setText(String text) {
-            this.text = text;
-        }
-
-        @Override
-        public int getNumber() {
-            return number;
-        }
-
-        @Override
-        public void setNumber(int number) {
-            this.number = number;
-        }
-
-        @Override
-        public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
-            long magic = in.readLong();
-            if (magic != MAGIC)
-                throw new AssertionError("Start " + Long.toHexString(magic));
-            text = in.readUTFΔ();
-            number = in.readInt();
-            long magic2 = in.readLong();
-            if (magic2 != MAGIC2)
-                throw new AssertionError("End " + Long.toHexString(magic2));
-        }
-
-        @Override
-        public void writeMarshallable(@NotNull Bytes out) {
-            out.writeLong(MAGIC);
-            out.writeUTFΔ(text);
-            out.writeInt(number);
-            out.writeLong(MAGIC2);
-        }
-    }
-}
-
-enum ToString implements SerializableFunction<Object, String> {
-    INSTANCE;
-
-    @Override
-    public String apply(Object o) {
-        return String.valueOf(o);
-    }
-
-}
-
-interface IBean {
-    long getLong();
-
-    void setLong(long num);
-
-    double getDouble();
-
-    void setDouble(double d);
-
-    int getInt();
-
-    void setInt(int i);
-
-    @Array(length = 7)
-    void setInnerAt(int index, Inner inner);
-
-    Inner getInnerAt(int index);
-
-    /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”
-    as array[ ] value */
-    interface Inner {
-
-        String getMessage();
-
-        void setMessage(@MaxUtf8Length(20) String px);
-
     }
 }

@@ -97,7 +97,7 @@ public class MapCheck {
             mainTest(key, absent);
             if ((rep & 3) == 3 && rep < numTests - 1) {
                 shuffle(key);
-                //                Thread.sleep(10);
+                //                Jvm.pause(10);
             }
         }
 

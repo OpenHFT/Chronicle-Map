@@ -17,9 +17,12 @@
 package net.openhft.chronicle.map.utility;
 
 import net.openhft.affinity.AffinitySupport;
-import net.openhft.chronicle.algo.bytes.Access;
-import net.openhft.chronicle.algo.locks.*;
+import net.openhft.chronicle.algo.locks.AcquisitionStrategies;
+import net.openhft.chronicle.algo.locks.ReadWriteLockingStrategy;
+import net.openhft.chronicle.algo.locks.TryAcquireOperations;
+import net.openhft.chronicle.algo.locks.VanillaReadWriteWithWaitsLockingStrategy;
 import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Array;
@@ -43,13 +46,13 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
  * shared map (using ChronicleMap) to maintain shared data across any processes
  * which use a ProcessInstanceLimiter, and checking on startup and regularly
  * after whether it is allowed to run.
- *
+ * <p/>
  * <p>Typically, you need to specify two things to create an instance of
  * ProcessInstanceLimiter: a path to a file that will hold the shared map; and a
  * callback object (an instance implementing ProcessInstanceLimiter.Callback) to
  * handle the various possible callback messages that the ProcessInstanceLimiter
  * can generate.
- *
+ * <p/>
  * <p>Once you have a ProcessInstanceLimiter instance, you specify a type of
  * process (any string) which will be limited to up to N processes running at
  * the same time by calling the setMaxNumberOfProcessesOfType() method. Finally
@@ -57,18 +60,18 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
  * startingProcessOfType(X). This last is deliberately not done automatically as
  * you may wish for one type of process to define limitations on other types of
  * processes.
- *
+ * <p/>
  * <p>The are some convenience methods which allow you to quickly specify a limit
  * without consideration of the above. For example, if during your application
  * startup you call ProcessInstanceLimiter.limitTo(2), then you need not call
  * anything else and you have limited your application to running at most 2 JVM
  * instances of your application. Under the covers, this call is identical to
  * the sequence:
- *
+ * <p/>
  * <p>ProcessInstanceLimiter limiter = new ProcessInstanceLimiter();
  * limiter.setMaxNumberOfProcessesOfType(processType,numProcesses);
  * limiter.startingProcessOfType(processType);
- *
+ * <p/>
  * <p>This:
  * 1. Creates a shared file called ProcessInstanceLimiter_DEFAULT_SHARED_MAP_ in
  * the temp directory to hold an instance of ChronicleMap
@@ -83,7 +86,6 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
  */
 public class ProcessInstanceLimiter implements Runnable {
     private static final long DEFAULT_TIME_UPDATE_INTERVAL_MS = 100L;
-    private long timeUpdateInterval = DEFAULT_TIME_UPDATE_INTERVAL_MS;
     private static final String DEFAULT_SHARED_MAP_NAME = "ProcessInstanceLimiter_DEFAULT_SHARED_MAP_";
     private static final String DEFAULT_SHARED_MAP_DIRECTORY = System.getProperty("java.io.tmpdir");
     private static final String DEFAULT_PROCESS_NAME = "_DEFAULT_";
@@ -97,6 +99,7 @@ public class ProcessInstanceLimiter implements Runnable {
     private final Callback callback;
     private final Map<String, Integer> localUpdates = new ConcurrentHashMap<String, Integer>();
     private final Map<String, String> processTypeToStartTimeType = new ConcurrentHashMap<String, String>();
+    private long timeUpdateInterval = DEFAULT_TIME_UPDATE_INTERVAL_MS;
     private long startTime;
     private long[] lastStartTimes;
     private Map<String, Data> timedata = new ConcurrentHashMap<String, Data>();
@@ -151,12 +154,12 @@ public class ProcessInstanceLimiter implements Runnable {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         ProcessInstanceLimiter.limitTo(2);
-        Thread.sleep(60L * 1000L);
+        Jvm.pause(60L * 1000L);
     }
 
     /**
      * Convenience method.
-     *
+     * <p/>
      * <p>Create a ProcessInstanceLimiter instance which is limited to one OS
      * process instance of the DEFAULT type. This will enforce that any JVM on
      * the same box which runs the code
@@ -172,7 +175,7 @@ public class ProcessInstanceLimiter implements Runnable {
 
     /**
      * Convenience method.
-     *
+     * <p/>
      * <p>Create a ProcessInstanceLimiter instance which is limited to
      * "numProcesses" OS process instances of the DEFAULT type. This will
      * enforce that any JVM on the same box which runs the code
@@ -191,7 +194,7 @@ public class ProcessInstanceLimiter implements Runnable {
 
     /**
      * Convenience method.
-     *
+     * <p/>
      * <p>Create a ProcessInstanceLimiter instance which is limited to
      * "numProcesses" OS process instances of the "processType" type. This will
      * enforce that any JVM on the same box which runs the code
@@ -223,10 +226,8 @@ public class ProcessInstanceLimiter implements Runnable {
         long start = System.currentTimeMillis();
         long elapsedTime;
         while ((elapsedTime = System.currentTimeMillis() - start) < pause) {
-            try {
-                Thread.sleep(pause - elapsedTime);
-            } catch (InterruptedException e) {
-            }
+            Thread.interrupted();// clear interruptions.
+            Jvm.pause(pause - elapsedTime);
         }
     }
 
@@ -336,7 +337,7 @@ public class ProcessInstanceLimiter implements Runnable {
             this.callback.tooManyProcessesOfType(processType);
             return;
         }
-        //try {Thread.sleep(60L*1000L);} catch (InterruptedException e) {}
+        //try {Jvm.pause(60L*1000L);} catch (InterruptedException e) {}
         //we've got the lock, now copy the array
         try {
             for (int i = 0; i < times1.length; i++) {
@@ -459,9 +460,9 @@ public class ProcessInstanceLimiter implements Runnable {
 
     private void unlock(Data data) {
         try {
-        VanillaReadWriteWithWaitsLockingStrategy.instance()
-                .writeUnlock(checkedBytesStoreAccess(),
-                        ((Byteable) data).bytesStore(), ((Byteable) data).offset());
+            VanillaReadWriteWithWaitsLockingStrategy.instance()
+                    .writeUnlock(checkedBytesStoreAccess(),
+                            ((Byteable) data).bytesStore(), ((Byteable) data).offset());
         } catch (IllegalMonitorStateException e) {
             //odd, but we'll be unlocked either way
             System.out.println("Unexpected state: " + e);
@@ -531,25 +532,30 @@ public class ProcessInstanceLimiter implements Runnable {
     /**
      * The Data object holds an array of timestamps and a maximum number of
      * processes allowed to be running concurrently
-     *
+     * <p/>
      * <p>The Timelock field is just for locking the time field
      */
     public interface Data {
 
-        /** Ensure lock goes first in flyweight layout, to apply external locking
+        /**
+         * Ensure lock goes first in flyweight layout, to apply external locking
          */
         @Group(0)
         long getTimeLock();
+
         void setTimeLock(long timeLock);
 
         @Group(1)
         @Array(length = 50)
         void setTimeAt(int index, long time);
+
         long getTimeAt(int index);
 
         @Group(1)
         int getMaxNumberOfProcessesAllowed();
+
         void setMaxNumberOfProcessesAllowed(int num);
+
         boolean compareAndSwapMaxNumberOfProcessesAllowed(int expected, int value);
     }
 

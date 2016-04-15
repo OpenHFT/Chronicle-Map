@@ -153,7 +153,7 @@ public class JSR166TestCase {
         long ns = millis * 1000 * 1000;
         for (; ; ) {
             if (millis > 0L)
-                Thread.sleep(millis);
+                Jvm.pause(millis);
             else // too short to sleep
                 Thread.yield();
             long d = ns - (System.nanoTime() - startTime);

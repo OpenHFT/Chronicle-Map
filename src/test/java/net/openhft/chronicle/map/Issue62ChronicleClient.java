@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,7 @@ public class Issue62ChronicleClient {
                 cityPostalCodesMapBuilder.createPersistedTo(MAP_FILE_B)) {
 
             LOGGER.info("Starting");
-            Thread.sleep(3000);
+            Jvm.pause(3000);
 
             for (Entry<String, Long> entry : map.entrySet()) {
                 LOGGER.info("{} : {}", entry.getKey(), entry.getValue());

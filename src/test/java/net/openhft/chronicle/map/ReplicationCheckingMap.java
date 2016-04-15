@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
@@ -91,13 +92,10 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                 return r1;
 
             if (i > 30) {
-                try {
-                    Thread.sleep(i);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            } else
+                    Jvm.pause(i);
+            } else {
                 Thread.yield();
+            }
         }
 
         Assert.assertEquals(map1, map2);

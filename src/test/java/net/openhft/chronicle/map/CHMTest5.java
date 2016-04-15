@@ -16,12 +16,12 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.locks.AcquisitionStrategies;
 import net.openhft.chronicle.algo.locks.ReadWriteLockingStrategy;
 import net.openhft.chronicle.algo.locks.TryAcquireOperations;
 import net.openhft.chronicle.algo.locks.VanillaReadWriteWithWaitsLockingStrategy;
 import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.map.utility.ProcessInstanceLimiter;
 import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.Group;
 import net.openhft.chronicle.values.Values;
@@ -229,14 +229,7 @@ public class CHMTest5 {
     }
 
     public static void pause(long pause) {
-        long start = System.currentTimeMillis();
-        long elapsedTime;
-        while ((elapsedTime = System.currentTimeMillis() - start) < pause) {
-            try {
-                Thread.sleep(pause - elapsedTime);
-            } catch (InterruptedException e) {
-            }
-        }
+        ProcessInstanceLimiter.pause(pause);
     }
 
     public interface CHMTest5Data {

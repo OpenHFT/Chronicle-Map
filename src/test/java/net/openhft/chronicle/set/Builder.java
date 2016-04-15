@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.set;
 
+import net.openhft.chronicle.core.Jvm;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -52,21 +54,21 @@ public class Builder {
         return file;
     }
 
-    public static void waitTillEqual(Map map1, Map map2, int timeOutMs) throws InterruptedException {
+    public static void waitTillEqual(Map map1, Map map2, int timeOutMs) {
         int numberOfTimesTheSame = 0;
         long startTime = System.currentTimeMillis();
         for (int t = 0; t < timeOutMs + 100; t++) {
             // not map1.equals(map2), the reason is described above
             if (map1.equals(map2)) {
                 numberOfTimesTheSame++;
-                Thread.sleep(1);
+                Jvm.pause(1);
                 if (numberOfTimesTheSame == 10) {
                     System.out.println("same");
                     break;
                 }
 
             }
-            Thread.sleep(1);
+            Jvm.pause(1);
             if (System.currentTimeMillis() - startTime > timeOutMs)
                 break;
         }

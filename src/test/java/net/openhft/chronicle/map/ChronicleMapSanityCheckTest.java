@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
 import org.junit.Test;
 
 import java.io.File;
@@ -32,10 +33,6 @@ import java.util.concurrent.locks.LockSupport;
  * Created by Borislav Ivanov on 5/29/15.
  */
 public class ChronicleMapSanityCheckTest {
-
-    enum DummyValue {
-        DUMMY_VALUE
-    }
 
     @Test
     public void testSanity1() throws IOException, InterruptedException
@@ -107,7 +104,7 @@ public class ChronicleMapSanityCheckTest {
 
             }, 0, consumerPeriod, consumerTimeUnit);
 
-            Thread.sleep(totalTestTimeMS);
+            Jvm.pause(totalTestTimeMS);
 
             consumerExecutor.shutdown();
             try {
@@ -123,5 +120,9 @@ public class ChronicleMapSanityCheckTest {
             }
         }
 
+    }
+
+    enum DummyValue {
+        DUMMY_VALUE
     }
 }

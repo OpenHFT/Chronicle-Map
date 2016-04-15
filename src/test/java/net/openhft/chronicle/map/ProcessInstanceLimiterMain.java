@@ -16,6 +16,9 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.map.utility.ProcessInstanceLimiter;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -60,18 +63,11 @@ public class ProcessInstanceLimiterMain implements Runnable {
         ProcessInstanceLimiterMain limiter = new ProcessInstanceLimiterMain("test", callback);
         limiter.setMaxNumberOfProcessesOfType("x", 2);
         limiter.startingProcessOfType("x");
-        Thread.sleep(60L * 1000L);
+        Jvm.pause(60L * 1000L);
     }
 
     public static void pause(long pause) {
-        long start = System.currentTimeMillis();
-        long elapsedTime;
-        while ((elapsedTime = System.currentTimeMillis() - start) < pause) {
-            try {
-                Thread.sleep(pause - elapsedTime);
-            } catch (InterruptedException e) {
-            }
-        }
+        ProcessInstanceLimiter.pause(pause);
     }
 
     public void run() {
