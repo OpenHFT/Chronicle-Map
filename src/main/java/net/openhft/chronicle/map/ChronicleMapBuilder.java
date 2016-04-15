@@ -135,6 +135,62 @@ public final class ChronicleMapBuilder<K, V> implements
             LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
 
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
+    private static final ConcurrentHashMap<File, Void> fileLockingControl =
+            new ConcurrentHashMap<>(128);
+    private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
+    SerializationBuilder<K> keyBuilder;
+    SerializationBuilder<V> valueBuilder;
+    K averageKey;
+    V averageValue;
+    /**
+     * Default timeout is 1 minute. Even loopback tests converge often in the course of seconds,
+     * let alone WAN replication over many nodes might take tens of seconds.
+     * <p/>
+     * TODO review
+     */
+    long cleanupTimeout = 1;
+    TimeUnit cleanupTimeoutUnit = TimeUnit.MINUTES;
+    boolean cleanupRemovedEntries = true;
+
+    //////////////////////////////
+    // Configuration fields
+    DefaultValueProvider<K, V> defaultValueProvider = DefaultSpi.defaultValueProvider();
+    byte replicationIdentifier = -1;
+    MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
+    MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
+    MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
+    // not final because of cloning
+    private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
+            new ChronicleMapBuilderPrivateAPI<>(this);
+    // used when configuring the number of segments.
+    private int minSegments = -1;
+    private int actualSegments = -1;
+    // used when reading the number of entries per
+    private long entriesPerSegment = -1L;
+    private long actualChunksPerSegmentTier = -1L;
+    private double averageKeySize = UNDEFINED_DOUBLE_CONFIG;
+    private K sampleKey;
+    private double averageValueSize = UNDEFINED_DOUBLE_CONFIG;
+    private V sampleValue;
+    private int actualChunkSize = 0;
+    private int worstAlignment = -1;
+    private int maxChunksPerEntry = -1;
+    private int alignment = UNDEFINED_ALIGNMENT_CONFIG;
+    private long entries = -1L;
+    private double maxBloatFactor = 1.0;
+    private boolean allowSegmentTiering = true;
+    private double nonTieredSegmentsPercentile = 0.99999;
+    private boolean aligned64BitMemoryOperationsAtomic = OS.is64Bit();
+    private ChecksumEntries checksumEntries = ChecksumEntries.IF_PERSISTED;
+    private boolean putReturnsNull = false;
+    private boolean removeReturnsNull = false;
+    private boolean replicated;
+    private boolean persisted;
+
+    ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
+        keyBuilder = new SerializationBuilder<>(keyClass);
+        valueBuilder = new SerializationBuilder<>(valueClass);
+    }
 
     private static boolean isDefined(double config) {
         return !isNaN(config);
@@ -155,14 +211,8 @@ public final class ChronicleMapBuilder<K, V> implements
         return (long) v;
     }
 
-    private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
-
-    private static final ConcurrentHashMap<File, Void> fileLockingControl =
-            new ConcurrentHashMap<>(128);
-
-    interface FileIOAction {
-        void fileIOAction() throws IOException;
-    }
+    //////////////////////////////
+    // Instance fields
 
     /**
      * When Chronicle Maps are created using {@link #createPersistedTo(File)} or
@@ -187,73 +237,6 @@ public final class ChronicleMapBuilder<K, V> implements
                 throw Jvm.rethrow(e);
             }
         });
-    }
-
-    // not final because of cloning
-    private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
-            new ChronicleMapBuilderPrivateAPI<>(this);
-
-    //////////////////////////////
-    // Configuration fields
-
-    SerializationBuilder<K> keyBuilder;
-    SerializationBuilder<V> valueBuilder;
-
-    // used when configuring the number of segments.
-    private int minSegments = -1;
-    private int actualSegments = -1;
-    // used when reading the number of entries per
-    private long entriesPerSegment = -1L;
-    private long actualChunksPerSegmentTier = -1L;
-    private double averageKeySize = UNDEFINED_DOUBLE_CONFIG;
-    K averageKey;
-    private K sampleKey;
-    private double averageValueSize = UNDEFINED_DOUBLE_CONFIG;
-    V averageValue;
-    private V sampleValue;
-    private int actualChunkSize = 0;
-    private int worstAlignment = -1;
-    private int maxChunksPerEntry = -1;
-    private int alignment = UNDEFINED_ALIGNMENT_CONFIG;
-    private long entries = -1L;
-    private double maxBloatFactor = 1.0;
-    private boolean allowSegmentTiering = true;
-    private double nonTieredSegmentsPercentile = 0.99999;
-    private boolean aligned64BitMemoryOperationsAtomic = OS.is64Bit();
-
-    enum ChecksumEntries {YES, NO, IF_PERSISTED}
-    private ChecksumEntries checksumEntries = ChecksumEntries.IF_PERSISTED;
-
-    private boolean putReturnsNull = false;
-    private boolean removeReturnsNull = false;
-
-    /**
-     * Default timeout is 1 minute. Even loopback tests converge often in the course of seconds,
-     * let alone WAN replication over many nodes might take tens of seconds.
-     *
-     * TODO review
-     */
-    long cleanupTimeout = 1;
-    TimeUnit cleanupTimeoutUnit = TimeUnit.MINUTES;
-    boolean cleanupRemovedEntries = true;
-
-    DefaultValueProvider<K, V> defaultValueProvider = DefaultSpi.defaultValueProvider();
-
-    byte replicationIdentifier = -1;
-
-    MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
-    MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
-    MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
-
-    //////////////////////////////
-    // Instance fields
-
-    private boolean replicated;
-    private boolean persisted;
-
-    ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
-        keyBuilder = new SerializationBuilder<>(keyClass);
-        valueBuilder = new SerializationBuilder<>(valueClass);
     }
 
     /**
@@ -290,6 +273,125 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private static String pretty(Object obj) {
         return obj != null ? obj + "" : "not configured";
+    }
+
+    private static void checkSizeIsStaticallyKnown(SerializationBuilder builder, String role) {
+        if (builder.sizeIsStaticallyKnown) {
+            throw new IllegalStateException("Size of " + builder.tClass +
+                    " instances is constant and statically known, shouldn't be specified via " +
+                    "average" + role + "Size() or average" + role + "() methods");
+        }
+    }
+
+    private static void checkAverageSize(double averageSize, String role) {
+        if (averageSize <= 0 || isNaN(averageSize) ||
+                Double.isInfinite(averageSize)) {
+            throw new IllegalArgumentException("Average " + role + " size must be a positive, " +
+                    "finite number");
+        }
+    }
+
+    private static double averageSizeStoringLength(
+            SerializationBuilder builder, double averageSize) {
+        SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
+        if (averageSize == round(averageSize))
+            return sizeMarshaller.storingLength(round(averageSize));
+        long lower = roundDown(averageSize);
+        long upper = lower + 1;
+        int lowerStoringLength = sizeMarshaller.storingLength(lower);
+        int upperStoringLength = sizeMarshaller.storingLength(upper);
+        if (lowerStoringLength == upperStoringLength)
+            return lowerStoringLength;
+        return lower * (upper - averageSize) + upper * (averageSize - lower);
+    }
+
+    static int greatestCommonDivisor(int a, int b) {
+        if (b == 0) return a;
+        return greatestCommonDivisor(b, a % b);
+    }
+
+    private static int maxDefaultChunksPerAverageEntry(boolean replicated) {
+        // When replicated, having 8 chunks (=> 8 bits in bitsets) per entry seems more wasteful
+        // because when replicated we have bit sets per each remote node, not only allocation
+        // bit set as when non-replicated
+        return replicated ? 4 : 8;
+    }
+
+    private static int estimateSegmentsForEntries(long size) {
+        if (size > 200 << 20)
+            return 256;
+        if (size >= 1 << 20)
+            return 128;
+        if (size >= 128 << 10)
+            return 64;
+        if (size >= 16 << 10)
+            return 32;
+        if (size >= 4 << 10)
+            return 16;
+        if (size >= 1 << 10)
+            return 8;
+        return 1;
+    }
+
+    private static long headerChecksum(ByteBuffer headerBuffer, int headerSize) {
+        return LongHashFunction.xx_r39().hashBytes(headerBuffer, SIZE_WORD_OFFSET, headerSize + 4);
+    }
+
+    private static void writeNotComplete(
+            FileChannel fileChannel, ByteBuffer headerBuffer, int headerSize) throws IOException {
+        //noinspection PointlessBitwiseExpression
+        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
+        headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
+        writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
+    }
+
+    /**
+     * @return ByteBuffer, with self bootstrapping header in [position, limit) range
+     */
+    private static <K, V> ByteBuffer writeHeader(
+            FileChannel fileChannel, VanillaChronicleMap<K, V, ?> map) throws IOException {
+        ByteBuffer headerBuffer = ByteBuffer.allocate(
+                SELF_BOOTSTRAPPING_HEADER_OFFSET + MAX_BOOTSTRAPPING_HEADER_SIZE);
+        headerBuffer.order(LITTLE_ENDIAN);
+
+        Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
+        headerBytes.writePosition(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        Wire wire = new TextWire(headerBytes);
+        wire.getValueOut().typedMarshallable(map);
+
+        int headerLimit = (int) headerBytes.writePosition();
+        int headerSize = headerLimit - SELF_BOOTSTRAPPING_HEADER_OFFSET;
+        // First set readiness bit to READY, to compute checksum correctly
+        //noinspection PointlessBitwiseExpression
+        headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
+
+        long checksum = headerChecksum(headerBuffer, headerSize);
+        headerBuffer.putLong(HEADER_OFFSET, checksum);
+
+        // Set readiness bit to NOT_COMPLETE, because the Chronicle Map instance is not actually
+        // ready yet
+        //noinspection PointlessBitwiseExpression
+        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
+
+        // Write the size-prefixed blob to the file
+        headerBuffer.position(0).limit(headerLimit);
+        writeFully(fileChannel, 0, headerBuffer);
+
+        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        return headerBuffer;
+    }
+
+    private static void commitChronicleMapReady(
+            VanillaChronicleHash map, RandomAccessFile raf, ByteBuffer headerBuffer, int headerSize)
+            throws IOException {
+        FileChannel fileChannel = raf.getChannel();
+        // see HCOLL-396
+        map.msync();
+
+        //noinspection PointlessBitwiseExpression
+        headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
+        headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
+        writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
 
     @Override
@@ -475,22 +577,6 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    private static void checkSizeIsStaticallyKnown(SerializationBuilder builder, String role) {
-        if (builder.sizeIsStaticallyKnown) {
-            throw new IllegalStateException("Size of " + builder.tClass +
-                    " instances is constant and statically known, shouldn't be specified via " +
-                    "average" + role + "Size() or average" + role + "() methods");
-        }
-    }
-
-    private static void checkAverageSize(double averageSize, String role) {
-        if (averageSize <= 0 || isNaN(averageSize) ||
-                Double.isInfinite(averageSize)) {
-            throw new IllegalArgumentException("Average " + role + " size must be a positive, " +
-                    "finite number");
-        }
-    }
-
     /**
      * Configures the constant number of bytes, taken by serialized form of values, put into maps,
      * created by this builder. This is done by providing the {@code sampleValue}, all values should
@@ -560,16 +646,6 @@ public final class ChronicleMapBuilder<K, V> implements
 
     SerializationBuilder<K> keyBuilder() {
         return keyBuilder;
-    }
-
-    static class EntrySizeInfo {
-        final double averageEntrySize;
-        final int worstAlignment;
-
-        public EntrySizeInfo(double averageEntrySize, int worstAlignment) {
-            this.averageEntrySize = averageEntrySize;
-            this.worstAlignment = worstAlignment;
-        }
     }
 
     private EntrySizeInfo entrySizeInfo() {
@@ -643,20 +719,6 @@ public final class ChronicleMapBuilder<K, V> implements
         return keyBuilder.constantSizeMarshaller() || sampleKey != null;
     }
 
-    private static double averageSizeStoringLength(
-            SerializationBuilder builder, double averageSize) {
-        SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
-        if (averageSize == round(averageSize))
-            return sizeMarshaller.storingLength(round(averageSize));
-        long lower = roundDown(averageSize);
-        long upper = lower + 1;
-        int lowerStoringLength = sizeMarshaller.storingLength(lower);
-        int upperStoringLength = sizeMarshaller.storingLength(upper);
-        if (lowerStoringLength == upperStoringLength)
-            return lowerStoringLength;
-        return lower * (upper - averageSize) + upper * (averageSize - lower);
-    }
-
     private int worstAlignmentAssumingChunkSize(
             long constantSizeBeforeAlignment, int chunkSize) {
         int alignment = valueAlignment();
@@ -687,11 +749,6 @@ public final class ChronicleMapBuilder<K, V> implements
         this.worstAlignment = worstAlignment;
     }
 
-    static int greatestCommonDivisor(int a, int b) {
-        if (b == 0) return a;
-        return greatestCommonDivisor(b, a % b);
-    }
-
     long chunkSize() {
         if (actualChunkSize > 0)
             return actualChunkSize;
@@ -718,13 +775,6 @@ public final class ChronicleMapBuilder<K, V> implements
         // entry space which is allocated lazily on Linux (main target platform)
         // so we can afford this
         return (entrySizeInfo().averageEntrySize + chunkSize - 1) / chunkSize;
-    }
-
-    private static int maxDefaultChunksPerAverageEntry(boolean replicated) {
-        // When replicated, having 8 chunks (=> 8 bits in bitsets) per entry seems more wasteful
-        // because when replicated we have bit sets per each remote node, not only allocation
-        // bit set as when non-replicated
-        return replicated ? 4 : 8;
     }
 
     @Override
@@ -928,22 +978,6 @@ public final class ChronicleMapBuilder<K, V> implements
                 : averageValueSize >= 1000
                 ? segmentsForEntries * 2
                 : segmentsForEntries;
-    }
-
-    private static int estimateSegmentsForEntries(long size) {
-        if (size > 200 << 20)
-            return 256;
-        if (size >= 1 << 20)
-            return 128;
-        if (size >= 128 << 10)
-            return 64;
-        if (size >= 16 << 10)
-            return 32;
-        if (size >= 4 << 10)
-            return 16;
-        if (size >= 1 << 10)
-            return 8;
-        return 1;
     }
 
     @Override
@@ -1501,7 +1535,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 // truncated between length() and read() calls, then continue to wait
             }
             try {
-                Jvm.pause(100);
+                Thread.sleep(100);
             } catch (InterruptedException e) {
                 if (recover) {
                     break;
@@ -1562,10 +1596,6 @@ public final class ChronicleMapBuilder<K, V> implements
         return headerBuffer;
     }
 
-    private static long headerChecksum(ByteBuffer headerBuffer, int headerSize) {
-        return LongHashFunction.xx_r39().hashBytes(headerBuffer, SIZE_WORD_OFFSET, headerSize + 4);
-    }
-
     private VanillaChronicleMap<K, V, ?> createWithNewFile(
             VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
             ByteBuffer headerBuffer, int headerSize) throws IOException {
@@ -1623,63 +1653,6 @@ public final class ChronicleMapBuilder<K, V> implements
                 throw new ChronicleHashRecoveryFailedException(e);
             throw e;
         }
-    }
-
-    private static void writeNotComplete(
-            FileChannel fileChannel, ByteBuffer headerBuffer, int headerSize) throws IOException {
-        //noinspection PointlessBitwiseExpression
-        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
-        headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
-        writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
-    }
-
-    /**
-     * @return ByteBuffer, with self bootstrapping header in [position, limit) range
-     */
-    private static <K, V> ByteBuffer writeHeader(
-            FileChannel fileChannel, VanillaChronicleMap<K, V, ?> map) throws IOException {
-        ByteBuffer headerBuffer = ByteBuffer.allocate(
-                SELF_BOOTSTRAPPING_HEADER_OFFSET + MAX_BOOTSTRAPPING_HEADER_SIZE);
-        headerBuffer.order(LITTLE_ENDIAN);
-
-        Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
-        headerBytes.writePosition(SELF_BOOTSTRAPPING_HEADER_OFFSET);
-        Wire wire = new TextWire(headerBytes);
-        wire.getValueOut().typedMarshallable(map);
-
-        int headerLimit = (int) headerBytes.writePosition();
-        int headerSize = headerLimit - SELF_BOOTSTRAPPING_HEADER_OFFSET;
-        // First set readiness bit to READY, to compute checksum correctly
-        //noinspection PointlessBitwiseExpression
-        headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
-
-        long checksum = headerChecksum(headerBuffer, headerSize);
-        headerBuffer.putLong(HEADER_OFFSET, checksum);
-
-        // Set readiness bit to NOT_COMPLETE, because the Chronicle Map instance is not actually
-        // ready yet
-        //noinspection PointlessBitwiseExpression
-        headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
-
-        // Write the size-prefixed blob to the file
-        headerBuffer.position(0).limit(headerLimit);
-        writeFully(fileChannel, 0, headerBuffer);
-
-        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
-        return headerBuffer;
-    }
-
-    private static void commitChronicleMapReady(
-            VanillaChronicleHash map, RandomAccessFile raf, ByteBuffer headerBuffer, int headerSize)
-            throws IOException {
-        FileChannel fileChannel = raf.getChannel();
-        // see HCOLL-396
-        map.msync();
-
-        //noinspection PointlessBitwiseExpression
-        headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
-        headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
-        writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
 
     ChronicleMap<K, V> createWithoutFile() {
@@ -1778,10 +1751,10 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * Inject your SPI code around basic {@code ChronicleMap}'s operations with entries:
      * removing entries, replacing entries' value and inserting new entries.
-     * 
+     *
      * <p>This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
      * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
-     * <i>internal replication operations</i>. 
+     * <i>internal replication operations</i>.
      */
     public ChronicleMapBuilder<K, V> entryOperations(MapEntryOperations<K, V, ?> entryOperations) {
         Objects.requireNonNull(entryOperations);
@@ -1793,7 +1766,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Inject your SPI around logic of all {@code ChronicleMap}'s operations with individual keys:
      * from {@link ChronicleMap#containsKey} to {@link ChronicleMap#acquireUsing} and
      * {@link ChronicleMap#merge}.
-     * 
+     *
      * <p>This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
      */
     public ChronicleMapBuilder<K, V> mapMethods(MapMethods<K, V, ?> mapMethods) {
@@ -1807,6 +1780,22 @@ public final class ChronicleMapBuilder<K, V> implements
         Objects.requireNonNull(remoteOperations);
         this.remoteOperations = remoteOperations;
         return this;
+    }
+
+    enum ChecksumEntries {YES, NO, IF_PERSISTED}
+
+    interface FileIOAction {
+        void fileIOAction() throws IOException;
+    }
+
+    static class EntrySizeInfo {
+        final double averageEntrySize;
+        final int worstAlignment;
+
+        public EntrySizeInfo(double averageEntrySize, int worstAlignment) {
+            this.averageEntrySize = averageEntrySize;
+            this.worstAlignment = worstAlignment;
+        }
     }
 }
 

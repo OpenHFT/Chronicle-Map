@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.affinity.AffinityLock;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.values.Values;
 
@@ -75,8 +76,8 @@ public class CHMLatencyTestMain {
         file.delete();
         ChronicleMap<LongValue, LongValue> countersMap =
                 ChronicleMapBuilder.of(LongValue.class, LongValue.class)
-                .entries(KEYS)
-                .createPersistedTo(file);
+                        .entries(KEYS)
+                        .createPersistedTo(file);
 
         // add keys
         LongValue key = Values.newHeapInstance(LongValue.class);
@@ -142,13 +143,8 @@ public class CHMLatencyTestMain {
 
         @Override
         public void run() {
-            while (running) {
-                try {
-                    Jvm.pause(1);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    break;
-                }
+            while (running && !Thread.currentThread().isInterrupted()) {
+                Jvm.pause(1);
                 long delay = System.nanoTime() - sample;
                 if (delay > 1000 * 1000) {
                     System.out.println("\n" + (System.currentTimeMillis() - START_TIME) + " : Delay of " + delay / 100000 / 10.0 + " ms.");

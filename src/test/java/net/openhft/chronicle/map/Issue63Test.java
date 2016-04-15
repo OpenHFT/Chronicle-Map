@@ -24,6 +24,7 @@ import net.openhft.chronicle.set.*;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,8 +39,54 @@ import static org.junit.Assert.assertEquals;
 
 public class Issue63Test {
 
+    // Right now no corresponding "knownUsers" object
+    private ChronicleMap<CharSequence, List<CharSequence>> knownItems;
+    private ChronicleMap<CharSequence, float[]> xVectors;
+    private ChronicleSet<CharSequence> xRecentIDs;
+    private ChronicleMap<CharSequence, float[]> yVectors;
+    private ChronicleSet<CharSequence> yRecentIDs;
+
+    public static void main(String[] args) throws Exception {
+        new Issue63Test().testChronicleMap();
+    }
+
+    private static void putIntoMapAndRecentSet(
+            ChronicleMap<CharSequence, float[]> map, ChronicleSet<CharSequence> recentSet,
+            String key, float[] value) {
+        try (ExternalMapQueryContext<CharSequence, float[], ?> c = map.queryContext(key);
+             ExternalSetQueryContext<CharSequence, ?> setC = recentSet.queryContext(key)) {
+            if (c.writeLock().tryLock(1, MINUTES) && setC.writeLock().tryLock(1, MINUTES)) {
+                putNoReturn(c, value);
+                addNoReturn(setC);
+            } else {
+                throw new RuntimeException("Dead lock");
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static <K> void addNoReturn(SetQueryContext<K, ?> c) {
+        SetAbsentEntry<K> setAbsentEntry = c.absentEntry();
+        if (setAbsentEntry != null) {
+            c.insert(setAbsentEntry);
+        }
+    }
+
+    private static <K, V> void putNoReturn(MapQueryContext<K, V, ?> c, V value) {
+        MapEntry<K, V> entry = c.entry();
+        Data<V> newValue = c.wrapValueAsData(value);
+        if (entry != null) {
+            c.replaceValue(entry, newValue);
+        } else {
+            MapAbsentEntry<K, V> absentEntry = c.absentEntry();
+            assert absentEntry != null;
+            c.insert(absentEntry, newValue);
+        }
+    }
+
     @Test
-    public void issue63test()  {
+    public void issue63test() throws IOException {
         Path path = Paths.get(System.getProperty("java.io.tmpdir") + "/test-vectors1.dat");
         if (Files.exists(path)) Files.delete(path);
         File mapFile = path.toFile();
@@ -137,18 +184,7 @@ public class Issue63Test {
         assertArrayEquals(exp2, xVectors2.get(key2), 0.0f);
     }
 
-    // Right now no corresponding "knownUsers" object
-    private ChronicleMap<CharSequence, List<CharSequence>> knownItems;
-    private ChronicleMap<CharSequence, float[]> xVectors;
-    private ChronicleSet<CharSequence> xRecentIDs;
-    private ChronicleMap<CharSequence, float[]> yVectors;
-    private ChronicleSet<CharSequence> yRecentIDs;
-
-    public static void main(String[] args) throws Exception {
-        new Issue63Test().testChronicleMap();
-    }
-
-    void testChronicleMap()  {
+    void testChronicleMap() throws IOException {
         int num = 1_000_000;
         testChronicleMap(System.getProperty("java.io.tmpdir"), num, num);
         ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -169,8 +205,7 @@ public class Issue63Test {
 
     void testChronicleMap(String persistToDir,
                           int numXIDs,
-                          int numYIDs)
-            throws Exception {
+                          int numYIDs) throws IOException {
 
         if (!Files.exists(Paths.get(persistToDir))) Files.createDirectory(Paths.get(persistToDir));
 
@@ -257,41 +292,6 @@ public class Issue63Test {
         putIntoMapAndRecentSet(yVectors, yRecentIDs, id, arr);
     }
 
-    private static void putIntoMapAndRecentSet(
-            ChronicleMap<CharSequence, float[]> map, ChronicleSet<CharSequence> recentSet,
-            String key, float[] value) {
-        try (ExternalMapQueryContext<CharSequence, float[], ?> c = map.queryContext(key);
-             ExternalSetQueryContext<CharSequence, ?> setC = recentSet.queryContext(key)) {
-            if (c.writeLock().tryLock(1, MINUTES) && setC.writeLock().tryLock(1, MINUTES)) {
-                putNoReturn(c, value);
-                addNoReturn(setC);
-            } else {
-                throw new RuntimeException("Dead lock");
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static <K> void addNoReturn(SetQueryContext<K, ?> c) {
-        SetAbsentEntry<K> setAbsentEntry = c.absentEntry();
-        if (setAbsentEntry != null) {
-            c.insert(setAbsentEntry);
-        }
-    }
-
-    private static <K, V> void putNoReturn(MapQueryContext<K, V, ?> c, V value) {
-        MapEntry<K, V> entry = c.entry();
-        Data<V> newValue = c.wrapValueAsData(value);
-        if (entry != null) {
-            c.replaceValue(entry, newValue);
-        } else {
-            MapAbsentEntry<K, V> absentEntry = c.absentEntry();
-            assert absentEntry != null;
-            c.insert(absentEntry, newValue);
-        }
-    }
-
     public void addKnownItems(ChronicleMap<CharSequence, List<CharSequence>> knownItems,
                               String id, List<CharSequence> items) {
         try (ExternalMapQueryContext<CharSequence, List<CharSequence>, ?> c =
@@ -307,7 +307,7 @@ public class Issue63Test {
     }
 
     @Test
-    public void testKnownItems()  {
+    public void testKnownItems() throws IOException {
 
         ArrayList<CharSequence> averageKnownItems = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
