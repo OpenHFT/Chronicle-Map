@@ -68,6 +68,11 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     }
 
     @Override
+    public boolean sharedMemory() {
+        return false;
+    }
+
+    @Override
     public ZeroBytesStore copy() {
         throw new UnsupportedOperationException();
     }
@@ -81,6 +86,13 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     @Override
     public Void underlyingObject() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+
+    public void move(long from, long to, long length) {
+        if (length != 0)
+            throw new UnsupportedOperationException();
     }
 
     @Override

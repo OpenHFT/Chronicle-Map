@@ -28,8 +28,6 @@ import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.impl.*;
-import net.openhft.chronicle.map.impl.CompiledMapIterationContext;
-import net.openhft.chronicle.map.impl.CompiledMapQueryContext;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.WireIn;
