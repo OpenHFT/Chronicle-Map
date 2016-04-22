@@ -15,7 +15,7 @@
  */
 
 package net.openhft.chronicle.map;/*
- * Copyright 2013 peter.lawrey Lawrey
+ * Copyright 2013 peter.lawrey
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,9 @@ package net.openhft.chronicle.map;/*
  * limitations under the License.
  */
 
-import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesIn;
 import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.bytes.BytesOut;
 import org.jetbrains.annotations.NotNull;
 
 enum BuySell {
@@ -54,7 +55,7 @@ public class SampleValues implements BytesMarshallable {
     long jj = 123456789;
 
     @Override
-    public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
+    public void readMarshallable(@NotNull BytesIn in) throws IllegalStateException {
         aa = in.readUtf8();
         bb = in.readUtf8();
         cc = (BuySell) in.readEnum(BuySell.class);
@@ -68,7 +69,7 @@ public class SampleValues implements BytesMarshallable {
     }
 
     @Override
-    public void writeMarshallable(@NotNull Bytes out) {
+    public void writeMarshallable(@NotNull BytesOut out) {
         out.writeUtf8(aa);
         out.writeUtf8(bb);
         out.writeEnum(cc);

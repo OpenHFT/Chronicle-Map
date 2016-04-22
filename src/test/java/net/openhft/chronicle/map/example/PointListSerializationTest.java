@@ -17,7 +17,9 @@
 package net.openhft.chronicle.map.example;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesIn;
 import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.bytes.BytesOut;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
@@ -31,9 +33,24 @@ import java.util.List;
 
 public class PointListSerializationTest {
 
-    static class A {
-        String str_;
-        List<B> list_;
+    @Test
+    public void testComplexSerialization() {
+        try (ChronicleMap<String, A> map = ChronicleMapBuilder
+                .of(String.class, A.class)
+                .valueMarshaller(AMarshaller.INSTANCE)
+                .entries(5)
+                .averageKeySize(4)
+                .averageValueSize(1000)
+                .create()) {
+            A obj_A = new A();
+            obj_A.str_ = "a";
+            obj_A.list_ = new ArrayList<>();
+            B b = new B();
+            b.str_ = "b";
+            obj_A.list_.add(b);
+            map.put("KEY1", obj_A);
+            map.get("KEY1");
+        }
     }
 
     enum AMarshaller implements BytesReader<A>, BytesWriter<A>, EnumMarshallable<AMarshaller> {
@@ -86,37 +103,22 @@ public class PointListSerializationTest {
         }
     }
 
+    static class A {
+        String str_;
+        List<B> list_;
+    }
+
     static class B implements BytesMarshallable {
         String str_;
 
         @Override
-        public void readMarshallable(Bytes in) {
+        public void readMarshallable(BytesIn in) {
             str_ = in.readUtf8();
         }
 
         @Override
-        public void writeMarshallable(Bytes out) {
+        public void writeMarshallable(BytesOut out) {
             out.writeUtf8(str_);
-        }
-    }
-
-    @Test
-    public void testComplexSerialization()  {
-        try (ChronicleMap<String, A> map = ChronicleMapBuilder
-                .of(String.class, A.class)
-                .valueMarshaller(AMarshaller.INSTANCE)
-                .entries(5)
-                .averageKeySize(4)
-                .averageValueSize(1000)
-                .create()) {
-            A obj_A = new A();
-            obj_A.str_ = "a";
-            obj_A.list_ = new ArrayList<>();
-            B b = new B();
-            b.str_ = "b";
-            obj_A.list_.add(b);
-            map.put("KEY1", obj_A);
-            map.get("KEY1");
         }
     }
 }

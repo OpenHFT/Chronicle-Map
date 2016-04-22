@@ -17,8 +17,9 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.primitives.Chars;
-import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesIn;
 import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.bytes.BytesOut;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.values.*;
@@ -101,7 +102,7 @@ interface IData extends BytesMarshallable {
         }
 
         @Override
-        public void readMarshallable(@NotNull Bytes in) throws IllegalStateException {
+        public void readMarshallable(@NotNull BytesIn in) throws IllegalStateException {
             long magic = in.readLong();
             if (magic != MAGIC)
                 throw new AssertionError("Start " + Long.toHexString(magic));
@@ -113,7 +114,7 @@ interface IData extends BytesMarshallable {
         }
 
         @Override
-        public void writeMarshallable(@NotNull Bytes out) {
+        public void writeMarshallable(@NotNull BytesOut out) {
             out.writeLong(MAGIC);
             out.writeUTFΔ(text);
             out.writeInt(number);

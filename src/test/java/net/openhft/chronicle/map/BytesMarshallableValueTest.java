@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -37,7 +36,6 @@ public class BytesMarshallableValueTest {
     }
 
     public static class Value implements BytesMarshallable {
-
         int x;
         String foo;
 
@@ -46,19 +44,6 @@ public class BytesMarshallableValueTest {
             this.foo = foo;
         }
 
-        public Value() {
-        }
 
-        @Override
-        public void readMarshallable(Bytes<?> bytes) {
-            x = bytes.readInt();
-            foo = bytes.readUtf8();
-        }
-
-        @Override
-        public void writeMarshallable(Bytes bytes) {
-            bytes.writeInt(x);
-            bytes.writeUtf8(foo);
-        }
     }
 }

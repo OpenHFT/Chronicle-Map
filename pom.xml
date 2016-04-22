@@ -47,7 +47,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <type>pom</type>
-                <version>1.12.10</version>
+                <version>1.12.14-SNAPSHOT</version>
                 <scope>import</scope>
             </dependency>
 
@@ -64,7 +64,6 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-values</artifactId>
-            <version>1.0.7-alpha</version>
         </dependency>
 
         <dependency>
@@ -95,7 +94,6 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-algorithms</artifactId>
-            <version>1.1.7</version>
         </dependency>
 
         <dependency>

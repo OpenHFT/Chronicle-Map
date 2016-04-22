@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
+import net.openhft.chronicle.core.util.ObjectUtils;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizedReader;
@@ -62,8 +63,8 @@ public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
      */
     protected T createInstance() {
         try {
-            return tClass.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+            return ObjectUtils.newInstance(tClass);
+        } catch (Exception e) {
             throw new IllegalStateException("Some of default marshallers, chosen for the type\n" +
                     tClass + " by default, delegates to \n" +
                     this.getClass().getName() + " which assumes the type has a public no-arg\n" +
