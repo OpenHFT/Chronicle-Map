@@ -1378,12 +1378,21 @@ public class ChronicleMapBuilder<K, V> implements Cloneable,
             } else {
                 replication = channel.hub();
             }
-            return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
-                    V, Object, MetaBytesInterop<V, Object>>(this, replication);
+            return newReplicatedMap(replication);
         } else {
             return new VanillaChronicleMap<K, Object, MetaBytesInterop<K, Object>,
                     V, Object, MetaBytesInterop<V, Object>>(this);
         }
+    }
+    
+    /**
+     * create the replicated map, as subclass can self implements of map.
+     * @param replication
+     * @return
+     */
+    protected ReplicatedChronicleMap<K, ?, ?, V, ?, ?> newReplicatedMap(AbstractReplication replication){
+    	return new ReplicatedChronicleMap<K, Object, MetaBytesInterop<K, Object>,
+        V, Object, MetaBytesInterop<V, Object>>(this, replication);
     }
 
     void preMapConstruction(boolean replicated) {
