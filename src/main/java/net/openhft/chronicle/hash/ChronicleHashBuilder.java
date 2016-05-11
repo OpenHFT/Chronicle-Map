@@ -460,7 +460,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
 
     /**
      * Configures whether hash containers, created by this builder, should compute and store entry
-     * checksums. It could be used to detect data corruption during recovery after crashes.
+     * checksums. It is used to detect data corruption during recovery after crashes. See the
+     * <a href="https://github.com/OpenHFT/Chronicle-Map#entry-checksums">Entry Checksums section
+     * </a> in the Chronicle Map tutorial for more information.
      *
      * <p>By default, {@linkplain #createPersistedTo(File) persisted} hash containers, created by
      * {@code ChronicleMapBuilder} <i>do</i> compute and store entry checksums, but hash containers,
@@ -469,6 +471,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @param checksumEntries if entry checksums should be computed and stored
      * @return this builder back
      * @see ChecksumEntry
+     * @see #recoverPersistedTo(File, boolean)
      */
     B checksumEntries(boolean checksumEntries);
 
@@ -534,16 +537,25 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     H createOrRecoverPersistedTo(File file) throws IOException;
 
     /**
-     * Recovers and opens the hash container, persisted to the specified file. This method should be
-     * used to open a persisted Chronicle Map after accessor process crash (that might leave some
-     * locks "acquired" therefore some segments inaccessible), or accessor process external
-     * termination (that, in addition to inaccessible segments, might lead to leaks in the Chronicle
-     * Hash memory), or sudden power loss, or file corruption (that, in addition to the already
-     * mentioned consequences, might lead to data corruption, i. e. presence of entries which were
-     * never put into the Chronicle Hash).
+     * <i>Recovers</i> and opens the hash container, persisted to the specified file. This method
+     * should be used to open a persisted Chronicle Map after an accessor process crash (that might
+     * leave some locks "acquired" therefore some segments inaccessible), or an accessor process
+     * external termination (that, in addition to inaccessible segments, might lead to leaks in the
+     * Chronicle Hash memory), or a sudden power loss, or a file corruption (that, in addition to
+     * the already mentioned consequences, might lead to data corruption, i. e. presence of entries
+     * which were never put into the Chronicle Hash).
      *
-     * <p>This method, unlike {@link #createPersistedTo(File)}, expects the mapping file already
-     * exists.
+     * <p>This method, unlike {@link #createPersistedTo(File)} or {@link
+     * #createOrRecoverPersistedTo(File)} methods, expects that the mapping file already exists.
+     *
+     * "Recovery" of the hash container is changing the memory of the data structure so that after
+     * the recovery the hash container is in some correct state: with "clean" locks, coherent
+     * entry counters, not containing provably corrupt entries, etc. <i>If {@link
+     * #checksumEntries(boolean) checksumEntries(true)} is configured for the chronicle hash
+     * container, recovery procedure checks for each entry that the checksums is correct, otherwise
+     * it assumes the entry is corrupt and deletes it from the Chronicle Hash.</i> See the
+     * <a href="https://github.com/OpenHFT/Chronicle-Map#recovery">Recovery section</a> in the
+     * Chronicle Map tutorial for more information.
      *
      * <p>At the moment this method is called and executed, no other thread or process should be
      * mapping to the given file, and trying to access the given file.
@@ -553,9 +565,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * {@code sameBuilderConfig} argument (another requirement is running the same version of the
      * Chronicle Map library). Otherwise, if the header of the given persisted Chronicle Hash file
      * is corrupted, this method is likely to be unable to recover and throw {@link
-     * ChronicleHashRecoveryFailedException}, or even worse, to corrupt the file further. However,
-     * the header shouldn't be corrupted on process crash/termination or power loss, only on direct
-     * file corruption.
+     * ChronicleHashRecoveryFailedException}, or even worse, to corrupt the file further.
+     * Fortunately, the header should never be corrupted on an "ordinary" process crash/termination
+     * or power loss, only on direct file corruption.
      *
      * @param file a hash container was mapped to the given file
      * @param sameBuilderConfig if this builder is configured with the same configurations, as the
