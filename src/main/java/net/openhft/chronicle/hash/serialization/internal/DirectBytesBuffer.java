@@ -55,6 +55,7 @@ class DirectBytesBuffer
     }
 
     Bytes obtain(long maxSize, boolean boundsChecking) {
+        // TODO return bounds checking
         DirectBytes buf;
         if ((buf = buffer) != null) {
             if (maxSize <= buf.capacity()) {
