@@ -33,7 +33,7 @@ should be accessible and updatable by any subsequent production release of the l
 branch, unless the older version has bugs that lead to data corruption.
 
 To support this,
- - Serialization forms of any classes should be changed. When e. g. a marshaller class (say,
+ - Serialization forms of any classes shouldn't be changed. When e. g. a marshaller class (say,
  `StringBytesReader`) of objects of some type is changed, and it's serialization form should be
  changed, a new class called `StringBytesReader_3_5` (5 is the "minor" number of the version of the
  library, in which this change is made) should be created and put along with older class.
