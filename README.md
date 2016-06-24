@@ -687,7 +687,7 @@ public final class CharSequenceCustomEncodingBytesWriter
 
             if (cr.isOverflow()) {
                 outputBuffer.flip();
-                out.write(outputBuffer);
+                writeOutputBuffer(out);
                 outputBuffer.clear();
                 continue;
             }
@@ -699,9 +699,15 @@ public final class CharSequenceCustomEncodingBytesWriter
             }
         }
         outputBuffer.flip();
-        out.write(outputBuffer);
+        writeOutputBuffer(out);
 
         out.writeInt(encodedSizePos, (int) (out.writePosition() - encodedSizePos - 4));
+    }
+
+    private void writeOutputBuffer(Bytes out) {
+        int remaining = outputBuffer.remaining();
+        out.write(out.writePosition(), outputBuffer, 0, remaining);
+        out.writeSkip(remaining);
     }
 
     /**
