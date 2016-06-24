@@ -26,10 +26,12 @@ import org.jetbrains.annotations.Nullable;
  * is deprecated in favor of {@link IntegerDataAccess}. As reader and element writer for {@link
  * ListMarshaller} and similar composite marshallers, {@code IntegerMarshaller} is not deprecated.
  */
-public enum IntegerMarshaller
+public final class IntegerMarshaller
         implements SizedReader<Integer>, BytesReader<Integer>,
         SizedWriter<Integer>, BytesWriter<Integer>, EnumMarshallable<IntegerMarshaller> {
-    INSTANCE;
+    public static final IntegerMarshaller INSTANCE = new IntegerMarshaller();
+
+    private IntegerMarshaller() {}
 
     @NotNull
     @Override

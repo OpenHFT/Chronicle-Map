@@ -129,9 +129,11 @@ public class Issue58 {
     }
 
 
-    enum UuidMarshaller
+    static final class UuidMarshaller
             implements BytesReader<UUID>, BytesWriter<UUID>, EnumMarshallable<UuidMarshaller> {
-        INSTANCE;
+        public static final UuidMarshaller INSTANCE = new UuidMarshaller();
+
+        private UuidMarshaller() {}
 
         @Override
         public void write(Bytes bytes, @NotNull UUID uuid) {

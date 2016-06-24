@@ -24,10 +24,12 @@ import net.openhft.chronicle.hash.serialization.SizedWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public enum BooleanMarshaller
+public final class BooleanMarshaller
         implements SizedReader<Boolean>, BytesReader<Boolean>,
         SizedWriter<Boolean>, BytesWriter<Boolean>, EnumMarshallable<BooleanMarshaller> {
-    INSTANCE;
+    public static final BooleanMarshaller INSTANCE = new BooleanMarshaller();
+
+    private BooleanMarshaller() {}
 
     @Override
     public long size(@NotNull Boolean e) {

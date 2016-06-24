@@ -25,9 +25,12 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated use one of {@link AbstractCharSequenceUtf8DataAccess} subclasses instead
  */
 @Deprecated
-public enum CharSequenceSizedWriter
+@SuppressWarnings("deprecation")
+public final class CharSequenceSizedWriter
         implements SizedWriter<CharSequence>, EnumMarshallable<CharSequenceSizedWriter> {
-    INSTANCE;
+    public static final CharSequenceSizedWriter INSTANCE = new CharSequenceSizedWriter();
+
+    private CharSequenceSizedWriter() {}
 
     @Override
     public long size(@NotNull CharSequence toWrite) {

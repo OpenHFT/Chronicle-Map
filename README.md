@@ -519,11 +519,13 @@ For example, here is the implementation of `BytesWriter` and `BytesReader` for `
 value type (array of CharSequences):
 
 ```java
-public enum CharSequenceArrayBytesMarshaller
+public final class CharSequenceArrayBytesMarshaller
         implements BytesWriter<CharSequence[]>, BytesReader<CharSequence[]>,
         ReadResolvable<CharSequenceArrayBytesMarshaller> {
 
-    INSTANCE;
+    static final CharSequenceArrayBytesMarshaller INSTANCE = new CharSequenceArrayBytesMarshaller();
+
+    private CharSequenceArrayBytesMarshaller() {}
 
     @Override
     public void write(Bytes out, @NotNull CharSequence[] toWrite) {
@@ -603,12 +605,15 @@ Some additional notes:
 
  - If the reader or writer interface implementation is not configurable and doesn't have
  per-instance cache or state fields, i. e. it doesn't have instance fields at all, there is
- a convention to make such implementations `enum`s with a single `INSTANCE` constant.
-   - For `enum` serialization interface implementations, don't forget to implement `ReadResolvable`
+ a convention to make such implementation classes `final`, give them a `private` constructor and
+ expose a single `INSTANCE` constant - a sole instance of this implementation in the JVM.
+   - *Don't* make marshaller class `enum`, because there are some issues with `enum` serialization/
+   deserialization.
+   - For such no-state implementations, don't forget to implement `ReadResolvable`
    interface and return `INSTANCE`, otherwise you have no guarantee that `INSTANCE` constant is the
    only alive instance of this implementation in the JVM.
  - If *both* writer and reader interface implementations have no fields, it might be a good idea
- to merge them into a single `enum` type, in order to keep writing and reading logic together.
+ to merge them into a single type, in order to keep writing and reading logic together.
 
 ###### Custom `CharSequence` encoding
 
@@ -875,7 +880,7 @@ Some notes on this case of custom serialization:
 
  - Both `CharSequenceCustomEncodingBytesWriter` and `CharSequenceCustomEncodingBytesReader` have
  configurations (charset and input buffer size), hence they are implemented as normal classes rather
- than enums with a single `INSTANCE` constant.
+ than classes with `private` constructors and a single `INSTANCE`.
  - Both writer and reader classes have some "cache" fields, their contents are mutated during
  writing and reading. That is why they have to implement `StatefulCopyable` interface. See
  [Understanding `StatefulCopyable`](#understanding-statefulcopyable) section for more infromation on
@@ -936,11 +941,13 @@ public final class Point {
 Serializer implementation:
 
 ```java
-public enum PointListSizedMarshaller
+public final class PointListSizedMarshaller
         implements SizedReader<List<Point>>, SizedWriter<List<Point>>,
         ReadResolvable<PointListSizedMarshaller> {
 
-    INSTANCE;
+    static final PointListSizedMarshaller INSTANCE = new PointListSizedMarshaller();
+
+    private PointListSizedMarshaller() {}
 
     /** A point takes 16 bytes in serialized form: 8 bytes for both x and y value */
     private static final long ELEMENT_SIZE = 16;
@@ -1153,10 +1160,12 @@ right in `Data` interface.
 Corresponding `SizedReader` for `byte[]`:
 
 ```java
-public enum ByteArraySizedReader
+public final class ByteArraySizedReader
         implements SizedReader<byte[]>, Marshallable, ReadResolvable<ByteArraySizedReader> {
 
-    INSTANCE;
+    public static final ByteArraySizedReader INSTANCE = new ByteArraySizedReader();
+
+    private ByteArraySizedReader() {}
 
     @NotNull
     @Override
@@ -1274,11 +1283,12 @@ class.
  `SizedReader`](#sizedwriter-and-sizedreader) or [`DataAccess` and
  `SizedReader`](#dataaccess-and-sizedreader). Recommendations on which pair to choose are given in
  the linked sections, describing each pair.
- 2. If implementation of the writer or reader part is configuration-less, make it a `enum` with
- a single `INSTANCE` constant. Implement `ReadResolvable` and return `INSTANCE` from `readResolve()`
- method.
+ 2. If implementation of the writer or reader part is configuration-less, give it a `private`
+ constructor and define a single `INSTANCE` constant -- a sole instance of this marshaller class in
+ the JVM. Implement `ReadResolvable` and return `INSTANCE` from `readResolve()` method. *But, don't
+ make implementation a Java `enum`.*
  3. If both the writer and reader are configuration-less, merge them into a single `-Marshaller`
- `enum` implementation.
+ implementation class.
  4. Make best effort in reusing `using` objects on the reader side (`BytesReader` or `SizedReader`),
  including nesting objects.
  5. Make best effort in caching intermediate serialization results on writer side while working with

@@ -37,9 +37,11 @@ import java.io.ObjectInputStream;
  *
  * @see CharSequenceBytesWriter
  */
-public enum CharSequenceBytesReader implements BytesReader<CharSequence>,
+public final class CharSequenceBytesReader implements BytesReader<CharSequence>,
         StatefulCopyable<CharSequenceBytesReader>, EnumMarshallable<CharSequenceBytesReader> {
-    INSTANCE;
+    public static final CharSequenceBytesReader INSTANCE = new CharSequenceBytesReader();
+
+    private CharSequenceBytesReader() {}
 
     @NotNull
     @Override

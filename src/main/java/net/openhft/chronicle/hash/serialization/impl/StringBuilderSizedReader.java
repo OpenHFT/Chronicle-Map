@@ -22,9 +22,11 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public enum StringBuilderSizedReader
+public final class StringBuilderSizedReader
         implements SizedReader<StringBuilder>, EnumMarshallable<StringBuilderSizedReader> {
-    INSTANCE;
+    public static final StringBuilderSizedReader INSTANCE = new StringBuilderSizedReader();
+
+    private StringBuilderSizedReader() {}
 
     @NotNull
     @Override

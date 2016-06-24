@@ -32,9 +32,11 @@ import java.util.zip.InflaterInputStream;
 /**
  * Created by peter on 24/10/14.
  */
-public enum DeflatorStringMarshaller implements BytesReader<CharSequence>,
+public final class DeflatorStringMarshaller implements BytesReader<CharSequence>,
         BytesWriter<CharSequence>, EnumMarshallable<DeflatorStringMarshaller> {
-    INSTANCE;
+    public static final DeflatorStringMarshaller INSTANCE = new DeflatorStringMarshaller();
+
+    private DeflatorStringMarshaller() {}
 
     private static final StringFactory STRING_FACTORY = getStringFactory();
 

@@ -24,9 +24,11 @@ import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-enum DummyValueMarshaller implements DataAccess<DummyValue>, SizedReader<DummyValue>,
+final class DummyValueMarshaller implements DataAccess<DummyValue>, SizedReader<DummyValue>,
         EnumMarshallable<DummyValueMarshaller> {
-    INSTANCE;
+    public static final DummyValueMarshaller INSTANCE = new DummyValueMarshaller();
+
+    private DummyValueMarshaller() {}
 
     @Override
     public Data<DummyValue> getData(@NotNull DummyValue instance) {

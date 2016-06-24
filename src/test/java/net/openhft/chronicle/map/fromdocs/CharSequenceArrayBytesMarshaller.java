@@ -28,11 +28,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public enum CharSequenceArrayBytesMarshaller
+public final class CharSequenceArrayBytesMarshaller
         implements BytesWriter<CharSequence[]>, BytesReader<CharSequence[]>,
         ReadResolvable<CharSequenceArrayBytesMarshaller> {
 
-    INSTANCE;
+    static final CharSequenceArrayBytesMarshaller INSTANCE = new CharSequenceArrayBytesMarshaller();
+
+    private CharSequenceArrayBytesMarshaller() {}
 
     @Override
     public void write(Bytes out, @NotNull CharSequence[] toWrite) {

@@ -28,11 +28,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public enum PointListSizedMarshaller
+public final class PointListSizedMarshaller
         implements SizedReader<List<Point>>, SizedWriter<List<Point>>,
         ReadResolvable<PointListSizedMarshaller> {
 
-    INSTANCE;
+    static final PointListSizedMarshaller INSTANCE = new PointListSizedMarshaller();
+
+    private PointListSizedMarshaller() {}
 
     /** A point takes 16 bytes in serialized form: 8 bytes for both x and y value */
     private static final long ELEMENT_SIZE = 16;

@@ -23,9 +23,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 
-public enum ByteBufferSizedReader
+public final class ByteBufferSizedReader
         implements SizedReader<ByteBuffer>, EnumMarshallable<ByteBufferSizedReader> {
-    INSTANCE;
+    public static final ByteBufferSizedReader INSTANCE = new ByteBufferSizedReader();
+
+    private ByteBufferSizedReader() {}
 
     @NotNull
     @Override

@@ -54,9 +54,12 @@ public class Issue43Test {
         }
     }
 
-    private enum ArrayMarshaller implements BytesReader<ValueWrapper>, BytesWriter<ValueWrapper>,
+    private static final class ArrayMarshaller
+            implements BytesReader<ValueWrapper>, BytesWriter<ValueWrapper>,
             EnumMarshallable<ArrayMarshaller> {
-        INSTANCE;
+        public static final ArrayMarshaller INSTANCE = new ArrayMarshaller();
+
+        private ArrayMarshaller() {}
 
         @Override
         public void write(Bytes bytes, @NotNull ValueWrapper vw) {

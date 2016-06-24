@@ -22,10 +22,12 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public enum ByteArraySizedReader
+public final class ByteArraySizedReader
         implements SizedReader<byte[]>, EnumMarshallable<ByteArraySizedReader> {
 
-    INSTANCE;
+    public static final ByteArraySizedReader INSTANCE = new ByteArraySizedReader();
+
+    private ByteArraySizedReader() {}
 
     @NotNull
     @Override

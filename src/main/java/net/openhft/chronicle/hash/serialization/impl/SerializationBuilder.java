@@ -19,9 +19,11 @@ package net.openhft.chronicle.hash.serialization.impl;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.util.ReadResolvable;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.values.ValueModel;
 import net.openhft.chronicle.values.Values;
+import net.openhft.chronicle.wire.Marshallable;
 
 import java.io.*;
 import java.lang.reflect.Modifier;
@@ -34,6 +36,17 @@ public final class SerializationBuilder<T> implements Cloneable {
 
     private static boolean concreteClass(Class c) {
         return !c.isInterface() && !Modifier.isAbstract(c.getModifiers());
+    }
+
+    private static void checkNonMarshallableEnum(Class c) {
+        if (Enum.class.isAssignableFrom(c) && (Marshallable.class.isAssignableFrom(c) ||
+                ReadResolvable.class.isAssignableFrom(c))) {
+            throw new IllegalArgumentException(c + ": since Chronicle Map 3.9.0, enum marshaller " +
+                    "shouldn't be a Java enum and implement " + Marshallable.class.getName() +
+                    " or " + ReadResolvable.class.getName() + ". There are problems with " +
+                    "serializing/deserializing them in Chronicle Map header. Emulate enums by " +
+                    "static final fields");
+        }
     }
 
     public final Class<T> tClass;
@@ -129,10 +142,12 @@ public final class SerializationBuilder<T> implements Cloneable {
     }
 
     public void reader(SizedReader<T> reader) {
+        checkNonMarshallableEnum(reader.getClass());
         this.reader = reader;
     }
 
     public void reader(BytesReader<T> reader) {
+        checkNonMarshallableEnum(reader.getClass());
         this.reader = new BytesAsSizedReader<>(reader);
     }
 
@@ -141,6 +156,7 @@ public final class SerializationBuilder<T> implements Cloneable {
     }
 
     public void dataAccess(DataAccess<T> dataAccess) {
+        checkNonMarshallableEnum(dataAccess.getClass());
         this.dataAccess = dataAccess;
     }
 
@@ -149,14 +165,17 @@ public final class SerializationBuilder<T> implements Cloneable {
     }
 
     public void writer(SizedWriter<? super T> writer) {
+        checkNonMarshallableEnum(writer.getClass());
         dataAccess(new SizedMarshallableDataAccess<>(tClass, reader, writer));
     }
 
     private void notReusingWriter(SizedWriter<? super T> writer) {
+        checkNonMarshallableEnum(writer.getClass());
         dataAccess(new NotReusingSizedMarshallableDataAccess<>(tClass, reader, writer));
     }
 
     public void writer(BytesWriter<? super T> writer) {
+        checkNonMarshallableEnum(writer.getClass());
         dataAccess(new ExternalBytesMarshallableDataAccess<>(tClass, reader, writer));
     }
 
@@ -212,6 +231,7 @@ public final class SerializationBuilder<T> implements Cloneable {
     }
 
     public SerializationBuilder<T> sizeMarshaller(SizeMarshaller sizeMarshaller) {
+        checkNonMarshallableEnum(sizeMarshaller.getClass());
         this.sizeMarshaller = sizeMarshaller;
         return this;
     }
