@@ -7,7 +7,7 @@
 
 **Community support: <a href="https://github.com/OpenHFT/Chronicle-Map/issues">Issues</a>,
 <a href="https://groups.google.com/forum/#!forum/java-chronicle">Chronicle
-mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle">Stackoverflow</a>,
+mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle-map">Stackoverflow</a>,
 <a href="https://plus.google.com/communities/111431452027706917722">Chronicle User's group</a>**
 
 ### 3 min to understand everything about Chronicle Map
