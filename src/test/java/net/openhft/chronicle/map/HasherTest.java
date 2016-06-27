@@ -20,6 +20,8 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import net.openhft.chronicle.hash.hashing.Hasher;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+
 public class HasherTest {
     public static void main(String[] args) {
 
@@ -27,8 +29,8 @@ public class HasherTest {
         for (int i=0;i<10;i++)
         {
             String key = "010758403"+String.format("%06d",i)+"S-INJFIX_SLE";
-            long hashCode = Hasher.hash(key.getBytes());
-            long guavaHashCode = hashFunction.hashBytes(key.getBytes()).asLong();
+            long hashCode = Hasher.hash(key.getBytes(ISO_8859_1));
+            long guavaHashCode = hashFunction.hashBytes(key.getBytes(ISO_8859_1)).asLong();
             System.out.println("<"+key+"> => "+hashCode+" "+guavaHashCode);
         }
     }

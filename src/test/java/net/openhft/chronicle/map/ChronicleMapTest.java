@@ -36,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static net.openhft.chronicle.map.Alignment.*;
 import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static org.junit.Assert.*;
@@ -192,9 +193,9 @@ public class ChronicleMapTest {
             try (ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder.of(byte[].class, byte[]
                     .class).createPersistedTo(persistenceFile)) {
 
-                byte[] o = map.get("hello".getBytes());
+                byte[] o = map.get("hello".getBytes(ISO_8859_1));
                 System.out.println(o == null ? "null" : new String(o));
-                map.put("hello".getBytes(), "world".getBytes());
+                map.put("hello".getBytes(ISO_8859_1), "world".getBytes(ISO_8859_1));
             }
         }
 
@@ -1800,10 +1801,10 @@ public class ChronicleMapTest {
                 try (ChronicleMap<byte[], byte[][]> map2 = localClient(8877)) {
 
                     byte[] key = new byte[14];
-                    System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
+                    System.arraycopy("A".getBytes(ISO_8859_1), 0, key, 0, "A".length());
                     byte[][] value = {new byte[11], new byte[11]};
-                    System.arraycopy("A".getBytes(), 0, value[0], 0, "A".length());
-                    System.arraycopy("A".getBytes(), 0, value[1], 0, "A".length());
+                    System.arraycopy("A".getBytes(ISO_8859_1), 0, value[0], 0, "A".length());
+                    System.arraycopy("A".getBytes(ISO_8859_1), 0, value[1], 0, "A".length());
 
                     map2.put(key, value);
                     Assert.assertNotNull(map2.get(key));

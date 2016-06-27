@@ -41,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.util.Arrays.asList;
 import static net.openhft.chronicle.map.StatelessClientTest.localClient;
 import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
@@ -447,12 +448,12 @@ public class CHMUseCasesTest {
                     .of(byte[].class, byte[][].class);
 
             try (ChronicleMap<byte[], byte[][]> map = newInstance(builder)) {
-                byte[] bytes1 = "value1".getBytes();
-                byte[] bytes2 = "value2".getBytes();
+                byte[] bytes1 = "value1".getBytes(ISO_8859_1);
+                byte[] bytes2 = "value2".getBytes(ISO_8859_1);
                 byte[][] value = {bytes1, bytes2};
-                map.put("Key".getBytes(), value);
+                map.put("Key".getBytes(ISO_8859_1), value);
 
-                assertEquals(value, map.get("Key".getBytes()));
+                assertEquals(value, map.get("Key".getBytes(ISO_8859_1)));
                 mapChecks();
             }
         }

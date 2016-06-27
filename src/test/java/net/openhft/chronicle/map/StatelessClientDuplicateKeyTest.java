@@ -27,7 +27,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder.*;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder.createClientOf;
 
 public class StatelessClientDuplicateKeyTest {
 
@@ -78,8 +79,8 @@ public class StatelessClientDuplicateKeyTest {
         byte[] _42 = {42};
         map.put(_42, new byte[] {1, 2, 3});
         map.put(new byte[]{1, 2, 3}, _42);
-        byte[] longKey = "fooBarFooBarFooBarFooBar".getBytes();
-        map.put(longKey, "bar".getBytes());
+        byte[] longKey = "fooBarFooBarFooBarFooBar".getBytes(ISO_8859_1);
+        map.put(longKey, "bar".getBytes(ISO_8859_1));
 
         final ChronicleMap<byte[], byte[]> client =
                 createClientOf(new InetSocketAddress("localhost", 8081));

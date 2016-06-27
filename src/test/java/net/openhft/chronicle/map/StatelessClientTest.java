@@ -34,6 +34,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static net.openhft.chronicle.map.ChronicleMapStatelessClientBuilder.createClientOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -756,7 +757,7 @@ public class StatelessClientTest {
             try (ChronicleMap<byte[], CharSequence> map2 = localClient(8875)) {
 
                 byte[] key = new byte[14];
-                System.arraycopy("A".getBytes(), 0, key, 0, "A".length());
+                System.arraycopy("A".getBytes(ISO_8859_1), 0, key, 0, "A".length());
 
                 map2.put(key, "hello world");
                 Assert.assertNotNull(map2.get(key));
