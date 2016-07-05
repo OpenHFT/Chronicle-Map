@@ -83,8 +83,8 @@ Read [the Chronicle Map data store design overview](spec/2-design-overview.md) f
  - A [multimap](https://en.wikipedia.org/wiki/Multimap). Using a `ChronicleMap<K, Collection<V>>`
  as multimap is technically possible, but often leads to problems (see [a StackOverflow answer](
  http://stackoverflow.com/a/36486525/648955) for details). Developing a proper multimap with
- Chronicle Map's design principles is possible, [contact us](mailto:sales@chronicle.software) is
- you consider sponsoring such development.
+ Chronicle Map's design principles is possible, [contact us](mailto:sales@chronicle.software) if
+ you would consider sponsoring such development.
 
 Chronicle Map doesn't support
 
