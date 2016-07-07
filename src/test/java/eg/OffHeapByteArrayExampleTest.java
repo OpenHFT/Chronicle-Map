@@ -62,7 +62,6 @@ public class OffHeapByteArrayExampleTest {
         ByteArray value = Values.newHeapInstance(ByteArray.class);
         LongValue key = Values.newHeapInstance(LongValue.class);
 
-
         key.setValue(1);
 
         // this is kind of like byteValue[1] = 'b'

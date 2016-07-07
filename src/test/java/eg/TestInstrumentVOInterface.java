@@ -24,31 +24,23 @@ import net.openhft.chronicle.values.MaxUtf8Length;
  */
 public interface TestInstrumentVOInterface {
 
-
     int getSizeOfInstrumentIDArray();
     void setSizeOfInstrumentIDArray(int sizeOfInstrumentIDArray);
-
 
     String getSymbol();
 
     void setSymbol(@MaxUtf8Length(20) String symbol);
 
-
-
-
     String getCurrencyCode();
 
     void setCurrencyCode(@MaxUtf8Length(4) String currencyCode);
-
 
     @Array(length = 2)
     void setInstrumentIDAt(int location, TestInstrumentIDVOInterface instrumentID);
 
     TestInstrumentIDVOInterface getInstrumentIDAt(int location);
 
-
     interface TestInstrumentIDVOInterface {
-
 
         String getIdSource();
 

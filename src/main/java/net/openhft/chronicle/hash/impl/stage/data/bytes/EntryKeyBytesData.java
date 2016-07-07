@@ -35,7 +35,6 @@ public class EntryKeyBytesData<K> extends AbstractData<K> {
     @StageRef HashEntryStages<K> entry;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
 
-
     @Stage("CachedEntryKey") private K cachedEntryKey;
     @Stage("CachedEntryKey") private boolean cachedEntryKeyRead = false;
     

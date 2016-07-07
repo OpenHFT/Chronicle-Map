@@ -32,7 +32,6 @@ public abstract class MapEntryOperationsDelegation<K, V, R> implements MapContex
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef VanillaChronicleMapHolder<K, V, R> mh;
 
-
     @Override
     public R replaceValue(@NotNull MapEntry<K, V> entry, Data<V> newValue) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();

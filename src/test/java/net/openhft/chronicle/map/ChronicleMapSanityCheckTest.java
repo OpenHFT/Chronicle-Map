@@ -119,8 +119,7 @@ public class ChronicleMapSanityCheckTest {
                 throw new RuntimeException(e);
             }
         }
-
-    }
+}
 
     enum DummyValue {
         DUMMY_VALUE

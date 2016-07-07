@@ -36,7 +36,6 @@ import static net.openhft.chronicle.values.ValueModel.$$NATIVE;
  */
 class AbstractChronicleMapConverter<K, V> implements Converter {
 
-
     private final Map<K, V> map;
     private final Class mapClazz;
 
@@ -45,13 +44,11 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         this.mapClazz = map.getClass();
     }
 
-
     @Override
     public boolean canConvert(Class aClass) {
         //noinspection unchecked
         return mapClazz.isAssignableFrom(aClass);
     }
-
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext
@@ -73,8 +70,7 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             }
             writer.endNode();
         }
-
-    }
+}
 
     @Override
     public Object unmarshal(HierarchicalStreamReader reader,
@@ -154,8 +150,7 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             } catch (Exception e1) {
                 throw new ConversionException("class=" + clazz, e1);
             }
-
-        }
+}
     }
 
 }

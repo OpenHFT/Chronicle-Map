@@ -40,7 +40,6 @@ public class KeySegmentDistributionTest {
         keySegmentDistributionTest(1000, 5);
     }
 
-
     public void keySegmentDistributionTest(int size, int segments) {
         ChronicleMap<CharSequence, Integer> map = ChronicleMapBuilder
                 .of(CharSequence.class, Integer.class)

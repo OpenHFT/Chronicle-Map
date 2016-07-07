@@ -189,7 +189,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void testByteArrayPersistenceFileReuse() throws IOException {
         final File persistenceFile = Builder.getPersistenceFile();
@@ -226,8 +225,7 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-
-        }
+}
     }
 
     @Test
@@ -250,10 +248,8 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-
-        }
+}
     }
-
 
     @Test
     public void testEqualsByteArray() {
@@ -275,10 +271,8 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-
-        }
+}
     }
-
 
     @Test
     public void testSize() {
@@ -714,11 +708,9 @@ public class ChronicleMapTest {
                         assertEquals(j, value3.getValue());
                     }
                 }
-
-            }
+}
         }
     }
-
 
     @Test
     public void testAcquireFromMultipleThreads() throws InterruptedException {
@@ -807,8 +799,7 @@ public class ChronicleMapTest {
                 }
             }
         }
-
-    }
+}
 
     @Test
     public void testLargerEntries() {
@@ -856,7 +847,6 @@ public class ChronicleMapTest {
                             .actualSegments(segments)
                             .averageKeySize(14)
                             .averageValueSize(value0.length() + 4);
-
 
 //                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
 //                    tmpFile.deleteOnExit();
@@ -1005,7 +995,6 @@ public class ChronicleMapTest {
         es.awaitTermination(1, TimeUnit.MINUTES);
     }
 
-
     static final LongValue ONE = Values.newHeapInstance(LongValue.class);
 
     static {
@@ -1039,7 +1028,6 @@ public class ChronicleMapTest {
                 int count = runs >= 5 ? 2 : 3;
                 final int independence = Math.min(procs, runs > 500 ? 8 : 4);
                 System.out.println("\nKey size: " + runs + " Million entries. " + builder);
-
 
                 for (int j = 0; j < count; j++) {
                     long start = System.currentTimeMillis();
@@ -1274,8 +1262,7 @@ public class ChronicleMapTest {
                     assertNull(map.getUsing(key, value));
                 }
             }
-
-        }
+}
     }
 
     @Test
@@ -1294,9 +1281,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
             assertValues(map.values(), new CharSequence[]{"1", "3"});
         }
-
-    }
-
+}
 
     @Test
     public void mapPutReflectedInViews() throws IOException {
@@ -1316,7 +1301,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void entrySetRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
@@ -1331,7 +1315,6 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
         }
     }
-
 
     @Test
     public void keySetRemoveReflectedInMapAndOtherViews() throws IOException {
@@ -1348,8 +1331,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
 
         }
-
-    }
+}
 
     @Test
     public void valuesRemoveReflectedInMap() throws IOException {
@@ -1365,8 +1347,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
 
         }
-
-    }
+}
 
     @Test
     public void entrySetIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
@@ -1389,7 +1370,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void keySetIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
@@ -1410,8 +1390,7 @@ public class ChronicleMapTest {
             assertValues(values, expectedValues);
 
         }
-
-    }
+}
 
     @Test
     public void valuesIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
@@ -1438,8 +1417,7 @@ public class ChronicleMapTest {
             assertValues(values, expectedValues);
 
         }
-
-    }
+}
 
     @Test
     public void entrySetRemoveAllReflectedInMapAndOtherViews() throws IOException {
@@ -1460,8 +1438,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"3"});
 
         }
-
-    }
+}
 
     @Test
     public void keySetRemoveAllReflectedInMapAndOtherViews() throws IOException {
@@ -1477,8 +1454,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"3"});
 
         }
-
-    }
+}
 
     @Test
     public void valuesRemoveAllReflectedInMapAndOtherViews() throws IOException {
@@ -1495,7 +1471,6 @@ public class ChronicleMapTest {
 
         }
     }
-
 
     @Test
     public void entrySetRetainAllReflectedInMapAndOtherViews() throws IOException {
@@ -1515,7 +1490,6 @@ public class ChronicleMapTest {
         }
     }
 
-
     @Test
     public void keySetRetainAllReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
@@ -1530,8 +1504,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"2", "1"});
 
         }
-
-    }
+}
 
     @Test
     public void valuesRetainAllReflectedInMapAndOtherViews() throws IOException {
@@ -1563,8 +1536,7 @@ public class ChronicleMapTest {
             org.junit.Assert.assertTrue(values.isEmpty());
 
         }
-
-    }
+}
 
     @Test
     public void keySetClearReflectedInMapAndOtherViews() throws IOException {
@@ -1596,8 +1568,7 @@ public class ChronicleMapTest {
             org.junit.Assert.assertTrue(values.isEmpty());
 
         }
-
-    }
+}
 
     @Test
     public void clearMapViaEntryIteratorRemoves() throws IOException {
@@ -1615,8 +1586,7 @@ public class ChronicleMapTest {
             assertEquals(noOfElements, sum);
 
         }
-
-    }
+}
 
     @Test
     public void clearMapViaKeyIteratorRemoves() throws IOException {
@@ -1661,7 +1631,6 @@ public class ChronicleMapTest {
                 ++sum;
             }
 
-
             assertEquals(noOfElements, sum);
         }
     }
@@ -1690,9 +1659,7 @@ public class ChronicleMapTest {
             assertValues(map.values(), new String[]{"B"});
 
         }
-
-    }
-
+}
 
     @Test
     public void equalsTest() throws IOException {
@@ -1711,9 +1678,7 @@ public class ChronicleMapTest {
                 assertEquals(map1, map2);
             }
         }
-
-
-    }
+}
 
     private static final class IncrementRunnable implements Runnable {
 
@@ -1746,9 +1711,7 @@ public class ChronicleMapTest {
                 e.printStackTrace();
             }
         }
-
-    }
-
+}
 
     @Test
     public void testPutLongValue() throws IOException {
@@ -1769,8 +1732,7 @@ public class ChronicleMapTest {
             throw new AssertionError("Should throw either IllegalStateException or " +
                     "NullPointerException, but succeed");
         }
-
-    }
+}
 
     @Test
     public void testOffheapAcquireUsingLocked() throws IOException {
@@ -1826,8 +1788,7 @@ public class ChronicleMapTest {
                 assert value == v;
                 assertEquals(1, c.entry().value().get().getValue());
             }
-
-        }
+}
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1936,5 +1897,4 @@ public class ChronicleMapTest {
     }
 
 }
-
 

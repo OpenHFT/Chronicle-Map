@@ -89,8 +89,7 @@ class Precision {
             } else {
                 isEqual = deltaMinus <= (maxUlps - deltaPlus);
             }
-
-        }
+}
 
         return isEqual && !Double.isNaN(x) && !Double.isNaN(y);
 

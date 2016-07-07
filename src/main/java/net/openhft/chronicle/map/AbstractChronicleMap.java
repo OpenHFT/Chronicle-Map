@@ -230,7 +230,6 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
         return new ChronicleMapEntrySet<>(this);
     }
 
-
     @Override
     default void forEachEntry(final Consumer<? super MapEntry<K, V>> action) {
         forEachEntryWhile(c -> {

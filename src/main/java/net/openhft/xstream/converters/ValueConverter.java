@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-
 /**
  * @author Rob Austin.
  */
@@ -66,7 +65,6 @@ public class ValueConverter implements Converter {
 
                 return;
             }
-
 
             try {
 
@@ -146,7 +144,6 @@ public class ValueConverter implements Converter {
             reader.moveUp();
         }
     }
-
 
     @Override
     public boolean canConvert(Class clazz) {

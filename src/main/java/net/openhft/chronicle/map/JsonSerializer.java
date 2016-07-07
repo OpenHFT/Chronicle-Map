@@ -45,7 +45,6 @@ class JsonSerializer {
         }
     }
 
-
     static synchronized <K, V> void putAll(File fromFile, Map<K, V> map, List jsonConverters)
             throws IOException {
         final XStream xstream = xStream(map, jsonConverters);
@@ -78,8 +77,7 @@ class JsonSerializer {
                             " expecting an object of type com.thoughtworks.xstream.converters" +
                             ".Converter");
                 }
-
-            }
+}
 
             return xstream;
         } catch (NoClassDefFoundError e) {
@@ -108,5 +106,4 @@ class JsonSerializer {
         xstream.registerConverter(new VanillaChronicleMapConverter<>(map));
     }
 }
-
 

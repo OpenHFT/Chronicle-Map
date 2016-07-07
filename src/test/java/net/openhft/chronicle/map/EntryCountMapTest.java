@@ -189,7 +189,6 @@ public class EntryCountMapTest {
         final int maxKeySize = "key:".length() +
                 (int) round(log10(moreThanMaxSize(maxSize) * stride + counter)) + 1;
 
-
         return es.submit(new Callable<Void>() {
             @Override
             public Void call() {
@@ -256,8 +255,7 @@ public class EntryCountMapTest {
                         ", seg: " + segments + ", min: " + minSize +
                         ", size: " + map.size());
         }
-
-    }
+}
 
     private static int moreThanMaxSize(int maxSize) {
         return maxSize * 14 / 10 + 300;

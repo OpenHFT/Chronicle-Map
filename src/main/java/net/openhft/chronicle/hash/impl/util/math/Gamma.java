@@ -18,7 +18,6 @@
 
 package net.openhft.chronicle.hash.impl.util.math;
 
-
 /**
  * <p>
  * This is a utility class that provides computation methods related to the

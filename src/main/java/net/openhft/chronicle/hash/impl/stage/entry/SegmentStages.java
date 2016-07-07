@@ -143,7 +143,6 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         return size;
     }
 
-
     @Stage("Locks") public LocksInterface rootContextLockedOnThisSegment = null;
     /**
      * See the ChMap Ops spec, considerations of nested same-thread concurrent contexts.

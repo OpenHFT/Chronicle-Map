@@ -66,7 +66,6 @@ public class Issue24ChronicleSetTest {
         }
         System.out.println("Finished all threads");
 
-
     }
 
     public static class WorkerThread implements Runnable {
@@ -92,12 +91,10 @@ public class Issue24ChronicleSetTest {
 
             set.addAll(nomenclatures);
 
-
             Set<String> strings = new HashSet<>(
                     selectRandomSubset(nomenclatures, nomenclatures.size() / 2));
 
             set.addAll(strings);
-
 
             Set<String> toRemove = new HashSet<>();
             Random generator = new Random();
@@ -121,6 +118,5 @@ public class Issue24ChronicleSetTest {
                 System.out.println(s);
             }
         }
-
-    }
+}
 }

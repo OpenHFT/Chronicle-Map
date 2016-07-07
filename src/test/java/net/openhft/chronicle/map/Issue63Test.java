@@ -100,7 +100,6 @@ public class Issue63Test {
                 .entries(10)
                 .createPersistedTo(mapFile);
 
-
         float[] exp1 = new float[]{
                 (float) -0.4200737, (float) -0.5428019, (float) 0.25542524, (float) -0.10631648,
                 (float) 0.12206168, (float) 0.0411969, (float) 0.9899967, (float) 0.15887073,

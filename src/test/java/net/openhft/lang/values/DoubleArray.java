@@ -43,7 +43,6 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray> {
         offset = 0;
     }
 
-
     @Override
     public void bytesStore(BytesStore bytes, long offset, long maxSize) {
         this.bs = bytes;

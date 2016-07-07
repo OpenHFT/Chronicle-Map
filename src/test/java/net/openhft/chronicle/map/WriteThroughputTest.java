@@ -117,6 +117,5 @@ public class WriteThroughputTest {
             long time = System.nanoTime() - start;
             System.out.printf("Concurrent %,d MB took %.3f seconds%n", size * count >> 20, time / 1e9);
         }
-
-    }
+}
 }

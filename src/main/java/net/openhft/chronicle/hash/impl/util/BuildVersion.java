@@ -58,7 +58,6 @@ public final class BuildVersion {
             // do nothing
         }
 
-
         // another way to get the version is to read it from the manifest
         final String versionFromManifest = getVersionFromManifest();
 
@@ -80,7 +79,6 @@ public final class BuildVersion {
     private static String getVersionFromManifest() {
         return ChronicleMapBuilder.class.getPackage().getImplementationVersion();
     }
-
 
     /**
      * reads the pom file to get this version, only to be used for development or within the IDE.

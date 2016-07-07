@@ -158,7 +158,6 @@ interface IBean {
 @RunWith(value = Parameterized.class)
 public class CHMUseCasesTest {
 
-
     static volatile int i = 0;
     private final TypeOfMap typeOfMap;
 
@@ -238,7 +237,6 @@ public class CHMUseCasesTest {
 
         assertEquals(map1.size(), map2.size());
 
-
         for (Object key : map1.keySet()) {
 
             if (map1.valueClass() == byte[].class)
@@ -249,7 +247,6 @@ public class CHMUseCasesTest {
             else if (map1.valueClass() == byte[][].class) {
                 byte[][] o1 = (byte[][]) map1.get(key);
                 byte[][] o2 = (byte[][]) map2.get(key);
-
 
                 Assert.assertEquals(o1.length, o2.length);
                 for (int i = 0; i < o1.length; i++) {
@@ -288,7 +285,6 @@ public class CHMUseCasesTest {
 
             try (ChronicleMap actual = builder.create()) {
                 actual.putAll(file);
-
 
                 if (map1.valueClass() == char[].class ||
                         map1.valueClass() == byte[].class ||
@@ -448,8 +444,7 @@ public class CHMUseCasesTest {
                 mpx1030.setAskPx(109.7);
                 mpx1030.setBidPx(107.6);
             }
-
-        }
+}
 
     }
 
@@ -532,7 +527,6 @@ public class CHMUseCasesTest {
     public void testStringStringMap() throws ExecutionException, InterruptedException,
             IOException {
 
-
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
                 .of(String.class, String.class)
                 .entries(1);
@@ -603,7 +597,6 @@ public class CHMUseCasesTest {
     public void testCharSequenceCharSequenceMap()
             throws ExecutionException, InterruptedException, IOException {
 
-
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entries(10);
@@ -622,7 +615,6 @@ public class CHMUseCasesTest {
             assertEquals("value-1", value.toString());
             map.remove("key-1");
             assertNull(map.getUsing(key, value));
-
 
             assertEquals("New World", map.getMapped("Hello", s -> "New " + s));
             assertEquals(null, map.getMapped("No key",
@@ -646,7 +638,6 @@ public class CHMUseCasesTest {
 
     @Test
     public void testAcquireUsingWithCharSequence() throws IOException {
-
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
@@ -693,7 +684,6 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, CharSequence> map = newInstance(builder)) {
 
-
             IntValue using = Values.newHeapInstance(IntValue.class);
             using.setValue(1);
 
@@ -715,7 +705,6 @@ public class CHMUseCasesTest {
                 .entries(1);
 
         try (ChronicleMap<IntValue, StringBuilder> map = newInstance(builder)) {
-
 
             IntValue key = Values.newHeapInstance(IntValue.class);
             key.setValue(1);
@@ -921,7 +910,6 @@ public class CHMUseCasesTest {
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
 
-
             key2 = 2;
             value2 = 22;
             map.put(key2, value2);
@@ -964,7 +952,6 @@ public class CHMUseCasesTest {
     @Test
     public void testLongLongMap() throws ExecutionException, InterruptedException, IOException {
 
-
         ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder
                 .of(Long.class, Long.class)
                 .entries(10);
@@ -1005,7 +992,6 @@ public class CHMUseCasesTest {
     @Test
     public void testDoubleDoubleMap() throws ExecutionException, InterruptedException, IOException {
 
-
         ChronicleMapBuilder<Double, Double> builder = ChronicleMapBuilder
                 .of(Double.class, Double.class)
                 .entries(10);
@@ -1035,9 +1021,7 @@ public class CHMUseCasesTest {
 
             } catch (Exception todoMoreSpecificException) {
             }
-
-
-        }
+}
     }
 
     @Test
@@ -1059,7 +1043,6 @@ public class CHMUseCasesTest {
             assertNull(map.get(key2));
 
             map.put(key1, value1);
-
 
             assertTrue(Arrays.equals(new byte[]{11, 11},
                     map.getMapped(key1, new SerializableFunction<byte[], byte[]>() {
@@ -1085,7 +1068,6 @@ public class CHMUseCasesTest {
             byte[] a2 = map.get(key1);
             assertTrue(Arrays.equals(new byte[]{12, 10}, a2));
 
-
         }
     }
 
@@ -1101,7 +1083,6 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
-
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
             ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
@@ -1110,7 +1091,6 @@ public class CHMUseCasesTest {
             assertBBEquals(value1, map.put(key1, value2));
             assertBBEquals(value2, map.get(key1));
             assertNull(map.get(key2));
-
 
             map.put(key1, value1);
 
@@ -1129,7 +1109,6 @@ public class CHMUseCasesTest {
                 .entries(1000);
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
-
 
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
@@ -1201,11 +1180,9 @@ public class CHMUseCasesTest {
                 valueA.flip();
             }
 
-
             value1.clear();
             value1.putInt(12345);
             value1.flip();
-
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, valueB)) {
@@ -1240,7 +1217,6 @@ public class CHMUseCasesTest {
                 .entries(1000);
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
-
 
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
             ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
@@ -1298,7 +1274,6 @@ public class CHMUseCasesTest {
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             IntValue value1 = Values.newHeapInstance(IntValue.class);
             IntValue value2 = Values.newHeapInstance(IntValue.class);
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -1517,7 +1492,6 @@ public class CHMUseCasesTest {
             // this may change due to alignment
             // assertEquals(6, entrySize(map));
 
-
             //     assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             IntValue key2 = Values.newHeapInstance(IntValue.class);
@@ -1620,7 +1594,6 @@ public class CHMUseCasesTest {
                 .entries(10);
 
         try (ChronicleMap<IntValue, UnsignedShortValue> map = newInstance(builder)) {
-
 
             // this may change due to alignment
             // assertEquals(8, entrySize(map));
@@ -1726,7 +1699,6 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, CharValue> map = newInstance(builder)) {
 
-
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             IntValue key2 = Values.newHeapInstance(IntValue.class);
@@ -1826,7 +1798,6 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, UnsignedByteValue> map = newInstance(builder)) {
 
-
             // TODO should be 5, but shorter fields based on range doesn't seem to be implemented
             // on data value generation level yet
             //assertEquals(8, entrySize(map)); this may change due to alignmented
@@ -1836,7 +1807,6 @@ public class CHMUseCasesTest {
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             UnsignedByteValue value1 = Values.newHeapInstance(UnsignedByteValue.class);
             UnsignedByteValue value2 = Values.newHeapInstance(UnsignedByteValue.class);
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -1933,14 +1903,12 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, BooleanValue> map = newInstance(builder)) {
 
-
             assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
 
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             BooleanValue value1 = Values.newHeapInstance(BooleanValue.class);
             BooleanValue value2 = Values.newHeapInstance(BooleanValue.class);
-
 
             key1.setValue(1);
             value1.setValue(true);
@@ -2043,7 +2011,6 @@ public class CHMUseCasesTest {
             FloatValue key2 = Values.newHeapInstance(FloatValue.class);
             FloatValue value1 = Values.newHeapInstance(FloatValue.class);
             FloatValue value2 = Values.newHeapInstance(FloatValue.class);
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -2149,7 +2116,6 @@ public class CHMUseCasesTest {
             DoubleValue key2 = Values.newHeapInstance(DoubleValue.class);
             DoubleValue value1 = Values.newHeapInstance(DoubleValue.class);
             DoubleValue value2 = Values.newHeapInstance(DoubleValue.class);
-
 
             key1.setValue(1);
             value1.setValue(11);
@@ -2257,7 +2223,6 @@ public class CHMUseCasesTest {
             LongValue value1 = Values.newHeapInstance(LongValue.class);
             LongValue value2 = Values.newHeapInstance(LongValue.class);
 
-
             key1.setValue(1);
             value1.setValue(11);
             assertEquals(null, map.get(key1));
@@ -2350,7 +2315,6 @@ public class CHMUseCasesTest {
                 .valueMarshaller(ListMarshaller.of(
                         new StringBytesReader(), CharSequenceBytesWriter.INSTANCE));
 
-
         try (ChronicleMap<String, List<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptyList());
             map.put("2", asList("two-A"));
@@ -2396,7 +2360,6 @@ public class CHMUseCasesTest {
                 .entries(10)
                 .valueMarshaller(SetMarshaller.of(
                         new StringBytesReader(), CharSequenceBytesWriter.INSTANCE));
-
 
         try (ChronicleMap<String, Set<String>> map = newInstance(builder)) {
             map.put("1", Collections.<String>emptySet());
@@ -2444,7 +2407,6 @@ public class CHMUseCasesTest {
                 .of(String.class, (Class<Map<String, String>>) (Class) Map.class)
                 .entries(3)
                 .valueMarshaller(valueMarshaller);
-
 
         try (ChronicleMap<String, Map<String, String>> map = newInstance(builder)) {
             map.put("1", Collections.<String, String>emptyMap());
@@ -2601,7 +2563,6 @@ public class CHMUseCasesTest {
     }
 
     enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED}
-
 
     interface I1 {
         @Array(length = 10)

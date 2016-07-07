@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-
 import net.openhft.chronicle.core.Maths;
 
 import static net.openhft.chronicle.algo.MemoryUnit.BITS;
@@ -34,7 +33,6 @@ public abstract class CompactOffHeapLinearHashTable {
      * segment tiering, when hashLookup load factor > 0.8, because collision chains become too long.
      */
     public static final double MAX_LOAD_FACTOR = 0.8;
-
 
     public static int valueBits(long actualChunksPerSegment) {
         return 64 - Long.numberOfLeadingZeros(actualChunksPerSegment - 1L);
@@ -76,7 +74,6 @@ public abstract class CompactOffHeapLinearHashTable {
 
     public static final long UNSET_KEY = 0L;
     public static final long UNSET_ENTRY = 0L;
-
 
     private final long capacityMask;
     final long capacityMask2;
