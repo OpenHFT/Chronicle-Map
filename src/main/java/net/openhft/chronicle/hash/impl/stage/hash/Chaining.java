@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.function.Function;
 
 @Staged
-public class Chaining extends ChainingInterface {
+public abstract class Chaining extends ChainingInterface {
 
     public final List<ChainingInterface> contextChain;
     public final int indexInContextChain;

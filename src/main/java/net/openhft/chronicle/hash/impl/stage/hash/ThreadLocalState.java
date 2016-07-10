@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.hash.impl.stage.hash;
 
-public class ThreadLocalState {
+public abstract class ThreadLocalState {
     public boolean iterationContextLockedInThisThread;
+
+    public abstract Thread owner();
 }

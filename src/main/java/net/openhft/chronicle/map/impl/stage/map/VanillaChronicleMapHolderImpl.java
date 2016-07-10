@@ -26,7 +26,7 @@ import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.sg.Staged;
 
 @Staged
-public class VanillaChronicleMapHolderImpl<K, V, R> extends Chaining
+public abstract class VanillaChronicleMapHolderImpl<K, V, R> extends Chaining
         implements VanillaChronicleMapHolder<K, V, R> {
     
     private final VanillaChronicleMap<K, V, R> m;

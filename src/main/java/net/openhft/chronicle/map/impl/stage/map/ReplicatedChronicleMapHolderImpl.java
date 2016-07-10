@@ -26,7 +26,7 @@ import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.sg.Staged;
 
 @Staged
-public class ReplicatedChronicleMapHolderImpl<K, V, R> extends Chaining
+public abstract class ReplicatedChronicleMapHolderImpl<K, V, R> extends Chaining
         implements ReplicatedChronicleMapHolder<K, V, R> {
 
     private final ReplicatedChronicleMap<K, V, R> m;
