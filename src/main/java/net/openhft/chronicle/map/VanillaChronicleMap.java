@@ -16,11 +16,14 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
+import net.openhft.chronicle.hash.impl.*;
+import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -76,6 +79,7 @@ public class VanillaChronicleMap<K, V, R>
     
     public transient MapEntryOperations<K, V, R> entryOperations;
     public transient MapMethods<K, V, R> methods;
+    private transient boolean defaultEntryOperationsAndMethods;
     public transient DefaultValueProvider<K, V> defaultValueProvider;
     
     transient ThreadLocal<ChainingInterface> cxt;
@@ -132,9 +136,11 @@ public class VanillaChronicleMap<K, V, R>
         putReturnsNull = builder.putReturnsNull();
         removeReturnsNull = builder.removeReturnsNull();
 
-        this.entryOperations = (MapEntryOperations<K, V, R>) builder.entryOperations;
-        this.methods = (MapMethods<K, V, R>) builder.methods;
-        this.defaultValueProvider = builder.defaultValueProvider;
+        entryOperations = (MapEntryOperations<K, V, R>) builder.entryOperations;
+        methods = (MapMethods<K, V, R>) builder.methods;
+        defaultEntryOperationsAndMethods = entryOperations == DefaultSpi.mapEntryOperations() &&
+                methods == DefaultSpi.mapMethods();
+        defaultValueProvider = builder.defaultValueProvider;
     }
 
     @Override
@@ -309,14 +315,168 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V get(Object key) {
+        return defaultEntryOperationsAndMethods ? optimizedGet(key, null) : defaultGet(key);
+    }
+
+    final V defaultGet(Object key) {
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.get(q, q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
         }
     }
 
+    private V optimizedGet(Object key, V using) {
+        checkKey(key);
+        CompiledMapQueryContext<K, V, R> q = (CompiledMapQueryContext<K, V, R>) mapContext();
+        Data<K> inputKey = q.inputKeyDataAccess().getData((K) key);
+        try {
+            Throwable primaryExc = null;
+            long inputKeySize = inputKey.size();
+
+            long keyHash = inputKey.hash(LongHashFunction.xx_r39());
+            HashSplitting hs = this.hashSplitting;
+            int segmentIndex = hs.segmentIndex(keyHash);
+            long segmentHeaderAddress = segmentHeaderAddress(segmentIndex);
+            boolean needReadUnlock = false;
+            try {
+                CompactOffHeapLinearHashTable hl = this.hashLookup;
+                long searchKey = hl.maskUnsetKey(hs.segmentHash(keyHash));
+                long searchStartPos = hl.hlPos(searchKey);
+                boolean needReadLock = true;
+                initLocks:
+                {
+                    int indexOfThisContext = q.indexInContextChain;
+                    for (int i = 0, size = q.contextChain.size(); i < size; i++) {
+                        if (i == indexOfThisContext)
+                            continue;
+                        LocksInterface c = ((LocksInterface) (q.contextChain.get(i)));
+                        if (c.segmentHeaderInit() &&
+                                c.segmentHeaderAddress() == segmentHeaderAddress &&
+                                c.locksInit()) {
+                            LocksInterface root = c.rootContextLockedOnThisSegment();
+                            if (root.totalReadLockCount() > 0 || root.totalUpdateLockCount() > 0 ||
+                                    root.totalWriteLockCount() > 0) {
+                                needReadLock = false;
+                                break initLocks;
+                            }
+                        }
+                    }
+                }
+                if (needReadLock) {
+                    BigSegmentHeader.INSTANCE.readLock(segmentHeaderAddress);
+                    needReadUnlock = true;
+                }
+                return tieredValue(q, segmentHeaderAddress, segmentIndex, searchKey, searchStartPos,
+                        inputKeySize, inputKey, using);
+            } catch (Throwable t) {
+                primaryExc = t;
+                throw t;
+            } finally {
+                if (primaryExc != null) {
+                    try {
+                        getClose(q, segmentHeaderAddress, needReadUnlock);
+                    } catch (Throwable suppressedExc) {
+                        primaryExc.addSuppressed(suppressedExc);
+                    }
+                } else {
+                    getClose(q, segmentHeaderAddress, needReadUnlock);
+                }
+            }
+        } finally {
+            q.doCloseInputKeyDataAccess();
+        }
+    }
+
+    private void getClose(CompiledMapQueryContext<K, V, R> q, long segmentHeaderAddress,
+                          boolean needReadUnlock) {
+        if (needReadUnlock)
+            BigSegmentHeader.INSTANCE.readUnlock(segmentHeaderAddress);
+        q.doCloseUsed();
+    }
+
+    private V tieredValue(CompiledMapQueryContext<K, V, R> q,
+                          long segmentHeaderAddress, int segmentIndex,
+                          long searchKey, long searchStartPos,
+                          long inputKeySize, Data<K> inputKey, V using) {
+        int tier = 0;
+        long tierBaseAddr = segmentBaseAddr(segmentIndex);
+        while (true) {
+            V value = searchValue(q, searchKey, searchStartPos, tierBaseAddr,
+                    inputKeySize, inputKey, using);
+            if (value != null)
+                return value;
+            long nextTierIndex;
+            if (tier == 0) {
+                nextTierIndex = BigSegmentHeader.INSTANCE.nextTierIndex(segmentHeaderAddress);
+            } else {
+                nextTierIndex = TierCountersArea.nextTierIndex(
+                        tierBaseAddr + tierHashLookupOuterSize);
+            }
+            if (nextTierIndex == 0)
+                return null;
+            tier++;
+            tierBaseAddr = tierIndexToBaseAddr(nextTierIndex);
+
+        }
+    }
+
+    private V searchValue(CompiledMapQueryContext<K, V, R> q,
+                          long searchKey, long searchStartPos, long tierBaseAddr,
+                          long inputKeySize, Data<K> inputKey, V using) {
+        CompactOffHeapLinearHashTable hl = this.hashLookup;
+
+        PointerBytesStore segmentBytesStore = q.segmentBS;
+        segmentBytesStore.set(tierBaseAddr, tierSize);
+        Bytes bs = q.segmentBytes;
+        bs.clear();
+        long freeListOffset = tierHashLookupOuterSize + TIER_COUNTERS_AREA_SIZE;
+        long entrySpaceOffset = freeListOffset + tierFreeListOuterSize + tierEntrySpaceInnerOffset;
+
+        long hlPos = searchStartPos;
+        searchLoop:
+        while (true) {
+            long entryPos;
+            nextPos: {
+                while (true) {
+                    long entry = hl.readEntryVolatile(tierBaseAddr, hlPos);
+                    if (hl.empty(entry)) {
+                        break searchLoop;
+                    }
+                    hlPos = hl.step(hlPos);
+                    if (hlPos == searchStartPos)
+                        throw new IllegalStateException("HashLookup overflow should never occur");
+
+                    if ((hl.key(entry)) == searchKey) {
+                        entryPos = hl.value(entry);
+                        break nextPos;
+                    }
+                }
+            }
+
+            long keySizeOffset = entrySpaceOffset + (entryPos * chunkSize);
+            bs.readLimit(bs.capacity());
+            bs.readPosition(keySizeOffset);
+            long keySize = keySizeMarshaller.readSize(bs);
+            long keyOffset = bs.readPosition();
+            if (!((inputKeySize == keySize) &&
+                    (inputKey.equivalent(segmentBytesStore, keyOffset)))) {
+                continue;
+            }
+            long valueSizeOffset = keyOffset + keySize;
+            bs.readPosition(valueSizeOffset);
+            long valueSize = readValueSize(bs);
+            return q.valueReader.read(bs, valueSize, using);
+        }
+        return null;
+    }
+
     @Override
     public V getUsing(K key, V usingValue) {
+        return defaultEntryOperationsAndMethods ? optimizedGet(key, usingValue) :
+                defaultGetUsing(key, usingValue);
+    }
+
+    final V defaultGetUsing(K key, V usingValue) {
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             q.usingReturnValue().initUsingReturnValue(usingValue);
             methods.get(q, q.usingReturnValue());

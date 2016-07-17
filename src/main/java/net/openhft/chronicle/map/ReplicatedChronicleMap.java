@@ -946,4 +946,14 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             }
         }
     }
+
+    @Override
+    public final V get(Object key) {
+        return defaultGet(key);
+    }
+
+    @Override
+    public final V getUsing(K key, V usingValue) {
+        return defaultGetUsing(key, usingValue);
+    }
 }
