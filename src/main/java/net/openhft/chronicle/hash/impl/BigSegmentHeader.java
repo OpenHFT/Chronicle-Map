@@ -52,7 +52,7 @@ public final class BigSegmentHeader implements SegmentHeader {
      * Previously this value was 2 seconds, but GC pauses often take more time that shouldn't
      * result to IllegalStateException.
      */
-    private static final int LOCK_TIMEOUT_SECONDS = 60;
+    public static final int LOCK_TIMEOUT_SECONDS = 60;
 
     private static RuntimeException deadLock() {
         return new RuntimeException("Failed to acquire the lock in " + LOCK_TIMEOUT_SECONDS +

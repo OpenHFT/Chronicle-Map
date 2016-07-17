@@ -52,7 +52,8 @@ public class NestedContextsInIterationContextTest {
                 .actualSegments(2)
                 .create()) {
             map.put(42, 42);
-            int keySegmentIndex = map.queryContext(42).segmentIndex();
+            ExternalMapQueryContext<Integer, Integer, ?> queryCxt = map.queryContext(42);
+            int keySegmentIndex = queryCxt.segmentIndex();
             try (MapSegmentContext<Integer, Integer, ?> cxt = map.segmentContext(keySegmentIndex)) {
                 cxt.forEachSegmentEntry(e -> {
                     int k = 0;
@@ -80,6 +81,8 @@ public class NestedContextsInIterationContextTest {
                     }
                     throw new AssertionError("expected " + IllegalStateException.class);
                 });
+            } finally {
+                queryCxt.close();
             }
         }
     }
@@ -92,7 +95,8 @@ public class NestedContextsInIterationContextTest {
                 .actualSegments(2)
                 .create()) {
             map.put(42, 42);
-            int keySegmentIndex = map.queryContext(42).segmentIndex();
+            ExternalMapQueryContext<Integer, Integer, ?> queryCxt = map.queryContext(42);
+            int keySegmentIndex = queryCxt.segmentIndex();
             try (MapSegmentContext<Integer, Integer, ?> cxt = map.segmentContext(keySegmentIndex)) {
                 cxt.forEachSegmentEntry(e -> {
                     int k = 0;
@@ -120,6 +124,8 @@ public class NestedContextsInIterationContextTest {
                     }
                     throw new AssertionError("expected " + IllegalStateException.class);
                 });
+            } finally {
+                queryCxt.close();
             }
         }
     }
@@ -132,7 +138,8 @@ public class NestedContextsInIterationContextTest {
                 .actualSegments(2)
                 .create()) {
             map.put(42, 42);
-            int keySegmentIndex = map.queryContext(42).segmentIndex();
+            ExternalMapQueryContext<Integer, Integer, ?> queryCxt = map.queryContext(42);
+            int keySegmentIndex = queryCxt.segmentIndex();
             try (MapSegmentContext<Integer, Integer, ?> cxt = map.segmentContext(keySegmentIndex)) {
                 cxt.forEachSegmentEntry(e -> {
                     int k = 0;
@@ -154,6 +161,8 @@ public class NestedContextsInIterationContextTest {
                         nestedC.readLock().lock();
                     }
                 });
+            } finally {
+                queryCxt.close();
             }
         }
     }

@@ -57,6 +57,7 @@ public abstract class ReplicatedChronicleMapHolderImpl<K, V, R> extends Chaining
         return m.chronicleSet;
     }
 
+    @Override
     public ChronicleHash<K, ?, ?, ?> hash() {
         return set() != null ? set() : map();
     }

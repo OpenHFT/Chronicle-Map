@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl.stage.hash;
 
-import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.entry.ReadLock;
 import net.openhft.chronicle.hash.impl.stage.entry.UpdateLock;
 import net.openhft.chronicle.hash.impl.stage.entry.WriteLock;
@@ -28,7 +27,6 @@ import net.openhft.sg.Staged;
 public abstract class CheckOnEachPublicOperation {
     
     @StageRef OwnerThreadHolder holder;
-    @StageRef VanillaChronicleHashHolder<?> hh;
     
     public void checkOnEachPublicOperation() {
         checkOnEachLockOperation();
@@ -42,7 +40,5 @@ public abstract class CheckOnEachPublicOperation {
      */
     public void checkOnEachLockOperation() {
         holder.checkAccessingFromOwnerThread();
-        if (!hh.h().isOpen())
-            throw new IllegalStateException("Access to Chronicle Hash after close()");
     }
 }

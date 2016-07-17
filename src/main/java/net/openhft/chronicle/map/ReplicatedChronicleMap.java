@@ -563,6 +563,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         queryContext = cxt.get();
         if (queryContext == null) {
             queryContext = new CompiledReplicatedMapQueryContext<>(ReplicatedChronicleMap.this);
+            addContext(queryContext);
             cxt.set(queryContext);
         }
         return queryContext;
@@ -597,6 +598,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         iterContext = cxt.get();
         if (iterContext == null) {
             iterContext = new CompiledReplicatedMapIterationContext<>(ReplicatedChronicleMap.this);
+            addContext(iterContext);
             cxt.set(iterContext);
         }
         return iterContext;

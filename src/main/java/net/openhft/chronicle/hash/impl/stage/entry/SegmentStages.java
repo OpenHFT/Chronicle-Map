@@ -259,6 +259,12 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     public abstract boolean locksInit();
 
     void initLocks() {
+        // This is a dummy check needed to make the Locks stage depend on the chaining.Used stage,
+        // to move the chaining.Used stage up in topological order, to make it closed later in
+        // the global context close() method, to ensure the context is unlocked (this is done in
+        // the chaining.closeUsed() method) after all other stages, potentially accessing Map's
+        // off-heap memory, are closed.
+        assert chaining.used;
         // Ensure SegmentHeader is init. This method initLocks() doesn't trigger SegmentHeader
         // initialization otherwise, so it could remain uninit on the beginning of locking methods.
         // But Locks still anyway depends on SegmentHeader stage (at least via

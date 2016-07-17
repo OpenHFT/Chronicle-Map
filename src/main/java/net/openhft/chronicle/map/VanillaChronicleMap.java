@@ -34,9 +34,7 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Set;
@@ -248,6 +246,7 @@ public class VanillaChronicleMap<K, V, R>
         queryContext = cxt.get();
         if (queryContext == null) {
             queryContext = new CompiledMapQueryContext<>(VanillaChronicleMap.this);
+            addContext(queryContext);
             cxt.set(queryContext);
         }
         return queryContext;
@@ -263,6 +262,7 @@ public class VanillaChronicleMap<K, V, R>
         iterContext = cxt.get();
         if (iterContext == null) {
             iterContext = new CompiledMapIterationContext<>(VanillaChronicleMap.this);
+            addContext(iterContext);
             cxt.set(iterContext);
         }
         return iterContext;

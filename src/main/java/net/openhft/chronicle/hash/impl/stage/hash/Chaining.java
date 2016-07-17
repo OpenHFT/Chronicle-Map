@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.hash;
 
+import net.openhft.sg.Stage;
 import net.openhft.sg.Staged;
 
 import java.util.ArrayList;
@@ -27,6 +28,9 @@ public abstract class Chaining extends ChainingInterface {
 
     public final List<ChainingInterface> contextChain;
     public final int indexInContextChain;
+    /**
+     * First context, ever created in this thread. rootContextInThisThread === contextChain.get(0).
+     */
     public final ChainingInterface rootContextInThisThread;
 
     public Chaining() {
@@ -53,20 +57,30 @@ public abstract class Chaining extends ChainingInterface {
         return (T) contextChain.get(index);
     }
 
-    boolean used;
+
+    @Stage("Used") public boolean used;
+    @Stage("Used") private boolean firstContextLockedInThisThread;
 
     @Override
     public boolean usedInit() {
         return used;
     }
 
+    /**
+     * Init method parameterized to avoid automatic initialization. {@code used} argument should
+     * always be {@code true}.
+     */
     @Override
     public void initUsed(boolean used) {
-        this.used = used;
+        assert used;
+        firstContextLockedInThisThread = rootContextInThisThread.lockContextLocally();
+        this.used = true;
     }
     
     void closeUsed() {
         used = false;
+        if (firstContextLockedInThisThread)
+            rootContextInThisThread.unlockContextLocally();
     }
 
     @Override
