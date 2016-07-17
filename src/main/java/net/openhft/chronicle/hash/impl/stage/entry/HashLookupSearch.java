@@ -53,20 +53,21 @@ public abstract class HashLookupSearch {
 
     public long nextPos() {
         long pos = hlp.hashLookupPos;
+        CompactOffHeapLinearHashTable hl = hl();
         while (true) {
             // read volatile to make a happens-before edge between entry insertion from concurrent
             // thread under update lock and this thread (reading the entry)
-            long entry = hl().readEntryVolatile(addr(), pos);
-            if (hl().empty(entry)) {
+            long entry = hl.readEntryVolatile(addr(), pos);
+            if (hl.empty(entry)) {
                 hlp.setHashLookupPos(pos);
                 return -1L;
             }
-            pos = hl().step(pos);
+            pos = hl.step(pos);
             if (pos == searchStartPos)
                 break;
-            if (hl().key(entry) == searchKey) {
+            if (hl.key(entry) == searchKey) {
                 hlp.setHashLookupPos(pos);
-                return hl().value(entry);
+                return hl.value(entry);
             }
         }
         throw new IllegalStateException("HashLookup overflow should never occur");
