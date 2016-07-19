@@ -1,7 +1,5 @@
 # The Chronicle Map Data Store Specification, revision 1
 
-This is currently work-in-progress.
-
  1. [Design goals, assumptions and guarantees](1-design-goals.md)
  2. [Design overview](2-design-overview.md)
  3. [Memory layout](3-memory-layout.md)
