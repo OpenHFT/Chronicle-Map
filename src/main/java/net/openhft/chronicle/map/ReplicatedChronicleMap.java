@@ -1496,6 +1496,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                     if (!keyEquals(keyInterop, metaKeyInterop, key, keySize, entry))
                         continue;
                     // key is found
+                    onRemoveEntry(this, pos);
                     entry.skip(keySize);
                     long timestampPos = entry.position();
                     long replacedTimestamp = entry.readLong(timestampPos);
@@ -1572,6 +1573,7 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
                     hashLookup.putAfterFailedSearch(searchState, pos);
                     hashLookup.removePosition(pos);
+                    onRemoveEntry(this, pos);
                     // listener.onRemove() might be missing here
                     // depends on onRemove() semantics
                 }
@@ -1582,6 +1584,15 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             } else {
                 return resultUnused ? null : readValue.readNull();
             }
+        }
+        
+        /**
+         * call when remove an entry in segment, regardless of local or remote remove, entry found or not found.<br>
+         * caller has held the segment write lock
+         * @param segment
+         * @param pos
+         */
+        void onRemoveEntry(Segment segment, long pos){
         }
 
         <KB, KBI, MKBI extends MetaBytesInterop<KB, ? super KBI>,

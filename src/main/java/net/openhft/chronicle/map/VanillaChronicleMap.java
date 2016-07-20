@@ -2618,7 +2618,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
         }
 
-        private void free(long fromPos, int chunks) {
+        void free(long fromPos, int chunks) {
             freeList.clear(fromPos, fromPos + chunks);
             if (fromPos < nextPosToSearchFrom)
                 nextPosToSearchFrom = fromPos;
