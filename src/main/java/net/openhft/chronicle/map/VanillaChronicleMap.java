@@ -155,7 +155,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
 
         lockTimeOutNS = builder.lockTimeOut(TimeUnit.NANOSECONDS);
 
-        boolean replicated = getClass() == ReplicatedChronicleMap.class;
+        boolean replicated = this instanceof ReplicatedChronicleMap;
         this.chunkSize = builder.chunkSize(replicated);
         this.alignment = builder.valueAlignment();
         this.constantlySizedEntry = builder.constantlySizedEntries();
@@ -2618,7 +2618,7 @@ class VanillaChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
             }
         }
 
-        private void free(long fromPos, int chunks) {
+        void free(long fromPos, int chunks) {
             freeList.clear(fromPos, fromPos + chunks);
             if (fromPos < nextPosToSearchFrom)
                 nextPosToSearchFrom = fromPos;
