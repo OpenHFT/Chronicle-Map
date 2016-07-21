@@ -29,6 +29,7 @@
     <version>2.4.16-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
+    <packaging>bundle</packaging>
 
 
     <dependencyManagement>
@@ -199,6 +200,42 @@
                         net.openhft.chronicle.hash.serialization.internal:net.openhft.xstream:net.openhft.xstream.*
                     </excludePackageNames>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
+                        <Bundle-Name>OpenHFT :: ${project.artifactId}</Bundle-Name>
+                        <Bundle-Version>${project.version}</Bundle-Version>
+                        <Import-Package>
+                            com.thoughtworks.xstream.*;resolution:=optional,
+                            org.jetbrains.annotations;resolution:=optional,
+                            org.intellij.lang.annotations;resolution:=optional,
+                            shaded.org.apache.maven.model.*;resolution:=optional,
+                            *
+                        </Import-Package>
+                        <Export-Package>
+                            net.openhft.chronicle.map.*,
+                            net.openhft.chronicle.set.*,
+                            net.openhft.chronicle.hash.*
+                        </Export-Package>
+                    </instructions>
+                </configuration>
+                <executions>
+                    <!--
+                      This execution makes sure that the manifest is available
+                      when the tests are executed
+                    -->
+                    <execution>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <!-- used to allow getClass().getPackage().getImplementationVersion() -->
