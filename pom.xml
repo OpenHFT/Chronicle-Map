@@ -31,7 +31,6 @@
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
 
-
     <dependencyManagement>
         <dependencies>
 
@@ -255,7 +254,6 @@
                 </configuration>
 
             </plugin>
-
 
         </plugins>
     </build>

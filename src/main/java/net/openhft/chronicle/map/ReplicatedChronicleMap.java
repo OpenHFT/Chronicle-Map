@@ -1908,7 +1908,6 @@ class ReplicatedChronicleMap<K, KI, MKI extends MetaBytesInterop<K, ? super KI>,
                         long offset = segment.offsetFromPos(segmentPos);
                         final Bytes entry = segment.reuse2(tmpBytes, offset);
 
-
                         // it may not be successful if the buffer can not be re-sized so we will
                         // process it later, by NOT clearing the changes.clear(position)
                         final boolean success = entryCallback.onEntry(entry,

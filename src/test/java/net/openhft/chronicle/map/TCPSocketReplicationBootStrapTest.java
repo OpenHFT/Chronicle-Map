@@ -46,6 +46,7 @@ import static org.junit.Assert.assertEquals;
 
 public class TCPSocketReplicationBootStrapTest {
 
+    Set<Thread> threads;
     private ReplicatedChronicleMap<Integer, ?, ?, CharSequence, ?, ?> map1;
     private ChronicleMap<Integer, CharSequence> map2;
 
@@ -108,7 +109,6 @@ public class TCPSocketReplicationBootStrapTest {
                 .replicated(replicationHubForChannelIdMap)
                 .create();
 
-
         channelIdMap.put("1", 1);
         SingleChronicleHashReplication replicationHubForChannelIdMap2 =
                 SingleChronicleHashReplication.builder().bootstrapOnlyLocalEntries(true)
@@ -122,7 +122,6 @@ public class TCPSocketReplicationBootStrapTest {
                 .replicated(replicationHubForChannelIdMap2)
                 .create();
 
-
         Thread.sleep(300);
 
         int map2Size = channelIdMap2.size();
@@ -130,7 +129,6 @@ public class TCPSocketReplicationBootStrapTest {
         channelIdMap2.close();
         assertEquals(1, map2Size);
     }
-
 
     @Test
     public void test2() throws IOException, InterruptedException {
@@ -144,11 +142,9 @@ public class TCPSocketReplicationBootStrapTest {
                         .createWithId((byte) 1))
                 .create();
 
-
         for (int i = 0; i < 500; i++) {
             map1.put("1st map " + Integer.toString(i), i);
         }
-
 
         final ChronicleMap<java.lang.String, Integer> map2 = ChronicleMapBuilder.of(java.lang.String
                 .class, Integer.class)
@@ -159,7 +155,6 @@ public class TCPSocketReplicationBootStrapTest {
                                 InetSocketAddress[]{new InetSocketAddress("localhost", 5035)}))
                         .createWithId((byte) 2))
                 .create();
-
 
         while (map2.size() != 500 || map1.size() != 500 || !map1.equals(map2)) {
             Thread.yield();
@@ -184,7 +179,6 @@ public class TCPSocketReplicationBootStrapTest {
 
         Assert.assertEquals(map1a, map2);
     }
-
 
     @Test
     public void testReplicationWhileModifying() throws IOException, InterruptedException {
@@ -217,7 +211,6 @@ public class TCPSocketReplicationBootStrapTest {
                         .createWithId((byte) 2))
                 .create();
 
-
         Executors.newSingleThreadExecutor().submit(new Runnable() {
             @Override
             public void run() {
@@ -227,7 +220,6 @@ public class TCPSocketReplicationBootStrapTest {
             }
         });
 
-
         while (map2.size() != 1000 || map1.size() != 1000 || !map1.equals(map2)) {
             Thread.yield();
         }
@@ -235,7 +227,6 @@ public class TCPSocketReplicationBootStrapTest {
         Assert.assertEquals(map1, map2);
 
     }
-
 
     @Test
     public void testBootstrapAndHeartbeat() throws IOException, InterruptedException {
@@ -249,7 +240,6 @@ public class TCPSocketReplicationBootStrapTest {
 
         final long bootStrapTimeStamp = map1.acquireModificationIterator((byte) 1).bootStrapTimeStamp();
         System.out.println("bootStrapTimeStamp=" + bootStrapTimeStamp);
-
 
         File persistenceFile = getPersistenceFile();
 
@@ -306,8 +296,6 @@ public class TCPSocketReplicationBootStrapTest {
         }
         System.gc();
     }
-
-    Set<Thread> threads;
 
     @Before
     public void sampleThreads() {
@@ -444,7 +432,6 @@ public class TCPSocketReplicationBootStrapTest {
 
     public class CacheMapListener<K, V> extends MapEventListener<K, V> {
 
-
         private Object firstPuttedValue = null;
 
         public CacheMapListener() {
@@ -468,7 +455,6 @@ public class TCPSocketReplicationBootStrapTest {
 
         }
     }
-
 
 }
 
