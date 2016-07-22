@@ -1,7 +1,5 @@
 # Chronicle Map
-<img align="right" src="http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png">
 
-#### Quick links
 **Documentation: <a href="#chronicle-map-3-tutorial">Tutorial</a>,
 <a href="http://www.javadoc.io/doc/net.openhft/chronicle-map/">Javadoc</a>**
 
@@ -9,6 +7,8 @@
 <a href="https://groups.google.com/forum/#!forum/java-chronicle">Chronicle
 mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle-map">Stackoverflow</a>,
 <a href="https://plus.google.com/communities/111431452027706917722">Chronicle User's group</a>**
+
+<img align="right" src="http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png">
 
 ### 3 min to understand everything about Chronicle Map
 
@@ -123,6 +123,11 @@ Chronicle Map doesn't support
     <td>Entry expiration timeouts</td>
   </tr>
 </table>
+
+### License
+
+Chronicle Map is distributed under LGPLv3. If you want to obtain this software under more permissive
+license, please contact the copyright holders.
 
 ### Peer projects
  - [Chronicle Engine](https://github.com/OpenHFT/Chronicle-Engine) - reactive processing framework
