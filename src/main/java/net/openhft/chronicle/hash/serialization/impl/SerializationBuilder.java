@@ -26,7 +26,7 @@ import net.openhft.chronicle.values.ValueModel;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
 
-import java.io.*;
+import java.io.Externalizable;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 
@@ -35,6 +35,20 @@ import static net.openhft.chronicle.hash.serialization.SizeMarshaller.stopBit;
 
 public final class SerializationBuilder<T> implements Cloneable {
 
+    public final Class<T> tClass;
+    public final boolean sizeIsStaticallyKnown;
+    boolean serializesGeneratedClasses = false;
+    private SizeMarshaller sizeMarshaller = stopBit();
+    private SizedReader<T> reader;
+    private DataAccess<T> dataAccess;
+
+    @SuppressWarnings("unchecked")
+    public SerializationBuilder(Class<T> tClass) {
+        this.tClass = tClass;
+        configureByDefault(tClass);
+        sizeIsStaticallyKnown = constantSizeMarshaller();
+    }
+    
     private static boolean concreteClass(Class c) {
         return !c.isInterface() && !Modifier.isAbstract(c.getModifiers());
     }
@@ -48,22 +62,6 @@ public final class SerializationBuilder<T> implements Cloneable {
                     "serializing/deserializing them in Chronicle Map header. Emulate enums by " +
                     "static final fields");
         }
-    }
-
-    public final Class<T> tClass;
-    private SizeMarshaller sizeMarshaller = stopBit();
-    private SizedReader<T> reader;
-    private DataAccess<T> dataAccess;
-
-    public final boolean sizeIsStaticallyKnown;
-    
-    boolean serializesGeneratedClasses = false;
-
-    @SuppressWarnings("unchecked")
-    public SerializationBuilder(Class<T> tClass) {
-        this.tClass = tClass;
-        configureByDefault(tClass);
-        sizeIsStaticallyKnown = constantSizeMarshaller();
     }
 
     @SuppressWarnings("unchecked")
@@ -98,7 +96,11 @@ public final class SerializationBuilder<T> implements Cloneable {
         if (concreteClass(tClass) && Byteable.class.isAssignableFrom(tClass)) {
             reader(new ByteableSizedReader<>((Class) tClass));
             dataAccess((DataAccess<T>) new ByteableDataAccess<>((Class) tClass));
-            sizeMarshaller(constant(((Byteable) OS.memory().allocateInstance(tClass)).maxSize()));
+            try {
+                sizeMarshaller(constant(((Byteable) OS.memory().allocateInstance(tClass)).maxSize()));
+            } catch (InstantiationException e) {
+                throw new IllegalStateException(e);
+            }
         } else if (tClass == CharSequence.class) {
             reader((SizedReader<T>) CharSequenceSizedReader.INSTANCE);
             dataAccess((DataAccess<T>) new CharSequenceUtf8DataAccess());

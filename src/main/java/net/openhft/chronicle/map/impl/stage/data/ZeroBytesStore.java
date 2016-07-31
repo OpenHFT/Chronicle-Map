@@ -23,10 +23,26 @@ import net.openhft.chronicle.core.OS;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     INSTANCE;
+
+    @Override
+    public int peekUnsignedByte(long offset) {
+        return 0;
+    }
+
+    @Override
+    public int readVolatileInt(long offset) throws BufferUnderflowException {
+        return 0;
+    }
+
+    @Override
+    public boolean isDirectMemory() {
+        return false;
+    }
 
     @Override
     public byte readByte(long offset) {
@@ -61,11 +77,6 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     @Override
     public void nativeRead(long position, long address, long size) {
         OS.memory().setMemory(address, size, (byte) 0);
-    }
-
-    @Override
-    public boolean isNative() {
-        return false;
     }
 
     @Override
