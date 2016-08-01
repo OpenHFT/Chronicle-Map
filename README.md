@@ -2031,3 +2031,20 @@ try (ChronicleMap<Integer, LongValue> map = ChronicleMap
     }
 }
 ```
+
+
+## FAQ's
+
+### Question
+
+I am investigating Chronicle Map as a potential replacement of Redis - with concurrency in mind. In our architecture we would be looking to replace a "large" Redis instance that currently has multiple clients connecting to it causing latency pileups due to Redis' blocking nature.
+
+The issue is that we need to make requests in random batches of ~1000. With Redis we are able to make a single request via a Lua script (or multi-get / multi-set commands) and receive a single response. In the documentation on Chronicle Maps stateless client I see that the remote calls are blocking and can be made only one key at a time, so for us the solution is not obvious.
+
+While I am considering passing off each individual key task to a threadpool running X blocking threads at a time, I wonder if there might be a better solution that could take advantage of doing RPC in batches and perhaps work asynchronously. As I do not see this available currently, my questions are whether this is an enhancement you might consider or if you could perhaps point me to if/how we could write our own solution for doing this - which we'd be open to contributing back...
+
+### Answer
+
+stateless client is has been to be replaced with Engine. It is already not supported for 
+ChronicleMap 3.x.  ( for the rest of the answer on this question please refer to Chronile Engine 
+FAQ's )
