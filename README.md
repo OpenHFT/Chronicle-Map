@@ -2043,8 +2043,23 @@ The issue is that we need to make requests in random batches of ~1000. With Redi
 
 While I am considering passing off each individual key task to a threadpool running X blocking threads at a time, I wonder if there might be a better solution that could take advantage of doing RPC in batches and perhaps work asynchronously. As I do not see this available currently, my questions are whether this is an enhancement you might consider or if you could perhaps point me to if/how we could write our own solution for doing this - which we'd be open to contributing back...
 
+Also, is there a reason these 1000 gets have be done serially in one thread? Why not submit 1000 get() tasks to a pool of say 20 threads, shouldn't this improve throughput / reduce latency?
+
 ### Answer
 
 stateless client is has been to be replaced with Engine. It is already not supported for 
 ChronicleMap 3.x.  ( for the rest of the answer on this question please refer to Chronile Engine 
 FAQ's )
+
+For get()s, sure parallelizing will reduce costs. For put()s, if you have concurrency requirements, i. e. multi-key lock before updating all of them, of cause it should be in one thread.
+
+The stateless client which was avaible in the last version gives better performance if you use a 
+number
+ of 
+threads - 
+see 
+https://github.com/OpenHFT/Chronicle-Map#how-to-speed-up-the-chronicle-map-stateless-client <https://github.com/OpenHFT/Chronicle-Map#how-to-speed-up-the-chronicle-map-stateless-client>
+
+I don’t see that you would gain a performance benefit, in using batches, unless you are compressing the batch of data. All the data will have to be sent via tcp anyway, even if its in a batch.
+
+Note : under high load the chronicle map stateless client consolidates many small TCP request into a single request ( when run with a number of threads. )
