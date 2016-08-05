@@ -55,8 +55,8 @@ public abstract class ThreadLocalState {
      * is a nested context.
      */
     public boolean lockContextLocally() {
-        // h().isOpen() check guarantees no starvation of a thread calling chMap.close() and trying
-        // to close this context by closeContext() method below, while the thread owning this
+        // hash().isOpen() check guarantees no starvation of a thread calling chMap.close() and
+        // trying to close this context by closeContext() method below, while the thread owning this
         // context frequently locks and unlocks it (e. g. in a loop). This is also the only check
         // for chMap openness during the whole context usage lifecycle.
         if (hash().isOpen() && MEMORY.compareAndSwapInt(this, CONTEXT_LOCK_OFFSET,
@@ -65,7 +65,9 @@ public abstract class ThreadLocalState {
         } else {
             if (contextLock == CONTEXT_LOCKED_LOCALLY)
                 return false;
-            if (contextLock == CONTEXT_CLOSED)
+            // Don't extract this hash().isOpen() and the one above, because they could different
+            // results (the first (above) could return true, the second (below) - false).
+            if (!hash().isOpen())
                 throw new ChronicleHashClosedException();
             throw new AssertionError("Unknown context lock state: " + contextLock);
         }
