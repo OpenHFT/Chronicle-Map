@@ -20,6 +20,7 @@ package net.openhft.chronicle.hash.impl.stage.hash;
 import net.openhft.chronicle.core.Memory;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.ChronicleHashClosedException;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -65,7 +66,7 @@ public abstract class ThreadLocalState {
             if (contextLock == CONTEXT_LOCKED_LOCALLY)
                 return false;
             if (contextLock == CONTEXT_CLOSED)
-                throw new IllegalStateException("Access to ChronicleHash after close()");
+                throw new ChronicleHashClosedException();
             throw new AssertionError("Unknown context lock state: " + contextLock);
         }
     }

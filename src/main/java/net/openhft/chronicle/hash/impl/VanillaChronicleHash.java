@@ -1002,7 +1002,7 @@ public abstract class VanillaChronicleHash<K,
 
     private void checkOpen() {
         if (closed)
-            throw new IllegalStateException("Access to ChronicleHash after close()");
+            throw new ChronicleHashClosedException();
     }
 
     protected void addContext(ChainingInterface context) {

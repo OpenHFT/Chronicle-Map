@@ -165,9 +165,10 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * collection. This could be a problem if, for example, you target rare garbage collections,
      * but load and drop {@code ChronicleHash}es regularly.
      *
-     * <p>After this method call behaviour of <i>all</i> methods of {@code ChronicleMap}
-     * or {@code ChronicleSet} is undefined. <i>Any</i> method call on the map might throw
-     * <i>any</i> exception, or even JVM crash. Shortly speaking, don't call use map closing.
+     * <p>After this method call, all methods, querying the {@code ChronicleHash}'s entries, {@link
+     * #longSize()} and {@code size()}), throw {@link ChronicleHashClosedException}. {@link
+     * #isOpen()} returns {@code false}, {@code close()} itself returns immediately without effects
+     * (i. e. repetitive {@code close()}, even from concurrent threads, are safe).
      */
     @Override
     void close();

@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,6 +33,38 @@ public class MapCloseTest {
                 ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
         ExternalMapQueryContext<Integer, Integer, ?> cxt = map.queryContext(1);
         map.close();
+    }
+
+    @Test(expected = ChronicleHashClosedException.class)
+    public void testGetAfterCloseThrowsChronicleHashClosedException() throws InterruptedException {
+        ChronicleMap<Integer, Integer> map =
+                ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+        Thread t = new Thread(() -> map.close());
+        t.start();
+        t.join();
+        map.get(1);
+    }
+
+    @Test(expected = ChronicleHashClosedException.class)
+    public void testIterationAfterCloseThrowsChronicleHashClosedException()
+            throws InterruptedException {
+        ChronicleMap<Integer, Integer> map =
+                ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+        Thread t = new Thread(() -> map.close());
+        t.start();
+        t.join();
+        map.forEach((k, v) -> {});
+    }
+
+    @Test(expected = ChronicleHashClosedException.class)
+    public void testSizeAfterCloseThrowsChronicleHashClosedException()
+            throws InterruptedException {
+        ChronicleMap<Integer, Integer> map =
+                ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+        Thread t = new Thread(() -> map.close());
+        t.start();
+        t.join();
+        map.size();
     }
 
     @Test(expected = RuntimeException.class)
