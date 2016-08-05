@@ -715,17 +715,6 @@ public abstract class VanillaChronicleHash<K,
         return (int) (sizeInBytes / chunkSize) + 1;
     }
 
-    @Override
-    public final long longSize() {
-        long result = 0L;
-        for (int i = 0; i < segments(); i++) {
-            try (SC c = segmentContext(i)) {
-                result += c.size();
-            }
-        }
-        return result;
-    }
-
     public final int size() {
         long size = longSize();
         return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
