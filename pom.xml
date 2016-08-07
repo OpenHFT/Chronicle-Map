@@ -15,8 +15,7 @@
   ~      along with this program.  If not, see <http://www.gnu.org/licenses />.
   -->
 
-<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <parent>
         <groupId>net.openhft</groupId>
@@ -27,7 +26,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-map</artifactId>
-    <version>3.10.0-SNAPSHOT</version>
+    <version>3.10.0</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
@@ -386,7 +385,7 @@
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</connection>
         <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</developerConnection>
-        <tag>master</tag>
+        <tag>chronicle-map-3.10.0</tag>
     </scm>
 
 </project>
