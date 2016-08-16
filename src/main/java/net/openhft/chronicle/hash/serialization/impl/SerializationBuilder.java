@@ -37,7 +37,6 @@ public final class SerializationBuilder<T> implements Cloneable {
 
     public final Class<T> tClass;
     public final boolean sizeIsStaticallyKnown;
-    boolean serializesGeneratedClasses = false;
     private SizeMarshaller sizeMarshaller = stopBit();
     private SizedReader<T> reader;
     private DataAccess<T> dataAccess;
@@ -75,17 +74,15 @@ public final class SerializationBuilder<T> implements Cloneable {
         if (tClass.isInterface() && Values.isValueInterfaceOrImplClass(tClass)) {
             try {
                 // Acquire a model before assigning readers/writers
-                // if the interface is not
+                // if the interface is not a value interface
                 ValueModel valueModel = ValueModel.acquire(tClass);
                 reader((BytesReader<T>) new ValueReader<>(tClass));
                 dataAccess(new ValueDataAccess<>(tClass));
                 sizeMarshaller(constant((long) valueModel.sizeInBytes()));
-                serializesGeneratedClasses = true;
                 return;
             } catch (Exception e) {
                 try {
                     tClass = Values.nativeClassFor(tClass);
-                    serializesGeneratedClasses = true;
                 } catch (Exception ex) {
                     // ignore, fall through
                 }

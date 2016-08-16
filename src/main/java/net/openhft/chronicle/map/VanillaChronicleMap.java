@@ -170,6 +170,18 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
+    public final long longSize() {
+        long result = 0L;
+        try (IterationContext<K, V, ?> c = iterationContext()) {
+            for (int segmentIndex = 0; segmentIndex < segments(); segmentIndex++) {
+                c.initSegmentIndex(segmentIndex);
+                result += c.size();
+            }
+        }
+        return result;
+    }
+
+    @Override
     public Class<K> keyClass() {
         return keyClass;
     }
