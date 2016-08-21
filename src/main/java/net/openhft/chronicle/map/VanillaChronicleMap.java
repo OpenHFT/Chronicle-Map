@@ -152,7 +152,9 @@ public class VanillaChronicleMap<K, V, R>
 
     public void recover() throws IOException {
         basicRecover();
-        iterationContext().recoverSegments();
+        try (IterationContext<K, V, ?> iterationContext = iterationContext()) {
+            iterationContext.recoverSegments();
+        }
     }
 
     private void initOwnTransients() {
