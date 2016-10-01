@@ -1504,12 +1504,17 @@ public final class ChronicleMapBuilder<K, V> implements
         } finally {
             if (result != null) {
                 result.registerRafReleaser();
-                // Ensure safe publication of a ChronicleMap
-                OS.memory().storeFence();
+                prepareMapPublication(result);
             } else {
                 CanonicalRandomAccessFiles.release(file);
             }
         }
+    }
+
+    private static void prepareMapPublication(VanillaChronicleMap map) {
+        // Ensure safe publication of a ChronicleMap
+        OS.memory().storeFence();
+        ChronicleMapCloseOnExitHook.add(map);
     }
 
     /**
@@ -1669,8 +1674,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     lazyNativeBytesStoreWithFixedCapacity(map.sizeInBytesWithoutTiers());
             map.createMappedStoreAndSegments(bytesStore);
             establishReplication(map);
-            // Ensure "safe publication" of a ChronicleMap
-            OS.memory().storeFence();
+            prepareMapPublication(map);
             return map;
         } catch (IOException e) {
             // file-less version should never trigger an IOException.

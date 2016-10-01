@@ -164,11 +164,24 @@ public abstract class VanillaChronicleHash<K,
 
     private transient ArrayList<WeakReference<ChainingInterface>> allContexts;
 
-    public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder) {
-        createdOrInMemory = true;
+    /**
+     * {@link net.openhft.chronicle.map.ChronicleMapCloseOnExitHook} needs to use
+     * {@code VanillaChronicleHash}es as WeakHashMap keys, but with identity comparison, not Map's
+     * equals() and hashCode().
+     */
+    public class Identity {
+        public VanillaChronicleHash hash() {
+            return VanillaChronicleHash.this;
+        }
+    }
 
+    public transient Identity identity;
+
+    public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder) {
         // Version
         dataFileVersion = BuildVersion.version();
+
+        createdOrInMemory = true;
 
         @SuppressWarnings({"deprecation", "unchecked"})
         ChronicleHashBuilderPrivateAPI<K, ?> privateAPI =
@@ -231,12 +244,12 @@ public abstract class VanillaChronicleHash<K,
     }
 
     protected void readMarshallableFields(@NotNull WireIn wireIn) {
+        dataFileVersion = wireIn.read(() -> "dataFileVersion").text();
+
         // Previously this assignment was done in default field initializer, but with Wire
         // serialization VanillaChronicleMap instance is created with unsafe.allocateInstance(),
         // that doesn't guarantee (?) to initialize fields with default values (false for boolean)
         createdOrInMemory = false;
-
-        dataFileVersion = wireIn.read(() -> "dataFileVersion").text();
 
         keyClass = wireIn.read(() -> "keyClass").typeLiteral();
         keySizeMarshaller = wireIn.read(() -> "keySizeMarshaller").typedMarshallable();
@@ -385,6 +398,7 @@ public abstract class VanillaChronicleHash<K,
                     tierHashLookupSlotSize + " observed");
         }
         allContexts = new ArrayList<>();
+        identity = new Identity();
     }
 
     public final void initBeforeMapping(
