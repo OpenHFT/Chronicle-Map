@@ -572,7 +572,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     public CompiledReplicatedMapQueryContext<K, V, R> mapContext() {
         //noinspection unchecked
         return q().getContext(CompiledReplicatedMapQueryContext.class,
-                ci -> new CompiledReplicatedMapQueryContext<>(ci, this));
+                // lambda is used instead of constructor reference because currently stage-compiler
+                // has issues with parsing method/constructor refs.
+                // TODO replace with constructor ref when stage-compiler is improved
+                (c, m) -> new CompiledReplicatedMapQueryContext<K, V, R>(c, m), this);
     }
 
     /**
@@ -606,7 +609,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     public CompiledReplicatedMapIterationContext<K, V, R> iterationContext() {
         //noinspection unchecked
         return i().getContext(CompiledReplicatedMapIterationContext.class,
-                ci -> new CompiledReplicatedMapIterationContext<>(ci, this));
+                // lambda is used instead of constructor reference because currently stage-compiler
+                // has issues with parsing method/constructor refs.
+                // TODO replace with constructor ref when stage-compiler is improved
+                (c, m) -> new CompiledReplicatedMapIterationContext<K, V, R>(c, m), this);
     }
 
     /**

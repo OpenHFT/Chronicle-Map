@@ -22,19 +22,17 @@ import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.VanillaChronicleMap;
 import net.openhft.chronicle.set.ChronicleSet;
+import net.openhft.sg.Staged;
 
+@Staged
 public interface VanillaChronicleMapHolder<K, V, R> extends VanillaChronicleHashHolder<K> {
     
     VanillaChronicleMap<K, V, R> m();
 
     @Override
-    default VanillaChronicleHash<K, ?, ?, ?> h() {
-        return m();
-    }
+    VanillaChronicleHash<K, ?, ?, ?> h();
 
-    default ChronicleMap<K, V> map() {
-        return m();
-    }
+    ChronicleMap<K, V> map();
 
     ChronicleSet<K> set();
 }

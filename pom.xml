@@ -170,7 +170,7 @@
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>stage-compiler</artifactId>
-            <version>1.11</version>
+            <version>1.12</version>
             <scope>provided</scope>
         </dependency>
 
@@ -225,6 +225,14 @@
                     <target>1.8</target>
                     <encoding>UTF-8</encoding>
                     <useIncrementalCompilation>false</useIncrementalCompilation>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <trimStackTrace>false</trimStackTrace>
                 </configuration>
             </plugin>
 
@@ -368,6 +376,15 @@
 
     <repositories>
         <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>http://repo.maven.apache.org/maven2</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
             <id>Snapshot Repository</id>
             <name>Snapshot Repository</name>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
@@ -379,6 +396,12 @@
                 <enabled>false</enabled>
                 <updatePolicy>never</updatePolicy>
             </releases>
+        </repository>
+        <repository>
+            <!-- For Spoon, a dependency of stage-compiler-->
+            <id>gforge.inria.fr-release</id>
+            <name>Maven Repository for JDT Compiler release</name>
+            <url>http://spoon.gforge.inria.fr/repositories/releases</url>
         </repository>
     </repositories>
 

@@ -18,11 +18,13 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.ref.WeakReference;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +38,27 @@ class OldDeletedEntriesCleanupThread extends Thread
         implements Closeable, Predicate<ReplicableEntry> {
     private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanupThread.class);
 
-    private final ReplicatedChronicleMap<?, ?, ?> map;
+    /**
+     * Don't store a strong ref to a map in order to avoid it's leaking, if the user forgets to
+     * close() map, from where this thread is shut down explicitly. Dereference map within
+     * a single method, {@link #cleanupSegment()}. The map has a chance to be collected by GC when
+     * this thread is sleeping after cleaning up a segment.
+     */
+    private final WeakReference<ReplicatedChronicleMap<?, ?, ?>> mapRef;
+    /**
+     * {@code cleanupTimeout}, {@link #cleanupTimeoutUnit} and {@link #segments} are parts of the
+     * cleaned Map's state, extracted in order to minimize accesses to the map.
+     *
+     * @see ChronicleHashBuilderPrivateAPI#removedEntryCleanupTimeout(long, TimeUnit)
+     */
+    private final long cleanupTimeout;
+    private final TimeUnit cleanupTimeoutUnit;
+    private final int segments;
+
+    /**
+     * {@code segmentsPermutation} and {@link #inverseSegmentsPermutation} determine random order,
+     * in which segments are cleaned up.
+     */
     private final int[] segmentsPermutation;
     private final int[] inverseSegmentsPermutation;
 
@@ -52,9 +74,13 @@ class OldDeletedEntriesCleanupThread extends Thread
     private long prevSegment0ScanStart = -1;
     private long removedCompletely;
 
-    public OldDeletedEntriesCleanupThread(ReplicatedChronicleMap<?, ?, ?> map) {
+    OldDeletedEntriesCleanupThread(ReplicatedChronicleMap<?, ?, ?> map) {
         super("Cleanup Thread for ReplicatedChronicleMap persisted to " + map.file());
-        this.map = map;
+        this.mapRef = new WeakReference<>(map);
+        cleanupTimeout = map.cleanupTimeout;
+        cleanupTimeoutUnit = map.cleanupTimeoutUnit;
+        segments = map.segments();
+
         segmentsPermutation = randomPermutation(map.segments());
         inverseSegmentsPermutation = inversePermutation(segmentsPermutation);
     }
@@ -62,31 +88,14 @@ class OldDeletedEntriesCleanupThread extends Thread
     @Override
     public void run() {
         while (!shutdown) {
-            int segmentIndex = map.globalMutableState().getCurrentCleanupSegmentIndex();
-            int nextSegmentIndex;
-            try (MapSegmentContext<?, ?, ?> context = map.segmentContext(segmentIndex)) {
-                if (segmentIndex == 0)
-                    prevSegment0ScanStart = currentTime();
-                removedCompletely = 0;
-                if (((ReplicatedHashSegmentContext<?, ?>) context)
-                        .forEachSegmentReplicableEntryWhile(this)) {
-                    LOG.debug("Removed {} old deleted entries in the segment {}",
-                            removedCompletely, segmentIndex);
-                    nextSegmentIndex = nextSegmentIndex(segmentIndex);
-                    map.globalMutableState().setCurrentCleanupSegmentIndex(nextSegmentIndex);
-                } else {
-                    // forEachWhile returned false => interrupted => shutdown = true
-                    assert shutdown;
-                    return;
-                }
-            }
+            int nextSegmentIndex = cleanupSegment();
+            if (nextSegmentIndex == -1)
+                return;
             if (nextSegmentIndex == 0) {
                 long currentTime = currentTime();
-                TimeUnit cleanupTimeoutUnit = map.cleanupTimeoutUnit;
                 long mapScanTime = systemTimeIntervalBetween(
                         prevSegment0ScanStart, currentTime, cleanupTimeoutUnit);
                 LOG.debug("Old deleted entries scan time: {} {}", mapScanTime, cleanupTimeoutUnit);
-                long cleanupTimeout = map.cleanupTimeout;
                 if (mapScanTime < cleanupTimeout) {
                     long timeToSleep = cleanupTimeoutUnit.toMillis(cleanupTimeout - mapScanTime);
                     if (timeToSleep > 0) {
@@ -99,14 +108,42 @@ class OldDeletedEntriesCleanupThread extends Thread
         }
     }
 
+    /**
+     * @return next segment index to cleanup, or -1 if cleanup thread should be shut down
+     */
+    private int cleanupSegment() {
+        ReplicatedChronicleMap<?, ?, ?> map = mapRef.get();
+        if (map == null)
+            return -1;
+        int segmentIndex = map.globalMutableState().getCurrentCleanupSegmentIndex();
+        int nextSegmentIndex;
+        try (MapSegmentContext<?, ?, ?> context = map.segmentContext(segmentIndex)) {
+            if (segmentIndex == 0)
+                prevSegment0ScanStart = currentTime();
+            removedCompletely = 0;
+            if (((ReplicatedHashSegmentContext<?, ?>) context)
+                    .forEachSegmentReplicableEntryWhile(this)) {
+                LOG.debug("Removed {} old deleted entries in the segment {}",
+                        removedCompletely, segmentIndex);
+                nextSegmentIndex = nextSegmentIndex(segmentIndex);
+                map.globalMutableState().setCurrentCleanupSegmentIndex(nextSegmentIndex);
+                return nextSegmentIndex;
+            } else {
+                // forEachWhile returned false => interrupted => shutdown = true
+                assert shutdown;
+                return -1;
+            }
+        }
+    }
+
     @Override
     public boolean test(ReplicableEntry e) {
         if (shutdown)
             return false;
         if (e instanceof MapAbsentEntry) {
             long deleteTimeout = systemTimeIntervalBetween(
-                    e.originTimestamp(), currentTime(), map.cleanupTimeoutUnit);
-            if (deleteTimeout > map.cleanupTimeout && !e.isChanged()) {
+                    e.originTimestamp(), currentTime(), cleanupTimeoutUnit);
+            if (deleteTimeout > cleanupTimeout && !e.isChanged()) {
                 e.doRemoveCompletely();
                 removedCompletely++;
             }
@@ -136,7 +173,7 @@ class OldDeletedEntriesCleanupThread extends Thread
 
     private int nextSegmentIndex(int segmentIndex) {
         int permutationIndex = inverseSegmentsPermutation[segmentIndex];
-        int nextPermutationIndex = (permutationIndex + 1) % map.segments();
+        int nextPermutationIndex = (permutationIndex + 1) % segments;
         return segmentsPermutation[nextPermutationIndex];
     }
 

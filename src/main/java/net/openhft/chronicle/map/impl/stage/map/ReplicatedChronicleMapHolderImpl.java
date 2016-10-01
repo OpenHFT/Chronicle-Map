@@ -18,29 +18,41 @@
 package net.openhft.chronicle.map.impl.stage.map;
 
 import net.openhft.chronicle.hash.ChronicleHash;
+import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
+import net.openhft.chronicle.map.VanillaChronicleMap;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.chronicle.set.ChronicleSet;
+import net.openhft.sg.Stage;
 import net.openhft.sg.Staged;
 
 @Staged
-public abstract class ReplicatedChronicleMapHolderImpl<K, V, R> extends Chaining
+public abstract class ReplicatedChronicleMapHolderImpl<K, V, R>
+        extends Chaining
         implements ReplicatedChronicleMapHolder<K, V, R> {
 
-    private final ReplicatedChronicleMap<K, V, R> m;
+    @Stage("Map") private ReplicatedChronicleMap<K, V, R> m = null;
 
-    public ReplicatedChronicleMapHolderImpl(ReplicatedChronicleMap<K, V, R> m) {
-        super();
-        this.m = m;
+    public ReplicatedChronicleMapHolderImpl(VanillaChronicleMap map) {
+        super(map);
     }
 
     public ReplicatedChronicleMapHolderImpl(
-            ChainingInterface c, ReplicatedChronicleMap<K, V, R> m) {
-        super(c);
-        this.m = m;
+            ChainingInterface rootContextInThisThread, VanillaChronicleMap map) {
+        super(rootContextInThisThread, map);
+    }
+
+    @Override
+    public void initMap(VanillaChronicleMap map) {
+        // alternative to this "unsafe" casting approach is proper generalization
+        // of Chaining/ChainingInterface, but this causes issues with current version
+        // of stage-compiler.
+        // TODO generalize Chaining with <M extends VanillaCM> when stage-compiler is improved.
+        //noinspection unchecked
+        m = (ReplicatedChronicleMap<K, V, R>) map;
     }
 
     @Override
@@ -49,8 +61,13 @@ public abstract class ReplicatedChronicleMapHolderImpl<K, V, R> extends Chaining
     }
 
     @Override
+    public VanillaChronicleHash<K, ?, ?, ?> h() {
+        return m;
+    }
+
+    @Override
     public ChronicleMap<K, V> map() {
-        return m();
+        return m;
     }
 
     @Override
@@ -58,7 +75,6 @@ public abstract class ReplicatedChronicleMapHolderImpl<K, V, R> extends Chaining
         return m.chronicleSet;
     }
 
-    @Override
     public ChronicleHash<K, ?, ?, ?> hash() {
         return set() != null ? set() : map();
     }

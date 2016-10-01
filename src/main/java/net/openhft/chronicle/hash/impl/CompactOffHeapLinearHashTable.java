@@ -92,6 +92,11 @@ public abstract class CompactOffHeapLinearHashTable {
         this.valueMask = mask(valueBits);
     }
 
+    /**
+     * Must not store {@code h} in a field, to avoid memory leaks.
+     *
+     * @see net.openhft.chronicle.hash.impl.stage.hash.Chaining#initMap
+     */
     CompactOffHeapLinearHashTable(VanillaChronicleHash h) {
         this(h.tierHashLookupCapacity, h.tierHashLookupSlotSize, h.tierHashLookupKeyBits,
                 h.tierHashLookupValueBits);

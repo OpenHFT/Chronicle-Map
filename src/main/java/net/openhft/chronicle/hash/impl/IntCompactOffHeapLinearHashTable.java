@@ -23,6 +23,11 @@ public final class IntCompactOffHeapLinearHashTable extends CompactOffHeapLinear
 
     private static final long SCALE = 4L;
 
+    /**
+     * Must not store {@code h} in a field, to avoid memory leaks.
+     *
+     * @see net.openhft.chronicle.hash.impl.stage.hash.Chaining#initMap
+     */
     IntCompactOffHeapLinearHashTable(VanillaChronicleHash h) {
         super(h);
     }

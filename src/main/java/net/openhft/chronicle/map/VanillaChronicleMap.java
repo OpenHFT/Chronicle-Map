@@ -276,7 +276,10 @@ public class VanillaChronicleMap<K, V, R>
     public QueryContextInterface<K, V, R> mapContext() {
         //noinspection unchecked
         return q().getContext(CompiledMapQueryContext.class,
-                ci -> new CompiledMapQueryContext<>(ci, this));
+                // lambda is used instead of constructor reference because currently stage-compiler
+                // has issues with parsing method/constructor refs.
+                // TODO replace with constructor ref when stage-compiler is improved
+                (c, m) -> new CompiledMapQueryContext<K, V, R>(c, m), this);
     }
 
     private ChainingInterface i() {
@@ -290,9 +293,14 @@ public class VanillaChronicleMap<K, V, R>
         return iterContext;
     }
 
-    public IterationContext<K, V, ?> iterationContext() {
-        return i().getContext(CompiledMapIterationContext.class,
-                ci -> new CompiledMapIterationContext<>(ci, this));
+    public IterationContext<K, V, R> iterationContext() {
+        //noinspection unchecked
+        return i().getContext(
+                CompiledMapIterationContext.class,
+                // lambda is used instead of constructor reference because currently stage-compiler
+                // has issues with parsing method/constructor refs.
+                // TODO replace with constructor ref when stage-compiler is improved
+                (c, m) -> new CompiledMapIterationContext<K, V, R>(c, m), this);
     }
 
     @Override
