@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
 
 public abstract class ThreadLocalState {
-    public boolean iterationContextLockedInThisThread;
 
     private static final Memory MEMORY = OS.memory();
     private static final long CONTEXT_LOCK_OFFSET;
@@ -49,6 +48,7 @@ public abstract class ThreadLocalState {
     }
 
     private volatile int contextLock = CONTEXT_UNLOCKED;
+    public boolean iterationContextLockedInThisThread;
 
     /**
      * Returns {@code true} if this is the outer context lock in this thread, {@code false} if this
