@@ -71,4 +71,6 @@ public final class CanonicalRandomAccessFiles {
             }
         });
     }
+
+    private CanonicalRandomAccessFiles() {}
 }
