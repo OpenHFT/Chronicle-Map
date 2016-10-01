@@ -75,7 +75,7 @@ public abstract class ThreadLocalState {
 
     public void unlockContextLocally() {
         // Ensure all reads from mapped memory are done before thread calling chronicleMap.close()
-        // frees resources potentially nulling some pointer used in those reads.
+        // frees resources potentially unmapping some memory from where those reads are performed.
         MEMORY.loadFence();
         // Avoid volatile write to avoid expensive store-load barrier
         MEMORY.writeOrderedInt(this, CONTEXT_LOCK_OFFSET, CONTEXT_UNLOCKED);
