@@ -36,7 +36,6 @@ import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
-import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.ValueModel;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.TextWire;
@@ -56,8 +55,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Double.isNaN;
@@ -124,10 +121,10 @@ public final class ChronicleMapBuilder<K, V> implements
     private static final int NO_ALIGNMENT = 1;
 
     /**
-     * If want to increase this number, note {@link OldDeletedEntriesCleanup} uses array to store
-     * all segment indexes -- so it could be current JVM max array size, not Integer.MAX_VALUE
-     * (which is an obvious limitation, as many APIs and internals use int type for representing
-     * segment index).
+     * If want to increase this number, note {@link OldDeletedEntriesCleanupThread} uses array
+     * to store all segment indexes -- so it could be current JVM max array size,
+     * not Integer.MAX_VALUE (which is an obvious limitation, as many APIs and internals use int
+     * type for representing segment index).
      *
      * Anyway, unlikely anyone ever need more than 1 billion segments.
      */
@@ -1729,20 +1726,15 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private void establishCleanupThread(ReplicatedChronicleMap map) {
-        OldDeletedEntriesCleanup cleanup = new OldDeletedEntriesCleanup(map);
-        NamedThreadFactory threadFactory =
-                new NamedThreadFactory("cleanup thread for map persisted at " + map.file());
-        ExecutorService executor = Executors.newSingleThreadExecutor(threadFactory);
-        executor.submit(cleanup);
-
-        map.addCloseable(cleanup);
+        OldDeletedEntriesCleanupThread cleanupThread = new OldDeletedEntriesCleanupThread(map);
+        map.addCloseable(cleanupThread);
+        cleanupThread.start();
         // WARNING this relies on the fact that ReplicatedChronicleMap closes closeables in the same
-        // order as they are added, i. e. OldDeletedEntriesCleanup instance close()d before the
-        // following closeable
+        // order as they are added, i. e. OldDeletedEntriesCleanupThread instance close()d before
+        // the following closeable
         map.addCloseable(() -> {
-            executor.shutdown();
             try {
-                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+                cleanupThread.join();
             } catch (InterruptedException e) {
                 LOG.error("", e);
             }

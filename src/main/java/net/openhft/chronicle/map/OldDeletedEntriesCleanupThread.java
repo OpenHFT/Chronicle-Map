@@ -32,18 +32,28 @@ import java.util.function.Predicate;
 import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 import static net.openhft.chronicle.hash.replication.TimeProvider.systemTimeIntervalBetween;
 
-class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<ReplicableEntry> {
-    private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanup.class);
+class OldDeletedEntriesCleanupThread extends Thread
+        implements Closeable, Predicate<ReplicableEntry> {
+    private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanupThread.class);
 
     private final ReplicatedChronicleMap<?, ?, ?> map;
     private final int[] segmentsPermutation;
     private final int[] inverseSegmentsPermutation;
+
+    /**
+     * This object is used to determine that this thread is parked from {@link #sleepMillis(long)}
+     * or {@link #sleepNanos(long)}, not somewhere inside ChronicleMap logic, to interrupt()
+     * selectively in {@link #close()}.
+     */
+    private final Object cleanupSleepingHandle = new Object();
+
     private volatile boolean shutdown;
-    private volatile Thread runnerThread;
+
     private long prevSegment0ScanStart = -1;
     private long removedCompletely;
 
-    public OldDeletedEntriesCleanup(ReplicatedChronicleMap<?, ?, ?> map) {
+    public OldDeletedEntriesCleanupThread(ReplicatedChronicleMap<?, ?, ?> map) {
+        super("Cleanup Thread for ReplicatedChronicleMap persisted to " + map.file());
         this.map = map;
         segmentsPermutation = randomPermutation(map.segments());
         inverseSegmentsPermutation = inversePermutation(segmentsPermutation);
@@ -51,7 +61,6 @@ class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<Replica
 
     @Override
     public void run() {
-        runnerThread = Thread.currentThread();
         while (!shutdown) {
             int segmentIndex = map.globalMutableState().getCurrentCleanupSegmentIndex();
             int nextSegmentIndex;
@@ -108,23 +117,21 @@ class OldDeletedEntriesCleanup implements Runnable, Closeable, Predicate<Replica
     private void sleepMillis(long millis) {
         long deadline = System.currentTimeMillis() + millis;
         while (System.currentTimeMillis() < deadline && !shutdown)
-            LockSupport.parkUntil(this, deadline);
+            LockSupport.parkUntil(cleanupSleepingHandle, deadline);
     }
 
     private void sleepNanos(long nanos) {
         long deadline = System.nanoTime() + nanos;
         while (System.nanoTime() < deadline && !shutdown)
-            LockSupport.parkNanos(this, deadline);
+            LockSupport.parkNanos(cleanupSleepingHandle, deadline);
     }
 
     @Override
     public void close() {
         shutdown = true;
-        if (runnerThread != null &&
-                // this means blocked in sleepMillis() or sleepNanos()
-                LockSupport.getBlocker(runnerThread) == this) {
-            runnerThread.interrupt(); // unblock
-        }
+        // this means blocked in sleepMillis() or sleepNanos()
+        if (LockSupport.getBlocker(this) == cleanupSleepingHandle)
+            this.interrupt(); // unblock
     }
 
     private int nextSegmentIndex(int segmentIndex) {
