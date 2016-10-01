@@ -560,10 +560,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
     
     private ChainingInterface q() {
-        ChainingInterface queryContext;
-        queryContext = cxt.get();
+        //noinspection unchecked
+        ChainingInterface queryContext = cxt.get();
         if (queryContext == null) {
-            queryContext = new CompiledReplicatedMapQueryContext<>(ReplicatedChronicleMap.this);
+            queryContext = new CompiledReplicatedMapQueryContext<>(this);
             addContext(queryContext);
             cxt.set(queryContext);
         }
@@ -595,10 +595,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     private ChainingInterface i() {
-        ChainingInterface iterContext;
-        iterContext = cxt.get();
+        //noinspection unchecked
+        ChainingInterface iterContext = cxt.get();
         if (iterContext == null) {
-            iterContext = new CompiledReplicatedMapIterationContext<>(ReplicatedChronicleMap.this);
+            iterContext = new CompiledReplicatedMapIterationContext<>(this);
             addContext(iterContext);
             cxt.set(iterContext);
         }

@@ -263,10 +263,10 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     private ChainingInterface q() {
-        ChainingInterface queryContext;
-        queryContext = cxt.get();
+        //noinspection unchecked
+        ChainingInterface queryContext = cxt.get();
         if (queryContext == null) {
-            queryContext = new CompiledMapQueryContext<>(VanillaChronicleMap.this);
+            queryContext = new CompiledMapQueryContext<>(this);
             addContext(queryContext);
             cxt.set(queryContext);
         }
@@ -274,15 +274,16 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     public QueryContextInterface<K, V, R> mapContext() {
+        //noinspection unchecked
         return q().getContext(CompiledMapQueryContext.class,
                 ci -> new CompiledMapQueryContext<>(ci, this));
     }
 
     private ChainingInterface i() {
-        ChainingInterface iterContext;
-        iterContext = cxt.get();
+        //noinspection unchecked
+        ChainingInterface iterContext = cxt.get();
         if (iterContext == null) {
-            iterContext = new CompiledMapIterationContext<>(VanillaChronicleMap.this);
+            iterContext = new CompiledMapIterationContext<>(this);
             addContext(iterContext);
             cxt.set(iterContext);
         }
