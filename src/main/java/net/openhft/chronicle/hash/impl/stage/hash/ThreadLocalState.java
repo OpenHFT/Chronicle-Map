@@ -84,9 +84,15 @@ public abstract class ThreadLocalState {
     public void closeContext() {
         if (tryCloseContext())
             return;
+        // If first attempt of closing a context (i. e. moving from unused to closed state) failed,
+        // it means that the context is still in use. If this context belongs to the current thread,
+        // this is a bug, because we cannot "wait" until context is unused in the same thread:
         if (owner() == Thread.currentThread())
             throw new IllegalStateException("Attempt to close a Chronicle Hash in the context " +
                     "of not yet finished query or iteration");
+        // If the context belongs to a different thread, wait until that thread finishes it's work
+        // with the context:
+
         // Double the current timeout for segment locks "without timeout", that effectively
         // specifies maximum lock (hence context) holding time
         long timeoutMillis = TimeUnit.SECONDS.toMillis(LOCK_TIMEOUT_SECONDS) * 2;
