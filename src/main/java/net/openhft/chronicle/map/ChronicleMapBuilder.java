@@ -1463,6 +1463,9 @@ public final class ChronicleMapBuilder<K, V> implements
         replicated = replicationIdentifier != -1;
         persisted = true;
 
+        // It's important to canonicalize the file, because CanonicalRandomAccessFiles.acquire()
+        // relies on java.io.File equality, which doesn't account symlinks itself.
+        file = file.getCanonicalFile();
         if (!file.exists()) {
             if (recover)
                 throw new FileNotFoundException("file " + file + " should exist for recovery");
