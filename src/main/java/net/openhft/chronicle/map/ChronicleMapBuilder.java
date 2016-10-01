@@ -383,7 +383,7 @@ public final class ChronicleMapBuilder<K, V> implements
             VanillaChronicleHash map, RandomAccessFile raf, ByteBuffer headerBuffer, int headerSize)
             throws IOException {
         FileChannel fileChannel = raf.getChannel();
-        // see HCOLL-396
+        // see https://higherfrequencytrading.atlassian.net/browse/HCOLL-396
         map.msync();
 
         //noinspection PointlessBitwiseExpression
@@ -1475,6 +1475,7 @@ public final class ChronicleMapBuilder<K, V> implements
             if (raf.length() > 0)
                 return result = openWithExistingFile(file, raf, recover, overrideBuilderConfig);
 
+            // Single-element arrays allow to modify variables within lambda
             @SuppressWarnings("unchecked")
             VanillaChronicleMap<K, V, ?>[] map = new VanillaChronicleMap[1];
             ByteBuffer[] headerBuffer = new ByteBuffer[1];
