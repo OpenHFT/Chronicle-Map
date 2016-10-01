@@ -264,9 +264,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     @Override
-    public synchronized void close() {
-        if (closed)
-            return;
+    protected void doClose() {
         for (Closeable closeable : closeables) {
             try {
                 closeable.close();
@@ -274,7 +272,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 LOG.error("", e);
             }
         }
-        super.close();
+        super.doClose();
     }
 
     @Override

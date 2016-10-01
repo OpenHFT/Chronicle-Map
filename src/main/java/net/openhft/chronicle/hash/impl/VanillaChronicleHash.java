@@ -638,41 +638,45 @@ public abstract class VanillaChronicleHash<K,
     }
 
     @Override
-    public void close() {
+    public final void close() {
         // Mutually exclude concurrent close() calls and ensure close procedure is done only once
         synchronized (closeLock) {
             if (closed)
                 return;
-            // Synchronization on allContexts here in conjunction with checkOpen() in addContext()
-            // ensures threads using this chronicleHash for the first time concurrently with close()
-            // will not be able to access chronicleHash, or either will be visible during iteration
-            // over allContexts below
-            synchronized (allContexts) {
-                closed = true;
-            }
-            for (WeakReference<ChainingInterface> contextRef : allContexts) {
-                ChainingInterface context = contextRef.get();
-                if (context != null && context.owner().isAlive()) {
-                    // Ensures that if the thread owning this context will come to access
-                    // chronicleHash concurrently with resource releasing operations below, it will
-                    // fail due to the check in context.lockContextLocally() method.
-                    // If the thread owning this context is currently accessing chronicleHash,
-                    // closeContext() will spin-wait until the end of this access session.
-                    context.closeContext();
-                }
-            }
-
-            bs.release();
-            assert bs.refCount() == 0;
-            for (TierBulkData bulkData : tierBulkOffsets) {
-                if (bulkData.bytesStore != bs) {
-                    bulkData.bytesStore.release();
-                    assert bulkData.bytesStore.refCount() == 0;
-                }
-            }
-            if (rafCleaner != null)
-                rafCleaner.clean();
+            doClose();
         }
+    }
+
+    protected void doClose() {
+        // Synchronization on allContexts here in conjunction with checkOpen() in addContext()
+        // ensures threads using this chronicleHash for the first time concurrently with close()
+        // will not be able to access chronicleHash, or either will be visible during iteration
+        // over allContexts below
+        synchronized (allContexts) {
+            closed = true;
+        }
+        for (WeakReference<ChainingInterface> contextRef : allContexts) {
+            ChainingInterface context = contextRef.get();
+            if (context != null && context.owner().isAlive()) {
+                // Ensures that if the thread owning this context will come to access
+                // chronicleHash concurrently with resource releasing operations below, it will
+                // fail due to the check in context.lockContextLocally() method.
+                // If the thread owning this context is currently accessing chronicleHash,
+                // closeContext() will spin-wait until the end of this access session.
+                context.closeContext();
+            }
+        }
+
+        bs.release();
+        assert bs.refCount() == 0;
+        for (TierBulkData bulkData : tierBulkOffsets) {
+            if (bulkData.bytesStore != bs) {
+                bulkData.bytesStore.release();
+                assert bulkData.bytesStore.refCount() == 0;
+            }
+        }
+        if (rafCleaner != null)
+            rafCleaner.clean();
     }
 
     @Override
