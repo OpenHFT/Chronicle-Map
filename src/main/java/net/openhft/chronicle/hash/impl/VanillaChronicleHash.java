@@ -164,9 +164,8 @@ public abstract class VanillaChronicleHash<K,
     private transient ArrayList<WeakReference<ChainingInterface>> allContexts;
 
     /**
-     * {@link net.openhft.chronicle.map.ChronicleMapCloseOnExitHook} needs to use
-     * {@code VanillaChronicleHash}es as WeakHashMap keys, but with identity comparison, not Map's
-     * equals() and hashCode().
+     * {@link ChronicleHashCloseOnExitHook} needs to use {@code VanillaChronicleHash}es as
+     * WeakHashMap keys, but with identity comparison, not Map's equals() and hashCode().
      */
     public class Identity {
         public VanillaChronicleHash hash() {
@@ -489,6 +488,10 @@ public abstract class VanillaChronicleHash<K,
         this.cleaner = Cleaner.create(this, resourceReleaser);
     }
 
+    public void addToOnExitHook() {
+        ChronicleHashCloseOnExitHook.add(this);
+    }
+
     public final void createMappedStoreAndSegments(ChronicleHashResourceReleaser resourceReleaser)
             throws IOException {
         this.resourceReleaser = resourceReleaser;
@@ -678,6 +681,7 @@ public abstract class VanillaChronicleHash<K,
         // Releases nothing after resourceReleaser.releaseManually(), only removes the cleaner
         // from the internal linked list of all cleaners.
         cleaner.clean();
+        ChronicleHashCloseOnExitHook.remove(this);
     }
 
     @Override

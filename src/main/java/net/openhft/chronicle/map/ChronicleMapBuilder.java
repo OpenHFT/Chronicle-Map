@@ -21,8 +21,6 @@ import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
@@ -1524,7 +1522,7 @@ public final class ChronicleMapBuilder<K, V> implements
         map.registerCleaner();
         // Ensure safe publication of a ChronicleMap
         OS.memory().storeFence();
-        ChronicleMapCloseOnExitHook.add(map);
+        map.addToOnExitHook();
     }
 
     /**

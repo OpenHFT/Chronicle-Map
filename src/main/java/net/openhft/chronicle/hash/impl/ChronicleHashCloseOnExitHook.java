@@ -14,18 +14,17 @@
  *      along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.openhft.chronicle.map;
+package net.openhft.chronicle.hash.impl;
 
 
-import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.TreeMap;
 import java.util.WeakHashMap;
 
-final class ChronicleMapCloseOnExitHook {
-    private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapCloseOnExitHook.class);
+final class ChronicleHashCloseOnExitHook {
+    private static final Logger LOG = LoggerFactory.getLogger(ChronicleHashCloseOnExitHook.class);
 
     private static WeakHashMap<VanillaChronicleHash.Identity, Long> maps = new WeakHashMap<>();
     private static long order = 0;
@@ -45,12 +44,18 @@ final class ChronicleMapCloseOnExitHook {
         maps.put(hash.identity, order++);
     }
 
+    static synchronized void remove(VanillaChronicleHash hash) {
+        if (maps == null)
+            return; // we are already in shutdown
+        maps.remove(hash.identity);
+    }
+
     private static void closeAll() {
         try {
             WeakHashMap<VanillaChronicleHash.Identity, Long> maps;
-            synchronized (ChronicleMapCloseOnExitHook.class) {
-                maps = ChronicleMapCloseOnExitHook.maps;
-                ChronicleMapCloseOnExitHook.maps = null;
+            synchronized (ChronicleHashCloseOnExitHook.class) {
+                maps = ChronicleHashCloseOnExitHook.maps;
+                ChronicleHashCloseOnExitHook.maps = null;
             }
 
             TreeMap<Long, VanillaChronicleHash> orderedMaps = new TreeMap<>();
@@ -69,5 +74,5 @@ final class ChronicleMapCloseOnExitHook {
         }
     }
 
-    private ChronicleMapCloseOnExitHook() {}
+    private ChronicleHashCloseOnExitHook() {}
 }
