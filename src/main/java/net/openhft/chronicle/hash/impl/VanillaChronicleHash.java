@@ -70,6 +70,8 @@ public abstract class VanillaChronicleHash<K,
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
     public static final long RESERVED_GLOBAL_MUTABLE_STATE_BYTES = 1024;
 
+    // --- Start of instance fields ---
+
     /////////////////////////////////////////////////
     // Version
     private String dataFileVersion;
@@ -126,11 +128,14 @@ public abstract class VanillaChronicleHash<K,
     protected int log2TiersInBulk;
 
     /////////////////////////////////////////////////
-    // Bytes Store (essentially, the base address) and serialization-dependent offsets
+    // Resources
     private transient File file;
     private transient RandomAccessFile raf;
     private transient ChronicleHashResourceReleaser resourceReleaser;
     private transient Cleaner cleaner;
+
+    /////////////////////////////////////////////////
+    // Bytes Store (essentially, the base address) and serialization-dependent offsets
     protected transient BytesStore bs;
 
     public static class TierBulkData {
@@ -154,6 +159,8 @@ public abstract class VanillaChronicleHash<K,
     public transient long segmentHeadersOffset;
     transient long segmentsOffset;
 
+    /////////////////////////////////////////////////
+    // Miscellaneous fields
     public transient CompactOffHeapLinearHashTable hashLookup;
 
     protected transient volatile boolean closed;
@@ -174,6 +181,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public transient Identity identity;
+
+    // --- End of instance fields ---
+
 
     public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder) {
         // Version
