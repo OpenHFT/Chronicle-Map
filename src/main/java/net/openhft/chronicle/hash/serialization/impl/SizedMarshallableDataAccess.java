@@ -62,7 +62,7 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
     }
 
     private void initTransients() {
-        bytes = Bytes.allocateElasticDirect(1);
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes();
         targetBytes = VanillaBytes.vanillaBytes();
     }
 

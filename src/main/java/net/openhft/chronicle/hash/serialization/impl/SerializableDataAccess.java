@@ -45,7 +45,7 @@ public class SerializableDataAccess<T extends Serializable> extends AbstractData
     }
 
     void initTransients() {
-        bytes = Bytes.allocateElasticDirect(1);
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes();
         out = bytes.outputStream();
         in = bytes.inputStream();
     }

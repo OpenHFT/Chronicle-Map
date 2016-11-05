@@ -41,7 +41,7 @@ abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extend
     }
 
     private void initTransients() {
-        bytes = Bytes.allocateElasticDirect(1);
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes();
     }
 
     @Override

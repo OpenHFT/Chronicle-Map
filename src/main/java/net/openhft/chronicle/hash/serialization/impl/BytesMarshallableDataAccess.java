@@ -47,7 +47,7 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
     }
 
     private void initTransients() {
-        bytes = Bytes.allocateElasticDirect(1);
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes();
         targetBytes = VanillaBytes.vanillaBytes();
     }
 

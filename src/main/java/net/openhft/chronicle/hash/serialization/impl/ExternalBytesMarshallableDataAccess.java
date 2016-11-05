@@ -52,7 +52,7 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
     }
 
     private void initTransients() {
-        bytes = Bytes.allocateElasticDirect(1);
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes();
     }
 
     @Override
