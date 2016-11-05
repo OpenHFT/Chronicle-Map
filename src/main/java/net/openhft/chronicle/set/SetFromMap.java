@@ -117,6 +117,11 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     }
 
     @Override
+    public long offHeapMemoryUsed() {
+        return m.offHeapMemoryUsed();
+    }
+
+    @Override
     public Class<E> keyClass() {
         return m.keyClass();
     }

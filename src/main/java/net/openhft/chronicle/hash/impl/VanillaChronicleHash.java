@@ -22,11 +22,11 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
+import net.openhft.chronicle.core.Memory;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
-import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
 import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -57,10 +57,8 @@ import static java.lang.Math.max;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
 import static net.openhft.chronicle.algo.MemoryUnit.*;
 import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
-import static net.openhft.chronicle.bytes.NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity;
 import static net.openhft.chronicle.core.OS.pageAlign;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
-import static net.openhft.chronicle.hash.impl.DummyReferenceCounted.DUMMY_REFERENCE_COUNTED;
 
 public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
@@ -131,7 +129,8 @@ public abstract class VanillaChronicleHash<K,
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     private transient File file;
     private transient RandomAccessFile raf;
-    private transient Cleaner rafCleaner;
+    private transient ChronicleHashResourceReleaser resourceReleaser;
+    private transient Cleaner cleaner;
     protected transient BytesStore bs;
 
     public static class TierBulkData {
@@ -438,7 +437,14 @@ public abstract class VanillaChronicleHash<K,
         return CACHE_LINES.align(headerSize, BYTES);
     }
 
-    public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
+    public final void createInMemoryStoreAndSegments(
+            ChronicleHashResourceReleaser resourceReleaser) throws IOException {
+        this.resourceReleaser = resourceReleaser;
+        BytesStore bytesStore = nativeBytesStoreWithFixedCapacity(sizeInBytesWithoutTiers());
+        createStoreAndSegments(bytesStore);
+    }
+
+    private void createStoreAndSegments(BytesStore bytesStore) throws IOException {
         initBytesStoreAndHeadersViews(bytesStore);
         initOffsetsAndBulks();
     }
@@ -479,32 +485,19 @@ public abstract class VanillaChronicleHash<K,
         onHeaderCreated();
     }
 
-    public void registerRafReleaser() {
-        this.rafCleaner = Cleaner.create(this, new RafReleaser(file));
+    public void registerCleaner() {
+        this.cleaner = Cleaner.create(this, resourceReleaser);
     }
 
-    private static class RafReleaser implements Runnable {
-        final File file;
-
-        private RafReleaser(File file) {
-            this.file = file;
-        }
-
-        @Override
-        public void run() {
-            try {
-                CanonicalRandomAccessFiles.release(file);
-            } catch (IOException e) {
-                LOG.error("error on releasing RAF for file {}: {}", file, e);
-            }
-        }
+    public final void createMappedStoreAndSegments(ChronicleHashResourceReleaser resourceReleaser)
+            throws IOException {
+        this.resourceReleaser = resourceReleaser;
+        createStoreAndSegments(map(dataStoreSize(), 0));
     }
 
-    public final void createMappedStoreAndSegments() throws IOException {
-        createMappedStoreAndSegments(map(dataStoreSize(), 0));
-    }
-
-    public final void basicRecover() throws IOException {
+    public final void basicRecover(ChronicleHashResourceReleaser resourceReleaser)
+            throws IOException {
+        this.resourceReleaser = resourceReleaser;
         long segmentHeadersOffset = globalMutableState().getSegmentHeadersOffset();
         if (segmentHeadersOffset <= 0 || segmentHeadersOffset % 4096 != 0 ||
                 segmentHeadersOffset > GIGABYTES.toBytes(1)) {
@@ -681,16 +674,10 @@ public abstract class VanillaChronicleHash<K,
             }
         }
 
-        bs.release();
-        assert bs.refCount() == 0;
-        for (TierBulkData bulkData : tierBulkOffsets) {
-            if (bulkData.bytesStore != bs) {
-                bulkData.bytesStore.release();
-                assert bulkData.bytesStore.refCount() == 0;
-            }
-        }
-        if (rafCleaner != null)
-            rafCleaner.clean();
+        resourceReleaser.releaseManually();
+        // Releases nothing after resourceReleaser.releaseManually(), only removes the cleaner
+        // from the internal linked list of all cleaners.
+        cleaner.clean();
     }
 
     @Override
@@ -775,6 +762,16 @@ public abstract class VanillaChronicleHash<K,
     public void globalMutableStateUnlock() {
         globalMutableStateLockingStrategy.unlock(nativeAccess(), null,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
+    }
+
+    /** For tests */
+    public boolean hasExtraTierBulks() {
+        return globalMutableState.getAllocatedExtraTierBulks() > 0;
+    }
+
+    @Override
+    public long offHeapMemoryUsed() {
+        return resourceReleaser.totalMemory();
     }
 
     public long allocateTier() {
@@ -992,8 +989,8 @@ public abstract class VanillaChronicleHash<K,
             raf.setLength(minFileSize);
         }
         long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
-        OS.Unmapper unmapper = new OS.Unmapper(address, mapSize, DUMMY_REFERENCE_COUNTED);
-        return new NativeBytesStore(address, mapSize, unmapper, false);
+        resourceReleaser.addMemoryResource(address, mapSize);
+        return new NativeBytesStore(address, mapSize, null, false);
     }
 
     private long bulkOffset(int bulkIndex) {
@@ -1001,11 +998,17 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private void allocateTierBulks(int upToBulkIndex) {
-        int firstBulkToMapIndex = tierBulkOffsets.size();
-        int bulksToMap = upToBulkIndex + 1 - firstBulkToMapIndex;
-        long mapSize = bulksToMap * tierBulkSizeInBytes;
-        BytesStore extraStore = lazyNativeBytesStoreWithFixedCapacity(mapSize);
-        appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore, 0);
+        int firstBulkToAllocateIndex = tierBulkOffsets.size();
+        int bulksToAllocate = upToBulkIndex + 1 - firstBulkToAllocateIndex;
+        long allocationSize = bulksToAllocate * tierBulkSizeInBytes;
+        BytesStore extraStore = nativeBytesStoreWithFixedCapacity(allocationSize);
+        appendBulkData(firstBulkToAllocateIndex, upToBulkIndex, extraStore, 0);
+    }
+
+    private BytesStore nativeBytesStoreWithFixedCapacity(long capacity) {
+        long address = OS.memory().allocate(capacity);
+        resourceReleaser.addMemoryResource(address, capacity);
+        return new NativeBytesStore<>(address, capacity, null, false);
     }
 
     private void appendBulkData(int firstBulkToMapIndex, int upToBulkIndex, BytesStore extraStore,

@@ -53,6 +53,16 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
     long longSize();
 
     /**
+     * Returns the amount of off-heap memory (in bytes), allocated by this {@code ChronicleHash} or
+     * shared with with other ChronicleHashes, persisting to the same {@link #file()}.
+     *
+     * <p>After {@link #close()} this method returns 0.
+     *
+     * @return the amount of off-heap memory, used by this {@code ChronicleHash} (in bytes)
+     */
+    long offHeapMemoryUsed();
+
+    /**
      * @return the class of {@code <K>}
      */
     Class<K> keyClass();

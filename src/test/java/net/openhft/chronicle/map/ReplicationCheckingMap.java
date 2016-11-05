@@ -215,6 +215,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public long offHeapMemoryUsed() {
+        return map1.offHeapMemoryUsed();
+    }
+
+    @Override
     public V getUsing(K key, V usingValue) {
         return map1.getUsing(key, usingValue);
     }

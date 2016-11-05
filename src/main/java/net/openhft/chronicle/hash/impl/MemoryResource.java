@@ -17,21 +17,12 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import net.openhft.chronicle.core.ReferenceCounted;
+final class MemoryResource {
+    final long address;
+    final long size;
 
-public enum DummyReferenceCounted implements ReferenceCounted {
-    DUMMY_REFERENCE_COUNTED;
-
-    @Override
-    public void reserve() throws IllegalStateException {
-    }
-
-    @Override
-    public void release() throws IllegalStateException {
-    }
-
-    @Override
-    public long refCount() {
-        return 0;
+    MemoryResource(long address, long size) {
+        this.address = address;
+        this.size = size;
     }
 }

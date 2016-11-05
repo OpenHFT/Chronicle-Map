@@ -150,8 +150,8 @@ public class VanillaChronicleMap<K, V, R>
         initOwnTransients();
     }
 
-    public void recover() throws IOException {
-        basicRecover();
+    public void recover(ChronicleHashResourceReleaser resourceReleaser) throws IOException {
+        basicRecover(resourceReleaser);
         try (IterationContext<K, V, ?> iterationContext = iterationContext()) {
             iterationContext.recoverSegments();
         }
