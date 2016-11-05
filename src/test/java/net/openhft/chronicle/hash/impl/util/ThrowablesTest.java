@@ -50,7 +50,7 @@ public class ThrowablesTest {
     }
 
     @Test(expected = NullPointerException.class)
-    public void testPropagateNotWrappingNullWrappingType() {
+    public void testPropagateNotWrappingNullWrappingType() throws Throwable {
         Throwables.propagateNotWrapping(new IOException(), null);
     }
 
