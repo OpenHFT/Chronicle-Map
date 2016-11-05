@@ -850,7 +850,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void msync() throws IOException {
-        msync(bsAddress(), bs.capacity());
+        if (persisted()) {
+            msync(bsAddress(), bs.capacity());
+        }
     }
 
     private void msync(long address, long length) throws IOException {
