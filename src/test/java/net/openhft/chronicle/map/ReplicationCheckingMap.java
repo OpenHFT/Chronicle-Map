@@ -306,6 +306,16 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public String name() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toIdentityString() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void close() {
         map1.close();
         map2.close();

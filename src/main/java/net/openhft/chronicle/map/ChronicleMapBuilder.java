@@ -105,6 +105,23 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  * #constantKeySizeBySample(Object)}, otherwise {@link #averageKey(Object)} or {@link
  * #averageKeySize(double)} method, and accordingly for values.
  *
+ * <p><a name="jvm-configurations"></a>
+ * There are some JVM-level configurations, which are not stored in the ChronicleMap's persistence
+ * file (or the other way to say this: they are not parts of <a
+ * href="https://github.com/OpenHFT/Chronicle-Map/tree/master/spec">the Chronicle Map data store
+ * specification</a>) and have to be configured explicitly for each created on-heap {@code
+ * ChronicleMap} instance, even if it is a view of an existing Chronicle Map data store. On the
+ * other hand, JVM-level configurations could be different for different views of the same Chronicle
+ * Map data store. The list of JVM-level configurations:
+ * <ul>
+ *     <li>{@link #name(String)}</li>
+ *     <li>{@link #putReturnsNull(boolean)}</li>
+ *     <li>{@link #removeReturnsNull(boolean)}</li>
+ *     <li>{@link #entryOperations(MapEntryOperations)}</li>
+ *     <li>{@link #mapMethods(MapMethods)}</li>
+ *     <li>{@link #defaultValueProvider(DefaultValueProvider)}</li>
+ * </ul>
+ *
  * @param <K> key type of the maps, produced by this builder
  * @param <V> value type of the maps, produced by this builder
  * @see ChronicleHashBuilder
@@ -133,6 +150,9 @@ public final class ChronicleMapBuilder<K, V> implements
     private static final ConcurrentHashMap<File, Void> fileLockingControl =
             new ConcurrentHashMap<>(128);
     private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
+
+
+    private String name;
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
     K averageKey;
@@ -411,6 +431,20 @@ public final class ChronicleMapBuilder<K, V> implements
     @Deprecated
     public Object privateAPI() {
         return privateAPI;
+    }
+
+    /**
+     * {@inheritDoc}
+     * <a href="#jvm-configurations">Read more about JVM-level configurations</a>.
+     */
+    @Override
+    public ChronicleMapBuilder<K, V> name(String name) {
+        this.name = name;
+        return this;
+    }
+
+    String name() {
+        return this.name;
     }
 
     /**
@@ -812,7 +846,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * explicitly for being sure and to compare performance in your case).
      *
      * @param alignment the new alignment of the maps constructed by this builder
-     * @return this {@code ChronicleMapOnHeapUpdatableBuilder} back
+     * @return this builder back
      * @throws IllegalStateException if values of maps, created by this builder, couldn't reference
      *                               off-heap memory
      */
@@ -1112,8 +1146,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * the data from off-heap memory. A collection hiding remote queries over the network should
      * send the value back in addition to that. It's expensive for something you probably don't use.
      *
-     * <p>By default, of cause, {@code ChronicleMap} conforms the general {@code Map} contract and
-     * returns the previous mapped value on {@code put()} calls.
+     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
+     *
+     * <p>By default, {@code ChronicleMap} conforms the general {@code Map} contract and returns the
+     * previous mapped value on {@code put()} calls.
      *
      * @param putReturnsNull {@code true} if you want {@link ChronicleMap#put(Object, Object)
      *                       ChronicleMap.put()} to not return the value that was replaced but
@@ -1141,8 +1177,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * from off-heap memory. A collection hiding remote queries over the network should send
      * the value back in addition to that. It's expensive for something you probably don't use.
      *
-     * <p>By default, of cause, {@code ChronicleMap} conforms the general {@code Map} contract and
-     * returns the mapped value on {@code remove()} calls.
+     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
+     *
+     * <p>By default, {@code ChronicleMap} conforms the general {@code Map} contract and returns the
+     * mapped value on {@code remove()} calls.
      *
      * @param removeReturnsNull {@code true} if you want {@link ChronicleMap#remove(Object)
      *                          ChronicleMap.remove()} to not return the value of the removed entry
@@ -1408,8 +1446,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * Specifies the function to obtain a value for the key during {@link ChronicleMap#acquireUsing
      * acquireUsing()} calls, if the key is absent in the map, created by this builder.
      *
+     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
+     *
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
-     * @return this builder object back
+     * @return this builder back
      */
     public ChronicleMapBuilder<K, V> defaultValueProvider(
             @NotNull DefaultValueProvider<K, V> defaultValueProvider) {
@@ -1771,6 +1811,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * <p>This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
      * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
      * <i>internal replication operations</i>.
+     *
+     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
+     *
+     * @return this builder back
      */
     public ChronicleMapBuilder<K, V> entryOperations(MapEntryOperations<K, V, ?> entryOperations) {
         Objects.requireNonNull(entryOperations);
@@ -1784,6 +1828,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * {@link ChronicleMap#merge}.
      *
      * <p>This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
+     *
+     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
+     *
+     * @return this builder back
      */
     public ChronicleMapBuilder<K, V> mapMethods(MapMethods<K, V, ?> mapMethods) {
         Objects.requireNonNull(mapMethods);

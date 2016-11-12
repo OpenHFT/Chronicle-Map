@@ -26,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -44,6 +46,34 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * @see ChronicleHashBuilder#createPersistedTo(File)
      */
     File file();
+
+    /**
+     * Returns the name of this {@code ChronicleHash}, configured by {@link
+     * ChronicleHashBuilder#name(String)}, or {@code null}, if not configured.
+     *
+     * @return the name of this this {@link ChronicleMap} or {@link ChronicleSet}
+     */
+    String name();
+
+    /**
+     * Returns a {@code String}, useful for identifying this {@code ChronicleHash} in debugging,
+     * logging, and error reporting. {@link #toString()} of concrete {@code ChronicleHash}
+     * subinterfaces, {@link ChronicleMap} and {@link ChronicleSet}, has to follow {@link
+     * Map#toString()} and {@link Set#toString()} contracts respectively, making it not always
+     * useful (or even impossible to use, if this {@code ChronicleHash} contains a lot of entries)
+     * for the purposes listed above.
+     *
+     * <p>This method return a string of the form:<br><br>
+     * [ChronicleMap|ChronicleSet]{name={@link #name()}, file={@link #file()},
+     * identityHashCode={@link System#identityHashCode System.identityHashCode(thisChronicleHash)}}
+     * <br><br>
+     * This form could be changed in any subsequent Chronicle Map library release (including patch
+     * release). The user code shouldn't depend on this form.
+     *
+     * @return a {@code String}, useful for identifying this {@code ChronicleHash} in debugging,
+     * logging, and error reporting
+     */
+    String toIdentityString();
 
     /**
      * Returns the number of entries in this store.

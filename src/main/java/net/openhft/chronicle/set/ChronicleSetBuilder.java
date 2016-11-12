@@ -82,6 +82,12 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
+    public ChronicleSetBuilder<K> name(String name) {
+        chronicleMapBuilder.name(name);
+        return this;
+    }
+
+    @Override
     public ChronicleSetBuilder<K> actualSegments(int actualSegments) {
         chronicleMapBuilder.actualSegments(actualSegments);
         return this;

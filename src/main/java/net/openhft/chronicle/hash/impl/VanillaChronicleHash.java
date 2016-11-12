@@ -22,7 +22,6 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
-import net.openhft.chronicle.core.Memory;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
@@ -73,7 +72,6 @@ public abstract class VanillaChronicleHash<K,
     // --- Start of instance fields ---
 
     /////////////////////////////////////////////////
-    // Version
     private String dataFileVersion;
 
     /////////////////////////////////////////////////
@@ -88,7 +86,6 @@ public abstract class VanillaChronicleHash<K,
     public DataAccess<K> keyDataAccess;
 
     /////////////////////////////////////////////////
-    // Checksum entries
     public boolean checksumEntries;
 
     /////////////////////////////////////////////////

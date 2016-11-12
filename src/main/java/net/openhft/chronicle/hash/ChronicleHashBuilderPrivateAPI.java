@@ -24,6 +24,8 @@ import java.util.concurrent.TimeUnit;
 
 public interface ChronicleHashBuilderPrivateAPI<K, RO> {
 
+    String name();
+
     SerializationBuilder<K> keyBuilder();
 
     int segmentEntrySpaceInnerOffset();

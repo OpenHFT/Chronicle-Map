@@ -90,7 +90,7 @@ public class TierRecovery {
                         // the slot cleared at (*) should be clear, if it is dirty, only
                         // a concurrent modification thread could occupy it
                         throw new ChronicleHashRecoveryFailedException(
-                                "Concurrent modification of ChronicleMap at " + h.file() +
+                                "Concurrent modification of " + h.toIdentityString() +
                                         " while recovery procedure is in progress");
                     }
                     checkDuplicateKeys:
@@ -124,8 +124,8 @@ public class TierRecovery {
                 } while (insertPos != startInsertPos);
                 throw new ChronicleHashRecoveryFailedException(
                         "HashLookup overflow should never occur. " +
-                                "It might also be concurrent access to ChronicleMap at " +
-                                h.file() + " while recovery procedure is in progress");
+                                "It might also be concurrent access to " + h.toIdentityString() +
+                                " while recovery procedure is in progress");
             }
             hlPos = hl.step(hlPos);
         } while (hlPos != 0);

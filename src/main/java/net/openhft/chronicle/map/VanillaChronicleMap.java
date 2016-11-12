@@ -66,6 +66,9 @@ public class VanillaChronicleMap<K, V, R>
     public int alignment;
     public int worstAlignment;
 
+    /////////////////////////////////////////////////
+    private transient String name;
+
     public transient boolean couldNotDetermineAlignmentBeforeAllocation;
 
     /////////////////////////////////////////////////
@@ -134,6 +137,7 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
+        name = builder.name();
         putReturnsNull = builder.putReturnsNull();
         removeReturnsNull = builder.removeReturnsNull();
 
@@ -238,6 +242,22 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     public String toString() {
         return mapToString();
+    }
+
+    @Override
+    public String name() {
+        return name;
+    }
+
+    @Override
+    public String toIdentityString() {
+        if (chronicleSet != null)
+            return chronicleSet.toIdentityString();
+        return "ChronicleMap{" +
+                "name=" + name() +
+                ", file=" + file() +
+                ", identityHashCode=" + System.identityHashCode(this) +
+                "}";
     }
     
     @Override

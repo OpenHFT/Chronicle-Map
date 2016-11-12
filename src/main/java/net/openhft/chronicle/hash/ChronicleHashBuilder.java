@@ -69,11 +69,31 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B clone();
 
     /**
+     * Specify the name which will be given to a ChronicleHash, created by this builder. It is
+     * recommended to give some distinctive name to each created {@code ChronicleHash}, because this
+     * name is used when logging errors and warnings inside Chronicle Map library itself, so having
+     * the concrete {@code ChronicleHash} name in logs may help to debug.
+     *
+     * <p>{@code name()} is a JVM-level configuration, it is not stored in the persistence file (or
+     * the other way to say this: they are not parts of <a
+     * href="https://github.com/OpenHFT/Chronicle-Map/tree/master/spec">the Chronicle Map data store
+     * specification</a>) and have to be configured explicitly for each created on-heap {@code
+     * ChronicleHash} instance, even if it is a view of an existing Chronicle Map data store. On the
+     * other hand, {@code name()} could be different for different views of the same Chronicle
+     * Map data store.
+     *
+     * @param name the name for a ChronicleHash, created by this builder
+     * @return this builder back
+     * @see ChronicleHash#name()
+     */
+    B name(String name);
+
+    /**
      * Set minimum number of segments in hash containers, constructed by this builder. See
      * concurrencyLevel in {@link ConcurrentHashMap}.
      *
      * @param minSegments the minimum number of segments in containers, constructed by this builder
-     * @return this builder object back
+     * @return this builder back
      */
     B minSegments(int minSegments);
 

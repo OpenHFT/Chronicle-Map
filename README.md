@@ -256,6 +256,7 @@ interface PostalCodeRange {
 
 ChronicleMapBuilder<CharSequence, PostalCodeRange> cityPostalCodesMapBuilder =
     ChronicleMapBuilder.of(CharSequence.class, PostalCodeRange.class)
+        .name("city-postal-codes-map")
         .averageKey("Amsterdam")
         .entries(50_000);
 ChronicleMap<CharSequence, PostalCodeRange> cityPostalCodes =
@@ -265,6 +266,7 @@ ChronicleMap<CharSequence, PostalCodeRange> cityPostalCodes =
 
 ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
     .of(CharSequence.class, PostalCodeRange.class)
+    .name("city-postal-codes-map")
     .averageKey("Amsterdam")
     .entries(50_000)
     .create();
@@ -367,12 +369,14 @@ Example:
 ```java
 ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
     .of(CharSequence.class, PostalCodeRange.class)
+    .name("city-postal-codes-map")
     .averageKey("Amsterdam")
     .entries(50_000)
     .recoverPersistedTo(cityPostalCodesFile, true);
 // or
 ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
     .of(CharSequence.class, PostalCodeRange.class)
+    .name("city-postal-codes-map")
     // assuming ChronicleMapBuilder configurations at the moment of
     // cityPostalCodes Chronicle Map creation are not known
     .recoverPersistedTo(cityPostalCodesFile, false);
@@ -468,6 +472,7 @@ friends is 150. Configure the `ChronicleMap` as follows:
 ```java
 Map<Long, long[]> socialGraph = ChronicleMap
     .of(Long.class, long[].class)
+    .name("social-graph-map")
     .entries(1_000_000_000L)
     .averageValue(new long[150])
     .create();
@@ -482,6 +487,7 @@ your Chronicle Map domain, you should prefer to configure `constantKeySizeBySamp
 ```java
 ChronicleSet<UUID> uuids =
     ChronicleSet.of(UUID.class)
+        .name("uuids")
         // All UUIDs take 16 bytes.
         .constantKeySizeBySample(UUID.randomUUID())
         .entries(1_000_000)
@@ -1369,6 +1375,7 @@ key:
 ```java
 ChronicleMap<LongValue, Order> orders = ChronicleMap
     .of(LongValue.class, Order.class)
+    .name("orders-map")
     .entries(1_000_000)
     .create();
 
@@ -1613,6 +1620,7 @@ for (int i = 0; i < AVERAGE_CONNECTIVITY; i++) {
 }
 ChronicleMap<Integer, Set<Integer>> graph = ChronicleMapBuilder
         .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
+        .name("graph")
         .entries(100)
         .averageValue(averageValue)
         .create();
@@ -1929,6 +1937,7 @@ Usage:
 BiMapEntryOperations<Integer, CharSequence> biMapOps1 = new BiMapEntryOperations<>();
 ChronicleMap<Integer, CharSequence> map1 = ChronicleMapBuilder
         .of(Integer.class, CharSequence.class)
+        .name("direct-bimap")
         .entries(100)
         .actualSegments(1)
         .averageValueSize(10)
@@ -1939,6 +1948,7 @@ ChronicleMap<Integer, CharSequence> map1 = ChronicleMapBuilder
 BiMapEntryOperations<CharSequence, Integer> biMapOps2 = new BiMapEntryOperations<>();
 ChronicleMap<CharSequence, Integer> map2 = ChronicleMapBuilder
         .of(CharSequence.class, Integer.class)
+        .name("reverse-bimap")
         .entries(100)
         .actualSegments(1)
         .averageKeySize(10)

@@ -75,7 +75,7 @@ class OldDeletedEntriesCleanupThread extends Thread
     private long removedCompletely;
 
     OldDeletedEntriesCleanupThread(ReplicatedChronicleMap<?, ?, ?> map) {
-        super("Cleanup Thread for ReplicatedChronicleMap persisted to " + map.file());
+        super("Cleanup Thread for " + map.toIdentityString());
         this.mapRef = new WeakReference<>(map);
         cleanupTimeout = map.cleanupTimeout;
         cleanupTimeoutUnit = map.cleanupTimeoutUnit;
