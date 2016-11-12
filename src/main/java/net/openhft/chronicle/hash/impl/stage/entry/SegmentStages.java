@@ -658,7 +658,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         if (chunks > h.maxChunksPerEntry) {
             throw new IllegalArgumentException("Entry is too large: requires " + chunks +
-                    " chucks, " + h.maxChunksPerEntry + " is maximum.");
+                    " chunks, " + h.maxChunksPerEntry + " is maximum.");
         }
         long lowestPossiblyFreeChunk = lowestPossiblyFreeChunk();
         if (lowestPossiblyFreeChunk + chunks > h.actualChunksPerSegmentTier)
