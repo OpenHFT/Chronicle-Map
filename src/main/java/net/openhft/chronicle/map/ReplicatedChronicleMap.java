@@ -264,15 +264,19 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     @Override
-    protected void doClose() {
+    protected void doClose(Throwable thrown) {
         for (Closeable closeable : closeables) {
             try {
                 closeable.close();
-            } catch (IOException e) {
-                LOG.error("", e);
+            } catch (Throwable t) {
+                if (thrown == null) {
+                    thrown = t;
+                } else {
+                    thrown.addSuppressed(t);
+                }
             }
         }
-        super.doClose();
+        super.doClose(thrown);
     }
 
     @Override

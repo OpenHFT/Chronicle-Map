@@ -62,7 +62,7 @@ public abstract class CompactOffHeapLinearHashTable {
 
     public static long capacityFor(long entriesPerSegment) {
         if (entriesPerSegment < 0L)
-            throw new AssertionError("entriesPerSegment should be positive");
+            throw new AssertionError("entriesPerSegment should be positive: " + entriesPerSegment);
         long capacity = Maths.nextPower2(entriesPerSegment, 64L);
         if (entriesPerSegment > MAX_UPPER_BOUND_LOAD_FACTOR * capacity)
             capacity *= 2;

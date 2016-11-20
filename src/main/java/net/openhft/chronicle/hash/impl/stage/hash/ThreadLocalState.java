@@ -42,7 +42,7 @@ public abstract class ThreadLocalState {
                     ThreadLocalState.class.getDeclaredField("contextLock");
             contextLockField.setAccessible(true);
             CONTEXT_LOCK_OFFSET = MEMORY.getFieldOffset(contextLockField);
-        } catch (NoSuchFieldException | SecurityException e) {
+        } catch (NoSuchFieldException e) {
             throw new AssertionError(e);
         }
     }
@@ -68,7 +68,7 @@ public abstract class ThreadLocalState {
             // Don't extract this hash().isOpen() and the one above, because they could different
             // results (the first (above) could return true, the second (below) - false).
             if (!hash.isOpen())
-                throw new ChronicleHashClosedException();
+                throw new ChronicleHashClosedException(hash);
             throw new AssertionError("Unknown context lock state: " + contextLock);
         }
     }
@@ -81,15 +81,17 @@ public abstract class ThreadLocalState {
         MEMORY.writeOrderedInt(this, CONTEXT_LOCK_OFFSET, CONTEXT_UNLOCKED);
     }
 
-    public void closeContext() {
+    public void closeContext(ChronicleHash<?, ?, ?, ?> hash) {
         if (tryCloseContext())
             return;
         // If first attempt of closing a context (i. e. moving from unused to closed state) failed,
         // it means that the context is still in use. If this context belongs to the current thread,
         // this is a bug, because we cannot "wait" until context is unused in the same thread:
-        if (owner() == Thread.currentThread())
-            throw new IllegalStateException("Attempt to close a Chronicle Hash in the context " +
-                    "of not yet finished query or iteration");
+        if (owner() == Thread.currentThread()) {
+            throw new IllegalStateException(hash.toIdentityString() +
+                    ": Attempt to close a Chronicle Hash in the context " +
+                            "of not yet finished query or iteration");
+        }
         // If the context belongs to a different thread, wait until that thread finishes it's work
         // with the context:
 
@@ -107,9 +109,9 @@ public abstract class ThreadLocalState {
                 timeoutMillis--;
             }
         } while (timeoutMillis >= 0);
-        throw new RuntimeException("Failed to close a context, belonging to the thread\n" +
-                owner() + ", in the state: " + owner().getState() + ", current stack trace:\n" +
-                Arrays.toString(owner().getStackTrace()) + "\n" +
+        throw new RuntimeException(hash.toIdentityString() +
+                ": Failed to close a context, belonging to the thread\n" +
+                owner() + ", in the state: " + owner().getState() + "\n" +
                 "Possible reasons:\n" +
                 "- The context owner thread exited before closing this context. Ensure that you\n" +
                 "always close opened Chronicle Map's contexts, the best way to do this is to use\n" +

@@ -58,11 +58,7 @@ public class DummyValueZeroData<V> extends AbstractData<V> {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         // Not optimized and creates garbage, because this isn't the primary
         // use case. Zero data should only be used in bytes form
-        try {
-            return getUsing(null);
-        } catch (Exception e) {
-            throw zeroReadException(e);
-        }
+        return getUsing(null);
     }
 
     @Override
@@ -77,9 +73,10 @@ public class DummyValueZeroData<V> extends AbstractData<V> {
     }
 
     private IllegalStateException zeroReadException(Exception cause) {
-        return new IllegalStateException("Most probable cause of this exception - zero bytes of\n" +
+        return new IllegalStateException(mh.h().toIdentityString() +
+                ": Most probable cause of this exception - zero bytes of\n" +
                 "the minimum positive encoding length, supported by the specified or default\n" +
                 "valueSizeMarshaller() is not correct serialized form of any value. You should\n" +
-                "configure defaultValueProvider() in ChronicleMapBuilder");
+                "configure defaultValueProvider() in ChronicleMapBuilder", cause);
     }
 }

@@ -26,6 +26,7 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
+import net.openhft.chronicle.hash.impl.util.Throwables;
 import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
 import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -421,7 +422,7 @@ public abstract class VanillaChronicleHash<K,
                 if (fileChannel.read(globalMutableStateBuffer,
                         this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET +
                                 globalMutableStateBuffer.position()) == -1) {
-                    throw throwRecoveryOrReturnIOException(file + " truncated", recover);
+                    throw throwRecoveryOrReturnIOException(file, "truncated", recover);
                 }
             }
             globalMutableStateBuffer.flip();
@@ -431,7 +432,9 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public static IOException throwRecoveryOrReturnIOException(String message, boolean recover) {
+    public static IOException throwRecoveryOrReturnIOException(
+            File file, String message, boolean recover) {
+        message = "file=" + file + " " + message;
         if (recover) {
             throw new ChronicleHashRecoveryFailedException(message);
         } else {
@@ -660,11 +663,11 @@ public abstract class VanillaChronicleHash<K,
         synchronized (closeLock) {
             if (closed)
                 return;
-            doClose();
+            doClose(null);
         }
     }
 
-    protected void doClose() {
+    protected void doClose(Throwable thrown) {
         // Synchronization on allContexts here in conjunction with checkOpen() in addContext()
         // ensures threads using this chronicleHash for the first time concurrently with close()
         // will not be able to access chronicleHash, or either will be visible during iteration
@@ -672,23 +675,32 @@ public abstract class VanillaChronicleHash<K,
         synchronized (allContexts) {
             closed = true;
         }
-        for (WeakReference<ChainingInterface> contextRef : allContexts) {
-            ChainingInterface context = contextRef.get();
-            if (context != null && context.owner().isAlive()) {
-                // Ensures that if the thread owning this context will come to access
-                // chronicleHash concurrently with resource releasing operations below, it will
-                // fail due to the check in context.lockContextLocally() method.
-                // If the thread owning this context is currently accessing chronicleHash,
-                // closeContext() will spin-wait until the end of this access session.
-                context.closeContext();
+        try {
+            for (WeakReference<ChainingInterface> contextRef : allContexts) {
+                ChainingInterface context = contextRef.get();
+                if (context != null && context.owner().isAlive()) {
+                    // Ensures that if the thread owning this context will come to access
+                    // chronicleHash concurrently with resource releasing operations below, it will
+                    // fail due to the check in context.lockContextLocally() method.
+                    // If the thread owning this context is currently accessing chronicleHash,
+                    // closeContext() will spin-wait until the end of this access session.
+                    context.closeContext(this);
+                }
+            }
+
+            resourceReleaser.releaseManually();
+            // Releases nothing after resourceReleaser.releaseManually(), only removes the cleaner
+            // from the internal linked list of all cleaners.
+            cleaner.clean();
+            ChronicleHashCloseOnExitHook.remove(this);
+        } catch (Throwable t) {
+            if (thrown == null) {
+                throw t;
+            } else {
+                thrown.addSuppressed(t);
+                throw Throwables.propagate(thrown);
             }
         }
-
-        resourceReleaser.releaseManually();
-        // Releases nothing after resourceReleaser.releaseManually(), only removes the cleaner
-        // from the internal linked list of all cleaners.
-        cleaner.clean();
-        ChronicleHashCloseOnExitHook.remove(this);
     }
 
     @Override
@@ -699,8 +711,8 @@ public abstract class VanillaChronicleHash<K,
     public final void checkKey(Object key) {
         if (!keyClass.isInstance(key)) {
             // key.getClass will cause NPE exactly as needed
-            throw new ClassCastException("Key must be a " + keyClass.getName() +
-                    " but was a " + key.getClass());
+            throw new ClassCastException(toIdentityString() + ": Key must be a " +
+                    keyClass.getName() + " but was a " + key.getClass());
         }
     }
 
@@ -790,7 +802,8 @@ public abstract class VanillaChronicleHash<K,
         try {
             long tiersInUse = globalMutableState.getExtraTiersInUse();
             if (tiersInUse >= maxExtraTiers) {
-                throw new IllegalStateException("Attempt to allocate #" + (tiersInUse + 1) +
+                throw new IllegalStateException(toIdentityString() + ": " +
+                        "Attempt to allocate #" + (tiersInUse + 1) +
                         " extra segment tier, " + maxExtraTiers + " is maximum.\n" +
                         "Possible reasons include:\n" +
                         " - you have forgotten to configure (or configured wrong) " +
@@ -802,19 +815,19 @@ public abstract class VanillaChronicleHash<K,
             }
             long firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
             if (firstFreeTierIndex < 0) {
-                throw new RuntimeException("unexpected firstFreeTierIndex value " +
-                        firstFreeTierIndex);
+                throw new RuntimeException(toIdentityString() +
+                        ": unexpected firstFreeTierIndex value " + firstFreeTierIndex);
             }
             if (firstFreeTierIndex == 0) {
                 try {
                     allocateTierBulk();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException(toIdentityString(), e);
                 }
                 firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
                 if (firstFreeTierIndex <= 0) {
-                    throw new RuntimeException("unexpected firstFreeTierIndex value " +
-                            firstFreeTierIndex);
+                    throw new RuntimeException(toIdentityString() +
+                            ": unexpected firstFreeTierIndex value " + firstFreeTierIndex);
                 }
             }
             globalMutableState.setExtraTiersInUse(tiersInUse + 1);
@@ -953,7 +966,7 @@ public abstract class VanillaChronicleHash<K,
             try {
                 mapTierBulksMapped(upToBulkIndex);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException(toIdentityString(), e);
             }
         } else {
             // in-memory ChMap
@@ -1036,7 +1049,7 @@ public abstract class VanillaChronicleHash<K,
 
     private void checkOpen() {
         if (closed)
-            throw new ChronicleHashClosedException();
+            throw new ChronicleHashClosedException(this);
     }
 
     protected void addContext(ChainingInterface context) {

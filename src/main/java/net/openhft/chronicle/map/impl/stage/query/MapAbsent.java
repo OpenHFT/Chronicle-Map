@@ -75,15 +75,16 @@ public abstract class MapAbsent<K, V> implements Absent<K, V> {
             ks.setSearchState(PRESENT);
             q.initPresenceOfEntry(EntryPresence.PRESENT);
         } else {
-            throw new IllegalStateException(
-                    "Entry is present in the map when doInsert() is called");
+            throw new IllegalStateException(mh.h().toIdentityString() +
+                    ": Entry is present in the map when doInsert() is called");
         }
     }
 
     @Override
     public void doInsert() {
         if (mh.set() == null)
-            throw new IllegalStateException("Called SetAbsentEntry.doInsert() from Map context");
+            throw new IllegalStateException(mh.h().toIdentityString() +
+                    ": Called SetAbsentEntry.doInsert() from Map context");
         //noinspection unchecked
         doInsert((Data<V>) DummyValueData.INSTANCE);
     }

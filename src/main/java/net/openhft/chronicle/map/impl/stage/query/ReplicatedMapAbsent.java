@@ -59,8 +59,8 @@ public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
             e.writeEntryPresent();
             ru.updateChange();
         } else {
-            throw new IllegalStateException(
-                    "Entry is present in the map when doInsert() is called");
+            throw new IllegalStateException(mh.h().toIdentityString() +
+                    ": Entry is present in the map when doInsert() is called");
         }
     }
 }

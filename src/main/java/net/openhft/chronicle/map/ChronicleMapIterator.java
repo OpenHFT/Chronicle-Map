@@ -42,8 +42,8 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, Consumer<Ma
 
     private void checkSingleThreaded() {
         if (ownerThread != Thread.currentThread()) {
-            throw new IllegalStateException(
-                    "Iterator should be accessed only from a single thread");
+            throw new IllegalStateException(map.toIdentityString() +
+                    ": Iterator should be accessed only from a single thread");
         }
     }
 
@@ -84,7 +84,7 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, Consumer<Ma
         fillEntryBuffer();
         E e;
         if ((e = entryBuffer.poll()) == null)
-            throw new NoSuchElementException();
+            throw new NoSuchElementException(map.toIdentityString());
         return returned = e;
     }
 
@@ -92,7 +92,7 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, Consumer<Ma
     public void remove() {
         checkSingleThreaded();
         if (returned == null)
-            throw new IllegalStateException();
+            throw new IllegalStateException(map.toIdentityString());
         removeReturned();
         returned = null;
     }

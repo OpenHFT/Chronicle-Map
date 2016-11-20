@@ -32,23 +32,22 @@ public final class InMemoryChronicleHashResourceReleaser extends ChronicleHashRe
     public synchronized void run() {
         if (memoryResources == null)
             return; // Already released
-        // All Throwables are catched because this class is used as Runnable for sun.misc.Cleaner,
+        // All Throwables are caught because this class is used as Runnable for sun.misc.Cleaner,
         // hence must not fail
-        Throwable thrown = null;
         try {
-            thrown = doRelease();
+            Throwable thrown = doRelease();
+            if (thrown != null) {
+                try {
+                    LOG.error("Error on releasing memory of a Chronicle Map:", thrown);
+                } catch (Throwable t) {
+                    // This may occur if Releaser is run in a shutdown hook, and the log service has
+                    // already been shut down. Try to fall back to printStackTrace().
+                    thrown.addSuppressed(t);
+                    thrown.printStackTrace();
+                }
+            }
         } finally {
             memoryResources = null;
-        }
-        if (thrown != null) {
-            try {
-                LOG.error("Error on releasing memory of a Chronicle Map:", thrown);
-            } catch (Throwable t) {
-                // This may occur if Releaser is run in a shutdown hook, and the log service has
-                // already been shut down. Try to fall back to printStackTrace().
-                thrown.addSuppressed(t);
-                thrown.printStackTrace();
-            }
         }
     }
 

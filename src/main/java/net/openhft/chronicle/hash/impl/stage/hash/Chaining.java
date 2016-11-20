@@ -66,7 +66,7 @@ public abstract class Chaining extends ChainingInterface {
      * context in the beginning of each usage of the context. Previously, this field was final and
      * set only once during context creation. It was preventing ChronicleMap objects from becoming
      * dead and collected by the GC, while any thread, from which the ChronicleMap was accessed
-     * (i. e, a thread local context created), is alive.
+     * (hence a thread local context created), is alive.
      *
      * <p>The chain of strong references:
      * 1) Thread ->
@@ -123,11 +123,11 @@ public abstract class Chaining extends ChainingInterface {
         }
         int maxNestedContexts = 1 << 10;
         if (contextChain.size() > maxNestedContexts) {
-            throw new IllegalStateException("More than " + maxNestedContexts +
-                    " nested ChronicleHash contexts are not supported. Very probable that " +
-                    "you simply forgot to close context somewhere (recommended to use " +
-                    "try-with-resources statement). " +
-                    "Otherwise this is a bug, please report with this " +
+            throw new IllegalStateException(map.toIdentityString() +
+                    ": More than " + maxNestedContexts + " nested ChronicleHash contexts\n" +
+                    "are not supported. Very probable that you simply forgot to close context\n" +
+                    "somewhere (recommended to use try-with-resources statement).\n" +
+                    "Otherwise this is a bug, please report with this\n" +
                     "stack trace on https://github.com/OpenHFT/Chronicle-Map/issues");
         }
         //noinspection unchecked

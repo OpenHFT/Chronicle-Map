@@ -137,7 +137,8 @@ public abstract class HashQuery<K> implements SetEntry<K> {
             ks.setSearchState(ABSENT);
             initPresenceOfEntry(EntryPresence.ABSENT);
         } else {
-            throw new IllegalStateException("Entry is absent when doRemove() is called");
+            throw new IllegalStateException(
+                    hh.h().toIdentityString() + ": Entry is absent when doRemove() is called");
         }
     }
 }

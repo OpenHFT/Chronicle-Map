@@ -42,10 +42,12 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
     public void initReplicationUpdate(byte identifier, long timestamp, byte remoteNodeIdentifier) {
         innerRemoteTimestamp = timestamp;
         if (identifier == 0)
-            throw new IllegalStateException("identifier can't be 0");
+            throw new IllegalStateException(mh.h().toIdentityString() + ": identifier can't be 0");
         innerRemoteIdentifier = identifier;
-        if (remoteNodeIdentifier == 0)
-            throw new IllegalStateException("remote node identifier can't be 0");
+        if (remoteNodeIdentifier == 0) {
+            throw new IllegalStateException(
+                    mh.h().toIdentityString() + ": remote node identifier can't be 0");
+        }
         innerRemoteNodeIdentifier = remoteNodeIdentifier;
     }
     

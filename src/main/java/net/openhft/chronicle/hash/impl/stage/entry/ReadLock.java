@@ -18,6 +18,7 @@
 package net.openhft.chronicle.hash.impl.stage.entry;
 
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -46,8 +47,13 @@ public class ReadLock implements InterProcessLock {
     public void lock() {
         checkOnEachPublicOperation.checkOnEachLockOperation();
         if (s.localLockState == UNLOCKED) {
-            if (s.readZero() && s.updateZero() && s.writeZero())
-                s.segmentHeader.readLock(s.segmentHeaderAddress);
+            if (s.readZero() && s.updateZero() && s.writeZero()) {
+                try {
+                    s.segmentHeader.readLock(s.segmentHeaderAddress);
+                } catch (InterProcessDeadLockException e) {
+                    throw s.debugContextsAndLocks(e);
+                }
+            }
             s.incrementRead();
             s.setLocalLockState(READ_LOCKED);
         }
@@ -59,8 +65,13 @@ public class ReadLock implements InterProcessLock {
         if (Thread.interrupted())
             throw new InterruptedException();
         if (s.localLockState == UNLOCKED) {
-            if (s.readZero() && s.updateZero() && s.writeZero())
-                s.segmentHeader.readLockInterruptibly(s.segmentHeaderAddress);
+            if (s.readZero() && s.updateZero() && s.writeZero()) {
+                try {
+                    s.segmentHeader.readLockInterruptibly(s.segmentHeaderAddress);
+                } catch (InterProcessDeadLockException e) {
+                    throw s.debugContextsAndLocks(e);
+                }
+            }
             s.incrementRead();
             s.setLocalLockState(READ_LOCKED);
         }

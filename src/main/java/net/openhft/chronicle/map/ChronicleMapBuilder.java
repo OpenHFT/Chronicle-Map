@@ -573,8 +573,6 @@ public final class ChronicleMapBuilder<K, V> implements
      * If value size is always the same, call {@link #constantValueSizeBySample(Object)} method
      * instead of this one.
      *
-     * <p>Example: If you
-     *
      * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
      * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
      * that, however, might result to quite high internal fragmentation, i. e. losses because only
@@ -1547,13 +1545,13 @@ public final class ChronicleMapBuilder<K, V> implements
             }
             prepareMapPublication(result);
             return result;
-        } catch (Throwable t) {
+        } catch (Throwable throwable) {
             try {
                 resourceReleaser.releaseManually();
             } catch (Exception e) {
-                t.addSuppressed(e);
+                throwable.addSuppressed(e);
             }
-            throw Throwables.propagateNotWrapping(t, IOException.class);
+            throw Throwables.propagateNotWrapping(throwable, IOException.class);
         }
     }
 
@@ -1568,7 +1566,8 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * @return size of the self bootstrapping header
      */
-    private int waitUntilReady(RandomAccessFile raf, boolean recover) throws IOException {
+    private int waitUntilReady(RandomAccessFile raf, File file, boolean recover)
+            throws IOException {
         FileChannel fileChannel = raf.getChannel();
 
         ByteBuffer sizeWordBuffer = ByteBuffer.allocate(4);
@@ -1594,8 +1593,13 @@ public final class ChronicleMapBuilder<K, V> implements
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 if (recover) {
-                    break;
+                    if (lastReadHeaderSize == -1) {
+                        throw new ChronicleHashRecoveryFailedException(e);
+                    } else {
+                        return lastReadHeaderSize;
+                    }
                 } else {
                     throw new IOException(e);
                 }
@@ -1603,13 +1607,15 @@ public final class ChronicleMapBuilder<K, V> implements
         }
         if (recover) {
             if (lastReadHeaderSize == -1) {
-                throw new ChronicleHashRecoveryFailedException("File header is not recoverable");
+                throw new ChronicleHashRecoveryFailedException(
+                        "File header is not recoverable, file=" + file);
             } else {
                 return lastReadHeaderSize;
             }
         } else {
-            throw new IOException("Unable to wait until the file is ready, likely the process " +
-                    "which created the file crashed or hung for more than 1 minute");
+            throw new IOException("Unable to wait until the file=" + file +
+                    " is ready, likely the process which created the file crashed or hung " +
+                    "for more than 1 minute");
         }
     }
 
@@ -1617,10 +1623,11 @@ public final class ChronicleMapBuilder<K, V> implements
      * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
      */
     private ByteBuffer checkSumSelfBootstrappingHeader(
-            RandomAccessFile raf, int headerSize, boolean recover) throws IOException {
+            File file, RandomAccessFile raf, int headerSize, boolean recover) throws IOException {
         if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
-            throw throwRecoveryOrReturnIOException("The file is shorter than the header size: " +
-                    headerSize + ", file size: " + raf.length(), recover);
+            throw throwRecoveryOrReturnIOException(file,
+                    "The file is shorter than the header size: " + headerSize +
+                            ", file size: " + raf.length(), recover);
         }
         FileChannel fileChannel = raf.getChannel();
         ByteBuffer headerBuffer = ByteBuffer.allocate(
@@ -1628,26 +1635,26 @@ public final class ChronicleMapBuilder<K, V> implements
         headerBuffer.order(LITTLE_ENDIAN);
         readFully(fileChannel, 0, headerBuffer);
         if (headerBuffer.remaining() > 0) {
-            throw throwRecoveryOrReturnIOException("Unable to read the header fully, " +
+            throw throwRecoveryOrReturnIOException(file, "Unable to read the header fully, " +
                     headerBuffer.remaining() + " is remaining to read, likely the file was " +
                     "truncated", recover);
         }
         int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
         if (!SizePrefixedBlob.isReady(sizeWord)) {
             if (recover) {
-                LOG.error("size-prefixed blob readiness bit is set to NOT_COMPLETE");
+                LOG.error("file={}: size-prefixed blob readiness bit is set to NOT_COMPLETE", file);
                 // the bit will be overwritten to READY in the end of recovery procedure, so nothing
                 // to fix right here
             } else {
-                throw new IOException("sizeWord is not ready: " + sizeWord);
+                throw new IOException("file=" + file+ ": sizeWord is not ready: " + sizeWord);
             }
         }
         long checkSum = headerChecksum(headerBuffer, headerSize);
         long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
         if (storedChecksum != checkSum) {
-            throw throwRecoveryOrReturnIOException("Self Bootstrapping Header checksum doesn't " +
-                    "match the stored checksum: " + storedChecksum + ", computed: " + checkSum,
-                    recover);
+            throw throwRecoveryOrReturnIOException(file,
+                    "Self Bootstrapping Header checksum doesn't match the stored checksum: " +
+                            storedChecksum + ", computed: " + checkSum, recover);
         }
         headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
         return headerBuffer;
@@ -1668,7 +1675,7 @@ public final class ChronicleMapBuilder<K, V> implements
             boolean recover, boolean overrideBuilderConfig)
             throws IOException {
         try {
-            int headerSize = waitUntilReady(raf, recover);
+            int headerSize = waitUntilReady(raf, file, recover);
             FileChannel fileChannel = raf.getChannel();
             ByteBuffer headerBuffer;
             if (overrideBuilderConfig) {
@@ -1676,15 +1683,15 @@ public final class ChronicleMapBuilder<K, V> implements
                 headerBuffer = writeHeader(fileChannel, mapObjectForHeaderOverwrite);
                 headerSize = headerBuffer.remaining();
             } else {
-                headerBuffer = checkSumSelfBootstrappingHeader(raf, headerSize, recover);
-                assert headerSize == headerBuffer.remaining();
+                headerBuffer = checkSumSelfBootstrappingHeader(file, raf, headerSize, recover);
+                if (headerSize != headerBuffer.remaining())
+                    throw new AssertionError();
             }
             Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
             headerBytes.readPosition(headerBuffer.position());
             headerBytes.readLimit(headerBuffer.limit());
             Wire wire = new TextWire(headerBytes);
             VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
-            assert map != null;
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
             long dataStoreSize = map.globalMutableState().getDataStoreSize();
             if (!recover && dataStoreSize > file.length()) {
@@ -1708,7 +1715,7 @@ public final class ChronicleMapBuilder<K, V> implements
             if (recover && !(e instanceof IOException) &&
                     !(e instanceof ChronicleHashRecoveryFailedException))
                 throw new ChronicleHashRecoveryFailedException(e);
-            throw e;
+            throw Throwables.propagateNotWrapping(e, IOException.class);
         }
     }
 
@@ -1723,13 +1730,13 @@ public final class ChronicleMapBuilder<K, V> implements
             map.createInMemoryStoreAndSegments(resourceReleaser);
             prepareMapPublication(map);
             return map;
-        } catch (Throwable t) {
+        } catch (Throwable throwable) {
             try {
                 resourceReleaser.releaseManually();
             } catch (Exception e) {
-                t.addSuppressed(e);
+                throwable.addSuppressed(e);
             }
-            throw Throwables.propagate(t);
+            throw Throwables.propagate(throwable);
         }
     }
 
@@ -1799,7 +1806,9 @@ public final class ChronicleMapBuilder<K, V> implements
             try {
                 cleanupThread.join();
             } catch (InterruptedException e) {
-                LOG.error("", e);
+                LOG.warn(map.toIdentityString() +
+                        ": Interrupted while waiting for the cleanup thread to cease");
+                Thread.currentThread().interrupt();
             }
         });
     }

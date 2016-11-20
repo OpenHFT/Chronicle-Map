@@ -111,8 +111,8 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
             ks.setSearchState(PRESENT);
             initPresenceOfEntry(EntryPresence.PRESENT);
         } else {
-            throw new IllegalStateException(
-                    "Entry is absent in the map when doReplaceValue() is called");
+            throw new IllegalStateException(mh.h().toIdentityString() +
+                    ": Entry is absent in the map when doReplaceValue() is called");
         }
     }
 

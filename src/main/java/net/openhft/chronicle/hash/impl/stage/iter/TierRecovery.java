@@ -241,7 +241,7 @@ public class TierRecovery {
         try {
             e.readExistingEntry(entryPos);
         } catch (Exception e) {
-            log.error("Exception while reading entry key size: {}", e);
+            log.error("Exception while reading entry key size:", e);
             return -1;
         }
         if (e.keyEnd() > s.segmentBytes.capacity()) {
@@ -275,7 +275,7 @@ public class TierRecovery {
                 return -1;
             }
         } catch (Exception ex) {
-            log.error("Exception while reading entry value size: {}, key: {}", ex, e.key());
+            log.error("Exception while reading entry value size, key: " + e.key(), ex);
             return -1;
         }
 

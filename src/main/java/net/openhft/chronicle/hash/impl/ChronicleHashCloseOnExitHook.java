@@ -64,13 +64,25 @@ final class ChronicleHashCloseOnExitHook {
             orderedMaps.descendingMap().values().forEach(h -> {
                 try {
                     h.close();
-                } catch (RuntimeException | AssertionError e) {
-                    LOG.error("", e);
+                } catch (Throwable throwable) {
+                    try {
+                        LOG.error("Error while closing " + h.toIdentityString() +
+                                " during shutdown hook:", throwable);
+                    } catch (Throwable t2) {
+                        // This may occur if the log service has already been shut down. Try to fall
+                        // back to printStackTrace().
+                        throwable.addSuppressed(t2);
+                        throwable.printStackTrace();
+                    }
                 }
             });
-        } catch (Throwable t) {
-            LOG.error("", t);
-            throw t;
+        } catch (Throwable throwable) {
+            try {
+                LOG.error("Error while closing maps during shutdown hook:", throwable);
+            } catch (Throwable t2) {
+                throwable.addSuppressed(t2);
+                throwable.printStackTrace();
+            }
         }
     }
 

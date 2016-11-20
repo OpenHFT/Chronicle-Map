@@ -20,7 +20,9 @@ package net.openhft.chronicle.hash.impl;
 import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.bytes.NativeAccess;
 import net.openhft.chronicle.algo.locks.VanillaReadWriteUpdateWithWaitsLockingStrategy;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 
 import java.util.concurrent.TimeUnit;
 
@@ -55,9 +57,10 @@ public final class BigSegmentHeader implements SegmentHeader {
      */
     public static final int LOCK_TIMEOUT_SECONDS = 60;
 
-    private static RuntimeException deadLock() {
-        return new RuntimeException("Failed to acquire the lock in " + LOCK_TIMEOUT_SECONDS +
-                " seconds.\nPossible reasons:\n" +
+    private static InterProcessDeadLockException deadLock() {
+        return new InterProcessDeadLockException(
+                "Failed to acquire the lock in " + LOCK_TIMEOUT_SECONDS + " seconds.\n" +
+                "Possible reasons:\n" +
                 " - The lock was not released by the previous holder. If you use contexts API,\n" +
                 " for example map.queryContext(key), in a try-with-resources block.\n" +
                 " - This Chronicle Map (or Set) instance is persisted to disk, and the previous\n" +
@@ -188,8 +191,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         do {
             if (LOCK.tryReadLock(A, null, address + LOCK_OFFSET))
                 return true;
-            if (interruptible && Thread.interrupted())
-                throw new InterruptedException();
+            checkInterrupted(interruptible);
         } while (System.nanoTime() <= end);
         return false;
     }
@@ -203,8 +205,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         do {
             if (LOCK.tryReadLock(A, null, address + LOCK_OFFSET))
                 return true;
-            if (interruptible && Thread.interrupted())
-                throw new InterruptedException();
+            checkInterrupted(interruptible);
             long now = System.currentTimeMillis();
             if (now != lastTime) {
                 lastTime = now;
@@ -275,8 +276,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         do {
             if (LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET))
                 return true;
-            if (interruptible && Thread.interrupted())
-                throw new InterruptedException();
+            checkInterrupted(interruptible);
         } while (System.nanoTime() <= end);
         return false;
     }
@@ -290,8 +290,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         do {
             if (LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET))
                 return true;
-            if (interruptible && Thread.interrupted())
-                throw new InterruptedException();
+            checkInterrupted(interruptible);
             long now = System.currentTimeMillis();
             if (now != lastTime) {
                 lastTime = now;
@@ -350,13 +349,17 @@ public final class BigSegmentHeader implements SegmentHeader {
             throws InterruptedException {
         long end = System.nanoTime() + timeInNanos;
         registerWait(address);
-        do {
-            if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
-                return true;
-            detectInterruptionAndDeregisterWait(address, interruptible);
-        } while (System.nanoTime() <= end);
-        deregisterWait(address);
-        return false;
+        try {
+            do {
+                if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
+                    return true;
+                checkInterrupted(interruptible);
+            } while (System.nanoTime() <= end);
+            deregisterWait(address);
+            return false;
+        } catch (Throwable t) {
+            throw tryDeregisterWaitAndRethrow(address, t);
+        }
     }
 
     /**
@@ -366,26 +369,27 @@ public final class BigSegmentHeader implements SegmentHeader {
             long address, long timeInMillis, boolean interruptible) throws InterruptedException {
         long lastTime = System.currentTimeMillis();
         registerWait(address);
-        do {
-            if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
-                return true;
-            detectInterruptionAndDeregisterWait(address, interruptible);
-            long now = System.currentTimeMillis();
-            if (now != lastTime) {
-                lastTime = now;
-                timeInMillis--;
-            }
-        } while (timeInMillis >= 0);
-        deregisterWait(address);
-        return false;
+        try {
+            do {
+                if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
+                    return true;
+                checkInterrupted(interruptible);
+                long now = System.currentTimeMillis();
+                if (now != lastTime) {
+                    lastTime = now;
+                    timeInMillis--;
+                }
+            } while (timeInMillis >= 0);
+            deregisterWait(address);
+            return false;
+        } catch (Throwable t) {
+            throw tryDeregisterWaitAndRethrow(address, t);
+        }
     }
 
-    private static void detectInterruptionAndDeregisterWait(long address, boolean interruptible)
-            throws InterruptedException {
-        if (interruptible && Thread.interrupted()) {
-            deregisterWait(address);
+    private static void checkInterrupted(boolean interruptible) throws InterruptedException {
+        if (interruptible && Thread.interrupted())
             throw new InterruptedException();
-        }
     }
 
     private static void registerWait(long address) {
@@ -446,13 +450,17 @@ public final class BigSegmentHeader implements SegmentHeader {
             long address, long timeInNanos, boolean interruptible) throws InterruptedException {
         long end = System.nanoTime() + timeInNanos;
         registerWait(address);
-        do {
-            if (tryUpgradeUpdateToWriteLockAndDeregisterWait0(address))
-                return true;
-            detectInterruptionAndDeregisterWait(address, interruptible);
-        } while (System.nanoTime() <= end);
-        deregisterWait(address);
-        return false;
+        try {
+            do {
+                if (tryUpgradeUpdateToWriteLockAndDeregisterWait0(address))
+                    return true;
+                checkInterrupted(interruptible);
+            } while (System.nanoTime() <= end);
+            deregisterWait(address);
+            return false;
+        } catch (Throwable t) {
+            throw tryDeregisterWaitAndRethrow(address, t);
+        }
     }
 
     /**
@@ -462,34 +470,35 @@ public final class BigSegmentHeader implements SegmentHeader {
             long address, long timeInMillis, boolean interruptible) throws InterruptedException {
         long lastTime = System.currentTimeMillis();
         registerWait(address);
-        do {
-            if (tryUpgradeUpdateToWriteLockAndDeregisterWait0(address))
-                return true;
-            detectInterruptionAndDeregisterWait(address, interruptible);
-            long now = System.currentTimeMillis();
-            if (now != lastTime) {
-                lastTime = now;
-                timeInMillis--;
-            }
-        } while (timeInMillis >= 0);
-        deregisterWait(address);
-        return false;
+        try {
+            do {
+                if (tryUpgradeUpdateToWriteLockAndDeregisterWait0(address))
+                    return true;
+                checkInterrupted(interruptible);
+                long now = System.currentTimeMillis();
+                if (now != lastTime) {
+                    lastTime = now;
+                    timeInMillis--;
+                }
+            } while (timeInMillis >= 0);
+            deregisterWait(address);
+            return false;
+        } catch (Throwable t) {
+            throw tryDeregisterWaitAndRethrow(address, t);
+        }
+    }
+
+    private static RuntimeException tryDeregisterWaitAndRethrow(long address, Throwable throwable) {
+        try {
+            deregisterWait(address);
+        } catch (Throwable t) {
+            throwable.addSuppressed(t);
+        }
+        throw Jvm.rethrow(throwable);
     }
 
     private static boolean tryUpgradeUpdateToWriteLockAndDeregisterWait0(long address) {
-        try {
-            if (LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET)) {
-                return true;
-            }
-        } catch (IllegalMonitorStateException e) {
-            try {
-                deregisterWait(address);
-            } catch (Throwable suppressed) {
-                e.addSuppressed(suppressed);
-            }
-            throw e;
-        }
-        return false;
+        return LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET);
     }
 
     @Override

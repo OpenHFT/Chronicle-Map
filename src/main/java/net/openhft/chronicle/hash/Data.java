@@ -28,6 +28,9 @@ import net.openhft.chronicle.map.MapQueryContext;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAccess;
 
 /**
@@ -186,9 +189,8 @@ public interface Data<T> {
      * {@code get()} method throws an exception.
      */
     default String dataToString() {
-        T object;
         try {
-            object = get();
+            return get().toString();
         } catch (Exception e) {
             StringBuilder sb = new StringBuilder();
             sb.append("failed to deserialize object from data with bytes: [");
@@ -197,9 +199,11 @@ public interface Data<T> {
                 sb.append(bs.printable(off));
             }
             sb.append("], exception: ");
-            sb.append(e);
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            String exceptionAsString = sw.toString();
+            sb.append(exceptionAsString);
             return sb.toString();
         }
-        return object.toString();
     }
 }

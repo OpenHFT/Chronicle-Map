@@ -30,6 +30,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
+import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.chronicle.map.impl.IterationContext;
 import net.openhft.sg.Stage;
@@ -260,9 +261,9 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     public abstract boolean locksInit();
 
     void initLocks() {
-        // This is a dummy check needed to make the Locks stage depend on the chaining.Used stage,
-        // to move the chaining.Used stage up in topological order, to make it closed later in
-        // the global context close() method, to ensure the context is unlocked (this is done in
+        // This is a dummy check needed to make the Locks stage dependent on the chaining.Used
+        // stage, to move the chaining.Used stage up in topological order, to make it closed later
+        // in the global context close() method, to ensure the context is unlocked (this is done in
         // the chaining.closeUsed() method) after all other stages, potentially accessing Map's
         // off-heap memory, are closed.
         assert chaining.used;
@@ -273,7 +274,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         // SegmentHeader is init, Locks stage is closed (and then need to be re-init again), as
         // a dependency of SegmentHeader. So ensuring SegmentHeader is always init before Locks
         // allows to avoid redundant work.
-        if (segmentHeader == null) throw new AssertionError();
+        if (segmentHeader == null)
+            throw new AssertionError();
         localLockState = UNLOCKED;
         int indexOfThisContext = chaining.indexInContextChain;
         for (int i = indexOfThisContext - 1; i >= 0; i--) {
@@ -386,8 +388,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         if (innermostContextOnThisSegment.getClass() == this.getClass()) {
             Data key = ((KeySearch) innermostContextOnThisSegment).inputKey;
             if (Objects.equals(key, ((KeySearch) (Object) this).inputKey)) {
-                throw new IllegalStateException("Nested same-thread contexts cannot access " +
-                        "the same key " + key);
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": Nested same-thread contexts cannot access the same key " + key);
             }
         }
     }
@@ -410,8 +412,10 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Locks")
     private void verifyInnermostContext() {
-        if (nextNode != null)
-            throw new IllegalStateException("Attempt to close contexts not structurally");
+        if (nextNode != null) {
+            throw new IllegalStateException(
+                    hh.h().toIdentityString() + ": Attempt to close contexts not structurally");
+        }
     }
 
     @Stage("Locks")
@@ -447,8 +451,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     public void checkIterationContextNotLockedInThisThread() {
         if (chaining.rootContextInThisThread.iterationContextLockedInThisThread) {
-            throw new IllegalStateException("Update or Write locking is forbidden in the context" +
-                    "of locked iteration context");
+            throw new IllegalStateException(hh.h().toIdentityString() + ": Update or Write " +
+                    "locking is forbidden in the context of locked iteration context");
         }
     }
 
@@ -465,8 +469,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     @Stage("Locks")
-    public String debugContextsAndLocks() {
-        String message = "";
+    public RuntimeException debugContextsAndLocks(InterProcessDeadLockException e) {
+        String message = hh.h().toIdentityString() + ":\n";
         message += "Contexts locked on this segment:\n";
 
         for (LocksInterface cxt = rootContextLockedOnThisSegment; cxt != null;
@@ -478,7 +482,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
             LocksInterface cxt = chaining.contextAtIndexInChain(i);
             message += cxt.debugLocksState() + "\n";
         }
-        return message;
+        throw new InterProcessDeadLockException(message, e);
     }
 
     @Override
@@ -595,8 +599,10 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     }
 
     public void prevTier() {
-        if (tier == 0)
-            throw new IllegalStateException("first tier doesn't have previous");
+        if (tier == 0) {
+            throw new IllegalStateException(
+                    hh.h().toIdentityString() + ": first tier doesn't have previous");
+        }
         initSegmentTier(tier - 1, prevTierIndex());
     }
 
@@ -657,7 +663,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     public long allocReturnCode(int chunks) {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         if (chunks > h.maxChunksPerEntry) {
-            throw new IllegalArgumentException("Entry is too large: requires " + chunks +
+            throw new IllegalArgumentException(hh.h().toIdentityString() +
+                    ": Entry is too large: requires " + chunks +
                     " chunks, " + h.maxChunksPerEntry + " is maximum.");
         }
         long lowestPossiblyFreeChunk = lowestPossiblyFreeChunk();

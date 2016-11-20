@@ -169,8 +169,8 @@ public class VanillaChronicleMap<K, V, R>
 
     public final V checkValue(Object value) {
         if (!valueClass.isInstance(value)) {
-            throw new ClassCastException("Value must be a " + valueClass.getName() +
-                    " but was a " + value.getClass());
+            throw new ClassCastException(toIdentityString() + ": Value must be a " +
+                    valueClass.getName() + " but was a " + value.getClass());
         }
         return (V) value;
     }
@@ -206,20 +206,21 @@ public class VanillaChronicleMap<K, V, R>
             q.writeLock().lock();
             checkAcquiredUsing(acquireUsingBody(q, usingValue), usingValue);
             return q.acquireHandle();
-        } catch (Throwable e) {
+        } catch (Throwable throwable) {
             try {
                 q.close();
-            } catch (Throwable suppressed) {
-                e.addSuppressed(suppressed);
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
             }
-            throw e;
+            throw throwable;
         }
     }
 
-    private static <V> void checkAcquiredUsing(V acquired, V using) {
+    private void checkAcquiredUsing(V acquired, V using) {
         if (acquired != using) {
-            throw new IllegalArgumentException("acquire*() MUST reuse the given " +
-                    "value. Given value " + using + " cannot be reused to read " + acquired);
+            throw new IllegalArgumentException(toIdentityString() +
+                    ": acquire*() MUST reuse the given value. Given value " + using +
+                    " cannot be reused to read " + acquired);
         }
     }
 
@@ -487,8 +488,10 @@ public class VanillaChronicleMap<K, V, R>
                         break searchLoop;
                     }
                     hlPos = hl.step(hlPos);
-                    if (hlPos == searchStartPos)
-                        throw new IllegalStateException("HashLookup overflow should never occur");
+                    if (hlPos == searchStartPos) {
+                        throw new IllegalStateException(
+                                toIdentityString() + ": HashLookup overflow should never occur");
+                    }
 
                     if ((hl.key(entry)) == searchKey) {
                         entryPos = hl.value(entry);

@@ -94,7 +94,8 @@ public final class SerializationBuilder<T> implements Cloneable {
             reader(new ByteableSizedReader<>((Class) tClass));
             dataAccess((DataAccess<T>) new ByteableDataAccess<>((Class) tClass));
             try {
-                sizeMarshaller(constant(((Byteable) OS.memory().allocateInstance(tClass)).maxSize()));
+                long byteableSize = ((Byteable) OS.memory().allocateInstance(tClass)).maxSize();
+                sizeMarshaller(constant(byteableSize));
             } catch (InstantiationException e) {
                 throw new IllegalStateException(e);
             }
