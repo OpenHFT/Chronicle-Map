@@ -62,8 +62,9 @@ public class MemoryResourcesTest {
         Assert.assertNotEquals(0, NoBytesStore.NO_PAGE);
     }
 
-    @Test(timeout = 60_000)
-    public void testChronicleMapCollectedAndDirectMemoryReleased() throws IOException {
+    @Test
+    public void testChronicleMapCollectedAndDirectMemoryReleased()
+            throws IOException, InterruptedException {
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
         WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(getMap());
         Assert.assertNotNull(ref.get());
@@ -75,11 +76,12 @@ public class MemoryResourcesTest {
             Thread.yield();
         }
         // Wait until Cleaner is called and memory is returned to the system
-        while (nativeMemoryUsedBeforeMap != nativeMemoryUsed()) {
+        for (int i = 0; nativeMemoryUsedBeforeMap != nativeMemoryUsed() && i < 60_000_000; i++) {
             System.gc();
             byte[] garbage = new byte[1_000_000];
-            Thread.yield();
+            Thread.sleep(1);
         }
+        Assert.assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
     }
 
     private long nativeMemoryUsed() {
