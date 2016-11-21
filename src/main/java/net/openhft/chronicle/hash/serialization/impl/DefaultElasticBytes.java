@@ -21,8 +21,14 @@ import net.openhft.chronicle.bytes.Bytes;
 
 final class DefaultElasticBytes {
 
-    public static Bytes<?> allocateDefaultElasticBytes() {
-        return Bytes.elasticHeapByteBuffer(32);
+    static final int DEFAULT_BYTES_CAPACITY = 32;
+
+    static Bytes<?> allocateDefaultElasticBytes(long bytesCapacity) {
+        if (bytesCapacity <= Bytes.MAX_BYTE_BUFFER_CAPACITY) {
+            return Bytes.elasticHeapByteBuffer((int) bytesCapacity);
+        } else {
+            return Bytes.allocateElasticDirect(bytesCapacity);
+        }
     }
 
     private DefaultElasticBytes() {}

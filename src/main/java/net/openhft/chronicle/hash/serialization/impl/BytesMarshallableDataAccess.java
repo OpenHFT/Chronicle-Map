@@ -24,6 +24,8 @@ import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
+
 public class BytesMarshallableDataAccess<T extends BytesMarshallable>
         extends InstanceCreatingMarshaller<T> implements DataAccess<T>, Data<T> {
 
@@ -36,18 +38,22 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
     private transient T instance;
 
     public BytesMarshallableDataAccess(Class<T> tClass) {
+        this(tClass, DEFAULT_BYTES_CAPACITY);
+    }
+
+    private BytesMarshallableDataAccess(Class<T> tClass, long bytesCapacity) {
         super(tClass);
-        initTransients();
+        initTransients(bytesCapacity);
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
         super.readMarshallable(wireIn);
-        initTransients();
+        initTransients(DEFAULT_BYTES_CAPACITY);
     }
 
-    private void initTransients() {
-        bytes = DefaultElasticBytes.allocateDefaultElasticBytes();
+    private void initTransients(long bytesCapacity) {
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes(bytesCapacity);
         targetBytes = VanillaBytes.vanillaBytes();
     }
 
@@ -133,6 +139,6 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
 
     @Override
     public DataAccess<T> copy() {
-        return new BytesMarshallableDataAccess<>(tClass());
+        return new BytesMarshallableDataAccess<>(tClass(), bytes.realCapacity());
     }
 }

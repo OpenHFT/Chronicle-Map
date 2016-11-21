@@ -23,7 +23,10 @@ import net.openhft.chronicle.hash.serialization.SizedWriter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated use one of {@link AbstractCharSequenceUtf8DataAccess} subclasses instead
+ * @deprecated use one of {@link AbstractCharSequenceUtf8DataAccess} subclasses instead. This class
+ * is not removed, because users who created a chronicleMap with older version of the library with
+ * this class as the key or value writer should be able to read and access the map with the present
+ * version of the library.
  */
 @Deprecated
 @SuppressWarnings("deprecation")

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
+import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
 public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T>
         implements DataAccess<T>, Data<T> {
@@ -47,10 +48,16 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
 
     public SizedMarshallableDataAccess(
             Class<T> tClass, SizedReader<T> sizedReader, SizedWriter<? super T> sizedWriter) {
+        this(tClass, sizedReader, sizedWriter, DEFAULT_BYTES_CAPACITY);
+    }
+
+    private SizedMarshallableDataAccess(
+            Class<T> tClass, SizedReader<T> sizedReader, SizedWriter<? super T> sizedWriter,
+            long bytesCapacity) {
         super(tClass);
         this.sizedWriter = sizedWriter;
         this.sizedReader = sizedReader;
-        initTransients();
+        initTransients(bytesCapacity);
     }
 
     SizedReader<T> sizedReader() {
@@ -61,8 +68,8 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
         return sizedWriter;
     }
 
-    private void initTransients() {
-        bytes = DefaultElasticBytes.allocateDefaultElasticBytes();
+    private void initTransients(long bytesCapacity) {
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes(bytesCapacity);
         targetBytes = VanillaBytes.vanillaBytes();
     }
 
@@ -143,7 +150,8 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
     @Override
     public DataAccess<T> copy() {
         return new SizedMarshallableDataAccess<>(
-                tClass(), copyIfNeeded(sizedReader), copyIfNeeded(sizedWriter));
+                tClass(), copyIfNeeded(sizedReader), copyIfNeeded(sizedWriter),
+                bytes.realCapacity());
     }
 
     @Override
@@ -151,7 +159,7 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
         super.readMarshallable(wireIn);
         sizedReader = wireIn.read(() -> "sizedReader").typedMarshallable();
         sizedWriter = wireIn.read(() -> "sizedWriter").typedMarshallable();
-        initTransients();
+        initTransients(DEFAULT_BYTES_CAPACITY);
     }
 
     @Override

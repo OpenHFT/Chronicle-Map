@@ -29,12 +29,19 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
+import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
+
 public class ExternalizableDataAccess<T extends Externalizable> extends SerializableDataAccess<T> {
 
     /** Config field */
     private Class<T> tClass;
 
     public ExternalizableDataAccess(Class<T> tClass) {
+        this(tClass, DEFAULT_BYTES_CAPACITY);
+    }
+
+    private ExternalizableDataAccess(Class<T> tClass, long bytesCapacity) {
+        super(bytesCapacity);
         this.tClass = tClass;
     }
 
@@ -80,13 +87,13 @@ public class ExternalizableDataAccess<T extends Externalizable> extends Serializ
 
     @Override
     public DataAccess<T> copy() {
-        return new ExternalizableDataAccess<>(tClass);
+        return new ExternalizableDataAccess<>(tClass, bytes.realCapacity());
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
         tClass = wireIn.read(() -> "tClass").typeLiteral();
-        initTransients();
+        initTransients(DEFAULT_BYTES_CAPACITY);
     }
 
     @Override
