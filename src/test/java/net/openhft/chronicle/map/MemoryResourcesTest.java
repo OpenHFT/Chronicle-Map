@@ -108,7 +108,7 @@ public class MemoryResourcesTest {
         VanillaChronicleMap<IntValue, String, ?> map;
         if (persisted) {
             map = (VanillaChronicleMap<IntValue, String, ?>)
-                    builder.createPersistedTo(folder.newFile("map.dat"));
+                    builder.createPersistedTo(folder.newFile());
         } else {
             map = (VanillaChronicleMap<IntValue, String, ?>) builder.create();
         }

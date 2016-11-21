@@ -36,7 +36,7 @@ public class ExitHookTest {
     public void testExitHook() throws IOException, InterruptedException {
         if (!OS.isLinux() && !OS.isMacOSX())
             return; // This test runs only in Unix-like OSes
-        File mapFile = folder.newFile("map");
+        File mapFile = folder.newFile();
         System.out.println("map file: " + mapFile.getAbsolutePath());
         // Create a process which opens the map, acquires the lock and "hangs" for 30 seconds
         Process process = startOtherProcess(mapFile);
