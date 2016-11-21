@@ -77,6 +77,7 @@ public class MemoryResourcesTest {
         // Wait until Cleaner is called and memory is returned to the system
         while (nativeMemoryUsedBeforeMap != nativeMemoryUsed()) {
             System.gc();
+            byte[] garbage = new byte[1_000_000];
             Thread.yield();
         }
     }
