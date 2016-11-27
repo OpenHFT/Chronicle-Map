@@ -18,23 +18,15 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
+public final class InMemoryChronicleHashResources extends ChronicleHashResources {
 
-
-public final class PersistedChronicleHashResourceReleaser
-        extends ChronicleHashResourceReleaser {
     private static final Logger LOG =
-            LoggerFactory.getLogger(PersistedChronicleHashResourceReleaser.class);
+            LoggerFactory.getLogger(PersistedChronicleHashResources.class);
 
-    private final File file;
-
-    public PersistedChronicleHashResourceReleaser(File file) {
-        this.file = file;
-    }
+    public InMemoryChronicleHashResources() {}
 
     @Override
     public synchronized void run() {
@@ -46,8 +38,7 @@ public final class PersistedChronicleHashResourceReleaser
             Throwable thrown = doRelease();
             if (thrown != null) {
                 try {
-                    LOG.error("Error on releasing memory or RAF of the Chronicle Map at " +
-                            "file=" + file, thrown);
+                    LOG.error("Error on releasing memory of a Chronicle Map:", thrown);
                 } catch (Throwable t) {
                     // This may occur if Releaser is run in a shutdown hook, and the log service has
                     // already been shut down. Try to fall back to printStackTrace().
@@ -63,24 +54,15 @@ public final class PersistedChronicleHashResourceReleaser
     @Override
     Throwable doRelease() {
         Throwable thrown = null;
-        for (MemoryResource mapping : memoryResources) {
+        for (MemoryResource allocation : memoryResources) {
             try {
-                OS.unmap(mapping.address, mapping.size);
+                OS.memory().freeMemory(allocation.address, allocation.size);
             } catch (Throwable t) {
                 if (thrown == null) {
                     thrown = t;
                 } else {
                     thrown.addSuppressed(t);
                 }
-            }
-        }
-        try {
-            CanonicalRandomAccessFiles.release(file);
-        } catch (Throwable t) {
-            if (thrown == null) {
-                thrown = t;
-            } else {
-                thrown.addSuppressed(t);
             }
         }
         return thrown;

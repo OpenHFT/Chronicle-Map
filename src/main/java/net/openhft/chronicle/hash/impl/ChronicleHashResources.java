@@ -22,7 +22,10 @@ import net.openhft.chronicle.hash.impl.util.Throwables;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class ChronicleHashResourceReleaser implements Runnable {
+/**
+ * ChronicleHashResources is Runnable to be passed as "hunk" to {@link sun.misc.Cleaner}.
+ */
+public abstract class ChronicleHashResources implements Runnable {
 
     List<MemoryResource> memoryResources = new ArrayList<>(1);
 

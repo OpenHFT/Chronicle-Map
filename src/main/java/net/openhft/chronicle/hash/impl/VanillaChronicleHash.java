@@ -129,7 +129,7 @@ public abstract class VanillaChronicleHash<K,
     // Resources
     private transient File file;
     private transient RandomAccessFile raf;
-    private transient ChronicleHashResourceReleaser resourceReleaser;
+    private transient ChronicleHashResources resources;
     private transient Cleaner cleaner;
 
     /////////////////////////////////////////////////
@@ -446,9 +446,9 @@ public abstract class VanillaChronicleHash<K,
         return CACHE_LINES.align(headerSize, BYTES);
     }
 
-    public final void createInMemoryStoreAndSegments(
-            ChronicleHashResourceReleaser resourceReleaser) throws IOException {
-        this.resourceReleaser = resourceReleaser;
+    public final void createInMemoryStoreAndSegments(ChronicleHashResources resources)
+            throws IOException {
+        this.resources = resources;
         BytesStore bytesStore = nativeBytesStoreWithFixedCapacity(sizeInBytesWithoutTiers());
         createStoreAndSegments(bytesStore);
     }
@@ -495,22 +495,22 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void registerCleaner() {
-        this.cleaner = Cleaner.create(this, resourceReleaser);
+        this.cleaner = Cleaner.create(this, resources);
     }
 
     public void addToOnExitHook() {
         ChronicleHashCloseOnExitHook.add(this);
     }
 
-    public final void createMappedStoreAndSegments(ChronicleHashResourceReleaser resourceReleaser)
+    public final void createMappedStoreAndSegments(ChronicleHashResources resources)
             throws IOException {
-        this.resourceReleaser = resourceReleaser;
+        this.resources = resources;
         createStoreAndSegments(map(dataStoreSize(), 0));
     }
 
-    public final void basicRecover(ChronicleHashResourceReleaser resourceReleaser)
+    public final void basicRecover(ChronicleHashResources resources)
             throws IOException {
-        this.resourceReleaser = resourceReleaser;
+        this.resources = resources;
         long segmentHeadersOffset = globalMutableState().getSegmentHeadersOffset();
         if (segmentHeadersOffset <= 0 || segmentHeadersOffset % 4096 != 0 ||
                 segmentHeadersOffset > GIGABYTES.toBytes(1)) {
@@ -688,8 +688,8 @@ public abstract class VanillaChronicleHash<K,
                 }
             }
 
-            resourceReleaser.releaseManually();
-            // Releases nothing after resourceReleaser.releaseManually(), only removes the cleaner
+            resources.releaseManually();
+            // Releases nothing after resources.releaseManually(), only removes the cleaner
             // from the internal linked list of all cleaners.
             cleaner.clean();
             ChronicleHashCloseOnExitHook.remove(this);
@@ -794,7 +794,7 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     public long offHeapMemoryUsed() {
-        return resourceReleaser.totalMemory();
+        return resources.totalMemory();
     }
 
     public long allocateTier() {
@@ -1015,7 +1015,7 @@ public abstract class VanillaChronicleHash<K,
             raf.setLength(minFileSize);
         }
         long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
-        resourceReleaser.addMemoryResource(address, mapSize);
+        resources.addMemoryResource(address, mapSize);
         return new NativeBytesStore(address, mapSize, null, false);
     }
 
@@ -1033,7 +1033,7 @@ public abstract class VanillaChronicleHash<K,
 
     private BytesStore nativeBytesStoreWithFixedCapacity(long capacity) {
         long address = OS.memory().allocate(capacity);
-        resourceReleaser.addMemoryResource(address, capacity);
+        resources.addMemoryResource(address, capacity);
         return new NativeBytesStore<>(address, capacity, null, false);
     }
 

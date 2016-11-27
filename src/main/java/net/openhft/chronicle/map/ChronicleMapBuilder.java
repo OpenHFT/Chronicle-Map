@@ -1508,13 +1508,11 @@ public final class ChronicleMapBuilder<K, V> implements
             file.createNewFile();
         }
         RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file);
-        ChronicleHashResourceReleaser resourceReleaser =
-                new PersistedChronicleHashResourceReleaser(file);
+        ChronicleHashResources resources = new PersistedChronicleHashResources(file);
         try {
             VanillaChronicleMap<K, V, ?> result;
             if (raf.length() > 0) {
-                result = openWithExistingFile(file, raf, resourceReleaser, recover,
-                        overrideBuilderConfig);
+                result = openWithExistingFile(file, raf, resources, recover, overrideBuilderConfig);
             } else {
 
                 // Single-element arrays allow to modify variables within lambda
@@ -1536,10 +1534,10 @@ public final class ChronicleMapBuilder<K, V> implements
 
                 if (newFile[0]) {
                     int headerSize = headerBuffer[0].remaining();
-                    result = createWithNewFile(map[0], file, raf, resourceReleaser, headerBuffer[0],
+                    result = createWithNewFile(map[0], file, raf, resources, headerBuffer[0],
                             headerSize);
                 } else {
-                    result = openWithExistingFile(file, raf, resourceReleaser, recover,
+                    result = openWithExistingFile(file, raf, resources, recover,
                             overrideBuilderConfig);
                 }
             }
@@ -1547,7 +1545,7 @@ public final class ChronicleMapBuilder<K, V> implements
             return result;
         } catch (Throwable throwable) {
             try {
-                resourceReleaser.releaseManually();
+                resources.releaseManually();
             } catch (Exception e) {
                 throwable.addSuppressed(e);
             }
@@ -1662,16 +1660,16 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private VanillaChronicleMap<K, V, ?> createWithNewFile(
             VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
-            ChronicleHashResourceReleaser resourceReleaser, ByteBuffer headerBuffer, int headerSize)
+            ChronicleHashResources resources, ByteBuffer headerBuffer, int headerSize)
             throws IOException {
         map.initBeforeMapping(file, raf, headerBuffer.limit(), false);
-        map.createMappedStoreAndSegments(resourceReleaser);
+        map.createMappedStoreAndSegments(resources);
         commitChronicleMapReady(map, raf, headerBuffer, headerSize);
         return map;
     }
 
     private VanillaChronicleMap<K, V, ?> openWithExistingFile(
-            File file, RandomAccessFile raf, ChronicleHashResourceReleaser resourceReleaser,
+            File file, RandomAccessFile raf, ChronicleHashResources resources,
             boolean recover, boolean overrideBuilderConfig)
             throws IOException {
         try {
@@ -1701,13 +1699,13 @@ public final class ChronicleMapBuilder<K, V> implements
             }
             map.initTransientsFromBuilder(this);
             if (!recover) {
-                map.createMappedStoreAndSegments(resourceReleaser);
+                map.createMappedStoreAndSegments(resources);
             } else {
                 if (!overrideBuilderConfig)
                     writeNotComplete(fileChannel, headerBuffer, headerSize);
                 // if overrideBuilderConfig = true, readiness bit is already set
                 // in writeHeader() call
-                map.recover(resourceReleaser);
+                map.recover(resources);
                 commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
             return map;
@@ -1723,16 +1721,15 @@ public final class ChronicleMapBuilder<K, V> implements
         replicated = replicationIdentifier != -1;
         persisted = false;
 
-        ChronicleHashResourceReleaser resourceReleaser =
-                new InMemoryChronicleHashResourceReleaser();
+        ChronicleHashResources resources = new InMemoryChronicleHashResources();
         try {
             VanillaChronicleMap<K, V, ?> map = newMap();
-            map.createInMemoryStoreAndSegments(resourceReleaser);
+            map.createInMemoryStoreAndSegments(resources);
             prepareMapPublication(map);
             return map;
         } catch (Throwable throwable) {
             try {
-                resourceReleaser.releaseManually();
+                resources.releaseManually();
             } catch (Exception e) {
                 throwable.addSuppressed(e);
             }
