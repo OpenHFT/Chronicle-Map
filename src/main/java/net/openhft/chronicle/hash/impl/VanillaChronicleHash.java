@@ -664,10 +664,6 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    protected void doClose(Throwable thrown) {
-
-    }
-
     @Override
     public boolean isOpen() {
         return !resources.closed();
