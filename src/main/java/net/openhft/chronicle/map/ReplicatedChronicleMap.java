@@ -17,7 +17,8 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.algo.bitset.*;
+import net.openhft.chronicle.algo.bitset.BitSetFrame;
+import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
@@ -34,11 +35,9 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReferenceArray;
@@ -106,7 +105,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
      * Default value is 0, that corresponds to "unset" identifier value (valid ids are positive)
      */
     private transient byte localIdentifier;
-    transient Set<Closeable> closeables;
 
     /**
      * Idiomatically {@code assignedModificationIterators} should be a {@link CopyOnWriteArraySet},
@@ -181,7 +179,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         //noinspection unchecked
         assignedModificationIterators = new ReplicatedChronicleMap.ModificationIterator[0];
         modificationIterators = new AtomicReferenceArray<>(128);
-        closeables = new CopyOnWriteArraySet<>();
         tierModIterFrame = new SingleThreadedFlatBitSetFrame(computeTierModIterBitSetSizeInBits());
         remoteNodeCouldBootstrapFrom = new long[128];
     }
@@ -257,26 +254,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     protected void zeroOutNewlyMappedChronicleMapBytes() {
         super.zeroOutNewlyMappedChronicleMapBytes();
         bs.zeroOut(super.mapHeaderInnerSize(), this.mapHeaderInnerSize());
-    }
-
-    void addCloseable(Closeable closeable) {
-        closeables.add(closeable);
-    }
-
-    @Override
-    protected void doClose(Throwable thrown) {
-        for (Closeable closeable : closeables) {
-            try {
-                closeable.close();
-            } catch (Throwable t) {
-                if (thrown == null) {
-                    thrown = t;
-                } else {
-                    thrown.addSuppressed(t);
-                }
-            }
-        }
-        super.doClose(thrown);
     }
 
     @Override
@@ -560,16 +537,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             LOG.debug(message + "value=" + value + ")");
         }
     }
-    
-    private ChainingInterface q() {
-        //noinspection unchecked
-        ChainingInterface queryContext = cxt.get();
-        if (queryContext == null) {
-            queryContext = new CompiledReplicatedMapQueryContext<>(this);
-            addContext(queryContext);
-            cxt.set(queryContext);
-        }
-        return queryContext;
+
+    @Override
+    ChainingInterface newQueryContext() {
+        return new CompiledReplicatedMapQueryContext<>(this);
     }
 
     @Override
@@ -599,15 +570,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         }
     }
 
-    private ChainingInterface i() {
-        //noinspection unchecked
-        ChainingInterface iterContext = cxt.get();
-        if (iterContext == null) {
-            iterContext = new CompiledReplicatedMapIterationContext<>(this);
-            addContext(iterContext);
-            cxt.set(iterContext);
-        }
-        return iterContext;
+    @Override
+    ChainingInterface newIterationContext() {
+        return new CompiledReplicatedMapIterationContext<>(this);
     }
 
     public CompiledReplicatedMapIterationContext<K, V, R> iterationContext() {

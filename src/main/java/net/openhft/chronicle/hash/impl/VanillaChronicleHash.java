@@ -24,9 +24,7 @@ import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
-import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
-import net.openhft.chronicle.hash.impl.util.Throwables;
 import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
 import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -43,13 +41,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.misc.Cleaner;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.numberOfTrailingZeros;
@@ -161,12 +162,7 @@ public abstract class VanillaChronicleHash<K,
     // Miscellaneous fields
     public transient CompactOffHeapLinearHashTable hashLookup;
 
-    protected transient volatile boolean closed;
-    private transient Object closeLock;
-
     private transient VanillaGlobalMutableState globalMutableState;
-
-    private transient ArrayList<WeakReference<ChainingInterface>> allContexts;
 
     /**
      * {@link ChronicleHashCloseOnExitHook} needs to use {@code VanillaChronicleHash}es as
@@ -391,8 +387,6 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private void initOwnTransients() {
-        closed = false;
-        closeLock = new Object();
         globalMutableState = createGlobalMutableState();
         tierBulkOffsets = new ArrayList<>();
         if (tierHashLookupSlotSize == 4) {
@@ -403,7 +397,6 @@ public abstract class VanillaChronicleHash<K,
             throw new AssertionError("hash lookup slot size could be 4 or 8, " +
                     tierHashLookupSlotSize + " observed");
         }
-        allContexts = new ArrayList<>();
         identity = new Identity();
     }
 
@@ -492,6 +485,10 @@ public abstract class VanillaChronicleHash<K,
                 globalMutableState.maxSize());
 
         onHeaderCreated();
+    }
+
+    public void setResourcesName() {
+        resources.setChronicleHashIdentityString(toIdentityString());
     }
 
     public void registerCleaner() {
@@ -659,53 +656,21 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     public final void close() {
-        // Mutually exclude concurrent close() calls and ensure close procedure is done only once
-        synchronized (closeLock) {
-            if (closed)
-                return;
-            doClose(null);
-        }
-    }
-
-    protected void doClose(Throwable thrown) {
-        // Synchronization on allContexts here in conjunction with checkOpen() in addContext()
-        // ensures threads using this chronicleHash for the first time concurrently with close()
-        // will not be able to access chronicleHash, or either will be visible during iteration
-        // over allContexts below
-        synchronized (allContexts) {
-            closed = true;
-        }
-        try {
-            for (WeakReference<ChainingInterface> contextRef : allContexts) {
-                ChainingInterface context = contextRef.get();
-                if (context != null && context.owner().isAlive()) {
-                    // Ensures that if the thread owning this context will come to access
-                    // chronicleHash concurrently with resource releasing operations below, it will
-                    // fail due to the check in context.lockContextLocally() method.
-                    // If the thread owning this context is currently accessing chronicleHash,
-                    // closeContext() will spin-wait until the end of this access session.
-                    context.closeContext(this);
-                }
-            }
-
-            resources.releaseManually();
+        if (resources.releaseManually()) {
             // Releases nothing after resources.releaseManually(), only removes the cleaner
             // from the internal linked list of all cleaners.
             cleaner.clean();
             ChronicleHashCloseOnExitHook.remove(this);
-        } catch (Throwable t) {
-            if (thrown == null) {
-                throw t;
-            } else {
-                thrown.addSuppressed(t);
-                throw Throwables.propagate(thrown);
-            }
         }
+    }
+
+    protected void doClose(Throwable thrown) {
+
     }
 
     @Override
     public boolean isOpen() {
-        return !closed;
+        return !resources.closed();
     }
 
     public final void checkKey(Object key) {
@@ -1047,41 +1012,16 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void checkOpen() {
-        if (closed)
-            throw new ChronicleHashClosedException(this);
+    protected void addContext(ContextHolder contextHolder) {
+        resources.addContext(contextHolder);
     }
 
-    protected void addContext(ChainingInterface context) {
-        synchronized (allContexts) {
-            checkOpen();
-            allContexts.removeAll(pseudoCollectionForExpunge);
-            allContexts.add(new WeakReference<>(context));
-        }
+    public void addCloseable(Closeable closeable) {
+        resources.addCloseable(closeable);
     }
 
     /** For testing only */
-    public List<WeakReference<ChainingInterface>> allContexts() {
-        return Collections.unmodifiableList(allContexts);
+    public List<WeakReference<ContextHolder>> allContexts() {
+        return Collections.unmodifiableList(resources.contexts());
     }
-
-    private static final Collection<WeakReference<ChainingInterface>> pseudoCollectionForExpunge =
-            new AbstractCollection<WeakReference<ChainingInterface>>() {
-
-                @Override
-                public boolean contains(Object o) {
-                    ChainingInterface context = ((WeakReference<ChainingInterface>) o).get();
-                    return context == null || !context.owner().isAlive();
-                }
-
-                @Override
-                public Iterator<WeakReference<ChainingInterface>> iterator() {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public int size() {
-                    throw new UnsupportedOperationException();
-                }
-            };
 }

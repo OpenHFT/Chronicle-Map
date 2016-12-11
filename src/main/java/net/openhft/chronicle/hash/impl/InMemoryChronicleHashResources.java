@@ -18,51 +18,28 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.OS;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.openhft.chronicle.hash.impl.util.Throwables;
+
+import java.util.List;
 
 public final class InMemoryChronicleHashResources extends ChronicleHashResources {
-
-    private static final Logger LOG =
-            LoggerFactory.getLogger(PersistedChronicleHashResources.class);
 
     public InMemoryChronicleHashResources() {}
 
     @Override
-    public synchronized void run() {
-        if (memoryResources == null)
-            return; // Already released
-        // All Throwables are caught because this class is used as Runnable for sun.misc.Cleaner,
-        // hence must not fail
-        try {
-            Throwable thrown = doRelease();
-            if (thrown != null) {
-                try {
-                    LOG.error("Error on releasing memory of a Chronicle Map:", thrown);
-                } catch (Throwable t) {
-                    // This may occur if Releaser is run in a shutdown hook, and the log service has
-                    // already been shut down. Try to fall back to printStackTrace().
-                    thrown.addSuppressed(t);
-                    thrown.printStackTrace();
-                }
-            }
-        } finally {
-            memoryResources = null;
-        }
-    }
-
-    @Override
-    Throwable doRelease() {
+    Throwable releaseSystemResources() {
         Throwable thrown = null;
-        for (MemoryResource allocation : memoryResources) {
+        List<MemoryResource> memoryResources = memoryResources();
+        // Indexed loop instead of for-each because we may be in the context of cleaning up after
+        // OutOfMemoryError, and allocating Iterator object may lead to another OutOfMemoryError, so
+        // we try to avoid any allocations
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < memoryResources.size(); i++) {
+            MemoryResource allocation = memoryResources.get(i);
             try {
                 OS.memory().freeMemory(allocation.address, allocation.size);
             } catch (Throwable t) {
-                if (thrown == null) {
-                    thrown = t;
-                } else {
-                    thrown.addSuppressed(t);
-                }
+                thrown = Throwables.returnOrSuppress(thrown, t);
             }
         }
         return thrown;

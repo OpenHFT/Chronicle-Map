@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
@@ -68,6 +69,7 @@ public class VanillaChronicleMap<K, V, R>
 
     /////////////////////////////////////////////////
     private transient String name;
+    private transient String identityString;
 
     public transient boolean couldNotDetermineAlignmentBeforeAllocation;
 
@@ -86,7 +88,7 @@ public class VanillaChronicleMap<K, V, R>
     private transient boolean defaultEntryOperationsAndMethods;
     public transient DefaultValueProvider<K, V> defaultValueProvider;
     
-    transient ThreadLocal<ChainingInterface> cxt;
+    transient ThreadLocal<ContextHolder> cxt;
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
         super(builder);
@@ -162,6 +164,7 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     private void initOwnTransients() {
+        identityString = makeIdentityString();
         couldNotDetermineAlignmentBeforeAllocation =
                 greatestCommonDivisor((int) chunkSize, alignment) != alignment;
         cxt = new ThreadLocal<>();
@@ -252,6 +255,10 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public String toIdentityString() {
+        return identityString;
+    }
+
+    private String makeIdentityString() {
         if (chronicleSet != null)
             return chronicleSet.toIdentityString();
         return "ChronicleMap{" +
@@ -283,15 +290,25 @@ public class VanillaChronicleMap<K, V, R>
         return (addr + alignment - 1) & ~(alignment - 1L);
     }
 
-    private ChainingInterface q() {
-        //noinspection unchecked
-        ChainingInterface queryContext = cxt.get();
-        if (queryContext == null) {
-            queryContext = new CompiledMapQueryContext<>(this);
-            addContext(queryContext);
-            cxt.set(queryContext);
+    final ChainingInterface q() {
+        ContextHolder contextHolder = cxt.get();
+        if (contextHolder == null) {
+            ChainingInterface queryContext = newQueryContext();
+            contextHolder = new ContextHolder(queryContext);
+            addContext(contextHolder);
+            cxt.set(contextHolder);
+            return queryContext;
         }
-        return queryContext;
+        ChainingInterface queryContext = contextHolder.get();
+        if (queryContext != null) {
+            return queryContext;
+        } else {
+            throw new ChronicleHashClosedException(this);
+        }
+    }
+
+    ChainingInterface newQueryContext() {
+        return new CompiledMapQueryContext<>(this);
     }
 
     public QueryContextInterface<K, V, R> mapContext() {
@@ -303,15 +320,25 @@ public class VanillaChronicleMap<K, V, R>
                 (c, m) -> new CompiledMapQueryContext<K, V, R>(c, m), this);
     }
 
-    private ChainingInterface i() {
-        //noinspection unchecked
-        ChainingInterface iterContext = cxt.get();
-        if (iterContext == null) {
-            iterContext = new CompiledMapIterationContext<>(this);
-            addContext(iterContext);
-            cxt.set(iterContext);
+    final ChainingInterface i() {
+        ContextHolder contextHolder = cxt.get();
+        if (contextHolder == null) {
+            ChainingInterface iterationContext = newIterationContext();
+            contextHolder = new ContextHolder(iterationContext);
+            addContext(contextHolder);
+            cxt.set(contextHolder);
+            return iterationContext;
         }
-        return iterContext;
+        ChainingInterface iterContext = contextHolder.get();
+        if (iterContext != null) {
+            return iterContext;
+        } else {
+            throw new ChronicleHashClosedException(this);
+        }
+    }
+
+    ChainingInterface newIterationContext() {
+        return new CompiledMapIterationContext<>(this);
     }
 
     public IterationContext<K, V, R> iterationContext() {

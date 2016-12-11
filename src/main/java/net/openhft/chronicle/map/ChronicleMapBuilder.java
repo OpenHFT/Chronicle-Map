@@ -1545,9 +1545,16 @@ public final class ChronicleMapBuilder<K, V> implements
             return result;
         } catch (Throwable throwable) {
             try {
-                resources.releaseManually();
-            } catch (Exception e) {
-                throwable.addSuppressed(e);
+                try {
+                    resources.setChronicleHashIdentityString(
+                            "ChronicleHash{name=" + name + ", file=" + file + "}");
+                } catch (Throwable t) {
+                    throwable.addSuppressed(t);
+                } finally {
+                    resources.releaseManually();
+                }
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
             }
             throw Throwables.propagateNotWrapping(throwable, IOException.class);
         }
@@ -1555,6 +1562,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private void prepareMapPublication(VanillaChronicleMap map) throws IOException {
         establishReplication(map);
+        map.setResourcesName();
         map.registerCleaner();
         // Ensure safe publication of a ChronicleMap
         OS.memory().storeFence();
@@ -1729,9 +1737,16 @@ public final class ChronicleMapBuilder<K, V> implements
             return map;
         } catch (Throwable throwable) {
             try {
-                resources.releaseManually();
-            } catch (Exception e) {
-                throwable.addSuppressed(e);
+                try {
+                    resources.setChronicleHashIdentityString(
+                            "ChronicleHash{name=" + name + ", file=null}");
+                } catch (Throwable t) {
+                    throwable.addSuppressed(t);
+                } finally {
+                    resources.releaseManually();
+                }
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
             }
             throw Throwables.propagate(throwable);
         }

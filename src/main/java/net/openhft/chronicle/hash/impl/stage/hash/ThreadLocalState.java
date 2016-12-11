@@ -81,14 +81,14 @@ public abstract class ThreadLocalState {
         MEMORY.writeOrderedInt(this, CONTEXT_LOCK_OFFSET, CONTEXT_UNLOCKED);
     }
 
-    public void closeContext(ChronicleHash<?, ?, ?, ?> hash) {
+    public void closeContext(String chronicleHashIdentityString) {
         if (tryCloseContext())
             return;
         // If first attempt of closing a context (i. e. moving from unused to closed state) failed,
         // it means that the context is still in use. If this context belongs to the current thread,
         // this is a bug, because we cannot "wait" until context is unused in the same thread:
         if (owner() == Thread.currentThread()) {
-            throw new IllegalStateException(hash.toIdentityString() +
+            throw new IllegalStateException(chronicleHashIdentityString +
                     ": Attempt to close a Chronicle Hash in the context " +
                             "of not yet finished query or iteration");
         }
@@ -109,7 +109,7 @@ public abstract class ThreadLocalState {
                 timeoutMillis--;
             }
         } while (timeoutMillis >= 0);
-        throw new RuntimeException(hash.toIdentityString() +
+        throw new RuntimeException(chronicleHashIdentityString +
                 ": Failed to close a context, belonging to the thread\n" +
                 owner() + ", in the state: " + owner().getState() + "\n" +
                 "Possible reasons:\n" +

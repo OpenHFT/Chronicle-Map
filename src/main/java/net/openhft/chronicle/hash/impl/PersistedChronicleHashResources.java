@@ -19,15 +19,13 @@ package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.openhft.chronicle.hash.impl.util.Throwables;
 
 import java.io.File;
+import java.util.List;
 
 
 public final class PersistedChronicleHashResources extends ChronicleHashResources {
-    private static final Logger LOG =
-            LoggerFactory.getLogger(PersistedChronicleHashResources.class);
 
     private final File file;
 
@@ -36,51 +34,41 @@ public final class PersistedChronicleHashResources extends ChronicleHashResource
     }
 
     @Override
-    public synchronized void run() {
-        if (memoryResources == null)
-            return; // Already released
-        // All Throwables are caught because this class is used as Runnable for sun.misc.Cleaner,
-        // hence must not fail
+    Throwable releaseSystemResources() {
+        Throwable thrown = null;
+        // Paranoiac mode: releaseMappedMemory() should never throw any Throwable (it should return
+        // it), but we don't trust ourselves and call releaseFile() in finally block.
         try {
-            Throwable thrown = doRelease();
-            if (thrown != null) {
-                try {
-                    LOG.error("Error on releasing memory or RAF of the Chronicle Map at " +
-                            "file=" + file, thrown);
-                } catch (Throwable t) {
-                    // This may occur if Releaser is run in a shutdown hook, and the log service has
-                    // already been shut down. Try to fall back to printStackTrace().
-                    thrown.addSuppressed(t);
-                    thrown.printStackTrace();
-                }
-            }
+            thrown = releaseMappedMemory();
         } finally {
-            memoryResources = null;
+            thrown = releaseFile(thrown);
         }
+        return thrown;
     }
 
-    @Override
-    Throwable doRelease() {
+    private Throwable releaseMappedMemory() {
         Throwable thrown = null;
-        for (MemoryResource mapping : memoryResources) {
+        List<MemoryResource> memoryResources = memoryResources();
+        // Indexed loop instead of for-each because we may be in the context of cleaning up after
+        // OutOfMemoryError, and allocating Iterator object may lead to another OutOfMemoryError, so
+        // we try to avoid any allocations
+        //noinspection ForLoopReplaceableByForEach
+        for (int i = 0; i < memoryResources.size(); i++) {
+            MemoryResource mapping = memoryResources.get(i);
             try {
                 OS.unmap(mapping.address, mapping.size);
             } catch (Throwable t) {
-                if (thrown == null) {
-                    thrown = t;
-                } else {
-                    thrown.addSuppressed(t);
-                }
+                thrown = Throwables.returnOrSuppress(thrown, t);
             }
         }
+        return thrown;
+    }
+
+    private Throwable releaseFile(Throwable thrown) {
         try {
             CanonicalRandomAccessFiles.release(file);
         } catch (Throwable t) {
-            if (thrown == null) {
-                thrown = t;
-            } else {
-                thrown.addSuppressed(t);
-            }
+            thrown = Throwables.returnOrSuppress(thrown, t);
         }
         return thrown;
     }

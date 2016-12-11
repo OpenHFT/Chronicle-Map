@@ -120,7 +120,7 @@ public class MapCloseTest {
 
         map.get(1);
         Assert.assertEquals(1, map.allContexts().size());
-        ChainingInterface cxt = map.allContexts().get(0).get();
+        ChainingInterface cxt = map.allContexts().get(0).get().get();
         Assert.assertTrue(cxt == map.queryContext(1));
     }
 }

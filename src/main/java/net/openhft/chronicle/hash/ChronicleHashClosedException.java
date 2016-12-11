@@ -24,6 +24,10 @@ public final class ChronicleHashClosedException extends IllegalStateException {
     private static final long serialVersionUID = 0L;
 
     public ChronicleHashClosedException(ChronicleHash hash) {
-        super("Access to " + hash.toIdentityString() + " after close()");
+        this(hash.toIdentityString());
+    }
+
+    public ChronicleHashClosedException(String chronicleHashIdentityString) {
+        super("Access to " + chronicleHashIdentityString + " after close()");
     }
 }

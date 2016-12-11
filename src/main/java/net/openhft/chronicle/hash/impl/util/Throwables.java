@@ -44,5 +44,15 @@ public final class Throwables {
         throw new RuntimeException(t);
     }
 
+    public static Throwable returnOrSuppress(Throwable thrown, Throwable t) {
+        if (thrown == null) {
+            return t;
+        } else {
+            if (t != null)
+                thrown.addSuppressed(t);
+            return thrown;
+        }
+    }
+
     private Throwables() {}
 }
