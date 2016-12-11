@@ -69,6 +69,11 @@ public class VanillaChronicleMap<K, V, R>
 
     /////////////////////////////////////////////////
     private transient String name;
+    /**
+     * identityString is initialized lazily in {@link #toIdentityString()} rather than in
+     * {@link #initOwnTransients()} because it depends on {@link #file()} which is set after
+     * initOwnTransients().
+     */
     private transient String identityString;
 
     public transient boolean couldNotDetermineAlignmentBeforeAllocation;
@@ -164,7 +169,6 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     private void initOwnTransients() {
-        identityString = makeIdentityString();
         couldNotDetermineAlignmentBeforeAllocation =
                 greatestCommonDivisor((int) chunkSize, alignment) != alignment;
         cxt = new ThreadLocal<>();
@@ -255,6 +259,8 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public String toIdentityString() {
+        if (identityString == null)
+            identityString = makeIdentityString();
         return identityString;
     }
 
