@@ -137,6 +137,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                                 break;
                         }
                     } finally {
+                        hookAfterEachIteration();
                         // if doReplaceValue() -> relocation() -> alloc() -> nextTier()
                         // was called, restore the tier we were iterating over
                         if (s.tier != currentTier) {
@@ -168,6 +169,9 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                     " more entries. Size diverged?");
         }
         return interrupted;
+    }
+
+    public void hookAfterEachIteration() {
     }
 
     @Override
