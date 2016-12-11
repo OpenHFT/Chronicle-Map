@@ -65,7 +65,7 @@ public class MemoryResourcesTest {
     @Test
     public void testChronicleMapCollectedAndDirectMemoryReleased()
             throws IOException, InterruptedException {
-        if (OS.isLinux())
+        if (!OS.isWindows())
             return; // TODO enable this test when stable on Linux
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
         WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(getMap());
@@ -78,10 +78,10 @@ public class MemoryResourcesTest {
             Thread.yield();
         }
         // Wait until Cleaner is called and memory is returned to the system
-        for (int i = 0; nativeMemoryUsedBeforeMap != nativeMemoryUsed() && i < 60_000_000; i++) {
+        for (int i = 0; nativeMemoryUsedBeforeMap != nativeMemoryUsed() && i < 600_000; i++) {
             System.gc();
             byte[] garbage = new byte[1_000_000];
-            Thread.sleep(1);
+            Thread.sleep(100);
         }
         Assert.assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
     }
