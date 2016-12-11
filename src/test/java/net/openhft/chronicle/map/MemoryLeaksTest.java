@@ -20,6 +20,8 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.NoBytesStore;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.hash.serialization.impl.StringSizedReader;
+import net.openhft.chronicle.hash.serialization.impl.StringUtf8DataAccess;
 import net.openhft.chronicle.values.Values;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,16 +30,18 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import sun.misc.Cleaner;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public class MemoryResourcesTest {
+public class MemoryLeaksTest {
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
@@ -51,10 +55,23 @@ public class MemoryResourcesTest {
 
     private boolean replicated;
     private boolean persisted;
+    private ChronicleMapBuilder<IntValue, String> builder;
+    /**
+     * Accounting {@link CountedStringReader} creation and finalization. All serializers,
+     * created since the map creation, should become unreachable after map.close() or collection by
+     * Cleaner, it means that map contexts (referencing serializers) are collected by the GC
+     */
+    private final AtomicInteger serializerCount = new AtomicInteger();
 
-    public MemoryResourcesTest(boolean replicated, boolean persisted) {
+    public MemoryLeaksTest(boolean replicated, boolean persisted) {
         this.replicated = replicated;
         this.persisted = persisted;
+        builder = ChronicleMap
+                .of(IntValue.class, String.class)
+                .valueReaderAndDataAccess(new CountedStringReader(), new StringUtf8DataAccess());
+        if (replicated)
+            builder.replication((byte) 1);
+        builder.entries(1).averageValueSize(1);
     }
 
     @Before
@@ -62,12 +79,16 @@ public class MemoryResourcesTest {
         Assert.assertNotEquals(0, NoBytesStore.NO_PAGE);
     }
 
+    @Before
+    public void resetSerializerCount() {
+        serializerCount.set(0);
+    }
+
     @Test
     public void testChronicleMapCollectedAndDirectMemoryReleased()
             throws IOException, InterruptedException {
-        if (!OS.isWindows())
-            return; // TODO enable this test when stable on Linux
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
+        int serializersBeforeMap = serializerCount.get();
         WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(getMap());
         Assert.assertNotNull(ref.get());
         long expectedNativeMemory = nativeMemoryUsedBeforeMap + ref.get().offHeapMemoryUsed();
@@ -78,12 +99,17 @@ public class MemoryResourcesTest {
             Thread.yield();
         }
         // Wait until Cleaner is called and memory is returned to the system
-        for (int i = 0; nativeMemoryUsedBeforeMap != nativeMemoryUsed() && i < 600_000; i++) {
+        for (int i = 0; i < 6_000; i++) {
+            if (nativeMemoryUsedBeforeMap == nativeMemoryUsed() &&
+                    serializerCount.get() == serializersBeforeMap) {
+                break;
+            }
             System.gc();
-            byte[] garbage = new byte[1_000_000];
-            Thread.sleep(100);
+            byte[] garbage = new byte[10_000_000];
+            Thread.sleep(10);
         }
         Assert.assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
+        Assert.assertEquals(serializersBeforeMap, serializerCount.get());
     }
 
     private long nativeMemoryUsed() {
@@ -95,21 +121,27 @@ public class MemoryResourcesTest {
     }
 
     @Test
-    public void testExplicitChronicleMapCloseReleasesMemory() throws IOException {
+    public void testExplicitChronicleMapCloseReleasesMemory()
+            throws IOException, InterruptedException {
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
+        int serializersBeforeMap = serializerCount.get();
         try (ChronicleMap<IntValue, String> map = getMap()) {
             long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
             assertEquals(expectedNativeMemory, nativeMemoryUsed());
         }
         assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
+        // Wait until chronicle map context (hence serializers) is collected by the GC
+        for (int i = 0; i < 6_000; i++) {
+            if (serializerCount.get() == serializersBeforeMap)
+                break;
+            System.gc();
+            byte[] garbage = new byte[10_000_000];
+            Thread.sleep(10);
+        }
+        Assert.assertEquals(serializersBeforeMap, serializerCount.get());
     }
 
     private ChronicleMap<IntValue, String> getMap() throws IOException {
-        ChronicleMapBuilder<IntValue, String> builder = ChronicleMap
-                .of(IntValue.class, String.class);
-        if (replicated)
-            builder.replication((byte) 1);
-        builder.entries(1).averageValueSize(1);
         VanillaChronicleMap<IntValue, String, ?> map;
         if (persisted) {
             map = (VanillaChronicleMap<IntValue, String, ?>)
@@ -124,5 +156,20 @@ public class MemoryResourcesTest {
             map.put(key, "string" + i);
         }
         return map;
+    }
+
+    private class CountedStringReader extends StringSizedReader {
+
+        private final Cleaner cleaner;
+
+        CountedStringReader() {
+            serializerCount.incrementAndGet();
+            cleaner = Cleaner.create(this, serializerCount::decrementAndGet);
+        }
+
+        @Override
+        public CountedStringReader copy() {
+            return new CountedStringReader();
+        }
     }
 }
