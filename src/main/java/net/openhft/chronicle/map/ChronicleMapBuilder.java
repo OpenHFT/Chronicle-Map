@@ -1811,19 +1811,6 @@ public final class ChronicleMapBuilder<K, V> implements
         OldDeletedEntriesCleanupThread cleanupThread = new OldDeletedEntriesCleanupThread(map);
         map.addCloseable(cleanupThread);
         cleanupThread.start();
-        // WARNING this relies on the fact that ReplicatedChronicleMap closes closeables in the same
-        // order as they are added, i. e. OldDeletedEntriesCleanupThread instance close()d before
-        // the following closeable
-        String mapIdentityString = map.toIdentityString();
-        map.addCloseable(() -> {
-            try {
-                cleanupThread.join();
-            } catch (InterruptedException e) {
-                LOG.warn(mapIdentityString +
-                        ": Interrupted while waiting for the cleanup thread to cease");
-                Thread.currentThread().interrupt();
-            }
-        });
     }
 
     /**
