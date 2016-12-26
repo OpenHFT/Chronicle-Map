@@ -335,9 +335,9 @@ public class VanillaChronicleMap<K, V, R>
             cxt.set(contextHolder);
             return iterationContext;
         }
-        ChainingInterface iterContext = contextHolder.get();
-        if (iterContext != null) {
-            return iterContext;
+        ChainingInterface iterationContext = contextHolder.get();
+        if (iterationContext != null) {
+            return iterationContext;
         } else {
             throw new ChronicleHashClosedException(this);
         }

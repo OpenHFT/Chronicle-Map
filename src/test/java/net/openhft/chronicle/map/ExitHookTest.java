@@ -61,7 +61,11 @@ public class ExitHookTest {
         ChronicleMap<Integer, Integer> map = createMap(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             c.writeLock().lock();
-            Thread.sleep(30_000);
+            try {
+                map.close();
+            } finally {
+                Thread.sleep(30_000);
+            }
         }
     }
 

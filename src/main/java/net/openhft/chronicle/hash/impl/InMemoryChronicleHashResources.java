@@ -23,25 +23,8 @@ import net.openhft.chronicle.hash.impl.util.Throwables;
 import java.util.List;
 
 public final class InMemoryChronicleHashResources extends ChronicleHashResources {
-
-    public InMemoryChronicleHashResources() {}
-
     @Override
-    Throwable releaseSystemResources() {
-        Throwable thrown = null;
-        List<MemoryResource> memoryResources = memoryResources();
-        // Indexed loop instead of for-each because we may be in the context of cleaning up after
-        // OutOfMemoryError, and allocating Iterator object may lead to another OutOfMemoryError, so
-        // we try to avoid any allocations
-        //noinspection ForLoopReplaceableByForEach
-        for (int i = 0; i < memoryResources.size(); i++) {
-            MemoryResource allocation = memoryResources.get(i);
-            try {
-                OS.memory().freeMemory(allocation.address, allocation.size);
-            } catch (Throwable t) {
-                thrown = Throwables.returnOrSuppress(thrown, t);
-            }
-        }
-        return thrown;
+    void releaseMemoryResource(MemoryResource allocation) {
+        OS.memory().freeMemory(allocation.address, allocation.size);
     }
 }

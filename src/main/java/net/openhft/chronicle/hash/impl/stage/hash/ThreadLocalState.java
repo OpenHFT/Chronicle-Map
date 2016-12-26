@@ -23,7 +23,6 @@ import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
@@ -65,9 +64,9 @@ public abstract class ThreadLocalState {
         } else {
             if (contextLock == CONTEXT_LOCKED_LOCALLY)
                 return false;
-            // Don't extract this hash().isOpen() and the one above, because they could different
-            // results (the first (above) could return true, the second (below) - false).
-            if (!hash.isOpen())
+            // Don't extract this hash().isOpen() and the one above, because they could return
+            // different results: the first (above) could return true, the second (below) - false.
+            if (contextLock == CONTEXT_CLOSED || !hash.isOpen())
                 throw new ChronicleHashClosedException(hash);
             throw new AssertionError("Unknown context lock state: " + contextLock);
         }
@@ -83,6 +82,15 @@ public abstract class ThreadLocalState {
 
     public void closeContext(String chronicleHashIdentityString) {
         if (tryCloseContext())
+            return;
+        // Unless there are bugs in this codebase, it could happen that
+        // contextLock == CONTEXT_CLOSED here only if closeContext() has succeed, and the subsequent
+        // contextHolder.clear() has failed in ChronicleHashResources.closeContext(), though this is
+        // hardly imaginable: contextHolder.clear() couldn't fail with OutOfMemoryError (because
+        // there are no allocations in this method) and StackOverflowError (because in this case
+        // closeContext() would fail with StackOverflowError before). But anyway it's probably
+        // a good idea to make this check rather than not to make.
+        if (contextLock == CONTEXT_CLOSED)
             return;
         // If first attempt of closing a context (i. e. moving from unused to closed state) failed,
         // it means that the context is still in use. If this context belongs to the current thread,
@@ -101,6 +109,10 @@ public abstract class ThreadLocalState {
         long lastTime = System.currentTimeMillis();
         do {
             if (tryCloseContext())
+                return;
+            // Unless there are bugs in this codebase, this should never happen. But anyway it's
+            // probably a good idea to make this check rather than not to make.
+            if (contextLock == CONTEXT_CLOSED)
                 return;
             Thread.yield();
             long now = System.currentTimeMillis();

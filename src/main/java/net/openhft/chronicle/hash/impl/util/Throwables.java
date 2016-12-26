@@ -23,7 +23,9 @@ package net.openhft.chronicle.hash.impl.util;
 public final class Throwables {
 
     public static RuntimeException propagate(Throwable t) {
-        Objects.requireNonNull(t);
+        // Avoid calling Objects.requireNonNull(), StackOverflowError-sensitive
+        if (t == null)
+            throw new NullPointerException();
         if (t instanceof Error)
             throw (Error) t;
         if (t instanceof RuntimeException)
