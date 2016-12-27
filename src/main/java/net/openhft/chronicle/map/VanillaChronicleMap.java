@@ -174,6 +174,15 @@ public class VanillaChronicleMap<K, V, R>
         cxt = new ThreadLocal<>();
     }
 
+    @Override
+    protected void cleanupOnClose() {
+        super.cleanupOnClose();
+        // Make GC life easier
+        valueReader = null;
+        valueDataAccess = null;
+        cxt = null;
+    }
+
     public final V checkValue(Object value) {
         if (!valueClass.isInstance(value)) {
             throw new ClassCastException(toIdentityString() + ": Value must be a " +
@@ -297,6 +306,9 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     final ChainingInterface q() {
+        ThreadLocal<ContextHolder> cxt = this.cxt;
+        if (cxt == null)
+            throw new ChronicleHashClosedException(this);
         ContextHolder contextHolder = cxt.get();
         if (contextHolder == null) {
             ChainingInterface queryContext = newQueryContext();
@@ -327,6 +339,9 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     final ChainingInterface i() {
+        ThreadLocal<ContextHolder> cxt = this.cxt;
+        if (cxt == null)
+            throw new ChronicleHashClosedException(this);
         ContextHolder contextHolder = cxt.get();
         if (contextHolder == null) {
             ChainingInterface iterationContext = newIterationContext();

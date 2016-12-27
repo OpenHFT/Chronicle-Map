@@ -657,13 +657,18 @@ public abstract class VanillaChronicleHash<K,
     @Override
     public final void close() {
         if (resources.releaseManually()) {
-            // Don't try to execute cleaner.clean() and ChronicleHashCloseOnExitHook.remove() from
-            // finally section of try block wrapping resources.releaseManually(), because
-            // Releases nothing after resources.releaseManually(), only removes the cleaner
-            // from the internal linked list of all cleaners.
-            cleaner.clean();
-            ChronicleHashCloseOnExitHook.remove(this);
+            cleanupOnClose();
         }
+    }
+
+    protected void cleanupOnClose() {
+        // Releases nothing after resources.releaseManually(), only removes the cleaner
+        // from the internal linked list of all cleaners.
+        cleaner.clean();
+        ChronicleHashCloseOnExitHook.remove(this);
+        // Make GC life easier
+        keyReader = null;
+        keyDataAccess = null;
     }
 
     @Override

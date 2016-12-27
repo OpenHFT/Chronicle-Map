@@ -23,7 +23,6 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.serialization.impl.StringSizedReader;
 import net.openhft.chronicle.hash.serialization.impl.StringUtf8DataAccess;
-import net.openhft.chronicle.map.impl.QueryContextInterface;
 import net.openhft.chronicle.values.Values;
 import org.junit.Assert;
 import org.junit.Before;
@@ -152,28 +151,17 @@ public class MemoryLeaksTest {
         assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
         // Wait until chronicle map context (hence serializers) is collected by the GC
         for (int i = 0; i < 6_000; i++) {
-            if (serializerCount.get() == serializersBeforeMap + 1)
-                break;
-            System.gc();
-            byte[] garbage = new byte[10_000_000];
-            Thread.sleep(10);
-        }
-        Assert.assertEquals(serializersBeforeMap + 1, serializerCount.get());
-        // This assertion ensures GC doesn't reclaim the map before or during the loop iteration
-        // above, to ensure that we test that the direct memory and contexts are released because
-        // of the manual map.close(), despite the "leak" of the map object itself.
-        Assert.assertEquals(0, map.offHeapMemoryUsed());
-        map = null;
-        // After cleaning the reference to the map, the last serializer, which was held in it's
-        // field, should be cleaned as well
-        for (int i = 0; i < 6_000; i++) {
             if (serializerCount.get() == serializersBeforeMap)
                 break;
             System.gc();
             byte[] garbage = new byte[10_000_000];
             Thread.sleep(10);
         }
-        Assert.assertEquals(serializersBeforeMap, serializerCount.get());
+        Assert.assertTrue(serializerCount.get() == serializersBeforeMap);
+        // This assertion ensures GC doesn't reclaim the map before or during the loop iteration
+        // above, to ensure that we test that the direct memory and contexts are released because
+        // of the manual map.close(), despite the "leak" of the map object itself.
+        Assert.assertEquals(0, map.offHeapMemoryUsed());
     }
 
     private ChronicleMap<IntValue, String> getMap() throws IOException {
