@@ -98,8 +98,8 @@ public abstract class Chaining extends ChainingInterface {
     @Override
     public void initUsed(boolean used, VanillaChronicleMap map) {
         assert used;
-        initMap(map);
         firstContextLockedInThisThread = rootContextInThisThread.lockContextLocally(map);
+        initMap(map);
         this.used = true;
     }
 
@@ -112,13 +112,12 @@ public abstract class Chaining extends ChainingInterface {
 
     @Override
     public <T extends ChainingInterface> T getContext(
-            Class<? extends T> contextClass, BiFunction<ChainingInterface, VanillaChronicleMap, T> createChaining,
+            Class<? extends T> contextClass, BiFunction<ChainingInterface,
+            VanillaChronicleMap, T> createChaining,
             VanillaChronicleMap map) {
         for (ChainingInterface context : contextChain) {
             if (context.getClass() == contextClass && !context.usedInit()) {
-                context.initUsed(true, map);
-                //noinspection unchecked
-                return (T) context;
+                return initUsedAndReturn(map, context);
             }
         }
         int maxNestedContexts = 1 << 10;
@@ -132,7 +131,22 @@ public abstract class Chaining extends ChainingInterface {
         }
         //noinspection unchecked
         T context = createChaining.apply(this, map);
-        context.initUsed(true, map);
-        return context;
+        return initUsedAndReturn(map, context);
+    }
+
+    private static <T extends ChainingInterface> T initUsedAndReturn(
+            VanillaChronicleMap map, ChainingInterface context) {
+        try {
+            context.initUsed(true, map);
+            //noinspection unchecked
+            return (T) context;
+        } catch (Throwable throwable) {
+            try {
+                ((AutoCloseable) context).close();
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
+            }
+            throw throwable;
+        }
     }
 }

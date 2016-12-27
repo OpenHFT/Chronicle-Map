@@ -21,6 +21,7 @@ import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.Data;
@@ -28,6 +29,7 @@ import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.Objects;
+import net.openhft.chronicle.hash.impl.util.Throwables;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
@@ -312,10 +314,19 @@ public class VanillaChronicleMap<K, V, R>
         ContextHolder contextHolder = cxt.get();
         if (contextHolder == null) {
             ChainingInterface queryContext = newQueryContext();
-            contextHolder = new ContextHolder(queryContext);
-            addContext(contextHolder);
-            cxt.set(contextHolder);
-            return queryContext;
+            try {
+                contextHolder = new ContextHolder(queryContext);
+                addContext(contextHolder);
+                cxt.set(contextHolder);
+                return queryContext;
+            } catch (Throwable throwable) {
+                try {
+                    ((AutoCloseable) queryContext).close();
+                } catch (Throwable t) {
+                    throwable.addSuppressed(t);
+                }
+                throw throwable;
+            }
         }
         ChainingInterface queryContext = contextHolder.get();
         if (queryContext != null) {
@@ -345,10 +356,19 @@ public class VanillaChronicleMap<K, V, R>
         ContextHolder contextHolder = cxt.get();
         if (contextHolder == null) {
             ChainingInterface iterationContext = newIterationContext();
-            contextHolder = new ContextHolder(iterationContext);
-            addContext(contextHolder);
-            cxt.set(contextHolder);
-            return iterationContext;
+            try {
+                contextHolder = new ContextHolder(iterationContext);
+                addContext(contextHolder);
+                cxt.set(contextHolder);
+                return iterationContext;
+            } catch (Throwable throwable) {
+                try {
+                    ((AutoCloseable) iterationContext).close();
+                } catch (Throwable t) {
+                    throwable.addSuppressed(t);
+                }
+                throw throwable;
+            }
         }
         ChainingInterface iterationContext = contextHolder.get();
         if (iterationContext != null) {
@@ -376,17 +396,35 @@ public class VanillaChronicleMap<K, V, R>
     @NotNull
     public QueryContextInterface<K, V, R> queryContext(Object key) {
         checkKey(key);
-        QueryContextInterface<K, V, R> q = mapContext();
-        q.initInputKey(q.inputKeyDataAccess().getData((K) key));
-        return q;
+        QueryContextInterface<K, V, R> c = mapContext();
+        try {
+            c.initInputKey(c.inputKeyDataAccess().getData((K) key));
+            return c;
+        } catch (Throwable throwable) {
+            try {
+                c.close();
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
+            }
+            throw throwable;
+        }
     }
 
     @Override
     @NotNull
     public QueryContextInterface<K, V, R> queryContext(Data<K> key) {
-        QueryContextInterface<K, V, R> q = mapContext();
-        q.initInputKey(key);
-        return q;
+        QueryContextInterface<K, V, R> c = mapContext();
+        try {
+            c.initInputKey(key);
+            return c;
+        } catch (Throwable throwable) {
+            try {
+                c.close();
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
+            }
+            throw throwable;
+        }
     }
 
     @NotNull
@@ -394,16 +432,34 @@ public class VanillaChronicleMap<K, V, R>
     public ExternalMapQueryContext<K, V, ?> queryContext(
             BytesStore keyBytes, long offset, long size) {
         Objects.requireNonNull(keyBytes);
-        QueryContextInterface<K, V, R> q = mapContext();
-        q.initInputKey(q.getInputKeyBytesAsData(keyBytes, offset, size));
-        return q;
+        QueryContextInterface<K, V, R> c = mapContext();
+        try {
+            c.initInputKey(c.getInputKeyBytesAsData(keyBytes, offset, size));
+            return c;
+        } catch (Throwable throwable) {
+            try {
+                c.close();
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
+            }
+            throw throwable;
+        }
     }
 
     @Override
     public MapSegmentContext<K, V, ?> segmentContext(int segmentIndex) {
         IterationContext<K, V, ?> c = iterationContext();
-        c.initSegmentIndex(segmentIndex);
-        return c;
+        try {
+            c.initSegmentIndex(segmentIndex);
+            return c;
+        } catch (Throwable throwable) {
+            try {
+                c.close();
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
+            }
+            throw throwable;
+        }
     }
 
     @Override
@@ -420,71 +476,84 @@ public class VanillaChronicleMap<K, V, R>
 
     private V optimizedGet(Object key, V using) {
         checkKey(key);
-        CompiledMapQueryContext<K, V, R> q = (CompiledMapQueryContext<K, V, R>) mapContext();
-        Data<K> inputKey = q.inputKeyDataAccess().getData((K) key);
+        CompiledMapQueryContext<K, V, R> c = (CompiledMapQueryContext<K, V, R>) mapContext();
+        boolean needReadUnlock = false;
+        Throwable primaryExc = null;
+        long segmentHeaderAddress = 0;
         try {
-            Throwable primaryExc = null;
+            Data<K> inputKey = c.inputKeyDataAccess().getData((K) key);
             long inputKeySize = inputKey.size();
 
             long keyHash = inputKey.hash(LongHashFunction.xx_r39());
             HashSplitting hs = this.hashSplitting;
             int segmentIndex = hs.segmentIndex(keyHash);
-            long segmentHeaderAddress = segmentHeaderAddress(segmentIndex);
-            boolean needReadUnlock = false;
-            try {
-                CompactOffHeapLinearHashTable hl = this.hashLookup;
-                long searchKey = hl.maskUnsetKey(hs.segmentHash(keyHash));
-                long searchStartPos = hl.hlPos(searchKey);
-                boolean needReadLock = true;
-                initLocks:
-                {
-                    int indexOfThisContext = q.indexInContextChain;
-                    for (int i = 0, size = q.contextChain.size(); i < size; i++) {
-                        if (i == indexOfThisContext)
-                            continue;
-                        LocksInterface c = ((LocksInterface) (q.contextChain.get(i)));
-                        if (c.segmentHeaderInit() &&
-                                c.segmentHeaderAddress() == segmentHeaderAddress &&
-                                c.locksInit()) {
-                            LocksInterface root = c.rootContextLockedOnThisSegment();
-                            if (root.totalReadLockCount() > 0 || root.totalUpdateLockCount() > 0 ||
-                                    root.totalWriteLockCount() > 0) {
-                                needReadLock = false;
-                                break initLocks;
-                            }
+            segmentHeaderAddress = segmentHeaderAddress(segmentIndex);
+            CompactOffHeapLinearHashTable hl = this.hashLookup;
+            long searchKey = hl.maskUnsetKey(hs.segmentHash(keyHash));
+            long searchStartPos = hl.hlPos(searchKey);
+            boolean needReadLock = true;
+            initLocks:
+            {
+                int indexOfThisContext = c.indexInContextChain;
+                for (int i = 0, size = c.contextChain.size(); i < size; i++) {
+                    if (i == indexOfThisContext)
+                        continue;
+                    LocksInterface locks = ((LocksInterface) (c.contextChain.get(i)));
+                    if (locks.segmentHeaderInit() &&
+                            locks.segmentHeaderAddress() == segmentHeaderAddress &&
+                            locks.locksInit()) {
+                        LocksInterface root = locks.rootContextLockedOnThisSegment();
+                        if (root.totalReadLockCount() > 0 || root.totalUpdateLockCount() > 0 ||
+                                root.totalWriteLockCount() > 0) {
+                            needReadLock = false;
+                            break initLocks;
                         }
                     }
                 }
-                if (needReadLock) {
-                    BigSegmentHeader.INSTANCE.readLock(segmentHeaderAddress);
-                    needReadUnlock = true;
-                }
-                return tieredValue(q, segmentHeaderAddress, segmentIndex, searchKey, searchStartPos,
-                        inputKeySize, inputKey, using);
-            } catch (Throwable t) {
-                primaryExc = t;
-                throw t;
-            } finally {
-                if (primaryExc != null) {
-                    try {
-                        getClose(q, segmentHeaderAddress, needReadUnlock);
-                    } catch (Throwable suppressedExc) {
-                        primaryExc.addSuppressed(suppressedExc);
-                    }
-                } else {
-                    getClose(q, segmentHeaderAddress, needReadUnlock);
-                }
             }
+            if (needReadLock) {
+                BigSegmentHeader.INSTANCE.readLock(segmentHeaderAddress);
+                needReadUnlock = true;
+            }
+            return tieredValue(c, segmentHeaderAddress, segmentIndex, searchKey, searchStartPos,
+                    inputKeySize, inputKey, using);
+        } catch (Throwable t) {
+            primaryExc = t;
+            throw t;
         } finally {
-            q.doCloseInputKeyDataAccess();
+            if (primaryExc != null) {
+                try {
+                    getClose(c, segmentHeaderAddress, needReadUnlock);
+                } catch (Throwable suppressedExc) {
+                    primaryExc.addSuppressed(suppressedExc);
+                }
+            } else {
+                getClose(c, segmentHeaderAddress, needReadUnlock);
+            }
         }
     }
 
-    private void getClose(CompiledMapQueryContext<K, V, R> q, long segmentHeaderAddress,
+    private void getClose(CompiledMapQueryContext<K, V, R> c, long segmentHeaderAddress,
                           boolean needReadUnlock) {
-        if (needReadUnlock)
-            BigSegmentHeader.INSTANCE.readUnlock(segmentHeaderAddress);
-        q.doCloseUsed();
+        Throwable thrown = null;
+        try {
+            if (needReadUnlock)
+                BigSegmentHeader.INSTANCE.readUnlock(segmentHeaderAddress);
+        } catch (Throwable t) {
+            thrown = t;
+        }
+        try {
+            c.doCloseUsed();
+        } catch (Throwable t) {
+            thrown = Throwables.returnOrSuppress(thrown, t);
+        }
+        try {
+            c.doCloseInputValueDataAccess();
+        } catch (Throwable t) {
+            thrown = Throwables.returnOrSuppress(thrown, t);
+        }
+        if (thrown != null)
+            throw Jvm.rethrow(thrown);
     }
 
     private V tieredValue(CompiledMapQueryContext<K, V, R> q,
