@@ -10,7 +10,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-map</artifactId>
-    <version>3.11.1-SNAPSHOT</version>
+    <version>3.12.0-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
@@ -22,7 +22,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.5.1</version>
+                <version>3.5.7</version>
                 <scope>import</scope>
             </dependency>
 
@@ -30,7 +30,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
                 <type>pom</type>
-                <version>1.13.34</version>
+                <version>1.13.44</version>
                 <scope>import</scope>
             </dependency>
 
