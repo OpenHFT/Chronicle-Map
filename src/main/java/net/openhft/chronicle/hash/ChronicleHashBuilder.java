@@ -470,8 +470,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
 
     /**
      * Specifies whether on the current combination of platform, OS and Jvm aligned 8-byte reads
-     * and writes are atomic or not. By default, Chronicle tries to determine this itself, but
-     * if it fails it pessimistically assumes that 64-bit memory operations are <i>not</i> atomic.
+     * and writes are atomic or not. The default value of this configuration is {@link
+     * net.openhft.chronicle.core.OS#is64Bit()}.
      *
      * @param aligned64BitMemoryOperationsAtomic {@code true} if aligned 8-byte memory operations
      * are atomic
