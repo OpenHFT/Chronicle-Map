@@ -262,8 +262,8 @@ public class TierRecovery {
         long searchKeyFromKey = h.hashLookup.maskUnsetKey(segmentHashFromKey);
         if (searchKey != searchKeyFromKey) {
             log.error("HashLookup searchKey: {}, HashLookup searchKey " +
-                            "from the entry key hash code: {}, entry key: {}",
-                    searchKey, searchKeyFromKey, e.key());
+                            "from the entry key hash code: {}, entry key: {}, entry pos: {}",
+                    searchKey, searchKeyFromKey, e.key(), entryPos);
             return -1;
         }
 
