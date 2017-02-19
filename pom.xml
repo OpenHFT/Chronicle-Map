@@ -272,12 +272,12 @@
                         <exclude>net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java</exclude>
                         <exclude>net/openhft/chronicle/hash/VanillaGlobalMutableState.java</exclude>
                         <exclude>net/openhft/chronicle/hash/ReplicatedHashSegmentContext.java</exclude>
-                        <exclude>net/openhft/chronicle/hash/VanillaGlobalMutableState$$Native.java</exclude>
+                        <exclude>net/openhft/chronicle/hash/VanillaGlobalMutableState*Native.java</exclude>
                         <exclude>net/openhft/chronicle/map/MapDiagnostics.java</exclude>
                         <exclude>net/openhft/chronicle/map/VanillaChronicleMap.java</exclude>
                         <exclude>net/openhft/chronicle/map/Replica.java</exclude>
                         <exclude>net/openhft/chronicle/map/ReplicatedChronicleMap.java</exclude>
-                        <exclude>net/openhft/chronicle/map/ReplicatedGlobalMutableState$$Native.java</exclude>
+                        <exclude>net/openhft/chronicle/map/ReplicatedGlobalMutableState*Native.java</exclude>
                         <exclude>net/openhft/chronicle/set/DummyValueData.java</exclude>
                         <exclude>**/Compiled*.java</exclude>
                     </sourceFileExcludes>
