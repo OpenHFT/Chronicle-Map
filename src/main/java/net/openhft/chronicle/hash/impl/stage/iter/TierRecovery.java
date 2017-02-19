@@ -181,11 +181,13 @@ public class TierRecovery {
             long entry = hashLookup.readEntry(currentTierBaseAddr, hlPos);
             if (!hashLookup.empty(entry)) {
                 e.readExistingEntry(hashLookup.value(entry));
-                Data key = (Data) e.key();
+                Data key = e.key();
                 try (ExternalMapQueryContext<?, ?, ?> c = m.queryContext(key)) {
                     MapEntry<?, ?> entry2 = c.entry();
                     Data<?> key2 = ((MapEntry) c).key();
-                    if (key2.bytes().address(key2.offset()) != key.bytes().address(key.offset())) {
+                    long keyAddress = key.bytes().address(key.offset());
+                    long key2Address = key2.bytes().address(key2.offset());
+                    if (key2Address != keyAddress) {
                         lh.LOG.error("entries with duplicate key {} in segment {}: " +
                                 "with values {} and {}, removing the latter",
                                 key, c.segmentIndex(),

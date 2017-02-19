@@ -1,5 +1,4 @@
 /*
- *      Copyright (C) 2012, 2016  higherfrequencytrading.com
  *      Copyright (C) 2016 Roman Leventov
  *
  *      This program is free software: you can redistribute it and/or modify
@@ -29,15 +28,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @deprecated use {@link IntegerDataAccess_3_13} instead. This class is not removed only because
- * users who created a Chronicle Map with older version of the library with this class as the key or
- * value data access should be able to read and access the map with the present version of the
- * Chronicle Map library.
- */
-@SuppressWarnings("DeprecatedIsStillUsed")
-@Deprecated
-public final class IntegerDataAccess extends AbstractData<Integer>
+public final class IntegerDataAccess_3_13 extends AbstractData<Integer>
         implements DataAccess<Integer>, Data<Integer> {
 
     // Cache fields
@@ -47,7 +38,7 @@ public final class IntegerDataAccess extends AbstractData<Integer>
     /** State field */
     private transient Integer instance;
 
-    public IntegerDataAccess() {
+    public IntegerDataAccess_3_13() {
         initTransients();
     }
 
@@ -86,11 +77,7 @@ public final class IntegerDataAccess extends AbstractData<Integer>
 
     @Override
     public long hash(LongHashFunction f) {
-        if (f == LongHashFunction.xx_r39()) {
-            return WrongXxHash.hashInt(instance);
-        } else {
-            return f.hashInt(instance);
-        }
+        return f.hashInt(instance);
     }
 
     @Override
@@ -127,8 +114,7 @@ public final class IntegerDataAccess extends AbstractData<Integer>
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public DataAccess<Integer> copy() {
-        return new IntegerDataAccess();
+        return new IntegerDataAccess_3_13();
     }
 }

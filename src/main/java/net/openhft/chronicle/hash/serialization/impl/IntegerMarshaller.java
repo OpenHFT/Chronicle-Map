@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * As a writer for top-level Chronicle Map's key or value type (Integer), {@code IntegerMarshaller}
- * is deprecated in favor of {@link IntegerDataAccess}. As reader and element writer for {@link
+ * is deprecated in favor of {@link IntegerDataAccess_3_13}. As reader and element writer for {@link
  * ListMarshaller} and similar composite marshallers, {@code IntegerMarshaller} is not deprecated.
  */
 public final class IntegerMarshaller

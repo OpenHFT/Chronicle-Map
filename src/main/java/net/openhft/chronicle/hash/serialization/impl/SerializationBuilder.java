@@ -122,7 +122,7 @@ public final class SerializationBuilder<T> implements Cloneable {
             sizeMarshaller(constant(8));
         } else if (tClass == Integer.class) {
             reader((SizedReader<T>) IntegerMarshaller.INSTANCE);
-            dataAccess((DataAccess<T>) new IntegerDataAccess());
+            dataAccess((DataAccess<T>) new IntegerDataAccess_3_13());
             sizeMarshaller(constant(4));
         } else if (tClass == byte[].class) {
             reader((SizedReader<T>) ByteArraySizedReader.INSTANCE);
