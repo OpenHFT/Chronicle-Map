@@ -231,14 +231,14 @@ public final class ChronicleMapBuilder<K, V> implements
 
     /**
      * When Chronicle Maps are created using {@link #createPersistedTo(File)} or
-     * {@link #recoverPersistedTo(File, boolean)} or {@link #createOrRecoverPersistedTo(File)}
-     * methods, file lock on the Chronicle Map's file is acquired, that shouldn't be done from
-     * concurrent threads within the same JVM process. So creation of Chronicle Maps
-     * persisted to the same File should be synchronized across JVM's threads. Simple way would be
-     * to synchronize on some static (lock) object, but would serialize all Chronicle Maps creations
-     * (persisted to any files), ConcurrentHashMap#compute() gives more scalability.
-     * ConcurrentHashMap is used effectively for lock striping only, because the entries are not
-     * even landing the map, because compute() always returns null.
+     * {@link #recoverPersistedTo(File, boolean)} or {@link
+     * #createOrRecoverPersistedTo(File, boolean)} methods, file lock on the Chronicle Map's file is
+     * acquired, that shouldn't be done from concurrent threads within the same JVM process. So
+     * creation of Chronicle Maps persisted to the same File should be synchronized across JVM's
+     * threads. Simple way would be to synchronize on some static (lock) object, but would serialize
+     * all Chronicle Maps creations (persisted to any files), ConcurrentHashMap#compute() gives more
+     * scalability. ConcurrentHashMap is used effectively for lock striping only, because the
+     * entries are not even landing the map, because compute() always returns null.
      */
     private static void fileLockedIO(
             File file, FileChannel fileChannel, FileIOAction fileIOAction) throws IOException {
@@ -1474,13 +1474,23 @@ public final class ChronicleMapBuilder<K, V> implements
 
     @Override
     public ChronicleMap<K, V> createOrRecoverPersistedTo(File file) throws IOException {
-        return file.exists() ? recoverPersistedTo(file, true) : createPersistedTo(file);
+        return createOrRecoverPersistedTo(file, true);
     }
 
     @Override
-    public ChronicleMap<K, V> recoverPersistedTo(File file, boolean sameBuilderConfig)
+    public ChronicleMap<K, V> createOrRecoverPersistedTo(File file, boolean sameLibraryVersion)
             throws IOException {
-        return clone().createWithFile(file, true, sameBuilderConfig);
+        if (file.exists()) {
+            return recoverPersistedTo(file, sameLibraryVersion);
+        } else {
+            return createPersistedTo(file);
+        }
+    }
+
+    @Override
+    public ChronicleMap<K, V> recoverPersistedTo(
+            File file, boolean sameBuilderConfigAndLibraryVersion) throws IOException {
+        return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion);
     }
 
     @Override

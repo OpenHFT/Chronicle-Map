@@ -533,7 +533,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see ChronicleHash#file()
      * @see ChronicleHash#close()
      * @see #create()
-     * @see #createOrRecoverPersistedTo(File)
+     * @see #createOrRecoverPersistedTo(File, boolean)
      * @see #recoverPersistedTo(File, boolean)
      */
     H createPersistedTo(File file) throws IOException;
@@ -541,9 +541,14 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     /**
      * Recovers and opens the hash container, persisted to the specified file, or creates a new one
      * from this builder, if the file doesn't exist yet, and maps its off-heap memory to the file.
-     * In other words, this methods behaves like {@link #createPersistedTo(File)}, if the given
-     * file doesn't exist, and {@link #recoverPersistedTo(File, boolean)
-     * recoverPersistedTo(file, true)}, if the file exists.
+     * This method is equivalent to {@link #createOrRecoverPersistedTo(File, boolean)
+     * createOrRecoverPersistedTo(file, true)}.
+     *
+     * <p><b>This method couldn't be used, if the Chronicle Map was created using an older version
+     * of the Chronicle Map library, and then {@code createOrRecoverPersistedTo()} is called with
+     * a newer version of the Chronicle Map library.</b> In this case, {@link
+     * #createOrRecoverPersistedTo(File, boolean) createOrRecoverPersistedTo(file, false)} should
+     * be used.
      *
      * @param file the persistence file for existing of future hash container
      * @return a {@code ChronicleHash} instance, mapped to the given instance
@@ -553,9 +558,34 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * calling this procedure.
      * @throws ChronicleHashRecoveryFailedException if recovery is impossible
      * @see #createPersistedTo(File)
+     * @see #createOrRecoverPersistedTo(File, boolean)
      * @see #recoverPersistedTo(File, boolean)
      */
     H createOrRecoverPersistedTo(File file) throws IOException;
+
+    /**
+     * Recovers and opens the hash container, persisted to the specified file, or creates a new one
+     * from this builder, if the file doesn't exist yet, and maps its off-heap memory to the file.
+     * In other words, this methods behaves like {@link #createPersistedTo(File)}, if the given
+     * file doesn't exist, and {@link #recoverPersistedTo(File, boolean)
+     * recoverPersistedTo(file, sameLibraryVersion)}, if the file exists.
+     *
+     * @param file the persistence file for existing of future hash container
+     * @param sameLibraryVersion if this builder is configured with the same configurations, as the
+     * builder, which created the Chronicle Map in the given file initially, and <b>the same version
+     * of the Chronicle Map library was used</b>. In this case, the header of the file is overridden
+     * (with presumably the same configurations), protecting from {@link
+     * ChronicleHashRecoveryFailedException}, if the header is corrupted.
+     * @return a {@code ChronicleHash} instance, mapped to the given instance
+     * @throws IOException if any IO error occurs on reading data from the file, or related to
+     * off-heap memory allocation or file mapping, or establishing replication connections. Probably
+     * the file is corrupted on OS level, and should be recovered on that level first, before
+     * calling this procedure.
+     * @throws ChronicleHashRecoveryFailedException if recovery is impossible
+     * @see #createPersistedTo(File)
+     * @see #recoverPersistedTo(File, boolean)
+     */
+    H createOrRecoverPersistedTo(File file, boolean sameLibraryVersion) throws IOException;
 
     /**
      * <i>Recovers</i> and opens the hash container, persisted to the specified file. This method
@@ -567,7 +597,8 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * which were never put into the Chronicle Hash).
      *
      * <p>This method, unlike {@link #createPersistedTo(File)} or {@link
-     * #createOrRecoverPersistedTo(File)} methods, expects that the mapping file already exists.
+     * #createOrRecoverPersistedTo(File, boolean)} methods, expects that the mapping file already
+     * exists.
      *
      * "Recovery" of the hash container is changing the memory of the data structure so that after
      * the recovery the hash container is in some correct state: with "clean" locks, coherent
@@ -583,21 +614,19 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *
      * <p>It is strongly recommended to configure this builder with the same configurations, as
      * the builder, that created the given file for the first time, and pass {@code true} as the
-     * {@code sameBuilderConfig} argument (another requirement is running the same version of the
-     * Chronicle Map library). Otherwise, if the header of the given persisted Chronicle Hash file
-     * is corrupted, this method is likely to be unable to recover and throw {@link
-     * ChronicleHashRecoveryFailedException}, or even worse, to corrupt the file further.
-     * Fortunately, the header should never be corrupted on an "ordinary" process crash/termination
-     * or power loss, only on direct file corruption.
+     * {@code sameBuilderConfigAndLibraryVersion} argument <b>(another requirement is running
+     * the same version of the Chronicle Map library)</b>. Otherwise, if the header of the given
+     * persisted Chronicle Hash file is corrupted, this method is likely to be unable to recover and
+     * throw {@link ChronicleHashRecoveryFailedException}, or even worse, to corrupt the file
+     * further. Fortunately, the header should never be corrupted on an "ordinary" process
+     * crash/termination or power loss, only on direct file corruption.
      *
      * @param file a hash container was mapped to the given file
-     * @param sameBuilderConfig if this builder is configured with the same configurations, as the
-     *                          builder, which created the file (the persisted Chronicle Hash
-     *                          instance) for the first time, and with the same version of the
-     *                          Chronicle Map library. In this case, the header of the file is
-     *                          overridden (with presumably the same configurations), protecting
-     *                          from {@link ChronicleHashRecoveryFailedException}, if the header is
-     *                          corrupted.
+     * @param sameBuilderConfigAndLibraryVersion if this builder is configured with the same
+     * configurations, as the builder, which created the file (the persisted Chronicle Hash
+     * instance) for the first time, and <b>with the same version of the Chronicle Map library</b>.
+     * In this case, the header of the file is overridden (with presumably the same configurations),
+     * protecting from {@link ChronicleHashRecoveryFailedException}, if the header is corrupted.
      * @return a recovered Chronicle Hash instance, mapped to the given file
      * @throws FileNotFoundException if the file doesn't exist
      * @throws IOException if any IO error occurs on reading data from the file, or related to
@@ -605,10 +634,10 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * the file is corrupted on OS level, and should be recovered on that level first, before
      * calling this procedure.
      * @throws ChronicleHashRecoveryFailedException if recovery is impossible
-     * @see #createOrRecoverPersistedTo(File)
+     * @see #createOrRecoverPersistedTo(File, boolean)
      * @see #createPersistedTo(File)
      */
-    H recoverPersistedTo(File file, boolean sameBuilderConfig) throws IOException;
+    H recoverPersistedTo(File file, boolean sameBuilderConfigAndLibraryVersion) throws IOException;
 
     /**
      * @deprecated don't use private API in the client code

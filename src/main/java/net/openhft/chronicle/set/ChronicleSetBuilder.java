@@ -311,10 +311,18 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
-    public ChronicleSet<K> recoverPersistedTo(File file, boolean sameBuilderConfig)
+    public ChronicleSet<K> createOrRecoverPersistedTo(File file, boolean sameLibraryVersion)
             throws IOException {
         ChronicleMap<K, DummyValue> map =
-                chronicleMapBuilder.recoverPersistedTo(file, sameBuilderConfig);
+                chronicleMapBuilder.createOrRecoverPersistedTo(file, sameLibraryVersion);
+        return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
+    }
+
+    @Override
+    public ChronicleSet<K> recoverPersistedTo(File file, boolean sameBuilderConfigAndLibraryVersion)
+            throws IOException {
+        ChronicleMap<K, DummyValue> map =
+                chronicleMapBuilder.recoverPersistedTo(file, sameBuilderConfigAndLibraryVersion);
         return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
     }
 

@@ -372,32 +372,24 @@ ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
     .name("city-postal-codes-map")
     .averageKey("Amsterdam")
     .entries(50_000)
-    .recoverPersistedTo(cityPostalCodesFile, true);
-// or
-ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
-    .of(CharSequence.class, PostalCodeRange.class)
-    .name("city-postal-codes-map")
-    // assuming ChronicleMapBuilder configurations at the moment of
-    // cityPostalCodes Chronicle Map creation are not known
     .recoverPersistedTo(cityPostalCodesFile, false);
 ```
 
-The second parameter in `recoverPersistedTo()` method is called `sameBuilderConfig`, it should be
-`true` if `ChronicleMapBuilder` is configured in exactly the same way, as when the Chronicle Map was
-created, and using the same version of Chronicle Map library, or `false`, if initial configurations
-are not known, of current version of Chronicle Map library differs from the version, used to create
-this Chronicle Map initially.
+The second parameter in `recoverPersistedTo()` method is called
+`sameBuilderConfigAndLibraryVersion`, it could be `true` only if `ChronicleMapBuilder` is configured
+in exactly the same way, as when the Chronicle Map (persisted to the given file) was created, **and
+using the same version of Chronicle Map library**, or `false`, if initial configurations are not
+known, *or current version of Chronicle Map library could be different from the version, used to
+create this Chronicle Map initially.*
 
-If `sameBuilderConfig` is `true`, `recoverPersistedTo()` checks that the recovered Chronicle Map's
-header memory (containing serialized configurations) is not corrupted, because it "knows" all the
-right configurations and what should be written to the header. If the header is corrupted, it
-recovers it.
+If `sameBuilderConfigAndLibraryVersion` is `true`, `recoverPersistedTo()` "knows" all the right
+configurations and what should be written to the header. It checks if the recovered Chronicle Map's
+header memory (containing serialized configurations) is corrupted or not. If the header is
+corrupted, it is overridden, and the recovery process continues.
 
-If `sameBuilderConfig` is `false`, `recoverPersistedTo()` relies on the configurations written to
-the Chronicle Map's header, assuming it is not corrupted. If it is corrupted, at best it will lead
-to a runtime exception thrown from `recoverPersistedTo()` without touching the data, stored in the
-Chronicle Map (but this effectively means inability to recover the Chronicle Map), at worst it will
-proceed "successfully" but will corrupt the Chronicle Map further.
+If `sameBuilderConfigAndLibraryVersion` is `false`, `recoverPersistedTo()` relies on the
+configurations written to the Chronicle Map's header, assuming it is not corrupted. If it is
+corrupted, `ChronicleHashRecoveryFailedException` is thrown.
 
 However, the subject header memory is never updated on ordinary operations with Chronicle Map, so it
 couldn't be corrupted if an accessing process crashed, or the operating system crashed, or even the
@@ -405,19 +397,19 @@ machine lost power. Only hardware memory or disk corruption or a bug in the file
 to Chronicle Map header memory corruption.
 
 `.recoverPersistedTo()` is harmless if the previous process accessing the Chronicle Map terminated
-normally, however this is a computationally expensive procedure that should generally be avoided.
+normally, however *this is a computationally expensive procedure that should generally be avoided.*
 
-To share configuration, Chronicle Map creation and recovery code you could use
-`.createOrRecoverPersistedTo(persistenceFile)` method in `ChronicleMapBuilder`, which is equivalent
-to `createPersistedTo(persistenceFile)` call, if the persistence file doesn't yet exist, and to
-`recoverPersistedTo(persistenceFile, true)`, if the file already exists, e. g.:
+Chronicle Map creation and recovery could be conveniently merged using a single call:
+`.createOrRecoverPersistedTo(persistenceFile, sameLibraryVersion)` in `ChronicleMapBuilder`, which
+acts like `createPersistedTo(persistenceFile)`, if the persistence file doesn't yet exist, and like
+`recoverPersistedTo(persistenceFile, sameLibraryVersion)`, if the file already exists, e. g.:
 
 ```java
 ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
     .of(CharSequence.class, PostalCodeRange.class)
     .averageKey("Amsterdam")
     .entries(50_000)
-    .createOrRecoverPersistedTo(cityPostalCodesFile);
+    .createOrRecoverPersistedTo(cityPostalCodesFile, false);
 ```
 
 If the Chronicle Map is configured to store entry checksums along with entries, recovery procedure
