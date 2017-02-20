@@ -1717,11 +1717,12 @@ public final class ChronicleMapBuilder<K, V> implements
                 commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
             return map;
-        } catch (Exception e) {
-            if (recover && !(e instanceof IOException) &&
-                    !(e instanceof ChronicleHashRecoveryFailedException))
-                throw new ChronicleHashRecoveryFailedException(e);
-            throw Throwables.propagateNotWrapping(e, IOException.class);
+        } catch (Throwable t) {
+            if (recover && !(t instanceof IOException) &&
+                    !(t instanceof ChronicleHashRecoveryFailedException)) {
+                throw new ChronicleHashRecoveryFailedException(t);
+            }
+            throw Throwables.propagateNotWrapping(t, IOException.class);
         }
     }
 
