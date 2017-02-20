@@ -1491,7 +1491,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return clone().createWithoutFile();
     }
 
-    ChronicleMap<K, V> createWithFile(
+    private ChronicleMap<K, V> createWithFile(
             File file, boolean recover, boolean overrideBuilderConfig) throws IOException {
         if (overrideBuilderConfig && !recover)
             throw new AssertionError("recover -> overrideBuilderConfig");
@@ -1564,7 +1564,7 @@ public final class ChronicleMapBuilder<K, V> implements
         establishReplication(map);
         map.setResourcesName();
         map.registerCleaner();
-        // Ensure safe publication of a ChronicleMap
+        // Ensure safe publication of the ChronicleMap
         OS.memory().storeFence();
         map.addToOnExitHook();
     }
@@ -1628,7 +1628,7 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
      */
-    private ByteBuffer checkSumSelfBootstrappingHeader(
+    private static ByteBuffer readSelfBootstrappingHeader(
             File file, RandomAccessFile raf, int headerSize, boolean recover) throws IOException {
         if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
             throw throwRecoveryOrReturnIOException(file,
@@ -1655,15 +1655,15 @@ public final class ChronicleMapBuilder<K, V> implements
                 throw new IOException("file=" + file+ ": sizeWord is not ready: " + sizeWord);
             }
         }
-        long checkSum = headerChecksum(headerBuffer, headerSize);
-        long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
-        if (storedChecksum != checkSum) {
-            throw throwRecoveryOrReturnIOException(file,
-                    "Self Bootstrapping Header checksum doesn't match the stored checksum: " +
-                            storedChecksum + ", computed: " + checkSum, recover);
-        }
         headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
         return headerBuffer;
+    }
+
+    private static boolean checkSumSelfBootstrappingHeader(
+            ByteBuffer headerBuffer, int headerSize) {
+        long checkSum = headerChecksum(headerBuffer, headerSize);
+        long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
+        return storedChecksum == checkSum;
     }
 
     private VanillaChronicleMap<K, V, ?> createWithNewFile(
@@ -1683,15 +1683,22 @@ public final class ChronicleMapBuilder<K, V> implements
         try {
             int headerSize = waitUntilReady(raf, file, recover);
             FileChannel fileChannel = raf.getChannel();
-            ByteBuffer headerBuffer;
-            if (overrideBuilderConfig) {
-                VanillaChronicleMap<K, V, ?> mapObjectForHeaderOverwrite = newMap();
-                headerBuffer = writeHeader(fileChannel, mapObjectForHeaderOverwrite);
-                headerSize = headerBuffer.remaining();
-            } else {
-                headerBuffer = checkSumSelfBootstrappingHeader(file, raf, headerSize, recover);
-                if (headerSize != headerBuffer.remaining())
-                    throw new AssertionError();
+            ByteBuffer headerBuffer = readSelfBootstrappingHeader(file, raf, headerSize, recover);
+            if (headerSize != headerBuffer.remaining())
+                throw new AssertionError();
+            boolean headerCorrect = checkSumSelfBootstrappingHeader(headerBuffer, headerSize);
+            boolean headerWritten = false;
+            if (!headerCorrect) {
+                if (overrideBuilderConfig) {
+                    VanillaChronicleMap<K, V, ?> mapObjectForHeaderOverwrite = newMap();
+                    headerBuffer = writeHeader(fileChannel, mapObjectForHeaderOverwrite);
+                    headerSize = headerBuffer.remaining();
+                    headerWritten = true;
+                } else {
+                    throw throwRecoveryOrReturnIOException(file,
+                            "Self Bootstrapping Header checksum doesn't match the stored checksum",
+                            recover);
+                }
             }
             Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
             headerBytes.readPosition(headerBuffer.position());
@@ -1709,10 +1716,8 @@ public final class ChronicleMapBuilder<K, V> implements
             if (!recover) {
                 map.createMappedStoreAndSegments(resources);
             } else {
-                if (!overrideBuilderConfig)
+                if (!headerWritten)
                     writeNotComplete(fileChannel, headerBuffer, headerSize);
-                // if overrideBuilderConfig = true, readiness bit is already set
-                // in writeHeader() call
                 map.recover(resources);
                 commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
@@ -1726,7 +1731,7 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    ChronicleMap<K, V> createWithoutFile() {
+    private ChronicleMap<K, V> createWithoutFile() {
         replicated = replicationIdentifier != -1;
         persisted = false;
 
@@ -1763,7 +1768,7 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    void preMapConstruction() {
+    private void preMapConstruction() {
         averageKeySize = preMapConstruction(
                 keyBuilder, averageKeySize, averageKey, sampleKey, "Key");
         averageValueSize = preMapConstruction(
@@ -1866,7 +1871,7 @@ public final class ChronicleMapBuilder<K, V> implements
         final double averageEntrySize;
         final int worstAlignment;
 
-        public EntrySizeInfo(double averageEntrySize, int worstAlignment) {
+        EntrySizeInfo(double averageEntrySize, int worstAlignment) {
             this.averageEntrySize = averageEntrySize;
             this.worstAlignment = worstAlignment;
         }
