@@ -378,7 +378,7 @@ ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
 The second parameter in `recoverPersistedTo()` method is called
 `sameBuilderConfigAndLibraryVersion`, it could be `true` only if `ChronicleMapBuilder` is configured
 in exactly the same way, as when the Chronicle Map (persisted to the given file) was created, **and
-using the same version of Chronicle Map library**, or `false`, if initial configurations are not
+using the same version of the Chronicle Map library**, or `false`, if initial configurations are not
 known, *or current version of Chronicle Map library could be different from the version, used to
 create this Chronicle Map initially.*
 
