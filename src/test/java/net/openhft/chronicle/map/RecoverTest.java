@@ -17,8 +17,12 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.core.values.LongValue;
+import net.openhft.chronicle.hash.ChecksumEntry;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
+import net.openhft.chronicle.hash.ChronicleHashCorruption;
+import net.openhft.chronicle.values.Values;
+import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -32,8 +36,10 @@ import java.nio.channels.FileChannel;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertNull;
+import static net.openhft.chronicle.map.ChronicleMapTest.getPersistenceFile;
+import static org.junit.Assert.*;
 
 public class RecoverTest {
 
@@ -116,5 +122,48 @@ public class RecoverTest {
                 }
             }
         }
+    }
+
+    @Test
+    public void testCorruptedEntryRecovery() throws IOException {
+        File file = getPersistenceFile();
+        try (ChronicleMap<Integer, LongValue> map = ChronicleMap
+                .of(Integer.class, LongValue.class)
+                .entries(1)
+                .createPersistedTo(file)) {
+
+            LongValue value = Values.newHeapInstance(LongValue.class);
+            value.setValue(42);
+            map.put(1, value);
+
+            try (ExternalMapQueryContext<Integer, LongValue, ?> c = map.queryContext(1)) {
+                // Update lock required for calling ChecksumEntry.checkSum()
+                c.updateLock().lock();
+                MapEntry<Integer, LongValue> entry = c.entry();
+                assertNotNull(entry);
+                ChecksumEntry checksumEntry = (ChecksumEntry) entry;
+                assertTrue(checksumEntry.checkSum());
+
+                // to access off-heap bytes, should call value().getUsing() with Native value
+                // provided. Simple get() return Heap value by default
+                LongValue nativeValue =
+                        entry.value().getUsing(Values.newNativeReference(LongValue.class));
+                // This value bytes update bypass Chronicle Map internals, so checksum is not
+                // updated automatically
+                nativeValue.setValue(43);
+                Assert.assertFalse(checksumEntry.checkSum());
+            }
+        }
+
+        AtomicInteger corruptionCounter = new AtomicInteger(0);
+        ChronicleHashCorruption.Listener corruptionListener =
+                corruption -> corruptionCounter.incrementAndGet();
+        //noinspection EmptyTryBlock
+        try (ChronicleMap<Integer, LongValue> ignore = ChronicleMap
+                .of(Integer.class, LongValue.class)
+                .entries(1)
+                .createOrRecoverPersistedTo(file, true, corruptionListener)) {
+        }
+        assertTrue(corruptionCounter.get() > 0);
     }
 }

@@ -17,6 +17,8 @@
 
 package net.openhft.chronicle.map.impl;
 
+import net.openhft.chronicle.hash.ChronicleHashCorruption;
+import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.MapSegmentContext;
 
@@ -28,5 +30,7 @@ public interface IterationContext<K, V, R> extends MapEntry<K, V>, MapSegmentCon
     
     void initSegmentIndex(int segmentIndex);
 
-    void recoverSegments();
+    void recoverSegments(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption);
 }

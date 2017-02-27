@@ -31,14 +31,13 @@ import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
+import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import sun.misc.Cleaner;
 
 import java.io.Closeable;
@@ -60,13 +59,13 @@ import static net.openhft.chronicle.algo.MemoryUnit.*;
 import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 import static net.openhft.chronicle.core.OS.pageAlign;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         ECQ extends ExternalHashQueryContext<K>>
         implements ChronicleHash<K, C, SC, ECQ>, Marshallable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleHash.class);
 
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
     public static final long RESERVED_GLOBAL_MUTABLE_STATE_BYTES = 1024;
@@ -505,7 +504,9 @@ public abstract class VanillaChronicleHash<K,
         createStoreAndSegments(map(dataStoreSize(), 0));
     }
 
-    public final void basicRecover(ChronicleHashResources resources)
+    public final void basicRecover(
+            ChronicleHashResources resources, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption)
             throws IOException {
         this.resources = resources;
         long segmentHeadersOffset = globalMutableState().getSegmentHeadersOffset();
@@ -525,45 +526,62 @@ public abstract class VanillaChronicleHash<K,
         }
         initBytesStoreAndHeadersViews(map(dataStoreSize, 0));
 
-        resetGlobalMutableStateLock();
-        recoverAllocatedExtraTierBulks(allocatedExtraTierBulks);
-        recoverSegmentHeadersOffset(segmentHeadersOffset);
-        recoverDataStoreSize(dataStoreSize);
+        resetGlobalMutableStateLock(corruptionListener, corruption);
+        recoverAllocatedExtraTierBulks(allocatedExtraTierBulks, corruptionListener, corruption);
+        recoverSegmentHeadersOffset(segmentHeadersOffset, corruptionListener, corruption);
+        recoverDataStoreSize(dataStoreSize, corruptionListener, corruption);
         initOffsetsAndBulks();
     }
 
-    private void resetGlobalMutableStateLock() {
+    private void resetGlobalMutableStateLock(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         long lockAddr = globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET;
         LockingStrategy lockingStrategy = globalMutableStateLockingStrategy;
         long lockState = lockingStrategy.getState(nativeAccess(), null, lockAddr);
         if (lockState != lockingStrategy.resetState()) {
-            LOG.error("global mutable state lock of map at {} is not clear: {}",
-                    file, lockingStrategy.toString(lockState));
+            report(corruptionListener, corruption, -1, () ->
+                    format("global mutable state lock of map at {} is not clear: {}",
+                            file, lockingStrategy.toString(lockState))
+            );
             lockingStrategy.reset(nativeAccess(), null, lockAddr);
         }
     }
 
-    private void recoverAllocatedExtraTierBulks(int allocatedExtraTierBulks) {
+    private void recoverAllocatedExtraTierBulks(
+            int allocatedExtraTierBulks, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         if (globalMutableState.getAllocatedExtraTierBulks() != allocatedExtraTierBulks) {
-            LOG.error("allocated extra tier bulks counter corrupted, or the map file {} " +
-                    "is truncated. stored: {}, should be: {}", file,
-                    globalMutableState.getAllocatedExtraTierBulks(), allocatedExtraTierBulks);
+            report(corruptionListener, corruption, -1, () ->
+                    format("allocated extra tier bulks counter corrupted, or the map file {} " +
+                                    "is truncated. stored: {}, should be: {}",
+                            file, globalMutableState.getAllocatedExtraTierBulks(),
+                            allocatedExtraTierBulks)
+            );
             globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks);
         }
     }
 
-    private void recoverSegmentHeadersOffset(long segmentHeadersOffset) {
+    private void recoverSegmentHeadersOffset(
+            long segmentHeadersOffset, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         if (globalMutableState.getSegmentHeadersOffset() != segmentHeadersOffset) {
-            LOG.error("segment headers offset of map at {} corrupted. stored: {}, should be: {}",
-                    file, globalMutableState.getSegmentHeadersOffset(), segmentHeadersOffset);
+            report(corruptionListener, corruption, -1, () ->
+                    format("segment headers offset of map at {} corrupted. stored: {}, should be: {}",
+                            file, globalMutableState.getSegmentHeadersOffset(), segmentHeadersOffset)
+            );
             globalMutableState.setSegmentHeadersOffset(segmentHeadersOffset);
         }
     }
 
-    private void recoverDataStoreSize(long dataStoreSize) {
+    private void recoverDataStoreSize(
+            long dataStoreSize, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         if (globalMutableState.getDataStoreSize() != dataStoreSize) {
-            LOG.error("data store size of map at {} corrupted. stored: {}, should be: {}",
-                    file, globalMutableState.getDataStoreSize(), dataStoreSize);
+            report(corruptionListener, corruption, -1, () ->
+                    format("data store size of map at {} corrupted. stored: {}, should be: {}",
+                            file, globalMutableState.getDataStoreSize(), dataStoreSize)
+            );
             globalMutableState.setDataStoreSize(dataStoreSize);
         }
     }

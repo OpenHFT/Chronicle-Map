@@ -24,6 +24,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
@@ -65,6 +66,8 @@ import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.throwRecovery
 import static net.openhft.chronicle.hash.impl.util.FileIOUtils.readFully;
 import static net.openhft.chronicle.hash.impl.util.FileIOUtils.writeFully;
 import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 import static net.openhft.chronicle.map.DefaultSpi.mapEntryOperations;
 import static net.openhft.chronicle.map.DefaultSpi.mapRemoteOperations;
 import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
@@ -151,6 +154,15 @@ public final class ChronicleMapBuilder<K, V> implements
             new ConcurrentHashMap<>(128);
     private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
 
+    private static final Logger chronicleMapLogger = LoggerFactory.getLogger(ChronicleMap.class);
+    private static final ChronicleHashCorruption.Listener defaultChronicleMapCorruptionListener =
+            corruption -> {
+                if (corruption.exception() != null) {
+                    chronicleMapLogger.error(corruption.message(), corruption.exception());
+                } else {
+                    chronicleMapLogger.error(corruption.message());
+                }
+            };
 
     private String name;
     SerializationBuilder<K> keyBuilder;
@@ -1469,7 +1481,7 @@ public final class ChronicleMapBuilder<K, V> implements
         // clone() to make this builder instance thread-safe, because createWithFile() method
         // computes some state based on configurations, but doesn't synchronize on configuration
         // changes.
-        return clone().createWithFile(file, false, false);
+        return clone().createWithFile(file, false, false, null);
     }
 
     @Override
@@ -1480,8 +1492,16 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMap<K, V> createOrRecoverPersistedTo(File file, boolean sameLibraryVersion)
             throws IOException {
+        return createOrRecoverPersistedTo(file, sameLibraryVersion,
+                defaultChronicleMapCorruptionListener);
+    }
+
+    @Override
+    public ChronicleMap<K, V> createOrRecoverPersistedTo(
+            File file, boolean sameLibraryVersion,
+            ChronicleHashCorruption.Listener corruptionListener) throws IOException {
         if (file.exists()) {
-            return recoverPersistedTo(file, sameLibraryVersion);
+            return recoverPersistedTo(file, sameLibraryVersion, corruptionListener);
         } else {
             return createPersistedTo(file);
         }
@@ -1490,7 +1510,16 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMap<K, V> recoverPersistedTo(
             File file, boolean sameBuilderConfigAndLibraryVersion) throws IOException {
-        return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion);
+        return recoverPersistedTo(file, sameBuilderConfigAndLibraryVersion,
+                defaultChronicleMapCorruptionListener);
+    }
+
+    @Override
+    public ChronicleMap<K, V> recoverPersistedTo(
+            File file, boolean sameBuilderConfigAndLibraryVersion,
+            ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+        return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion,
+                corruptionListener);
     }
 
     @Override
@@ -1502,7 +1531,8 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private ChronicleMap<K, V> createWithFile(
-            File file, boolean recover, boolean overrideBuilderConfig) throws IOException {
+            File file, boolean recover, boolean overrideBuilderConfig,
+            ChronicleHashCorruption.Listener corruptionListener) throws IOException {
         if (overrideBuilderConfig && !recover)
             throw new AssertionError("recover -> overrideBuilderConfig");
         replicated = replicationIdentifier != -1;
@@ -1522,7 +1552,8 @@ public final class ChronicleMapBuilder<K, V> implements
         try {
             VanillaChronicleMap<K, V, ?> result;
             if (raf.length() > 0) {
-                result = openWithExistingFile(file, raf, resources, recover, overrideBuilderConfig);
+                result = openWithExistingFile(file, raf, resources, recover, overrideBuilderConfig,
+                        corruptionListener);
             } else {
 
                 // Single-element arrays allow to modify variables within lambda
@@ -1548,7 +1579,7 @@ public final class ChronicleMapBuilder<K, V> implements
                             headerSize);
                 } else {
                     result = openWithExistingFile(file, raf, resources, recover,
-                            overrideBuilderConfig);
+                            overrideBuilderConfig, corruptionListener);
                 }
             }
             prepareMapPublication(result);
@@ -1639,7 +1670,9 @@ public final class ChronicleMapBuilder<K, V> implements
      * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
      */
     private static ByteBuffer readSelfBootstrappingHeader(
-            File file, RandomAccessFile raf, int headerSize, boolean recover) throws IOException {
+            File file, RandomAccessFile raf, int headerSize, boolean recover,
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) throws IOException {
         if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
             throw throwRecoveryOrReturnIOException(file,
                     "The file is shorter than the header size: " + headerSize +
@@ -1658,7 +1691,10 @@ public final class ChronicleMapBuilder<K, V> implements
         int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
         if (!SizePrefixedBlob.isReady(sizeWord)) {
             if (recover) {
-                LOG.error("file={}: size-prefixed blob readiness bit is set to NOT_COMPLETE", file);
+                report(corruptionListener, corruption, -1, () ->
+                        format("file={}: size-prefixed blob readiness bit is set to NOT_COMPLETE",
+                                file)
+                );
                 // the bit will be overwritten to READY in the end of recovery procedure, so nothing
                 // to fix right here
             } else {
@@ -1688,12 +1724,15 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private VanillaChronicleMap<K, V, ?> openWithExistingFile(
             File file, RandomAccessFile raf, ChronicleHashResources resources,
-            boolean recover, boolean overrideBuilderConfig)
+            boolean recover, boolean overrideBuilderConfig,
+            ChronicleHashCorruption.Listener corruptionListener)
             throws IOException {
+        ChronicleHashCorruptionImpl corruption = recover ? new ChronicleHashCorruptionImpl() : null;
         try {
             int headerSize = waitUntilReady(raf, file, recover);
             FileChannel fileChannel = raf.getChannel();
-            ByteBuffer headerBuffer = readSelfBootstrappingHeader(file, raf, headerSize, recover);
+            ByteBuffer headerBuffer = readSelfBootstrappingHeader(
+                    file, raf, headerSize, recover, corruptionListener, corruption);
             if (headerSize != headerBuffer.remaining())
                 throw new AssertionError();
             boolean headerCorrect = checkSumSelfBootstrappingHeader(headerBuffer, headerSize);
@@ -1728,7 +1767,7 @@ public final class ChronicleMapBuilder<K, V> implements
             } else {
                 if (!headerWritten)
                     writeNotComplete(fileChannel, headerBuffer, headerSize);
-                map.recover(resources);
+                map.recover(resources, corruptionListener, corruption);
                 commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
             return map;

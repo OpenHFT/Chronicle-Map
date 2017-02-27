@@ -17,34 +17,40 @@
 
 package net.openhft.chronicle.hash.impl.stage.iter;
 
+import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.hash.impl.TierCountersArea;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
-import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
+import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
 import net.openhft.chronicle.map.impl.IterationContext;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
-import org.slf4j.Logger;
+
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 @Staged
 public abstract class SegmentsRecovery implements IterationContext {
 
-    @StageRef VanillaChronicleHashHolder<?> hh;
-    @StageRef SegmentStages s;
-    @StageRef TierRecovery tierRecovery;
-    @StageRef LogHolder lh;
+    @StageRef
+    VanillaChronicleHashHolder<?> hh;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    TierRecovery tierRecovery;
 
     @Override
-    public void recoverSegments() {
-        Logger log = lh.LOG;
+    public void recoverSegments(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         for (int segmentIndex = 0; segmentIndex < h.actualSegments; segmentIndex++) {
             s.initSegmentIndex(segmentIndex);
-            resetSegmentLock();
-            zeroOutFirstSegmentTierCountersArea();
-            tierRecovery.recoverTier(segmentIndex);
+            resetSegmentLock(corruptionListener, corruption);
+            zeroOutFirstSegmentTierCountersArea(corruptionListener, corruption);
+            tierRecovery.recoverTier(segmentIndex, corruptionListener, corruption);
         }
 
         VanillaGlobalMutableState globalMutableState = h.globalMutableState();
@@ -58,14 +64,17 @@ public abstract class SegmentsRecovery implements IterationContext {
             long tierIndex = h.extraTierIndexToTierIndex(extraTierIndex);
             // `tier` is unused in recoverTier(), 0 should be a safe value
             s.initSegmentTier(0, tierIndex);
-            int segmentIndex = tierRecovery.recoverTier(-1);
+            int segmentIndex = tierRecovery.recoverTier(
+                    -1, corruptionListener, corruption);
             if (segmentIndex >= 0) {
                 long tierCountersAreaAddr = s.tierCountersAreaAddr();
                 int storedSegmentIndex = TierCountersArea.segmentIndex(tierCountersAreaAddr);
                 if (storedSegmentIndex != segmentIndex) {
-                    log.error("wrong segment index stored in tier counters area " +
-                            "of tier with index {}: {}, should be, based on entries: {}",
-                            tierIndex, storedSegmentIndex, segmentIndex);
+                    report(corruptionListener, corruption, segmentIndex, () ->
+                            format("wrong segment index stored in tier counters area " +
+                                            "of tier with index {}: {}, should be, based on entries: {}",
+                                    tierIndex, storedSegmentIndex, segmentIndex)
+                    );
                     TierCountersArea.segmentIndex(tierCountersAreaAddr, segmentIndex);
                 }
                 s.nextTierIndex(0);
@@ -84,8 +93,11 @@ public abstract class SegmentsRecovery implements IterationContext {
         }
 
         if (storedExtraTiersInUse != actualExtraTiersInUse) {
-            log.error("wrong number of actual tiers in use in global mutable state, stored: {}, " +
-                    "should be: {}", storedExtraTiersInUse, actualExtraTiersInUse);
+            long finalActualExtraTiersInUse = actualExtraTiersInUse;
+            report(corruptionListener, corruption, -1, () ->
+                    format("wrong number of actual tiers in use in global mutable state, stored: {}, " +
+                            "should be: {}", storedExtraTiersInUse, finalActualExtraTiersInUse)
+            );
             globalMutableState.setExtraTiersInUse(actualExtraTiersInUse);
         }
 
@@ -105,22 +117,26 @@ public abstract class SegmentsRecovery implements IterationContext {
         }
         long storedFirstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
         if (storedFirstFreeTierIndex != firstFreeTierIndex) {
-            log.error("wrong first free tier index in global mutable state, stored: {}, " +
-                    "should be: {}", storedFirstFreeTierIndex, firstFreeTierIndex);
+            report(corruptionListener, corruption, -1, () ->
+                    format("wrong first free tier index in global mutable state, stored: {}, " +
+                            "should be: {}", storedFirstFreeTierIndex, firstFreeTierIndex)
+            );
             globalMutableState.setFirstFreeTierIndex(firstFreeTierIndex);
         }
 
-        removeDuplicatesInSegments();
+        removeDuplicatesInSegments(corruptionListener, corruption);
     }
 
-    private void removeDuplicatesInSegments() {
+    private void removeDuplicatesInSegments(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         for (int segmentIndex = 0; segmentIndex < h.actualSegments; segmentIndex++) {
             s.initSegmentIndex(segmentIndex);
             s.initSegmentTier();
             s.goToLastTier();
             while (true) {
-                tierRecovery.removeDuplicatesInSegment();
+                tierRecovery.removeDuplicatesInSegment(corruptionListener, corruption);
                 if (s.tier > 0) {
                     s.prevTier();
                 } else {
@@ -130,31 +146,43 @@ public abstract class SegmentsRecovery implements IterationContext {
         }
     }
 
-    private void resetSegmentLock() {
+    private void resetSegmentLock(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         long lockState = s.segmentHeader.getLockState(s.segmentHeaderAddress);
         if (lockState != s.segmentHeader.resetLockState()) {
-            lh.LOG.error("lock of segment {} is not clear: {}",
-                    s.segmentIndex, s.segmentHeader.lockStateToString(lockState));
+            report(corruptionListener, corruption, s.segmentIndex, () ->
+                    format("lock of segment {} is not clear: {}",
+                    s.segmentIndex, s.segmentHeader.lockStateToString(lockState))
+            );
             s.segmentHeader.resetLock(s.segmentHeaderAddress);
         }
     }
 
-    private void zeroOutFirstSegmentTierCountersArea() {
+    private void zeroOutFirstSegmentTierCountersArea(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         s.nextTierIndex(0);
         if (s.prevTierIndex() != 0) {
-            lh.LOG.error("stored prev tier index in first tier of segment {}: {}, should be 0",
-                    s.segmentIndex, s.prevTierIndex());
+            report(corruptionListener, corruption, s.segmentIndex, () ->
+                    format("stored prev tier index in first tier of segment {}: {}, should be 0",
+                            s.segmentIndex, s.prevTierIndex())
+            );
             s.prevTierIndex(0);
         }
         long tierCountersAreaAddr = s.tierCountersAreaAddr();
         if (TierCountersArea.segmentIndex(tierCountersAreaAddr) != 0) {
-            lh.LOG.error("stored segment index in first tier of segment {}: {}, should be 0",
-                    s.segmentIndex, TierCountersArea.segmentIndex(tierCountersAreaAddr));
+            report(corruptionListener, corruption, s.segmentIndex, () ->
+                    format("stored segment index in first tier of segment {}: {}, should be 0",
+                    s.segmentIndex, TierCountersArea.segmentIndex(tierCountersAreaAddr))
+            );
             TierCountersArea.segmentIndex(tierCountersAreaAddr, 0);
         }
         if (TierCountersArea.tier(tierCountersAreaAddr) != 0) {
-            lh.LOG.error("stored tier in first tier of segment {}: {}, should be 0",
-                    s.segmentIndex, TierCountersArea.tier(tierCountersAreaAddr));
+            report(corruptionListener, corruption, s.segmentIndex, () ->
+                    format("stored tier in first tier of segment {}: {}, should be 0",
+                    s.segmentIndex, TierCountersArea.tier(tierCountersAreaAddr))
+            );
             TierCountersArea.tier(tierCountersAreaAddr, 0);
         }
     }

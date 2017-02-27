@@ -24,6 +24,7 @@ import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
+import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
@@ -163,10 +164,12 @@ public class VanillaChronicleMap<K, V, R>
         initOwnTransients();
     }
 
-    public void recover(ChronicleHashResources resources) throws IOException {
-        basicRecover(resources);
+    public void recover(
+            ChronicleHashResources resources, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) throws IOException {
+        basicRecover(resources, corruptionListener, corruption);
         try (IterationContext<K, V, ?> iterationContext = iterationContext()) {
-            iterationContext.recoverSegments();
+            iterationContext.recoverSegments(corruptionListener, corruption);
         }
     }
 
