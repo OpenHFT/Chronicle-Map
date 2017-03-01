@@ -56,9 +56,7 @@ public final class CanonicalRandomAccessFiles {
     }
 
     public static void release(File file) throws IOException {
-        canonicalRafs.compute(file, (f, ref) -> {
-            if (ref == null)
-                throw new IllegalStateException("releasing not referenced RAF of file " + f);
+        canonicalRafs.computeIfPresent(file, (f, ref) -> {
             if (--ref.refCount == 0) {
                 try {
                     ref.raf.close();
@@ -71,4 +69,6 @@ public final class CanonicalRandomAccessFiles {
             }
         });
     }
+
+    private CanonicalRandomAccessFiles() {}
 }

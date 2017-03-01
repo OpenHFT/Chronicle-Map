@@ -19,11 +19,14 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
+import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +34,7 @@ import java.io.IOException;
 /**
  * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
  * be used as a classic builder and/or factory.
- *
+ * <p>
  * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link
  * ChronicleHashBuilder} interface documentation.
  *
@@ -41,6 +44,16 @@ import java.io.IOException;
  */
 public final class ChronicleSetBuilder<K>
         implements ChronicleHashBuilder<K, ChronicleSet<K>, ChronicleSetBuilder<K>> {
+
+    private static final Logger chronicleSetLogger = LoggerFactory.getLogger(ChronicleSet.class);
+    private static final ChronicleHashCorruption.Listener defaultChronicleSetCorruptionListener =
+            corruption -> {
+                if (corruption.exception() != null) {
+                    chronicleSetLogger.error(corruption.message(), corruption.exception());
+                } else {
+                    chronicleSetLogger.error(corruption.message());
+                }
+            };
 
     private ChronicleMapBuilder<K, DummyValue> chronicleMapBuilder;
     private ChronicleSetBuilderPrivateAPI<K> privateAPI;
@@ -60,9 +73,9 @@ public final class ChronicleSetBuilder<K>
      * Returns a new {@code ChronicleSetBuilder} instance which is able to {@linkplain #create()
      * create} sets with the specified key class.
      *
-     * @param keyClass   class object used to infer key type and discover it's properties via
-     *                   reflection
-     * @param <K>        key type of the sets, created by the returned builder
+     * @param keyClass class object used to infer key type and discover it's properties via
+     *                 reflection
+     * @param <K>      key type of the sets, created by the returned builder
      * @return a new builder for the given key class
      */
     public static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {
@@ -79,6 +92,12 @@ public final class ChronicleSetBuilder<K>
         } catch (CloneNotSupportedException e) {
             throw new AssertionError(e);
         }
+    }
+
+    @Override
+    public ChronicleSetBuilder<K> name(String name) {
+        chronicleMapBuilder.name(name);
+        return this;
     }
 
     @Override
@@ -119,9 +138,9 @@ public final class ChronicleSetBuilder<K>
      * encoded (and each character takes 2 bytes on-heap), because default off-heap {@link String}
      * encoding is UTF-8 in {@code ChronicleSet}.)
      *
+     * @param averageKeySize the average size in bytes of the key
      * @see #constantKeySizeBySample(Object)
      * @see #actualChunkSize(int)
-     * @param averageKeySize   the average size in bytes of the key
      */
     @Override
     public ChronicleSetBuilder<K> averageKeySize(double averageKeySize) {
@@ -137,7 +156,7 @@ public final class ChronicleSetBuilder<K>
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Set<byte[]> gitCommitsOfInterest = ChronicleSetBuilder.of(byte[].class)
      *     .constantKeySizeBySample(new byte[20])
@@ -300,15 +319,38 @@ public final class ChronicleSetBuilder<K>
 
     @Override
     public ChronicleSet<K> createOrRecoverPersistedTo(File file) throws IOException {
-        ChronicleMap<K, DummyValue> map = chronicleMapBuilder.createOrRecoverPersistedTo(file);
+        return createOrRecoverPersistedTo(file, true);
+    }
+
+    @Override
+    public ChronicleSet<K> createOrRecoverPersistedTo(File file, boolean sameLibraryVersion)
+            throws IOException {
+        return createOrRecoverPersistedTo(file, sameLibraryVersion,
+                defaultChronicleSetCorruptionListener);
+    }
+
+    @Override
+    public ChronicleSet<K> createOrRecoverPersistedTo(
+            File file, boolean sameLibraryVersion,
+            ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+        ChronicleMap<K, DummyValue> map = chronicleMapBuilder.createOrRecoverPersistedTo(
+                file, sameLibraryVersion, corruptionListener);
         return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
     }
 
     @Override
-    public ChronicleSet<K> recoverPersistedTo(File file, boolean sameBuilderConfig)
+    public ChronicleSet<K> recoverPersistedTo(File file, boolean sameBuilderConfigAndLibraryVersion)
             throws IOException {
-        ChronicleMap<K, DummyValue> map =
-                chronicleMapBuilder.recoverPersistedTo(file, sameBuilderConfig);
+        return recoverPersistedTo(file, sameBuilderConfigAndLibraryVersion,
+                defaultChronicleSetCorruptionListener);
+    }
+
+    @Override
+    public ChronicleSet<K> recoverPersistedTo(
+            File file, boolean sameBuilderConfigAndLibraryVersion,
+            ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+        ChronicleMap<K, DummyValue> map = chronicleMapBuilder.recoverPersistedTo(
+                file, sameBuilderConfigAndLibraryVersion, corruptionListener);
         return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
     }
 

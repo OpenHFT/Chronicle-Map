@@ -23,7 +23,11 @@ package net.openhft.chronicle.hash;
 public final class ChronicleHashClosedException extends IllegalStateException {
     private static final long serialVersionUID = 0L;
 
-    public ChronicleHashClosedException() {
-        super("Access to ChronicleHash after close()");
+    public ChronicleHashClosedException(ChronicleHash hash) {
+        this(hash.toIdentityString());
+    }
+
+    public ChronicleHashClosedException(String chronicleHashIdentityString) {
+        super("Access to " + chronicleHashIdentityString + " after close()");
     }
 }

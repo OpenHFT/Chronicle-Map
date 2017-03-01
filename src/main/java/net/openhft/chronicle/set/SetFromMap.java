@@ -90,6 +90,15 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
         return s.toString();
     }
 
+    @Override
+    public String toIdentityString() {
+        return "ChronicleSet{" +
+                "name=" + name() +
+                ", file=" + file() +
+                ", identityHashCode=" + System.identityHashCode(this) +
+                "}";
+    }
+
     public int hashCode() {
         return s.hashCode();
     }
@@ -114,6 +123,11 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     @Override
     public long longSize() {
         return m.longSize();
+    }
+
+    @Override
+    public long offHeapMemoryUsed() {
+        return m.offHeapMemoryUsed();
     }
 
     @Override
@@ -172,6 +186,11 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     @Override
     public File file() {
         return m.file();
+    }
+
+    @Override
+    public String name() {
+        return m.name();
     }
 
     @Override

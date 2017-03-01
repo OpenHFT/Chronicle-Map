@@ -27,6 +27,8 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
+import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
+
 abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extends AbstractData<T>
         implements DataAccess<T>, Data<T> {
 
@@ -36,12 +38,12 @@ abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extend
     /** State field */
     transient T cs;
 
-    AbstractCharSequenceUtf8DataAccess() {
-        initTransients();
+    AbstractCharSequenceUtf8DataAccess(long bytesCapacity) {
+        initTransients(bytesCapacity);
     }
 
-    private void initTransients() {
-        bytes = Bytes.allocateElasticDirect(1);
+    private void initTransients(long bytesCapacity) {
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes(bytesCapacity);
     }
 
     @Override
@@ -60,7 +62,7 @@ abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extend
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
         // no config fields to read
-        initTransients();
+        initTransients(DEFAULT_BYTES_CAPACITY);
     }
 
     @Override

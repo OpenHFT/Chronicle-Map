@@ -21,7 +21,7 @@ import java.io.File;
 
 /**
  * This exception is thrown, when a Chronicle Hash recovery using {@link
- * ChronicleHashBuilder#recoverPersistedTo(File, boolean)}  method is impossible, for example,
+ * ChronicleHashBuilder#recoverPersistedTo(File, boolean)} method is impossible, for example,
  * if the persistence file is corrupted too much.
  *
  * @see ChronicleHashBuilder#recoverPersistedTo(File, boolean)

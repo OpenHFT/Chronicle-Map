@@ -81,7 +81,8 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
             ru.updateChange();
             s.tierDeleted(s.tierDeleted() + 1);
         } else {
-            throw new IllegalStateException("Entry is absent in the map when doRemove() is called");
+            throw new IllegalStateException(mh.h().toIdentityString() +
+                    ": Entry is absent in the map when doRemove() is called");
         }
     }
 

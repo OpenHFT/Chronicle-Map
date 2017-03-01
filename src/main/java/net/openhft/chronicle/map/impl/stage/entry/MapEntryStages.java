@@ -138,8 +138,8 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
             newValueDoesNotFit:
             if (newSizeInChunks > entrySizeInChunks) {
                 if (newSizeInChunks > m.maxChunksPerEntry) {
-                    throw new IllegalArgumentException("Value too large: " +
-                            "entry takes " + newSizeInChunks + " chunks, " +
+                    throw new IllegalArgumentException(m.toIdentityString() +
+                            ": Value too large: entry takes " + newSizeInChunks + " chunks, " +
                             m.maxChunksPerEntry + " is maximum.");
                 }
                 if (s.realloc(pos, entrySizeInChunks, newSizeInChunks)) {

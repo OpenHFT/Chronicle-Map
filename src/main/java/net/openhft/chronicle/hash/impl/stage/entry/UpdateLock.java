@@ -17,8 +17,9 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
+import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -32,8 +33,8 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UPDATE_LOCKED;
 @Staged
 public class UpdateLock implements InterProcessLock {
 
+    @StageRef VanillaChronicleHashHolder<?> hh;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef LogHolder logHolder;
     @StageRef SegmentStages s;
     @StageRef HashEntryStages<?> entry;
     
@@ -54,9 +55,8 @@ public class UpdateLock implements InterProcessLock {
                         throw forbiddenUpdateLockWhenOuterContextReadLocked();
                     try {
                         s.segmentHeader.updateLock(s.segmentHeaderAddress);
-                    } catch (RuntimeException e) {
-                        logHolder.LOG.error(s.debugContextsAndLocks());
-                        throw e;
+                    } catch (InterProcessDeadLockException e) {
+                        throw s.debugContextsAndLocks(e);
                     }
                 }
                 s.incrementUpdate();
@@ -75,7 +75,8 @@ public class UpdateLock implements InterProcessLock {
      */
     @NotNull
     private IllegalMonitorStateException forbiddenUpgrade() {
-        return new IllegalMonitorStateException("Cannot upgrade from read to update lock");
+        return new IllegalMonitorStateException(
+                hh.h().toIdentityString() + ": Cannot upgrade from read to update lock");
     }
 
     /**
@@ -83,9 +84,9 @@ public class UpdateLock implements InterProcessLock {
      */
     @NotNull
     private IllegalStateException forbiddenUpdateLockWhenOuterContextReadLocked() {
-        return new IllegalStateException("Cannot acquire update lock, because outer context " +
-                "holds read lock. In this case you should acquire update lock in the outer " +
-                "context up front");
+        return new IllegalStateException(hh.h().toIdentityString() +
+                ": Cannot acquire update lock, because outer context holds read lock. " +
+                "In this case you should acquire update lock in the outer context up front");
     }
 
     @Override
@@ -99,7 +100,11 @@ public class UpdateLock implements InterProcessLock {
                 if (s.updateZero() && s.writeZero()) {
                     if (!s.readZero())
                         throw forbiddenUpdateLockWhenOuterContextReadLocked();
-                    s.segmentHeader.updateLockInterruptibly(s.segmentHeaderAddress);
+                    try {
+                        s.segmentHeader.updateLockInterruptibly(s.segmentHeaderAddress);
+                    } catch (InterProcessDeadLockException e) {
+                        throw s.debugContextsAndLocks(e);
+                    }
                 }
                 s.incrementUpdate();
                 s.setLocalLockState(UPDATE_LOCKED);
@@ -138,8 +143,10 @@ public class UpdateLock implements InterProcessLock {
             case UPDATE_LOCKED:
             case WRITE_LOCKED:
                 return true;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
-        throw new AssertionError();
     }
 
     @Override
@@ -170,8 +177,10 @@ public class UpdateLock implements InterProcessLock {
             case UPDATE_LOCKED:
             case WRITE_LOCKED:
                 return true;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
-        throw new AssertionError();
     }
 
     @Override

@@ -38,6 +38,11 @@ class ChronicleSetBuilderPrivateAPI<K>
     }
 
     @Override
+    public String name() {
+        return mapB.name();
+    }
+
+    @Override
     public SerializationBuilder<K> keyBuilder() {
         return mapB.keyBuilder();
     }

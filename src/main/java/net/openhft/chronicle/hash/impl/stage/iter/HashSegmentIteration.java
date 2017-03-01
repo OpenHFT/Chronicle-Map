@@ -137,6 +137,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                                 break;
                         }
                     } finally {
+                        hookAfterEachIteration();
                         // if doReplaceValue() -> relocation() -> alloc() -> nextTier()
                         // was called, restore the tier we were iterating over
                         if (s.tier != currentTier) {
@@ -162,11 +163,15 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             // entry
         } while (currentHashLookupPos != startPos || steps == 0);
         if (!interrupted && leftEntries > 0) {
-            throw new IllegalStateException("We a tier without interruption, " +
+            throw new IllegalStateException(hh.h().toIdentityString() +
+                    ": We a tier without interruption, " +
                     "but according to tier counters there should be " + leftEntries +
                     " more entries. Size diverged?");
         }
         return interrupted;
+    }
+
+    public void hookAfterEachIteration() {
     }
 
     @Override
@@ -178,8 +183,10 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     }
     
     public void checkEntryNotRemovedOnThisIteration() {
-        if (entryRemovedOnThisIterationInit())
-            throw new IllegalStateException("Entry was already removed on this iteration");
+        if (entryRemovedOnThisIterationInit()) {
+            throw new IllegalStateException(
+                    hh.h().toIdentityString() + ": Entry was already removed on this iteration");
+        }
     }
 
     @Override

@@ -17,7 +17,9 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -31,6 +33,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.WRITE_LOCKED;
 @Staged
 public class WriteLock implements InterProcessLock {
 
+    @StageRef VanillaChronicleHashHolder<?> hh;
     @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef SegmentStages s;
     @StageRef HashEntryStages<?> entry;
@@ -53,7 +56,11 @@ public class WriteLock implements InterProcessLock {
                     } else {
                         if (!s.readZero())
                             throw forbiddenWriteLockWhenOuterContextReadLocked();
-                        s.segmentHeader.writeLock(s.segmentHeaderAddress);
+                        try {
+                            s.segmentHeader.writeLock(s.segmentHeaderAddress);
+                        } catch (InterProcessDeadLockException e) {
+                            throw s.debugContextsAndLocks(e);
+                        }
                     }
                 }
                 s.incrementWrite();
@@ -64,7 +71,11 @@ public class WriteLock implements InterProcessLock {
             case UPDATE_LOCKED:
                 if (s.writeZero()) {
                     assert !s.updateZero();
-                    s.segmentHeader.upgradeUpdateToWriteLock(s.segmentHeaderAddress);
+                    try {
+                        s.segmentHeader.upgradeUpdateToWriteLock(s.segmentHeaderAddress);
+                    } catch (InterProcessDeadLockException e) {
+                        throw s.debugContextsAndLocks(e);
+                    }
                 }
                 s.decrementUpdate();
                 s.incrementWrite();
@@ -79,7 +90,8 @@ public class WriteLock implements InterProcessLock {
      */
     @NotNull
     private IllegalMonitorStateException forbiddenUpgrade() {
-        return new IllegalMonitorStateException("Cannot upgrade from read to write lock");
+        return new IllegalMonitorStateException(
+                hh.h().toIdentityString() + ": Cannot upgrade from read to write lock");
     }
 
     /**
@@ -87,9 +99,9 @@ public class WriteLock implements InterProcessLock {
      */
     @NotNull
     private IllegalStateException forbiddenWriteLockWhenOuterContextReadLocked() {
-        return new IllegalStateException("Cannot acquire write lock, because outer context " +
-                "holds read lock. In this case you should acquire update lock in the outer " +
-                "context up front");
+        return new IllegalStateException(hh.h().toIdentityString() +
+                ": Cannot acquire write lock, because outer context holds read lock. " +
+                "In this case you should acquire update lock in the outer context up front");
     }
 
     @Override
@@ -107,7 +119,11 @@ public class WriteLock implements InterProcessLock {
                     } else {
                         if (!s.readZero())
                             throw forbiddenWriteLockWhenOuterContextReadLocked();
-                        s.segmentHeader.writeLockInterruptibly(s.segmentHeaderAddress);
+                        try {
+                            s.segmentHeader.writeLockInterruptibly(s.segmentHeaderAddress);
+                        } catch (InterProcessDeadLockException e) {
+                            throw s.debugContextsAndLocks(e);
+                        }
                     }
                 }
                 s.incrementWrite();
@@ -118,7 +134,12 @@ public class WriteLock implements InterProcessLock {
             case UPDATE_LOCKED:
                 if (s.writeZero()) {
                     assert !s.updateZero();
-                    s.segmentHeader.upgradeUpdateToWriteLockInterruptibly(s.segmentHeaderAddress);
+                    try {
+                        s.segmentHeader.upgradeUpdateToWriteLockInterruptibly(
+                                s.segmentHeaderAddress);
+                    } catch (InterProcessDeadLockException e) {
+                        throw s.debugContextsAndLocks(e);
+                    }
                 }
                 s.decrementUpdate();
                 s.incrementWrite();
@@ -180,8 +201,10 @@ public class WriteLock implements InterProcessLock {
                 }
             case WRITE_LOCKED:
                 return true;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
-        throw new AssertionError();
     }
 
     @Override
@@ -240,8 +263,10 @@ public class WriteLock implements InterProcessLock {
                 }
             case WRITE_LOCKED:
                 return true;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
-        throw new AssertionError();
     }
 
     @Override

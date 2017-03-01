@@ -215,6 +215,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public long offHeapMemoryUsed() {
+        return map1.offHeapMemoryUsed();
+    }
+
+    @Override
     public V getUsing(K key, V usingValue) {
         return map1.getUsing(key, usingValue);
     }
@@ -297,6 +302,16 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
     @Override
     public File file() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String name() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toIdentityString() {
         throw new UnsupportedOperationException();
     }
 

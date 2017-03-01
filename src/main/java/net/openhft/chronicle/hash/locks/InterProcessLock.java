@@ -58,7 +58,7 @@ public interface InterProcessLock extends Lock {
     boolean isHeldByCurrentThread();
 
     /**
-     * Acquires the lock, if this lock (or a stronger-level lock, in the context of {@link
+     * Acquires the lock. If this lock (or a stronger-level lock, in the context of {@link
      * InterProcessReadWriteUpdateLock}) is already held by the current thread, this call returns
      * immediately.
      *
@@ -66,14 +66,42 @@ public interface InterProcessLock extends Lock {
      * threshold time spent in a busy loop, the thread <i>might</i> be disabled for thread
      * scheduling purposes and lay dormant until the lock has been acquired. After some
      * implementation-defined time spent in waiting for the lock acquisition,
-     * {@link RuntimeException} is thrown.
+     * {@link InterProcessDeadLockException} is thrown.
      *
      * @throws IllegalMonitorStateException if this method call observes illegal lock state, or some
      * lock limitations reached (e. g. maximum read lock holders)
-     * @throws RuntimeException if fails to acquire a lock for some finite time
+     * @throws InterProcessDeadLockException if fails to acquire a lock for some finite time
      */
     @Override
     void lock();
+
+    /**
+     * Acquires the lock unless the current thread is {@linkplain Thread#interrupt interrupted}. If
+     * the current thread is not interrupted, and this lock (or a stronger-level lock, in the
+     * context of {@link InterProcessReadWriteUpdateLock}) is already held by the current thread,
+     * this call returns immediately.
+     *
+     * <p>If the lock is not available then the current thread enters a busy loop, and after some
+     * threshold time spend in a busy loop, the thread <i>might</i> be disabled for thread
+     * scheduling purposes and lay dormant until one of three things happens:
+     *
+     * <ul>
+     * <li>The lock is acquired by the current thread, then {@code lockInterruptibly()} successfully
+     * returns.
+     * <li>Some other thread {@linkplain Thread#interrupt interrupts} the current thread, then
+     * {@link InterruptedException} is thrown and the current thread's interrupted status is
+     * cleared.
+     * <li>Some implementation-defined time is spent in waiting for the lock acquisition, then
+     * {@link InterProcessDeadLockException} is thrown.
+     * </ul>
+     *
+     * @throws InterruptedException if the current thread is interrupted while acquiring the lock
+     * @throws IllegalMonitorStateException if this method call observes illegal lock state, or some
+     * lock limitations reached (e. g. maximum read lock holders)
+     * @throws InterProcessDeadLockException if fails to acquire a lock for some finite time
+     */
+    @Override
+    void lockInterruptibly() throws InterruptedException;
 
     /**
      * Acquires the lock only if it is free at the time of invocation, also if the lock is already

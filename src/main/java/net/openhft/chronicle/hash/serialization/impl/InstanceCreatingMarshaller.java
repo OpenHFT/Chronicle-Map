@@ -67,7 +67,7 @@ public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
             return ObjectUtils.newInstance(tClass);
         } catch (Exception e) {
             throw new IllegalStateException("Some of default marshallers, chosen for the type\n" +
-                    tClass + " by default, delegates to \n" +
+                    tClass + " by default, delegate to \n" +
                     this.getClass().getName() + " which assumes the type has a public no-arg\n" +
                     "constructor. If this is not true, you should either extend the marshaller,\n" +
                     "overriding createInstance() and copy() (if defined), and the extending\n" +

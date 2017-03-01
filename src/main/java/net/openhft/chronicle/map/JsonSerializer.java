@@ -82,13 +82,12 @@ class JsonSerializer {
 
             return xstream;
         } catch (NoClassDefFoundError e) {
-            logErrorSuggestXStreem(e);
-            throw e;
+            throw new RuntimeException(logErrorSuggestXStreem, e);
         }
     }
 
-    static private void logErrorSuggestXStreem(Error e) {
-        LOG.error("map.getAll(<file>) and map.putAll(<file>) methods require the JSON XStream serializer, " +
+    static final String logErrorSuggestXStreem =
+            "map.getAll(<file>) and map.putAll(<file>) methods require the JSON XStream serializer, " +
                 "we don't include these artifacts by default as some users don't require this functionality. " +
                 "Please add the following artifacts to your project\n" +
                 "<dependency>\n" +
@@ -100,8 +99,7 @@ class JsonSerializer {
                 " <groupId>org.codehaus.jettison</groupId>\n" +
                 " <artifactId>jettison</artifactId>\n" +
                 " <version>1.3.6</version>\n" +
-                "</dependency>\n", e);
-    }
+                "</dependency>\n";
 
     private static <K, V> void registerChronicleMapConverter(Map<K, V> map, XStream xstream) {
         xstream.registerConverter(new VanillaChronicleMapConverter<>(map));

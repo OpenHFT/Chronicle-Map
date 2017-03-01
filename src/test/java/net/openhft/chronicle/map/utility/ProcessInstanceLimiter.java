@@ -108,7 +108,7 @@ public class ProcessInstanceLimiter implements Runnable {
 
     /**
      * Create a ProcessInstanceLimiter instance with a default callback, an
-     * instance of "DefaultCallback", and using the default shareed file named
+     * instance of "DefaultCallback", and using the default shared file named
      * ProcessInstanceLimiter_DEFAULT_SHARED_MAP_ in the temp directory.
      *
      * @throws IOException - if the default shared file cannot be created
@@ -131,7 +131,7 @@ public class ProcessInstanceLimiter implements Runnable {
     }
 
     /**
-     * Create a ProcessInstanceLimiter instance using the default shareed file
+     * Create a ProcessInstanceLimiter instance using the default shared file
      * named ProcessInstanceLimiter_DEFAULT_SHARED_MAP_ in the tmp directory.
      *
      * @param sharedMapPath - The path to a file which will be used to store the shared

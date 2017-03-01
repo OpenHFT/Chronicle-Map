@@ -17,8 +17,8 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.Byteable;
-import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.bytes.*;
+import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -29,7 +29,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static net.openhft.chronicle.bytes.NativeBytesStore.nativeStoreWithFixedCapacity;
+import java.nio.ByteBuffer;
 
 public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T> {
 
@@ -68,8 +68,16 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
         nativeInstanceAsCopyable = (Copyable) nativeInstance;
         nativeClass = (Class<? extends T>) nativeInstance.getClass();
         heapClass = Values.heapClassFor(valueType);
-        nativeInstance.bytesStore(nativeStoreWithFixedCapacity(nativeInstance.maxSize()),
-                0, nativeInstance.maxSize());
+        nativeInstance.bytesStore(allocateBytesStoreForInstance(), 0, nativeInstance.maxSize());
+    }
+
+    private BytesStore allocateBytesStoreForInstance() {
+        long instanceSize = nativeInstance.maxSize();
+        if (instanceSize > Bytes.MAX_BYTE_BUFFER_CAPACITY) {
+            return NativeBytesStore.nativeStoreWithFixedCapacity(instanceSize);
+        } else {
+            return BytesStore.wrap(ByteBuffer.allocate(Maths.toUInt31(instanceSize)));
+        }
     }
 
     protected T createInstance() {

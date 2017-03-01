@@ -18,16 +18,20 @@
 package net.openhft.chronicle.map.impl.stage.iter;
 
 import net.openhft.chronicle.algo.bitset.ReusableBitSet;
+import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
-import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.iter.TierRecovery;
+import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.entry.ReplicatedMapEntryStages;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
+
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 @Staged
 public class ReplicatedTierRecovery extends TierRecovery {
@@ -35,16 +39,19 @@ public class ReplicatedTierRecovery extends TierRecovery {
     @StageRef ReplicatedChronicleMapHolder<?, ?, ?> rh;
     @StageRef SegmentStages s;
     @StageRef ReplicatedMapEntryStages<?, ?> e;
-    @StageRef LogHolder lh;
 
     @Override
-    public void removeDuplicatesInSegment() {
-        super.removeDuplicatesInSegment();
-        recoverTierDeleted();
+    public void removeDuplicatesInSegment(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
+        super.removeDuplicatesInSegment(corruptionListener, corruption);
+        recoverTierDeleted(corruptionListener, corruption);
         cleanupModificationIterationBits();
     }
 
-    private void recoverTierDeleted() {
+    private void recoverTierDeleted(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         VanillaChronicleHash<?, ?, ?, ?> h = rh.h();
         CompactOffHeapLinearHashTable hl = h.hashLookup;
         long hlAddr = s.tierBaseAddr;
@@ -62,8 +69,11 @@ public class ReplicatedTierRecovery extends TierRecovery {
             hlPos = hl.step(hlPos);
         } while (hlPos != 0);
         if (s.tierDeleted() != deleted) {
-            lh.LOG.error("wrong deleted counter for tier with index {}, stored: {}, should be: {}",
-                    s.tierIndex, s.tierDeleted(), deleted);
+            long finalDeleted = deleted;
+            report(corruptionListener, corruption, s.segmentIndex, () ->
+                    format("wrong deleted counter for tier with index {}, stored: {}, should be: {}",
+                    s.tierIndex, s.tierDeleted(), finalDeleted)
+            );
             s.tierDeleted(deleted);
         }
     }

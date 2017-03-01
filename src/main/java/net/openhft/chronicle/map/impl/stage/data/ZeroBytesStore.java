@@ -35,7 +35,22 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     }
 
     @Override
+    public byte readVolatileByte(long offset) throws BufferUnderflowException {
+        return 0;
+    }
+
+    @Override
+    public short readVolatileShort(long offset) throws BufferUnderflowException {
+        return 0;
+    }
+
+    @Override
     public int readVolatileInt(long offset) throws BufferUnderflowException {
+        return 0;
+    }
+
+    @Override
+    public long readVolatileLong(long offset) throws BufferUnderflowException {
         return 0;
     }
 

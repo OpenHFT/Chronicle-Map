@@ -29,6 +29,14 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link IntegerDataAccess_3_13} instead. This class is not removed only because
+ * users who created a Chronicle Map with older version of the library with this class as the key or
+ * value data access should be able to read and access the map with the present version of the
+ * Chronicle Map library.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public final class IntegerDataAccess extends AbstractData<Integer>
         implements DataAccess<Integer>, Data<Integer> {
 
@@ -78,7 +86,11 @@ public final class IntegerDataAccess extends AbstractData<Integer>
 
     @Override
     public long hash(LongHashFunction f) {
-        return f.hashInt(instance);
+        if (f == LongHashFunction.xx_r39()) {
+            return WrongXxHash.hashInt(instance);
+        } else {
+            return f.hashInt(instance);
+        }
     }
 
     @Override
@@ -115,6 +127,7 @@ public final class IntegerDataAccess extends AbstractData<Integer>
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public DataAccess<Integer> copy() {
         return new IntegerDataAccess();
     }

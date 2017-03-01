@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
+import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
+
 public class SerializableDataAccess<T extends Serializable> extends AbstractData<T>
         implements DataAccess<T> {
 
@@ -41,11 +43,15 @@ public class SerializableDataAccess<T extends Serializable> extends AbstractData
     transient T instance;
 
     public SerializableDataAccess() {
-        initTransients();
+        this(DEFAULT_BYTES_CAPACITY);
     }
 
-    void initTransients() {
-        bytes = Bytes.allocateElasticDirect(1);
+    SerializableDataAccess(long bytesCapacity) {
+        initTransients(bytesCapacity);
+    }
+
+    void initTransients(long bytesCapacity) {
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes(bytesCapacity);
         out = bytes.outputStream();
         in = bytes.inputStream();
     }
@@ -103,13 +109,13 @@ public class SerializableDataAccess<T extends Serializable> extends AbstractData
 
     @Override
     public DataAccess<T> copy() {
-        return new SerializableDataAccess<>();
+        return new SerializableDataAccess<>(bytes.realCapacity());
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
         // no fields to read
-        initTransients();
+        initTransients(DEFAULT_BYTES_CAPACITY);
     }
 
     @Override

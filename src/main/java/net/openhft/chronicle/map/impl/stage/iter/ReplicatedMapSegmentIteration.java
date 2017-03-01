@@ -146,14 +146,15 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
                 s.innerWriteLock.unlock();
             }
         } else {
-            throw new IllegalStateException(
-                    "Entry is present in the map when doInsert() is called");
+            throw new IllegalStateException(mh.h().toIdentityString() +
+                    ": Entry is present in the map when doInsert() is called");
         }
     }
 
     public void doInsert() {
         if (mh.set() == null)
-            throw new IllegalStateException("Called SetAbsentEntry.doInsert() from Map context");
+            throw new IllegalStateException(mh.h().toIdentityString() +
+                    ": Called SetAbsentEntry.doInsert() from Map context");
         doInsert((Data<V>) DummyValueData.INSTANCE);
     }
 }

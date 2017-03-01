@@ -161,8 +161,8 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
     public void updateChecksum() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (!hh.h().checksumEntries) {
-            throw new UnsupportedOperationException(
-                    "Checksum is not stored in this Chronicle Hash");
+            throw new UnsupportedOperationException(hh.h().toIdentityString() +
+                    ": Checksum is not stored in this Chronicle Hash");
         }
         s.innerUpdateLock.lock();
         initDelayedUpdateChecksum(true);
@@ -172,8 +172,8 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
     public boolean checkSum() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (!hh.h().checksumEntries) {
-            throw new UnsupportedOperationException(
-                    "Checksum is not stored in this Chronicle Hash");
+            throw new UnsupportedOperationException(hh.h().toIdentityString() +
+                    ": Checksum is not stored in this Chronicle Hash");
         }
         // This is needed, because a concurrent update lock holder might perform an entry update,
         // but not yet written a checksum (because checksum write is delayed to the update unlock).

@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
+import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
 public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T>
         implements DataAccess<T>, Data<T> {
@@ -45,14 +46,20 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
 
     public ExternalBytesMarshallableDataAccess(
             Class<T> tClass, SizedReader<T> reader, BytesWriter<? super T> writer) {
+        this(tClass, reader, writer, DEFAULT_BYTES_CAPACITY);
+    }
+
+    private ExternalBytesMarshallableDataAccess(
+            Class<T> tClass, SizedReader<T> reader, BytesWriter<? super T> writer,
+            long bytesCapacity) {
         super(tClass);
         this.writer = writer;
         this.reader = reader;
-        initTransients();
+        initTransients(bytesCapacity);
     }
 
-    private void initTransients() {
-        bytes = Bytes.allocateElasticDirect(1);
+    private void initTransients(long bytesCapacity) {
+        bytes = DefaultElasticBytes.allocateDefaultElasticBytes(bytesCapacity);
     }
 
     @Override
@@ -115,7 +122,7 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
     @Override
     public DataAccess<T> copy() {
         return new ExternalBytesMarshallableDataAccess<>(
-                tClass(), copyIfNeeded(reader), copyIfNeeded(writer));
+                tClass(), copyIfNeeded(reader), copyIfNeeded(writer), bytes.realCapacity());
     }
 
     @Override
@@ -123,7 +130,7 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
         super.readMarshallable(wireIn);
         reader = wireIn.read(() -> "reader").typedMarshallable();
         writer = wireIn.read(() -> "writer").typedMarshallable();
-        initTransients();
+        initTransients(DEFAULT_BYTES_CAPACITY);
     }
 
     @Override

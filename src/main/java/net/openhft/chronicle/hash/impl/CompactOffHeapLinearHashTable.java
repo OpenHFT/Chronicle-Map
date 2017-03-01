@@ -62,7 +62,7 @@ public abstract class CompactOffHeapLinearHashTable {
 
     public static long capacityFor(long entriesPerSegment) {
         if (entriesPerSegment < 0L)
-            throw new AssertionError("entriesPerSegment should be positive");
+            throw new AssertionError("entriesPerSegment should be positive: " + entriesPerSegment);
         long capacity = Maths.nextPower2(entriesPerSegment, 64L);
         if (entriesPerSegment > MAX_UPPER_BOUND_LOAD_FACTOR * capacity)
             capacity *= 2;
@@ -92,6 +92,11 @@ public abstract class CompactOffHeapLinearHashTable {
         this.valueMask = mask(valueBits);
     }
 
+    /**
+     * Must not store {@code h} in a field, to avoid memory leaks.
+     *
+     * @see net.openhft.chronicle.hash.impl.stage.hash.Chaining#initMap
+     */
     CompactOffHeapLinearHashTable(VanillaChronicleHash h) {
         this(h.tierHashLookupCapacity, h.tierHashLookupSlotSize, h.tierHashLookupKeyBits,
                 h.tierHashLookupValueBits);

@@ -33,6 +33,11 @@ class ChronicleMapBuilderPrivateAPI<K, V>
     }
 
     @Override
+    public String name() {
+        return b.name();
+    }
+
+    @Override
     public SerializationBuilder<K> keyBuilder() {
         return b.keyBuilder();
     }

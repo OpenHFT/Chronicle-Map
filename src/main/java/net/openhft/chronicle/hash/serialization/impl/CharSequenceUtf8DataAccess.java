@@ -23,6 +23,14 @@ import org.jetbrains.annotations.Nullable;
 public final class CharSequenceUtf8DataAccess
         extends AbstractCharSequenceUtf8DataAccess<CharSequence> {
 
+    public CharSequenceUtf8DataAccess() {
+        this(DefaultElasticBytes.DEFAULT_BYTES_CAPACITY);
+    }
+
+    private CharSequenceUtf8DataAccess(long bytesCapacity) {
+        super(bytesCapacity);
+    }
+
     @Override
     public CharSequence getUsing(@Nullable CharSequence using) {
         StringBuilder sb;
@@ -38,6 +46,6 @@ public final class CharSequenceUtf8DataAccess
 
     @Override
     public DataAccess<CharSequence> copy() {
-        return new CharSequenceUtf8DataAccess();
+        return new CharSequenceUtf8DataAccess(bytes().realCapacity());
     }
 }

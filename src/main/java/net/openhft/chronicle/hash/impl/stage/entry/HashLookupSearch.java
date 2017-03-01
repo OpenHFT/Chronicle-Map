@@ -71,7 +71,8 @@ public abstract class HashLookupSearch {
                 return hl.value(entry);
             }
         }
-        throw new IllegalStateException("HashLookup overflow should never occur");
+        throw new IllegalStateException(hh.h().toIdentityString() +
+                ": HashLookup overflow should never occur");
     }
 
     public void found() {

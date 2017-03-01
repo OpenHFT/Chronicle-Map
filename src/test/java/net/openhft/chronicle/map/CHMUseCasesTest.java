@@ -784,7 +784,7 @@ public class CHMUseCasesTest {
                 MapEntry<StringValue, StringValue> entry = c.entry();
                 assertNotNull(entry);
                 StringValue v = entry.value().get();
-                assertEquals("11", v.getValue());
+                assertEquals("11", v.getValue().toString());
                 v.getUsingValue(sb);
                 assertEquals("11", sb.toString());
             }
@@ -795,7 +795,7 @@ public class CHMUseCasesTest {
                 MapEntry<StringValue, StringValue> entry = c.entry();
                 assertNotNull(entry);
                 StringValue v = entry.value().get();
-                assertEquals("22", v.getValue());
+                assertEquals("22", v.getValue().toString());
                 v.getUsingValue(sb);
                 assertEquals("22", sb.toString());
             }
@@ -806,7 +806,7 @@ public class CHMUseCasesTest {
                 MapEntry<StringValue, StringValue> entry = c.entry();
                 assertNotNull(entry);
                 StringValue v = entry.value().get();
-                assertEquals("11", v.getValue());
+                assertEquals("11", v.getValue().toString());
                 v.getUsingValue(sb);
                 assertEquals("11", sb.toString());
             }
@@ -817,7 +817,7 @@ public class CHMUseCasesTest {
                 MapEntry<StringValue, StringValue> entry = c.entry();
                 assertNotNull(entry);
                 StringValue v = entry.value().get();
-                assertEquals("22", v.getValue());
+                assertEquals("22", v.getValue().toString());
                 v.getUsingValue(sb);
                 assertEquals("22", sb.toString());
             }
@@ -834,7 +834,7 @@ public class CHMUseCasesTest {
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals("", value1.getValue());
+                assertEquals("", value1.getValue().toString());
                 value1.getUsingValue(sb);
                 assertEquals("", sb.toString());
                 sb.append(123);
@@ -845,9 +845,9 @@ public class CHMUseCasesTest {
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals("123", value2.getValue());
+                assertEquals("123", value2.getValue().toString());
                 value2.setValue(value2.getValue().toString() + '4');
-                assertEquals("1234", value2.getValue());
+                assertEquals("1234", value2.getValue().toString());
             }
 
             mapChecks();
@@ -855,14 +855,14 @@ public class CHMUseCasesTest {
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key1)) {
                 MapEntry<StringValue, StringValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals("1234", entry.value().get().getValue());
+                assertEquals("1234", entry.value().get().getValue().toString());
             }
 
             mapChecks();
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals("", value2.getValue());
+                assertEquals("", value2.getValue().toString());
                 value2.getUsingValue(sb);
                 assertEquals("", sb.toString());
                 sb.append(123);
@@ -873,9 +873,9 @@ public class CHMUseCasesTest {
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals("123", value1.getValue());
+                assertEquals("123", value1.getValue().toString());
                 value1.setValue(value1.getValue().toString() + '4');
-                assertEquals("1234", value1.getValue());
+                assertEquals("1234", value1.getValue().toString());
             }
 
             mapChecks();
@@ -883,7 +883,7 @@ public class CHMUseCasesTest {
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key2)) {
                 MapEntry<StringValue, StringValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals("1234", entry.value().get().getValue());
+                assertEquals("1234", entry.value().get().getValue().toString());
             }
 
             mapChecks();

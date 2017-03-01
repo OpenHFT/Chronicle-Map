@@ -24,32 +24,32 @@ import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
-import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
-import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
 import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
+import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import sun.misc.Cleaner;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static java.lang.Long.numberOfTrailingZeros;
@@ -57,23 +57,22 @@ import static java.lang.Math.max;
 import static java.nio.channels.FileChannel.MapMode.READ_WRITE;
 import static net.openhft.chronicle.algo.MemoryUnit.*;
 import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
-import static net.openhft.chronicle.bytes.NativeBytesStore.lazyNativeBytesStoreWithFixedCapacity;
 import static net.openhft.chronicle.core.OS.pageAlign;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
-import static net.openhft.chronicle.hash.impl.DummyReferenceCounted.DUMMY_REFERENCE_COUNTED;
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
+import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         ECQ extends ExternalHashQueryContext<K>>
         implements ChronicleHash<K, C, SC, ECQ>, Marshallable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VanillaChronicleHash.class);
-
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
     public static final long RESERVED_GLOBAL_MUTABLE_STATE_BYTES = 1024;
 
+    // --- Start of instance fields ---
+
     /////////////////////////////////////////////////
-    // Version
     private String dataFileVersion;
 
     /////////////////////////////////////////////////
@@ -88,7 +87,6 @@ public abstract class VanillaChronicleHash<K,
     public DataAccess<K> keyDataAccess;
 
     /////////////////////////////////////////////////
-    // Checksum entries
     public boolean checksumEntries;
 
     /////////////////////////////////////////////////
@@ -128,10 +126,14 @@ public abstract class VanillaChronicleHash<K,
     protected int log2TiersInBulk;
 
     /////////////////////////////////////////////////
-    // Bytes Store (essentially, the base address) and serialization-dependent offsets
+    // Resources
     private transient File file;
     private transient RandomAccessFile raf;
-    private transient Cleaner rafCleaner;
+    private transient ChronicleHashResources resources;
+    private transient Cleaner cleaner;
+
+    /////////////////////////////////////////////////
+    // Bytes Store (essentially, the base address) and serialization-dependent offsets
     protected transient BytesStore bs;
 
     public static class TierBulkData {
@@ -155,20 +157,32 @@ public abstract class VanillaChronicleHash<K,
     public transient long segmentHeadersOffset;
     transient long segmentsOffset;
 
+    /////////////////////////////////////////////////
+    // Miscellaneous fields
     public transient CompactOffHeapLinearHashTable hashLookup;
-
-    protected transient volatile boolean closed;
-    private transient Object closeLock;
 
     private transient VanillaGlobalMutableState globalMutableState;
 
-    private transient ArrayList<WeakReference<ChainingInterface>> allContexts;
+    /**
+     * {@link ChronicleHashCloseOnExitHook} needs to use {@code VanillaChronicleHash}es as
+     * WeakHashMap keys, but with identity comparison, not Map's equals() and hashCode().
+     */
+    public class Identity {
+        public VanillaChronicleHash hash() {
+            return VanillaChronicleHash.this;
+        }
+    }
+
+    public transient Identity identity;
+
+    // --- End of instance fields ---
+
 
     public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder) {
-        createdOrInMemory = true;
-
         // Version
         dataFileVersion = BuildVersion.version();
+
+        createdOrInMemory = true;
 
         @SuppressWarnings({"deprecation", "unchecked"})
         ChronicleHashBuilderPrivateAPI<K, ?> privateAPI =
@@ -231,12 +245,12 @@ public abstract class VanillaChronicleHash<K,
     }
 
     protected void readMarshallableFields(@NotNull WireIn wireIn) {
+        dataFileVersion = wireIn.read(() -> "dataFileVersion").text();
+
         // Previously this assignment was done in default field initializer, but with Wire
         // serialization VanillaChronicleMap instance is created with unsafe.allocateInstance(),
         // that doesn't guarantee (?) to initialize fields with default values (false for boolean)
         createdOrInMemory = false;
-
-        dataFileVersion = wireIn.read(() -> "dataFileVersion").text();
 
         keyClass = wireIn.read(() -> "keyClass").typeLiteral();
         keySizeMarshaller = wireIn.read(() -> "keySizeMarshaller").typedMarshallable();
@@ -372,8 +386,6 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private void initOwnTransients() {
-        closed = false;
-        closeLock = new Object();
         globalMutableState = createGlobalMutableState();
         tierBulkOffsets = new ArrayList<>();
         if (tierHashLookupSlotSize == 4) {
@@ -384,7 +396,7 @@ public abstract class VanillaChronicleHash<K,
             throw new AssertionError("hash lookup slot size could be 4 or 8, " +
                     tierHashLookupSlotSize + " observed");
         }
-        allContexts = new ArrayList<>();
+        identity = new Identity();
     }
 
     public final void initBeforeMapping(
@@ -402,7 +414,7 @@ public abstract class VanillaChronicleHash<K,
                 if (fileChannel.read(globalMutableStateBuffer,
                         this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET +
                                 globalMutableStateBuffer.position()) == -1) {
-                    throw throwRecoveryOrReturnIOException(file + " truncated", recover);
+                    throw throwRecoveryOrReturnIOException(file, "truncated", recover);
                 }
             }
             globalMutableStateBuffer.flip();
@@ -412,7 +424,9 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public static IOException throwRecoveryOrReturnIOException(String message, boolean recover) {
+    public static IOException throwRecoveryOrReturnIOException(
+            File file, String message, boolean recover) {
+        message = "file=" + file + " " + message;
         if (recover) {
             throw new ChronicleHashRecoveryFailedException(message);
         } else {
@@ -424,7 +438,14 @@ public abstract class VanillaChronicleHash<K,
         return CACHE_LINES.align(headerSize, BYTES);
     }
 
-    public final void createMappedStoreAndSegments(BytesStore bytesStore) throws IOException {
+    public final void createInMemoryStoreAndSegments(ChronicleHashResources resources)
+            throws IOException {
+        this.resources = resources;
+        BytesStore bytesStore = nativeBytesStoreWithFixedCapacity(sizeInBytesWithoutTiers());
+        createStoreAndSegments(bytesStore);
+    }
+
+    private void createStoreAndSegments(BytesStore bytesStore) throws IOException {
         initBytesStoreAndHeadersViews(bytesStore);
         initOffsetsAndBulks();
     }
@@ -465,32 +486,29 @@ public abstract class VanillaChronicleHash<K,
         onHeaderCreated();
     }
 
-    public void registerRafReleaser() {
-        this.rafCleaner = Cleaner.create(this, new RafReleaser(file));
+    public void setResourcesName() {
+        resources.setChronicleHashIdentityString(toIdentityString());
     }
 
-    private static class RafReleaser implements Runnable {
-        final File file;
-
-        private RafReleaser(File file) {
-            this.file = file;
-        }
-
-        @Override
-        public void run() {
-            try {
-                CanonicalRandomAccessFiles.release(file);
-            } catch (IOException e) {
-                LOG.error("error on releasing RAF for file {}: {}", file, e);
-            }
-        }
+    public void registerCleaner() {
+        this.cleaner = Cleaner.create(this, resources);
     }
 
-    public final void createMappedStoreAndSegments() throws IOException {
-        createMappedStoreAndSegments(map(dataStoreSize(), 0));
+    public void addToOnExitHook() {
+        ChronicleHashCloseOnExitHook.add(this);
     }
 
-    public final void basicRecover() throws IOException {
+    public final void createMappedStoreAndSegments(ChronicleHashResources resources)
+            throws IOException {
+        this.resources = resources;
+        createStoreAndSegments(map(dataStoreSize(), 0));
+    }
+
+    public final void basicRecover(
+            ChronicleHashResources resources, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption)
+            throws IOException {
+        this.resources = resources;
         long segmentHeadersOffset = globalMutableState().getSegmentHeadersOffset();
         if (segmentHeadersOffset <= 0 || segmentHeadersOffset % 4096 != 0 ||
                 segmentHeadersOffset > GIGABYTES.toBytes(1)) {
@@ -508,45 +526,62 @@ public abstract class VanillaChronicleHash<K,
         }
         initBytesStoreAndHeadersViews(map(dataStoreSize, 0));
 
-        resetGlobalMutableStateLock();
-        recoverAllocatedExtraTierBulks(allocatedExtraTierBulks);
-        recoverSegmentHeadersOffset(segmentHeadersOffset);
-        recoverDataStoreSize(dataStoreSize);
+        resetGlobalMutableStateLock(corruptionListener, corruption);
+        recoverAllocatedExtraTierBulks(allocatedExtraTierBulks, corruptionListener, corruption);
+        recoverSegmentHeadersOffset(segmentHeadersOffset, corruptionListener, corruption);
+        recoverDataStoreSize(dataStoreSize, corruptionListener, corruption);
         initOffsetsAndBulks();
     }
 
-    private void resetGlobalMutableStateLock() {
+    private void resetGlobalMutableStateLock(
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         long lockAddr = globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET;
         LockingStrategy lockingStrategy = globalMutableStateLockingStrategy;
         long lockState = lockingStrategy.getState(nativeAccess(), null, lockAddr);
         if (lockState != lockingStrategy.resetState()) {
-            LOG.error("global mutable state lock of map at {} is not clear: {}",
-                    file, lockingStrategy.toString(lockState));
+            report(corruptionListener, corruption, -1, () ->
+                    format("global mutable state lock of map at {} is not clear: {}",
+                            file, lockingStrategy.toString(lockState))
+            );
             lockingStrategy.reset(nativeAccess(), null, lockAddr);
         }
     }
 
-    private void recoverAllocatedExtraTierBulks(int allocatedExtraTierBulks) {
+    private void recoverAllocatedExtraTierBulks(
+            int allocatedExtraTierBulks, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         if (globalMutableState.getAllocatedExtraTierBulks() != allocatedExtraTierBulks) {
-            LOG.error("allocated extra tier bulks counter corrupted, or the map file {} " +
-                    "is truncated. stored: {}, should be: {}", file,
-                    globalMutableState.getAllocatedExtraTierBulks(), allocatedExtraTierBulks);
+            report(corruptionListener, corruption, -1, () ->
+                    format("allocated extra tier bulks counter corrupted, or the map file {} " +
+                                    "is truncated. stored: {}, should be: {}",
+                            file, globalMutableState.getAllocatedExtraTierBulks(),
+                            allocatedExtraTierBulks)
+            );
             globalMutableState.setAllocatedExtraTierBulks(allocatedExtraTierBulks);
         }
     }
 
-    private void recoverSegmentHeadersOffset(long segmentHeadersOffset) {
+    private void recoverSegmentHeadersOffset(
+            long segmentHeadersOffset, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         if (globalMutableState.getSegmentHeadersOffset() != segmentHeadersOffset) {
-            LOG.error("segment headers offset of map at {} corrupted. stored: {}, should be: {}",
-                    file, globalMutableState.getSegmentHeadersOffset(), segmentHeadersOffset);
+            report(corruptionListener, corruption, -1, () ->
+                    format("segment headers offset of map at {} corrupted. stored: {}, should be: {}",
+                            file, globalMutableState.getSegmentHeadersOffset(), segmentHeadersOffset)
+            );
             globalMutableState.setSegmentHeadersOffset(segmentHeadersOffset);
         }
     }
 
-    private void recoverDataStoreSize(long dataStoreSize) {
+    private void recoverDataStoreSize(
+            long dataStoreSize, ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) {
         if (globalMutableState.getDataStoreSize() != dataStoreSize) {
-            LOG.error("data store size of map at {} corrupted. stored: {}, should be: {}",
-                    file, globalMutableState.getDataStoreSize(), dataStoreSize);
+            report(corruptionListener, corruption, -1, () ->
+                    format("data store size of map at {} corrupted. stored: {}, should be: {}",
+                            file, globalMutableState.getDataStoreSize(), dataStoreSize)
+            );
             globalMutableState.setDataStoreSize(dataStoreSize);
         }
     }
@@ -638,53 +673,32 @@ public abstract class VanillaChronicleHash<K,
     }
 
     @Override
-    public void close() {
-        // Mutually exclude concurrent close() calls and ensure close procedure is done only once
-        synchronized (closeLock) {
-            if (closed)
-                return;
-            // Synchronization on allContexts here in conjunction with checkOpen() in addContext()
-            // ensures threads using this chronicleHash for the first time concurrently with close()
-            // will not be able to access chronicleHash, or either will be visible during iteration
-            // over allContexts below
-            synchronized (allContexts) {
-                closed = true;
-            }
-            for (WeakReference<ChainingInterface> contextRef : allContexts) {
-                ChainingInterface context = contextRef.get();
-                if (context != null && context.owner().isAlive()) {
-                    // Ensures that if the thread owning this context will come to access
-                    // chronicleHash concurrently with resource releasing operations below, it will
-                    // fail due to the check in context.lockContextLocally() method.
-                    // If the thread owning this context is currently accessing chronicleHash,
-                    // closeContext() will spin-wait until the end of this access session.
-                    context.closeContext();
-                }
-            }
-
-            bs.release();
-            assert bs.refCount() == 0;
-            for (TierBulkData bulkData : tierBulkOffsets) {
-                if (bulkData.bytesStore != bs) {
-                    bulkData.bytesStore.release();
-                    assert bulkData.bytesStore.refCount() == 0;
-                }
-            }
-            if (rafCleaner != null)
-                rafCleaner.clean();
+    public final void close() {
+        if (resources.releaseManually()) {
+            cleanupOnClose();
         }
+    }
+
+    protected void cleanupOnClose() {
+        // Releases nothing after resources.releaseManually(), only removes the cleaner
+        // from the internal linked list of all cleaners.
+        cleaner.clean();
+        ChronicleHashCloseOnExitHook.remove(this);
+        // Make GC life easier
+        keyReader = null;
+        keyDataAccess = null;
     }
 
     @Override
     public boolean isOpen() {
-        return !closed;
+        return !resources.closed();
     }
 
     public final void checkKey(Object key) {
         if (!keyClass.isInstance(key)) {
             // key.getClass will cause NPE exactly as needed
-            throw new ClassCastException("Key must be a " + keyClass.getName() +
-                    " but was a " + key.getClass());
+            throw new ClassCastException(toIdentityString() + ": Key must be a " +
+                    keyClass.getName() + " but was a " + key.getClass());
         }
     }
 
@@ -759,12 +773,23 @@ public abstract class VanillaChronicleHash<K,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
+    /** For tests */
+    public boolean hasExtraTierBulks() {
+        return globalMutableState.getAllocatedExtraTierBulks() > 0;
+    }
+
+    @Override
+    public long offHeapMemoryUsed() {
+        return resources.totalMemory();
+    }
+
     public long allocateTier() {
         globalMutableStateLock();
         try {
             long tiersInUse = globalMutableState.getExtraTiersInUse();
             if (tiersInUse >= maxExtraTiers) {
-                throw new IllegalStateException("Attempt to allocate #" + (tiersInUse + 1) +
+                throw new IllegalStateException(toIdentityString() + ": " +
+                        "Attempt to allocate #" + (tiersInUse + 1) +
                         " extra segment tier, " + maxExtraTiers + " is maximum.\n" +
                         "Possible reasons include:\n" +
                         " - you have forgotten to configure (or configured wrong) " +
@@ -776,19 +801,19 @@ public abstract class VanillaChronicleHash<K,
             }
             long firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
             if (firstFreeTierIndex < 0) {
-                throw new RuntimeException("unexpected firstFreeTierIndex value " +
-                        firstFreeTierIndex);
+                throw new RuntimeException(toIdentityString() +
+                        ": unexpected firstFreeTierIndex value " + firstFreeTierIndex);
             }
             if (firstFreeTierIndex == 0) {
                 try {
                     allocateTierBulk();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException(toIdentityString(), e);
                 }
                 firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
                 if (firstFreeTierIndex <= 0) {
-                    throw new RuntimeException("unexpected firstFreeTierIndex value " +
-                            firstFreeTierIndex);
+                    throw new RuntimeException(toIdentityString() +
+                            ": unexpected firstFreeTierIndex value " + firstFreeTierIndex);
                 }
             }
             globalMutableState.setExtraTiersInUse(tiersInUse + 1);
@@ -835,7 +860,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void msync() throws IOException {
-        msync(bsAddress(), bs.capacity());
+        if (persisted()) {
+            msync(bsAddress(), bs.capacity());
+        }
     }
 
     private void msync(long address, long length) throws IOException {
@@ -925,7 +952,7 @@ public abstract class VanillaChronicleHash<K,
             try {
                 mapTierBulksMapped(upToBulkIndex);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException(toIdentityString(), e);
             }
         } else {
             // in-memory ChMap
@@ -974,8 +1001,8 @@ public abstract class VanillaChronicleHash<K,
             raf.setLength(minFileSize);
         }
         long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
-        OS.Unmapper unmapper = new OS.Unmapper(address, mapSize, DUMMY_REFERENCE_COUNTED);
-        return new NativeBytesStore(address, mapSize, unmapper, false);
+        resources.addMemoryResource(address, mapSize);
+        return new NativeBytesStore(address, mapSize, null, false);
     }
 
     private long bulkOffset(int bulkIndex) {
@@ -983,11 +1010,17 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private void allocateTierBulks(int upToBulkIndex) {
-        int firstBulkToMapIndex = tierBulkOffsets.size();
-        int bulksToMap = upToBulkIndex + 1 - firstBulkToMapIndex;
-        long mapSize = bulksToMap * tierBulkSizeInBytes;
-        BytesStore extraStore = lazyNativeBytesStoreWithFixedCapacity(mapSize);
-        appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore, 0);
+        int firstBulkToAllocateIndex = tierBulkOffsets.size();
+        int bulksToAllocate = upToBulkIndex + 1 - firstBulkToAllocateIndex;
+        long allocationSize = bulksToAllocate * tierBulkSizeInBytes;
+        BytesStore extraStore = nativeBytesStoreWithFixedCapacity(allocationSize);
+        appendBulkData(firstBulkToAllocateIndex, upToBulkIndex, extraStore, 0);
+    }
+
+    private BytesStore nativeBytesStoreWithFixedCapacity(long capacity) {
+        long address = OS.memory().allocate(capacity);
+        resources.addMemoryResource(address, capacity);
+        return new NativeBytesStore<>(address, capacity, null, false);
     }
 
     private void appendBulkData(int firstBulkToMapIndex, int upToBulkIndex, BytesStore extraStore,
@@ -1000,41 +1033,16 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void checkOpen() {
-        if (closed)
-            throw new ChronicleHashClosedException();
+    protected void addContext(ContextHolder contextHolder) {
+        resources.addContext(contextHolder);
     }
 
-    protected void addContext(ChainingInterface context) {
-        synchronized (allContexts) {
-            checkOpen();
-            allContexts.removeAll(pseudoCollectionForExpunge);
-            allContexts.add(new WeakReference<>(context));
-        }
+    public void addCloseable(Closeable closeable) {
+        resources.addCloseable(closeable);
     }
 
     /** For testing only */
-    public List<WeakReference<ChainingInterface>> allContexts() {
-        return Collections.unmodifiableList(allContexts);
+    public List<WeakReference<ContextHolder>> allContexts() {
+        return Collections.unmodifiableList(resources.contexts());
     }
-
-    private static final Collection<WeakReference<ChainingInterface>> pseudoCollectionForExpunge =
-            new AbstractCollection<WeakReference<ChainingInterface>>() {
-
-                @Override
-                public boolean contains(Object o) {
-                    ChainingInterface context = ((WeakReference<ChainingInterface>) o).get();
-                    return context == null || !context.owner().isAlive();
-                }
-
-                @Override
-                public Iterator<WeakReference<ChainingInterface>> iterator() {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public int size() {
-                    throw new UnsupportedOperationException();
-                }
-            };
 }
