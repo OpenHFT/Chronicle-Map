@@ -19,12 +19,11 @@
 
     <parent>
         <groupId>net.openhft</groupId>
-        <artifactId>chronicle-enterprise-root-pom</artifactId>
-        <version>1.0.3</version>
+        <artifactId>java-parent-pom</artifactId>
+        <version>1.1.10</version>
         <relativePath />
     </parent>
-
-
+    
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-map</artifactId>
     <version>3.13.1-SNAPSHOT</version>
