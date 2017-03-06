@@ -1,31 +1,13 @@
-# Download
-
-As a software company we are maturing and as such want to offer a more commercial supported service, to companies who use our libraries. Maven central is a fantastic location for downloading artifacts, but because our software is downloaded anonymously it offers little opportunity for us to build up a working relationship with your organisation, we feel such a relationship will be beneficial to both parties. With our advice we can help your company get the most out of chronicle technology, in perhaps ways that you did not even realise exist, this can both save you time and money. We have pondered on how to build up this working relationship but at the same time not to alienate our existing user base. So to this end, we have decided to make the following changes :
-
- - Our libraries will continue to be open source and available on git-hub, you get access to all the source code and release tags for free and anonymously, you are able to create the builds yourself off the latest tags.
-
- - but in order to engage with our users, we are no-longer going to release to maven central, future releases are going to be moved onto our own chronicle nexus server, if you want access to this nexus server, to download the latest release artifacts, please contact sales@chronicle.software
- 
 # Chronicle Map
 
 **Documentation: <a href="#chronicle-map-3-tutorial">Tutorial</a>,
 <a href="http://www.javadoc.io/doc/net.openhft/chronicle-map/">Javadoc</a>**
 
 **Community support: <a href="https://github.com/OpenHFT/Chronicle-Map/issues">Issues</a>,
-<a href="https://groups.google.com/forum/#!forum/java-chronicle">Chronicle
-mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle-map">Stackoverflow</a>,
+<a href="https://groups.google.com/forum/#!forum/chronicle-map">Chronicle Map mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle-map">Stackoverflow</a>,
 <a href="https://plus.google.com/communities/111431452027706917722">Chronicle User's group</a>**
 
 <img align="right" src="http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png">
-
-
-###  Download
-
-As a software company we are maturing and as such want to offer a more commercial supported service, to companies who use our libraries. Maven central is a fantastic location for downloading artifacts, but because our software is downloaded anonymously it offers little opportunity for us to  build up a working relationship with your organisation, we feel such a relationship will be beneficial to both parties. With our advice we can help your company get the most out of chronicle technology, in perhaps ways that you did not even realise exist, this can both save you time and money. We have pondered on how to build up this working relationship but at the same time not to alienate our existing user base. So to this end, we have decided to make the following changes,
-
--  Our libraries will continue to be open source and available on git-hub, you get access to all the source code and release tags for free and anonymously, you are able to create the builds yourself off the latest tags.
-
--  but in order to engage with our users, we are no-longer going to release to maven central, future releases are going to be moved onto our own chronicle nexus server, if you want access to this nexus server, to download the latest release artifacts, please contact mailto:sales@chronicle.software[sales@chronicle.software]
 
 
 ### 3 min to understand everything about Chronicle Map
