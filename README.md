@@ -4,8 +4,7 @@
 <a href="http://www.javadoc.io/doc/net.openhft/chronicle-map/">Javadoc</a>**
 
 **Community support: <a href="https://github.com/OpenHFT/Chronicle-Map/issues">Issues</a>,
-<a href="https://groups.google.com/forum/#!forum/java-chronicle">Chronicle
-mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle-map">Stackoverflow</a>,
+<a href="https://groups.google.com/forum/#!forum/chronicle-map">Chronicle Map mailing list</a>, <a href="http://stackoverflow.com/tags/chronicle-map">Stackoverflow</a>,
 <a href="https://plus.google.com/communities/111431452027706917722">Chronicle User's group</a>**
 
 <img align="right" src="http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png">
