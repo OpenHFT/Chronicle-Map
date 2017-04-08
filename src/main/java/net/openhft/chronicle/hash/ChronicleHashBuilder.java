@@ -624,6 +624,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see #createOrRecoverPersistedTo(File, boolean)
      * @see #recoverPersistedTo(File, boolean)
      */
+    @Beta
     H createOrRecoverPersistedTo(
             File file, boolean sameLibraryVersion,
             ChronicleHashCorruption.Listener corruptionListener) throws IOException;
@@ -739,6 +740,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see #createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
      * @see #createPersistedTo(File)
      */
+    @Beta
     H recoverPersistedTo(
             File file, boolean sameBuilderConfigAndLibraryVersion,
             ChronicleHashCorruption.Listener corruptionListener) throws IOException;

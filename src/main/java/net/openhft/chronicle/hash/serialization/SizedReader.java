@@ -53,7 +53,7 @@ public interface SizedReader<T> extends Marshallable {
      * given {@code using} object, i. e. to read the deserialized data into the given object. If it
      * is possible, this objects then returned from this method. If it is impossible for any reason,
      * a new object should be created and returned. The given {@code using} object could be {@code
-     * null}, in this case this method, of cause, should create a new object.
+     * null}, in this case read() should always create a new object.
      *
      * <p>This method should increment the position in the given {@code Bytes} by the given {@code
      * size}.

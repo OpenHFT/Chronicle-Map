@@ -38,9 +38,13 @@ import java.io.File;
  * used outside of the {@link Listener#onCorruption(ChronicleHashCorruption)} method body, because
  * {@code ChronicleHashCorruption} objects could be reused during the recovery procedure.
  *
+ * <p>During a recovery procedure, <i>{@link Listener#onCorruption(ChronicleHashCorruption)} might
+ * be called concurrently from multiple threads.</i> If the implementation of this method calls some
+ * methods on some objects, that are not safe for concurrent use from multiple threads, the
+ * implementation must care about synchronization itself.
  *
- * @see ChronicleHashBuilder#recoverPersistedTo(File, boolean, Listener)
- * @see ChronicleHashBuilder#createOrRecoverPersistedTo(File, boolean, Listener)
+ * @see ChronicleHashBuilder#recoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
+ * @see ChronicleHashBuilder#createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
  */
 @Beta
 public interface ChronicleHashCorruption {
@@ -73,8 +77,13 @@ public interface ChronicleHashCorruption {
     @Beta
     interface Listener {
         /**
-         * Called, when <a href="https://github.com/OpenHFT/Chronicle-Map#recovery">recovery</a>
+         * Called when <a href="https://github.com/OpenHFT/Chronicle-Map#recovery">recovery</a>
          * procedure encounters a corruption of a persisted Chronicle Map.
+         *
+         * <p>During a recovery procedure, <i>this method might be called concurrently from multiple
+         * threads.</i> If the implementation of this method calls some methods on some objects,
+         * that are not safe for concurrent use from multiple threads, the implementation must
+         * care about synchronization itself.
          *
          * @param corruption the corruption object, must not be saved and used outside the body of
          *                   the {@code #onCorruption()} method, because during the recovery
