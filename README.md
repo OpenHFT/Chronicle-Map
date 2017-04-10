@@ -9,6 +9,7 @@
 
 <img align="right" src="http://openhft.net/wp-content/uploads/2014/07/ChronicleMap_200px.png">
 
+[Chronicle Map usage heatmap](http://jrvis.com/red-dwarf/?user=openhft&repo=Chronicle-Map)
 
 ### 3 min to understand everything about Chronicle Map
 
