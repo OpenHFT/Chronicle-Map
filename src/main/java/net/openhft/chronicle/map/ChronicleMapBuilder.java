@@ -152,6 +152,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
     private static final ConcurrentHashMap<File, Void> fileLockingControl =
             new ConcurrentHashMap<>(128);
+    private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
     private static final Logger chronicleMapLogger = LoggerFactory.getLogger(ChronicleMap.class);
     private static final ChronicleHashCorruption.Listener defaultChronicleMapCorruptionListener =
             corruption -> {
@@ -161,7 +162,8 @@ public final class ChronicleMapBuilder<K, V> implements
                     chronicleMapLogger.error(corruption.message());
                 }
             };
-    private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
+
+    private String name;
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
     K averageKey;
@@ -175,6 +177,7 @@ public final class ChronicleMapBuilder<K, V> implements
     long cleanupTimeout = 1;
     TimeUnit cleanupTimeoutUnit = TimeUnit.MINUTES;
     boolean cleanupRemovedEntries = true;
+
     //////////////////////////////
     // Configuration fields
     DefaultValueProvider<K, V> defaultValueProvider = DefaultSpi.defaultValueProvider();
@@ -182,7 +185,6 @@ public final class ChronicleMapBuilder<K, V> implements
     MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
     MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
     MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
-    private String name;
     // not final because of cloning
     private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
             new ChronicleMapBuilderPrivateAPI<>(this);
@@ -416,52 +418,6 @@ public final class ChronicleMapBuilder<K, V> implements
         headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
         headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
         writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
-    }
-
-    /**
-     * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
-     */
-    private static ByteBuffer readSelfBootstrappingHeader(
-            File file, RandomAccessFile raf, int headerSize, boolean recover,
-            ChronicleHashCorruption.Listener corruptionListener,
-            ChronicleHashCorruptionImpl corruption) throws IOException {
-        if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
-            throw throwRecoveryOrReturnIOException(file,
-                    "The file is shorter than the header size: " + headerSize +
-                            ", file size: " + raf.length(), recover);
-        }
-        FileChannel fileChannel = raf.getChannel();
-        ByteBuffer headerBuffer = ByteBuffer.allocate(
-                SELF_BOOTSTRAPPING_HEADER_OFFSET + headerSize);
-        headerBuffer.order(LITTLE_ENDIAN);
-        readFully(fileChannel, 0, headerBuffer);
-        if (headerBuffer.remaining() > 0) {
-            throw throwRecoveryOrReturnIOException(file, "Unable to read the header fully, " +
-                    headerBuffer.remaining() + " is remaining to read, likely the file was " +
-                    "truncated", recover);
-        }
-        int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
-        if (!SizePrefixedBlob.isReady(sizeWord)) {
-            if (recover) {
-                report(corruptionListener, corruption, -1, () ->
-                        format("file={}: size-prefixed blob readiness bit is set to NOT_COMPLETE",
-                                file)
-                );
-                // the bit will be overwritten to READY in the end of recovery procedure, so nothing
-                // to fix right here
-            } else {
-                throw new IOException("file=" + file + ": sizeWord is not ready: " + sizeWord);
-            }
-        }
-        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
-        return headerBuffer;
-    }
-
-    private static boolean checkSumSelfBootstrappingHeader(
-            ByteBuffer headerBuffer, int headerSize) {
-        long checkSum = headerChecksum(headerBuffer, headerSize);
-        long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
-        return storedChecksum == checkSum;
     }
 
     @Override
@@ -1709,6 +1665,52 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
+    /**
+     * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
+     */
+    private static ByteBuffer readSelfBootstrappingHeader(
+            File file, RandomAccessFile raf, int headerSize, boolean recover,
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) throws IOException {
+        if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
+            throw throwRecoveryOrReturnIOException(file,
+                    "The file is shorter than the header size: " + headerSize +
+                            ", file size: " + raf.length(), recover);
+        }
+        FileChannel fileChannel = raf.getChannel();
+        ByteBuffer headerBuffer = ByteBuffer.allocate(
+                SELF_BOOTSTRAPPING_HEADER_OFFSET + headerSize);
+        headerBuffer.order(LITTLE_ENDIAN);
+        readFully(fileChannel, 0, headerBuffer);
+        if (headerBuffer.remaining() > 0) {
+            throw throwRecoveryOrReturnIOException(file, "Unable to read the header fully, " +
+                    headerBuffer.remaining() + " is remaining to read, likely the file was " +
+                    "truncated", recover);
+        }
+        int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
+        if (!SizePrefixedBlob.isReady(sizeWord)) {
+            if (recover) {
+                report(corruptionListener, corruption, -1, () ->
+                        format("file={}: size-prefixed blob readiness bit is set to NOT_COMPLETE",
+                                file)
+                );
+                // the bit will be overwritten to READY in the end of recovery procedure, so nothing
+                // to fix right here
+            } else {
+                throw new IOException("file=" + file + ": sizeWord is not ready: " + sizeWord);
+            }
+        }
+        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        return headerBuffer;
+    }
+
+    private static boolean checkSumSelfBootstrappingHeader(
+            ByteBuffer headerBuffer, int headerSize) {
+        long checkSum = headerChecksum(headerBuffer, headerSize);
+        long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
+        return storedChecksum == checkSum;
+    }
+
     private VanillaChronicleMap<K, V, ?> createWithNewFile(
             VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
             ChronicleHashResources resources, ByteBuffer headerBuffer, int headerSize)
@@ -1749,7 +1751,6 @@ public final class ChronicleMapBuilder<K, V> implements
             Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
             headerBytes.readPosition(headerBuffer.position());
             headerBytes.readLimit(headerBuffer.limit());
-            System.out.println(headerBytes);
             Wire wire = new TextWire(headerBytes);
             VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);

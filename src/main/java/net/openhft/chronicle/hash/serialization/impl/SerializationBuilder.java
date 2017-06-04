@@ -143,7 +143,7 @@ public final class SerializationBuilder<T> implements Cloneable {
         try {
             return (Byteable) OS.memory().allocateInstance(tClass);
         } catch (InstantiationException e) {
-            throw new AssertionError(e);
+            throw new IllegalStateException(e);
         }
     }
 

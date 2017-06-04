@@ -56,29 +56,20 @@ public class VanillaChronicleMap<K, V, R>
         ExternalMapQueryContext<K, V, ?>>
         implements AbstractChronicleMap<K, V> {
 
+    /////////////////////////////////////////////////
+    // Value Data model
+    Class<V> valueClass;
     public SizeMarshaller valueSizeMarshaller;
     public SizedReader<V> valueReader;
     public DataAccess<V> valueDataAccess;
+
     public boolean constantlySizedEntry;
+
     /////////////////////////////////////////////////
     // Memory management and dependent fields
     public int alignment;
     public int worstAlignment;
-    public transient boolean couldNotDetermineAlignmentBeforeAllocation;
-    /** @see net.openhft.chronicle.set.SetFromMap */
-    public transient ChronicleSet<K> chronicleSet;
-    public transient MapEntryOperations<K, V, R> entryOperations;
-    public transient MapMethods<K, V, R> methods;
-    public transient DefaultValueProvider<K, V> defaultValueProvider;
-    /////////////////////////////////////////////////
-    // Value Data model
-    Class<V> valueClass;
-    /////////////////////////////////////////////////
-    // Behavior
-    transient boolean putReturnsNull;
-    transient boolean removeReturnsNull;
-    transient Set<Entry<K, V>> entrySet;
-    transient ThreadLocal<ContextHolder> cxt;
+
     /////////////////////////////////////////////////
     private transient String name;
     /**
@@ -87,7 +78,25 @@ public class VanillaChronicleMap<K, V, R>
      * initOwnTransients().
      */
     private transient String identityString;
+
+    public transient boolean couldNotDetermineAlignmentBeforeAllocation;
+
+    /////////////////////////////////////////////////
+    // Behavior
+    transient boolean putReturnsNull;
+    transient boolean removeReturnsNull;
+
+    transient Set<Entry<K, V>> entrySet;
+
+    /** @see net.openhft.chronicle.set.SetFromMap */
+    public transient ChronicleSet<K> chronicleSet;
+    
+    public transient MapEntryOperations<K, V, R> entryOperations;
+    public transient MapMethods<K, V, R> methods;
     private transient boolean defaultEntryOperationsAndMethods;
+    public transient DefaultValueProvider<K, V> defaultValueProvider;
+    
+    transient ThreadLocal<ContextHolder> cxt;
 
     public VanillaChronicleMap(ChronicleMapBuilder<K, V> builder) throws IOException {
         super(builder);
@@ -105,10 +114,6 @@ public class VanillaChronicleMap<K, V, R>
 
         initTransientsFromBuilder(builder);
         initTransients();
-    }
-
-    public static long alignAddr(long addr, long alignment) {
-        return (addr + alignment - 1) & ~(alignment - 1L);
     }
 
     @Override
@@ -282,7 +287,7 @@ public class VanillaChronicleMap<K, V, R>
                 ", identityHashCode=" + System.identityHashCode(this) +
                 "}";
     }
-
+    
     @Override
     public void clear() {
         forEachEntry(c -> c.context().remove(c));
@@ -299,6 +304,10 @@ public class VanillaChronicleMap<K, V, R>
         long skip = alignAddr(positionAddr, alignment) - positionAddr;
         if (skip > 0)
             entry.readSkip(skip);
+    }
+
+    public static long alignAddr(long addr, long alignment) {
+        return (addr + alignment - 1) & ~(alignment - 1L);
     }
 
     final ChainingInterface q() {
