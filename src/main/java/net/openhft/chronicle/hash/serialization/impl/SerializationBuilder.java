@@ -20,6 +20,7 @@ package net.openhft.chronicle.hash.serialization.impl;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.core.util.ReadResolvable;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.values.ValueModel;
@@ -47,7 +48,7 @@ public final class SerializationBuilder<T> implements Cloneable {
         configureByDefault(tClass);
         sizeIsStaticallyKnown = constantSizeMarshaller();
     }
-    
+
     private static boolean concreteClass(Class c) {
         return !c.isInterface() && !Modifier.isAbstract(c.getModifiers());
     }
@@ -93,12 +94,7 @@ public final class SerializationBuilder<T> implements Cloneable {
         if (concreteClass(tClass) && Byteable.class.isAssignableFrom(tClass)) {
             reader(new ByteableSizedReader<>((Class) tClass));
             dataAccess((DataAccess<T>) new ByteableDataAccess<>((Class) tClass));
-            try {
-                long byteableSize = ((Byteable) OS.memory().allocateInstance(tClass)).maxSize();
-                sizeMarshaller(constant(byteableSize));
-            } catch (InstantiationException e) {
-                throw new IllegalStateException(e);
-            }
+            sizeMarshaller(constant(allocateByteable(tClass).maxSize()));
         } else if (tClass == CharSequence.class) {
             reader((SizedReader<T>) CharSequenceSizedReader.INSTANCE);
             dataAccess((DataAccess<T>) new CharSequenceUtf8DataAccess());
@@ -139,6 +135,15 @@ public final class SerializationBuilder<T> implements Cloneable {
         } else {
             reader((SizedReader<T>) new SerializableReader<>());
             dataAccess((DataAccess<T>) new SerializableDataAccess<>());
+        }
+    }
+
+    @NotNull
+    private Byteable allocateByteable(Class<T> tClass) {
+        try {
+            return (Byteable) OS.memory().allocateInstance(tClass);
+        } catch (InstantiationException e) {
+            throw new AssertionError(e);
         }
     }
 

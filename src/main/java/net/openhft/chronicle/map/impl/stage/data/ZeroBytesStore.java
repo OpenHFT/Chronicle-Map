@@ -231,4 +231,6 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     public void nativeWrite(long l, long l1, long l2) {
         throw new UnsupportedOperationException();
     }
+
+
 }
