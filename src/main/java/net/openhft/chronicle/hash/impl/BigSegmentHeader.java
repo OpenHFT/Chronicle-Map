@@ -54,7 +54,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     /**
      * Previously this value was 2 seconds, but GC pauses often take more time that shouldn't
-     * result to IllegalStateException.
+     * result to InterProcessDeadLockException.
      */
     public static final int LOCK_TIMEOUT_SECONDS = 60;
 
