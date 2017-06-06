@@ -52,11 +52,21 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     private static final int TRY_LOCK_NANOS_THRESHOLD = 2_000_000;
 
-    /**
-     * Previously this value was 2 seconds, but GC pauses often take more time that shouldn't
-     * result to IllegalStateException.
-     */
-    public static final int LOCK_TIMEOUT_SECONDS = 60;
+    public static final int LOCK_TIMEOUT_SECONDS;
+
+    static {
+        // Previously this value was 2 seconds, but GC pauses often take more time that shouldn't
+        // result to InterProcessDeadLockException.
+        int timeout = 60;
+        try {
+            timeout = Integer.parseInt(System.getProperty("net.openhft.chronicle.map.lockTimeoutSeconds", String.valueOf(timeout)));
+        }
+        catch (NumberFormatException ex) {
+            // ignore
+        }
+
+        LOCK_TIMEOUT_SECONDS = timeout;
+    }
 
     private static InterProcessDeadLockException deadLock() {
         return new InterProcessDeadLockException(
