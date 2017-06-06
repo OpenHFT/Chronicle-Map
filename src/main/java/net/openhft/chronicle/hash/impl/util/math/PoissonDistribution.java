@@ -19,6 +19,10 @@
 package net.openhft.chronicle.hash.impl.util.math;
 
 public class PoissonDistribution {
+    
+    private PoissonDistribution() {
+        
+    }
 
     private static final double EPSILON = 1e-12;
     /**

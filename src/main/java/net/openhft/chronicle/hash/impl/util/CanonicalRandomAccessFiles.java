@@ -26,6 +26,10 @@ import java.io.RandomAccessFile;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class CanonicalRandomAccessFiles {
+    
+    private CanonicalRandomAccessFiles() {
+        
+    }
 
     private static class RafReference {
         RandomAccessFile raf;

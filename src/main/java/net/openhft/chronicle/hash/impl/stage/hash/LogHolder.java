@@ -23,5 +23,10 @@ import org.slf4j.LoggerFactory;
 
 @Staged
 public class LogHolder {
+    
+    private LogHolder() {
+        
+    }
+    
     public static final Logger LOG = LoggerFactory.getLogger(LogHolder.class);
 }
