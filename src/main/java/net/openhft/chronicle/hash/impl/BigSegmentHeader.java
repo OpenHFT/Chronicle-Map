@@ -32,10 +32,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 public final class BigSegmentHeader implements SegmentHeader {
     public static final BigSegmentHeader INSTANCE = new BigSegmentHeader();
-
-    private static final long UNSIGNED_INT_MASK = 0xFFFFFFFFL;
-
     static final long LOCK_OFFSET = 0L;
+    static final long ENTRIES_OFFSET = LOCK_OFFSET + 8L; // 32-bit
+    static final long LOWEST_POSSIBLY_FREE_CHUNK_OFFSET = ENTRIES_OFFSET + 4L;
+    static final long NEXT_TIER_INDEX_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
+    static final long DELETED_OFFSET = NEXT_TIER_INDEX_OFFSET + 8L;
+    private static final long UNSIGNED_INT_MASK = 0xFFFFFFFFL;
     /**
      * Make the LOCK constant and {@link #A} of final class types (instead of interfaces) as this
      * hopefully help JVM with inlining
@@ -44,15 +46,9 @@ public final class BigSegmentHeader implements SegmentHeader {
             (VanillaReadWriteUpdateWithWaitsLockingStrategy)
             VanillaReadWriteUpdateWithWaitsLockingStrategy.instance();
     private static final NativeAccess A = (NativeAccess) Access.nativeAccess();
-
-    static final long ENTRIES_OFFSET = LOCK_OFFSET + 8L; // 32-bit
-    static final long LOWEST_POSSIBLY_FREE_CHUNK_OFFSET = ENTRIES_OFFSET + 4L;
-    static final long NEXT_TIER_INDEX_OFFSET = LOWEST_POSSIBLY_FREE_CHUNK_OFFSET + 4L;
-    static final long DELETED_OFFSET = NEXT_TIER_INDEX_OFFSET + 8L;
-
     private static final int TRY_LOCK_NANOS_THRESHOLD = 2_000_000;
 
-    public static final int LOCK_TIMEOUT_SECONDS;
+    public static int LOCK_TIMEOUT_SECONDS;
 
     static {
         // Previously this value was 2 seconds, but GC pauses often take more time that shouldn't
@@ -66,6 +62,9 @@ public final class BigSegmentHeader implements SegmentHeader {
         }
 
         LOCK_TIMEOUT_SECONDS = timeout;
+    }
+
+    private BigSegmentHeader() {
     }
 
     private static InterProcessDeadLockException deadLock() {
@@ -98,84 +97,6 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     private static long roundUpNanosToMillis(long nanos) {
         return NANOSECONDS.toMillis(nanos + 900_000);
-    }
-
-    private BigSegmentHeader() {
-    }
-
-    @Override
-    public long entries(long address) {
-        return OS.memory().readInt(address + ENTRIES_OFFSET) & UNSIGNED_INT_MASK;
-    }
-
-    @Override
-    public void entries(long address, long entries) {
-        if (entries >= (1L << 32)) {
-            throw new IllegalStateException("segment entries overflow: up to " + UNSIGNED_INT_MASK +
-                    " supported, " + entries + " given");
-        }
-        OS.memory().writeInt(address + ENTRIES_OFFSET, (int) entries);
-    }
-
-    @Override
-    public long deleted(long address) {
-        return OS.memory().readInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
-    }
-
-    @Override
-    public void deleted(long address, long deleted) {
-        if (deleted >= (1L << 32)) {
-            throw new IllegalStateException("segment deleted entries count overflow: up to " +
-                    UNSIGNED_INT_MASK + " supported, " + deleted + " given");
-        }
-        OS.memory().writeInt(address + DELETED_OFFSET, (int) deleted);
-    }
-
-    @Override
-    public long lowestPossiblyFreeChunk(long address) {
-        return OS.memory().readInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET) & UNSIGNED_INT_MASK;
-    }
-
-    @Override
-    public void lowestPossiblyFreeChunk(long address, long lowestPossiblyFreeChunk) {
-        OS.memory().writeInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET,
-                (int) lowestPossiblyFreeChunk);
-    }
-
-    @Override
-    public long nextTierIndex(long address) {
-        return OS.memory().readLong(address + NEXT_TIER_INDEX_OFFSET);
-    }
-
-    @Override
-    public void nextTierIndex(long address, long nextTierIndex) {
-        OS.memory().writeLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
-    }
-
-    @Override
-    public void readLock(long address) {
-        try {
-            if (!innerTryReadLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
-                throw deadLock();
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    @Override
-    public void readLockInterruptibly(long address) throws InterruptedException {
-        if (!tryReadLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
-            throw deadLock();
-    }
-
-    @Override
-    public boolean tryReadLock(long address) {
-        return LOCK.tryReadLock(A, null, address + LOCK_OFFSET);
-    }
-
-    @Override
-    public boolean tryReadLock(long address, long time, TimeUnit unit) throws InterruptedException {
-        return innerTryReadLock(address, time, unit, true);
     }
 
     private static boolean innerTryReadLock(
@@ -228,43 +149,6 @@ public final class BigSegmentHeader implements SegmentHeader {
         return false;
     }
 
-    @Override
-    public boolean tryUpgradeReadToUpdateLock(long address) {
-        return LOCK.tryUpgradeReadToUpdateLock(A, null, address + LOCK_OFFSET);
-    }
-
-    @Override
-    public boolean tryUpgradeReadToWriteLock(long address) {
-        return LOCK.tryUpgradeReadToWriteLock(A, null, address + LOCK_OFFSET);
-    }
-
-    @Override
-    public void updateLock(long address) {
-        try {
-            if (!innerTryUpdateLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
-                throw deadLock();
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    @Override
-    public void updateLockInterruptibly(long address) throws InterruptedException {
-        if (!tryUpdateLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
-            throw deadLock();
-    }
-
-    @Override
-    public boolean tryUpdateLock(long address) {
-        return LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET);
-    }
-
-    @Override
-    public boolean tryUpdateLock(long address, long time, TimeUnit unit)
-            throws InterruptedException {
-        return innerTryUpdateLock(address, time, unit, true);
-    }
-
     private static boolean innerTryUpdateLock(
             long address, long time, TimeUnit unit, boolean interruptible)
             throws InterruptedException {
@@ -313,33 +197,6 @@ public final class BigSegmentHeader implements SegmentHeader {
             }
         } while (timeInMillis >= 0);
         return false;
-    }
-
-    @Override
-    public void writeLock(long address) {
-        try {
-            if (!innerTryWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
-                throw deadLock();
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    @Override
-    public void writeLockInterruptibly(long address) throws InterruptedException {
-        if (!tryWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
-            throw deadLock();
-    }
-
-    @Override
-    public boolean tryWriteLock(long address) {
-        return LOCK.tryWriteLock(A, null, address + LOCK_OFFSET);
-    }
-
-    @Override
-    public boolean tryWriteLock(long address, long time, TimeUnit unit)
-            throws InterruptedException {
-        return innerTryWriteLock(address, time, unit, true);
     }
 
     private static boolean innerTryWriteLock(
@@ -417,33 +274,6 @@ public final class BigSegmentHeader implements SegmentHeader {
         LOCK.deregisterWait(A, null, address + LOCK_OFFSET);
     }
 
-    @Override
-    public void upgradeUpdateToWriteLock(long address) {
-        try {
-            if (!innerTryUpgradeUpdateToWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
-                throw deadLock();
-        } catch (InterruptedException e) {
-            throw new AssertionError(e);
-        }
-    }
-
-    @Override
-    public void upgradeUpdateToWriteLockInterruptibly(long address) throws InterruptedException {
-        if (!tryUpgradeUpdateToWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
-            throw deadLock();
-    }
-
-    @Override
-    public boolean tryUpgradeUpdateToWriteLock(long address) {
-        return LOCK.tryUpgradeUpdateToWriteLock(A, null, address + LOCK_OFFSET);
-    }
-
-    @Override
-    public boolean tryUpgradeUpdateToWriteLock(long address, long time, TimeUnit unit)
-            throws InterruptedException {
-        return innerTryUpgradeUpdateToWriteLock(address, time, unit, true);
-    }
-
     private static boolean innerTryUpgradeUpdateToWriteLock(
             long address, long time, TimeUnit unit, boolean interruptible)
             throws InterruptedException {
@@ -518,6 +348,172 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     private static boolean tryUpgradeUpdateToWriteLockAndDeregisterWait0(long address) {
         return LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public long entries(long address) {
+        return OS.memory().readInt(address + ENTRIES_OFFSET) & UNSIGNED_INT_MASK;
+    }
+
+    @Override
+    public void entries(long address, long entries) {
+        if (entries >= (1L << 32)) {
+            throw new IllegalStateException("segment entries overflow: up to " + UNSIGNED_INT_MASK +
+                    " supported, " + entries + " given");
+        }
+        OS.memory().writeInt(address + ENTRIES_OFFSET, (int) entries);
+    }
+
+    @Override
+    public long deleted(long address) {
+        return OS.memory().readInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
+    }
+
+    @Override
+    public void deleted(long address, long deleted) {
+        if (deleted >= (1L << 32)) {
+            throw new IllegalStateException("segment deleted entries count overflow: up to " +
+                    UNSIGNED_INT_MASK + " supported, " + deleted + " given");
+        }
+        OS.memory().writeInt(address + DELETED_OFFSET, (int) deleted);
+    }
+
+    @Override
+    public long lowestPossiblyFreeChunk(long address) {
+        return OS.memory().readInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET) & UNSIGNED_INT_MASK;
+    }
+
+    @Override
+    public void lowestPossiblyFreeChunk(long address, long lowestPossiblyFreeChunk) {
+        OS.memory().writeInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET,
+                (int) lowestPossiblyFreeChunk);
+    }
+
+    @Override
+    public long nextTierIndex(long address) {
+        return OS.memory().readLong(address + NEXT_TIER_INDEX_OFFSET);
+    }
+
+    @Override
+    public void nextTierIndex(long address, long nextTierIndex) {
+        OS.memory().writeLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
+    }
+
+    @Override
+    public void readLock(long address) {
+        try {
+            if (!innerTryReadLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
+                throw deadLock();
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @Override
+    public void readLockInterruptibly(long address) throws InterruptedException {
+        if (!tryReadLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
+            throw deadLock();
+    }
+
+    @Override
+    public boolean tryReadLock(long address) {
+        return LOCK.tryReadLock(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public boolean tryReadLock(long address, long time, TimeUnit unit) throws InterruptedException {
+        return innerTryReadLock(address, time, unit, true);
+    }
+
+    @Override
+    public boolean tryUpgradeReadToUpdateLock(long address) {
+        return LOCK.tryUpgradeReadToUpdateLock(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public boolean tryUpgradeReadToWriteLock(long address) {
+        return LOCK.tryUpgradeReadToWriteLock(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public void updateLock(long address) {
+        try {
+            if (!innerTryUpdateLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
+                throw deadLock();
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @Override
+    public void updateLockInterruptibly(long address) throws InterruptedException {
+        if (!tryUpdateLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
+            throw deadLock();
+    }
+
+    @Override
+    public boolean tryUpdateLock(long address) {
+        return LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public boolean tryUpdateLock(long address, long time, TimeUnit unit)
+            throws InterruptedException {
+        return innerTryUpdateLock(address, time, unit, true);
+    }
+
+    @Override
+    public void writeLock(long address) {
+        try {
+            if (!innerTryWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
+                throw deadLock();
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @Override
+    public void writeLockInterruptibly(long address) throws InterruptedException {
+        if (!tryWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
+            throw deadLock();
+    }
+
+    @Override
+    public boolean tryWriteLock(long address) {
+        return LOCK.tryWriteLock(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public boolean tryWriteLock(long address, long time, TimeUnit unit)
+            throws InterruptedException {
+        return innerTryWriteLock(address, time, unit, true);
+    }
+
+    @Override
+    public void upgradeUpdateToWriteLock(long address) {
+        try {
+            if (!innerTryUpgradeUpdateToWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
+                throw deadLock();
+        } catch (InterruptedException e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    @Override
+    public void upgradeUpdateToWriteLockInterruptibly(long address) throws InterruptedException {
+        if (!tryUpgradeUpdateToWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
+            throw deadLock();
+    }
+
+    @Override
+    public boolean tryUpgradeUpdateToWriteLock(long address) {
+        return LOCK.tryUpgradeUpdateToWriteLock(A, null, address + LOCK_OFFSET);
+    }
+
+    @Override
+    public boolean tryUpgradeUpdateToWriteLock(long address, long time, TimeUnit unit)
+            throws InterruptedException {
+        return innerTryUpgradeUpdateToWriteLock(address, time, unit, true);
     }
 
     @Override

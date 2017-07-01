@@ -25,6 +25,8 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
+import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
+
 public class MapCloseTest {
 
     @Test(expected = IllegalStateException.class)
@@ -69,6 +71,7 @@ public class MapCloseTest {
 
     @Test(expected = RuntimeException.class)
     public void closeWithContextInAnotherThreadTest() throws InterruptedException {
+        LOCK_TIMEOUT_SECONDS = 2;
         ChronicleMap<Integer, Integer> map =
                 ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
         Object lock = new Object();
@@ -87,6 +90,7 @@ public class MapCloseTest {
             latch.await();
             map.close();
         }
+        LOCK_TIMEOUT_SECONDS = 60;
     }
 
     @Test
