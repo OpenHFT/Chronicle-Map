@@ -67,7 +67,6 @@ public class DoubleArrayTest {
     }
 
     @Test
-    @Ignore("TODO What is HACK???")
     public void addToAMap() {
         DoubleArray a = new DoubleArray(10);
         a.setData(new double[]{1, 2, 3, 4, 5});
@@ -77,6 +76,7 @@ public class DoubleArrayTest {
 
         ChronicleMap<Integer, DoubleArray> proxyMap = ChronicleMap
                 .of(Integer.class, DoubleArray.class)
+                .constantValueSizeBySample(a)
                 .entries(2)
                 .create();
         proxyMap.put(1, a);

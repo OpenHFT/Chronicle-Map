@@ -820,6 +820,11 @@ public final class ChronicleMapBuilder<K, V> implements
         if (maxChunksPerEntry < 1)
             throw new IllegalArgumentException("maxChunksPerEntry should be >= 1, " +
                     maxChunksPerEntry + " given");
+        if (constantlySizedEntries()) {
+            throw new IllegalStateException("Sizes of key type: " + keyBuilder.tClass + " and " +
+                    "value type: " + valueBuilder.tClass + " are both constant, " +
+                    "so maxChunksPerEntry shouldn't be specified manually");
+        }
         this.maxChunksPerEntry = maxChunksPerEntry;
         return this;
     }
@@ -1821,6 +1826,11 @@ public final class ChronicleMapBuilder<K, V> implements
                 keyBuilder, averageKeySize, averageKey, sampleKey, "Key");
         averageValueSize = preMapConstruction(
                 valueBuilder, averageValueSize, averageValue, sampleValue, "Value");
+
+        // TODO mark.price
+//        System.out.printf(Thread.currentThread().getName() + "|++!! averageValueSize calculated as %.2f%n",
+//                averageValueSize);
+
         stateChecks();
     }
 

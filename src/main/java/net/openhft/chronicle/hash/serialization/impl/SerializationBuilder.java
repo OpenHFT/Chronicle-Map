@@ -19,6 +19,7 @@ package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.bytes.DynamicallySized;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.annotation.NotNull;
 import net.openhft.chronicle.core.util.ReadResolvable;
@@ -190,8 +191,9 @@ public final class SerializationBuilder<T> implements Cloneable {
     }
 
     public long constantSizeBySample(T sampleObject) {
+        // TODO mark.price this should probably be maxSize()
         long constantSize = serializationSize(sampleObject);
-        if (constantSizeMarshaller()) {
+        if (constantSizeMarshaller() && !DynamicallySized.class.isAssignableFrom(sampleObject.getClass())) {
             long expectedConstantSize = constantSize();
             if (constantSize != expectedConstantSize) {
                 throw new IllegalStateException("Although configuring constant size by sample " +
