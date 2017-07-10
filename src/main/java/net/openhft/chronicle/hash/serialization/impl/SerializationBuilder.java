@@ -191,7 +191,6 @@ public final class SerializationBuilder<T> implements Cloneable {
     }
 
     public long constantSizeBySample(T sampleObject) {
-        // TODO mark.price this should probably be maxSize()
         long constantSize = serializationSize(sampleObject);
         if (constantSizeMarshaller() && !DynamicallySized.class.isAssignableFrom(sampleObject.getClass())) {
             long expectedConstantSize = constantSize();

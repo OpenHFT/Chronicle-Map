@@ -1826,11 +1826,6 @@ public final class ChronicleMapBuilder<K, V> implements
                 keyBuilder, averageKeySize, averageKey, sampleKey, "Key");
         averageValueSize = preMapConstruction(
                 valueBuilder, averageValueSize, averageValue, sampleValue, "Value");
-
-        // TODO mark.price
-//        System.out.printf(Thread.currentThread().getName() + "|++!! averageValueSize calculated as %.2f%n",
-//                averageValueSize);
-
         stateChecks();
     }
 

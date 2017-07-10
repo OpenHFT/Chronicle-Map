@@ -59,7 +59,7 @@ public class BasicReplicationTest {
             final Map[] maps = new Map[] {mapOne, mapTwo, mapThree};
 
             final Random random = new Random(0xBAD5EED);
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 5; i++) {
                 final int mapIndex = random.nextInt(maps.length);
                 final Map map = maps[mapIndex];
                 final String key = "key" + random.nextInt(100);
@@ -68,7 +68,7 @@ public class BasicReplicationTest {
                 System.out.printf("map %d, put(%s, %s)%n", mapIndex, key, value);
             }
 
-            LockSupport.parkNanos(TimeUnit.DAYS.toNanos(5L));
+            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(5L));
             executorService.shutdownNow();
 
             for(String key : mapOne.keySet()) {
