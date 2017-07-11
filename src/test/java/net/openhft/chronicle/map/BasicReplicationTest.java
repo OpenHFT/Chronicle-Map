@@ -2,9 +2,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import org.hamcrest.CoreMatchers;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
@@ -17,19 +15,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class BasicReplicationTest {
 
-    @Ignore
     @Test
     public void shouldReplicate() throws Exception {
         final ChronicleMapBuilder<String, String> builder = ChronicleMap.of(String.class, String.class)
                 .entries(1000).averageKeySize(7).averageValueSize(7);
-
-
         try (
                 ReplicatedChronicleMap<String, String, Object> mapOne = createReplicatedMap(builder, asByte(1));
                 ReplicatedChronicleMap<String, String, Object> mapTwo = createReplicatedMap(builder, asByte(2));
@@ -54,22 +52,30 @@ public class BasicReplicationTest {
             final ExecutorService executorService = Executors.newFixedThreadPool(3);
             executorService.submit(processorOne::processPendingChangesLoop);
             executorService.submit(processorTwo::processPendingChangesLoop);
-            executorService.submit(processorTwo::processPendingChangesLoop);
+            executorService.submit(processorThree::processPendingChangesLoop);
 
             final Map[] maps = new Map[] {mapOne, mapTwo, mapThree};
-
             final Random random = new Random(0xBAD5EED);
-            for (int i = 0; i < 5; i++) {
+            for (int i = 0; i < 5000; i++) {
                 final int mapIndex = random.nextInt(maps.length);
-                final Map map = maps[mapIndex];
+                final Map<String, String> map = maps[mapIndex];
                 final String key = "key" + random.nextInt(100);
                 final String value = "val" + random.nextInt(500);
                 map.put(key, value);
-                System.out.printf("map %d, put(%s, %s)%n", mapIndex, key, value);
             }
 
-            LockSupport.parkNanos(TimeUnit.SECONDS.toNanos(5L));
+            waitForBacklog(processorOne);
+            waitForBacklog(processorTwo);
+            waitForBacklog(processorThree);
+
             executorService.shutdownNow();
+
+            waitForFinish(processorOne);
+            waitForFinish(processorTwo);
+            waitForFinish(processorThree);
+
+            assertThat(mapOne.size(), is(equalTo(mapTwo.size())));
+            assertThat(mapOne.size(), is(equalTo(mapThree.size())));
 
             for(String key : mapOne.keySet()) {
                 final String mapOneValue = mapOne.get(key);
@@ -82,6 +88,20 @@ public class BasicReplicationTest {
         }
     }
 
+    private void waitForBacklog(final ReplicationEventProcessor<String, String> p) {
+        while (!p.queueEmpty.get()) {
+            LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1L));
+        }
+    }
+
+    private void waitForFinish(final ReplicationEventProcessor<String, String> processor) {
+        for (IteratorAndDestinationMap<String, String> destinationMap : processor.destinationMaps) {
+            while (destinationMap.messagesInflight.get() != 0 || !processor.stopped.get()) {
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(1L));
+            }
+        }
+    }
+
     private static byte asByte(final int i) {
         return (byte) i;
     }
@@ -89,6 +109,7 @@ public class BasicReplicationTest {
     private static final class ReplicationEventProcessor<K, V> {
         private final List<IteratorAndDestinationMap<K, V>> destinationMaps = new ArrayList<>();
         private final AtomicBoolean queueEmpty = new AtomicBoolean(true);
+        private final AtomicBoolean stopped = new AtomicBoolean(false);
         private ReplicatedChronicleMap<K, V, ?> sourceMap;
 
         void addDestinationMap(final ReplicatedChronicleMap<K, V, ?>.ModificationIterator modificationIterator,
@@ -108,20 +129,25 @@ public class BasicReplicationTest {
 
         void processPendingChangesLoop() {
 
-            while(!Thread.currentThread().isInterrupted()) {
-                while (queueEmpty.get()) {
-                    LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(7));
-                }
+            try {
 
-                Collections.shuffle(destinationMaps);
-
-                for (IteratorAndDestinationMap<K, V> iteratorAndDestinationMap : destinationMaps) {
-                    while (iteratorAndDestinationMap.modificationIterator.hasNext()) {
-                        iteratorAndDestinationMap.modificationIterator.nextEntry(iteratorAndDestinationMap, 17);
+                while(!Thread.currentThread().isInterrupted()) {
+                    while (queueEmpty.get() && !Thread.currentThread().isInterrupted()) {
+                        LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(7));
                     }
-                }
 
-                queueEmpty.compareAndSet(false, true);
+                    Collections.shuffle(destinationMaps);
+
+                    for (IteratorAndDestinationMap<K, V> iteratorAndDestinationMap : destinationMaps) {
+                        while (iteratorAndDestinationMap.modificationIterator.nextEntry(
+                                iteratorAndDestinationMap, sourceMap.identifier())) {
+                        }
+                    }
+
+                    queueEmpty.compareAndSet(false, true);
+                }
+            } finally {
+                stopped.set(true);
             }
         }
     }
@@ -130,7 +156,9 @@ public class BasicReplicationTest {
         private final ReplicatedChronicleMap<K, V, ?>.ModificationIterator modificationIterator;
         private final ReplicatedChronicleMap<K, V, ?> sourceMap;
         private final ReplicatedChronicleMap<K, V, ?> destinationMap;
-        private final Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer();
+        private final Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer(4096);
+        private final ExecutorService delayedExecutor = Executors.newSingleThreadExecutor();
+        private final AtomicInteger messagesInflight = new AtomicInteger(0);
 
         IteratorAndDestinationMap(final ReplicatedChronicleMap<K, V, ?>.ModificationIterator modificationIterator,
                                   final ReplicatedChronicleMap<K, V, ?> sourceMap,
@@ -142,31 +170,39 @@ public class BasicReplicationTest {
 
         @Override
         public void onEntry(final ReplicableEntry entry, final int chronicleId) {
+           try {
+                buffer.clear();
+                sourceMap.writeExternalEntry(entry, null, buffer, chronicleId);
 
-            try (CompiledReplicatedMapQueryContext<K, V, ?> iCtx = sourceMap.mapContext()) {
-                iCtx.updateLock().lock();
-                try {
-                    sourceMap.writeExternalEntry(entry, null, buffer, chronicleId);
-                } finally {
-                    iCtx.updateLock().unlock();
-                }
-            } catch(Throwable e) {
+                buffer.readPosition(0);
+                buffer.readLimit(buffer.writePosition());
+                final ByteBuffer message = ByteBuffer.allocate((int) buffer.writePosition());
+                buffer.read(message);
+                message.position(0);
+                messagesInflight.incrementAndGet();
+                delayedExecutor.submit(() -> {
+                    try {
+                        final Bytes<ByteBuffer> tmp = Bytes.elasticByteBuffer(128);
+                        while (message.remaining() != 0) {
+                            tmp.writeByte(message.get());
+                        }
+
+                        destinationMap.readExternalEntry(tmp, sourceMap.identifier());
+                        messagesInflight.decrementAndGet();
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                });
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
-            final long writeLimit = buffer.writeLimit();
-
-            buffer.readPosition(0);
-            buffer.readLimit(writeLimit);
-
-            destinationMap.readExternalEntry(buffer, sourceMap.identifier());
         }
 
         @Override
         public void onBootstrapTime(final long bootstrapTime, final int chronicleId) {
-
+            destinationMap.setRemoteNodeCouldBootstrapFrom((byte) chronicleId, bootstrapTime);
         }
     }
-
 
     private ReplicatedChronicleMap<String, String, Object>
         createReplicatedMap(final ChronicleMapBuilder<String, String> builder, final byte replicaId) {
@@ -175,42 +211,5 @@ public class BasicReplicationTest {
         privateBuilder.replication(replicaId);
         final ChronicleMap<String, String> map = builder.create();
         return (ReplicatedChronicleMap<String, String, Object>) map;
-    }
-
-    private static final class ReplicationCallback implements Replica.ModificationIterator.Callback {
-
-        private final ReplicatedChronicleMap<String, String, Object> sourceMap;
-        private final ReplicatedChronicleMap<String, String, Object> destinationMap;
-
-        ReplicationCallback(final ReplicatedChronicleMap<String, String, Object> sourceMap,
-                            final ReplicatedChronicleMap<String, String, Object> destinationMap) {
-            this.sourceMap = sourceMap;
-            this.destinationMap = destinationMap;
-        }
-
-        @Override
-        public void onEntry(final ReplicableEntry entry, final int chronicleId) {
-            final boolean changed = entry.isChanged();
-            final byte originIdentifier = entry.originIdentifier();
-            final long originTimestamp = entry.originTimestamp();
-
-            System.out.printf("onEntry(%s, %d, %d)%n", changed, originIdentifier, originTimestamp);
-
-            final boolean identifierCheck = sourceMap.identifierCheck(entry, chronicleId);
-            final Bytes<ByteBuffer> destination = Bytes.elasticByteBuffer();
-            sourceMap.writeExternalEntry(entry, null, destination, chronicleId);
-            System.out.println(identifierCheck);
-            System.out.println("destination: " + destination);
-            final long writeLimit = destination.writeLimit();
-            destination.readPosition(0);
-            destination.readLimit(writeLimit);
-
-            destinationMap.readExternalEntry(destination, sourceMap.identifier());
-        }
-
-        @Override
-        public void onBootstrapTime(final long bootstrapTime, final int chronicleId) {
-            System.out.printf("onBootstrapTime(%d, %d)%n", bootstrapTime, chronicleId);
-        }
     }
 }
