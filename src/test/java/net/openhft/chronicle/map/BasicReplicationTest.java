@@ -206,10 +206,7 @@ public class BasicReplicationTest {
 
     private ReplicatedChronicleMap<String, String, Object>
         createReplicatedMap(final ChronicleMapBuilder<String, String> builder, final byte replicaId) {
-        final ChronicleMapBuilderPrivateAPI<String, String> privateBuilder =
-                new ChronicleMapBuilderPrivateAPI<>(builder);
-        privateBuilder.replication(replicaId);
-        final ChronicleMap<String, String> map = builder.create();
+        final ChronicleMap<String, String> map = builder.replication(replicaId).create();
         return (ReplicatedChronicleMap<String, String, Object>) map;
     }
 }

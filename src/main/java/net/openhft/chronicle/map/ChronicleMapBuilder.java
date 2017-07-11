@@ -1472,7 +1472,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    ChronicleMapBuilder<K, V> replication(byte identifier) {
+    public ChronicleMapBuilder<K, V> replication(byte identifier) {
         if (identifier <= 0)
             throw new IllegalArgumentException("Identifier must be positive, " + identifier +
                     " given");
