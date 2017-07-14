@@ -58,11 +58,11 @@ public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext
         long keyOffset = replicatedInputBytes.readPosition();
 
         q.initInputKey(q.getInputKeyBytesAsData(replicatedInputBytes, keyOffset, keySize));
+        replicatedInputBytes.readSkip(keySize);
         if (isDeleted) {
             s.innerUpdateLock.lock();
             mh.m().remoteOperations.remove(this);
         } else {
-            replicatedInputBytes.readSkip(keySize);
             long valueSize = mh.m().valueSizeMarshaller.readSize(replicatedInputBytes);
             long valueOffset = replicatedInputBytes.readPosition();
             Data<V> value = q.wrapValueBytesAsData(replicatedInputBytes, valueOffset, valueSize);
