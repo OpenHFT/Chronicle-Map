@@ -23,6 +23,7 @@ import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongSupplier;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -41,6 +42,7 @@ public final class TimeProvider {
     private TimeProvider() {}
 
     private static final AtomicLong lastTimeHolder = new AtomicLong();
+    private static LongSupplier millisecondSupplier = System::currentTimeMillis;
 
     /**
      * Returns a non-decreasing number, assumed to be used as a "timestamp".
@@ -54,7 +56,7 @@ public final class TimeProvider {
      * @return the current timestamp
      */
     public static long currentTime() {
-        long now = MILLISECONDS.toNanos(System.currentTimeMillis());
+        long now = MILLISECONDS.toNanos(millisecondSupplier.getAsLong());
         while (true) {
             long lastTime = lastTimeHolder.get();
             if (now <= lastTime)
@@ -81,4 +83,7 @@ public final class TimeProvider {
         return systemTimeIntervalUnit.convert(intervalNanos, NANOSECONDS);
     }
 
+    static void overrideMillisecondSupplier(final LongSupplier millisecondSupplier) {
+        TimeProvider.millisecondSupplier = millisecondSupplier;
+    }
 }
