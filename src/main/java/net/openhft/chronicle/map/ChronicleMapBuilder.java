@@ -47,6 +47,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -212,6 +213,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean removeReturnsNull = false;
     private boolean replicated;
     private boolean persisted;
+    private String replicatedMapClassName = ReplicatedChronicleMap.class.getName();
 
     ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass);
@@ -1480,6 +1482,11 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    public ChronicleMapBuilder<K, V> replicatedMapClassName(final String replicatedMapClassName) {
+        this.replicatedMapClassName = replicatedMapClassName;
+        return this;
+    }
+
     @Override
     public ChronicleMap<K, V> createPersistedTo(File file) throws IOException {
         // clone() to make this builder instance thread-safe, because createWithFile() method
@@ -1811,11 +1818,18 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
+    @SuppressWarnings("unchecked")
     private VanillaChronicleMap<K, V, ?> newMap()
             throws IOException {
         preMapConstruction();
         if (replicated) {
-            return new ReplicatedChronicleMap<>(this);
+            try {
+                return (VanillaChronicleMap<K, V, ?>) Class.forName(replicatedMapClassName).
+                        getDeclaredConstructor(getClass()).newInstance(this);
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                    InvocationTargetException | ClassNotFoundException e) {
+                throw new IllegalStateException("Cannot load specified implementation class: " + replicatedMapClassName);
+            }
         } else {
             return new VanillaChronicleMap<>(this);
         }
