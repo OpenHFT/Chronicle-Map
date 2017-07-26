@@ -1828,7 +1828,8 @@ public final class ChronicleMapBuilder<K, V> implements
                         getDeclaredConstructor(getClass()).newInstance(this);
             } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
                     InvocationTargetException | ClassNotFoundException e) {
-                throw new IllegalStateException("Cannot load specified implementation class: " + replicatedMapClassName);
+                throw new IllegalStateException("Cannot load specified implementation class: " + replicatedMapClassName,
+                        e);
             }
         } else {
             return new VanillaChronicleMap<>(this);
