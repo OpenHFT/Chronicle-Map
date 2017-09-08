@@ -31,7 +31,7 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 /**
- * Created by peter on 24/10/14.
+ * Created by Peter Lawrey on 24/10/14.
  */
 public final class DeflatorStringMarshaller implements BytesReader<CharSequence>,
         BytesWriter<CharSequence>, EnumMarshallable<DeflatorStringMarshaller> {

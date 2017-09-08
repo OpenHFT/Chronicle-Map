@@ -23,7 +23,7 @@ import java.io.File;
 import java.io.IOException;
 
 /**
- * Created by peter on 04/06/17.
+ * Created by Peter Lawrey on 04/06/17.
  */
 public class Issue125Test {
     @Test

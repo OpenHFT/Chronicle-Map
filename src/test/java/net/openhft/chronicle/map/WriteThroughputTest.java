@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.stream.IntStream;
 
 /**
- * Created by peter on 12/05/15.
+ * Created by Peter Lawrey on 12/05/15.
  */
 public class WriteThroughputTest {
     @Ignore("Long running")
