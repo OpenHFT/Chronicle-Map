@@ -82,6 +82,9 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
  * made to one node should be identical to the decision made to the other. We resolve this simple
  * dilemma by using a node identifier, each node will have a unique identifier, the update from the
  * node with the smallest identifier wins. </p>
+ * <p>This a one of the basic building blocks needed to implement a fully-functioning Chronicle Map
+ * cluster, such as that provided in
+ * <a href="http://chronicle.software/products/chronicle-map/">Chronicle Map Enterprise</a>.</p>
  *
  * @param <K> the entries key type
  * @param <V> the entries value type

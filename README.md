@@ -64,12 +64,11 @@ queries*.
  queries are not atomic.
  - Consistency - doesn't make sense for key-value stores
  - Isolation - yes (for both single- and multi-key queries).
- - Durability - no, at most, Chronicle Map could be persisted to disk. **Durability with Chronicle
- Map is provided by another level of architecture,** for example all requests are sent to several
- nodes - master and hot standby. Clustering/distributed architecture is out of the scope of the
- Chronicle Map project, there are projects *on top* of Chronicle Map which address these questions,
- e. g. [Chronicle Enterprise](http://chronicle.software/products/chronicle-enterprise/).
-
+ - Durability - no, Chronicle Map can be persisted to disk but with no guarantee as to to how frequently this 
+ happens - this is under the control of the OS. All data is guaranteed to be written to disk when the Map is closed.
+ **Clustering and replication for Chronicle
+ Map is provided by [Chronicle Map Enterprise](http://chronicle.software/products/chronicle-map/).** 
+ 
 **Project status: ready for production.**
 
 **What is the Chronicle Map's data structure?** In one sentence and simplified, a Chronicle Map
@@ -108,17 +107,18 @@ Chronicle Map doesn't support
   </tr>
   <tr>
     <td>Remote calls</td>
-    <th rowspan="5"><a href="http://chronicle.software/consultancy/">
-    Closed-source,<br>on-demand</a></th>
+    <th rowspan="3"><a href="http://chronicle.software/products/chronicle-map/">
+    Closed-source</a></th>
   </tr>
   <tr>
     <td>Eventually-consistent replication (100% redundancy)</td>
   </tr>
   <tr>
-    <td>Partially-redundant replication</td>
+    <td>Synchronous replication</td>
   </tr>
   <tr>
-    <td>Synchronous replication</td>
+    <td>Partially-redundant replication</td>
+    <th rowspan="2"><a href="http://chronicle.software/consultancy/"><br>On-demand</a></th>
   </tr>
   <tr>
     <td>Entry expiration timeouts</td>
@@ -128,7 +128,7 @@ Chronicle Map doesn't support
 ### License
 
 Chronicle Map is distributed under LGPLv3. If you want to obtain this software under more permissive
-license, please contact the copyright holders.
+license, please contact sales@chronicle.software.
 
 ### Peer projects
  - [Chronicle Engine](https://github.com/OpenHFT/Chronicle-Engine) - reactive processing framework
@@ -1672,7 +1672,7 @@ Combined, interception SPI interfaces and `ChronicleMap.queryContext()` API are 
  - Log some specific operations on `ChronicleMap` (e. g. log only acquireUsing() calls, which has
  created a new entry)
  - Forbid performing operations of some kind on the `ChronicleMap` instance
- - Backup all changes to `ChronicleMap` to some durable storage, e. g. SQL database
+ - Backup all changes to `ChronicleMap` to some alternative storage, e. g. SQL database
  - Perform multi-Chronicle Map operations correctly in concurrent environment, by acquiring locks on
  all ChronicleMaps before updating them.
  - Perform multi-key operations on a single `ChronicleMap` correctly in concurrent environment, by
