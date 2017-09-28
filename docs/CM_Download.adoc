@@ -1,0 +1,67 @@
+= Download the library
+Neil Clifford
+:toc: macro
+:toclevels: 1
+:css-signature: demo
+:toc-placement: macro
+:icons: font
+
+toc::[]
+
+== Prerequisites
+
+To run Chronicle Map, please ensure you have first installed:
+
+* Java (1.8.0_91 or later)
+* Apache Maven (3.2.3 or later)
+
+== License
+
+Chronicle Map is distributed under `LGPLv3`. If you want to obtain this software under a more permissive
+license, please contact mailto:sales@chronicle.software.
+
+== Maven Artifact Download
+
+[#image-maven]
+[caption="", link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
+image::https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[]
+
+
+``` xml
+<dependency>
+  <groupId>net.openhft</groupId>
+  <artifactId>chronicle-map</artifactId>
+  <version><!--replace with the latest version--></version>
+</dependency>
+```
+
+Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22[Latest Version Number].
+
+== Maven Snapshot Download
+If you want to try out the latest pre-release code, you can download the snapshot artifact manually
+from https://oss.sonatype.org/content/repositories/snapshots/net/openhft/chronicle-map/.
+
+A better way, is to add the following to your `setting.xml` file to allow Maven to download snapshots:
+
+``` xml
+<repository>
+    <id>Snapshot Repository</id>
+    <name>Snapshot Repository</name>
+    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    <snapshots>
+        <enabled>true</enabled>
+    </snapshots>
+</repository>
+```
+You can define the snapshot version in your `pom.xml`; for example:
+
+```xml
+<dependency>
+  <groupId>net.openhft</groupId>
+  <artifactId>chronicle-map</artifactId>
+  <version><!--replace with the latest snapshot version--></version>
+</dependency>
+```
+
+'''
+<<../ReadMe.adoc#,Back to ReadMe>>

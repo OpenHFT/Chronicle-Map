@@ -1,0 +1,671 @@
+=  Chronicle Map Tutorial
+Neil Clifford
+:toc: macro
+:toclevels: 2
+:css-signature: demo
+:toc-placement: macro
+:icons: font
+
+toc::[]
+
+This document describes the Chronicle Map tutorial supplied with the project.
+
+
+== Create a `ChronicleMap` Instance
+
+Creating an instance of `ChronicleMap` is a little more complex than just calling a constructor.
+To create an instance you have to use the `ChronicleMapBuilder`.
+
+== In-memory Chronicle Map
+The following code snippet creates an in-memory Chronicle Map store, to store about 50,000 _city name -> postal code_ mappings.
+
+It is accessible within a single JVM process; the process in which it was created. The data is accessible while the process is alive. When the process is terminated, the data is cleared.
+
+
+``` java
+import net.openhft.chronicle.map.*
+.....
+
+interface PostalCodeRange {
+    int minCode();
+    void minCode(int minCode);
+
+    int maxCode();
+    void maxCode(int maxCode);
+}
+
+ChronicleMapBuilder<CharSequence, PostalCodeRange> cityPostalCodesMapBuilder =
+    ChronicleMapBuilder.of(CharSequence.class, PostalCodeRange.class)
+        .name("city-postal-codes-map")
+        .averageKey("Amsterdam")
+        .entries(50_000);
+ChronicleMap<CharSequence, PostalCodeRange> cityPostalCodes =
+    cityPostalCodesMapBuilder.create();
+
+// Or shorter form, without builder variable extraction:
+
+ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
+    .of(CharSequence.class, PostalCodeRange.class)
+    .name("city-postal-codes-map")
+    .averageKey("Amsterdam")
+    .entries(50_000)
+    .create();
+```
+
+== Persisted Chronicle Map
+
+You can amend this code to create a persisted Chronicle Map by replacing `.create()` calls with `.createPersistedTo(cityPostalCodesFile)`. Use a persisted Chronicle Map if you want it to, either:
+
+ - outlive the process it was created within; for example, to support hot application redeployment.
+ - be accessible from multiple concurrent processes on the same server.
+ - persist the data to disk.
+
+The `cityPostalCodesFile` has to represent the same location on your server for all the Java
+processes that wish to access this Chronicle Map instance. For example, `System.getProperty("java.io.tmpdir") + "/cityPostalCodes.dat"`.
+
+The name and location of the file is entirely up to you.
+
+NOTE: When you create a `ChronicleMap` instance with `.createPersistedTo(file)`, and the specified
+file already exists in the system, you open a view to the existing Chronicle Map data store from
+this JVM process, rather than creating a new Chronicle Map data store. That means that the data store may already contain some entries. No special action with the data is performed during such an operation. If you want to clean up corrupted entries, and ensure that the data store is in correct state, see the <<Recovery>> section.
+
+
+== ChronicleMap instance vs Chronicle Map data store
+
+In this tutorial, the term `ChronicleMap` instance (or simply `ChronicleMap`)  is used to refer to an on-heap object providing access to a Chronicle Map data store (or Chronicle Map key-value store, or Chronicle Map store, or simply Chronicle Map, with space between two words in contrast to `ChronicleMap`), which could be purely in-memory, or persisted to disk.
+
+Currently the Java implementation doesn't allow creation of multiple accessor ChronicleMap` objects for a single *in-memory Chronicle Map store*; there is always a one-to-one relationship.
+
+A *persisted Chronicle Map store*, however, does allow creation of multiple accessor `ChronicleMap` instances; either within a single JVM process (although it is not recommended), or from concurrent JVM processes.
+
+When no processes access the file, it could be  moved to another location in the system, or
+even to another server. It could even run on different operating systems. When opened from another location you will observe the same data.
+
+If you don't need the Chronicle Map instance to survive the server restart (that is, you don't need
+persistence to disk; only multi-process access), mount the file on http://en.wikipedia.org/wiki/Tmpfs[tmpfs]. For example, on `Linux` it is as easy as placing you file in `/dev/shm` directory.
+
+
+== Configure entries
+
+You must configure .entries(entries) -- to support the maximum number of entries in the Chronicle Map. Try to configure the entries so that the created Chronicle Map is going to serve about 99% of requests.
+
+You should not put additional margin over the actual target number of entries. This bad practice was popularized by `new HashMap(capacity)` and `new HashSet(capacity)` constructors, which accept capacity, that should be multiplied by load factor to obtain the actual maximum expected number of entries in the container. `ChronicleMap` and `ChronicleSet` do not have a notion of load factor.
+
+See `ChronicleMapBuilder#entries()` in http://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs] for more information.
+
+Once a `ChronicleMap` instance is created, its configurations are sealed and cannot be changed
+using the `ChronicleMapBuilder` instance.
+
+
+== Single `ChronicleMap` instance per JVM
+If you want to access a Chronicle Map data store
+concurrently within a Java process, you should not create a separate `ChronicleMap` instance for each thread. Within the JVM environment, a `ChronicleMap` instance is a `ConcurrentMap`, and could be accessed concurrently the same way as, for example, a `ConcurrentHashMap`.
+
+== Recovery
+
+If a process, accessing a persisted Chronicle Map, terminated abnormally, for example:
+
+  - crashed
+  - `SIGKILL`ed
+  - terminated because the host operating system crashed
+  - terminated because the host machine lost power
+
+then the Chronicle Map may remain in an inaccessible or corrupted state.
+
+When the Chronicle Map is opened next time from another process, it should be done using `.recoverPersistedTo()` method in `ChronicleMapBuilder`.
+
+Unlike `createPersistedTo()`, this method scans all the memory of the Chronicle Map store for
+inconsistencies and, if any are found, it cleans them up.
+
+`.recoverPersistedTo()` needs to access the Chronicle Map exclusively. If a concurrent process is
+accessing the Chronicle Map while another process is attempting to perform recovery, the results of
+operations on the accessing process side, and results of recovery are unspecified; the data could be corrupted further. You must ensure thst no other process is accessing the Chronicle Map store when
+calling `.recoverPersistedTo()`.
+
+Example:
+
+```java
+ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
+    .of(CharSequence.class, PostalCodeRange.class)
+    .name("city-postal-codes-map")
+    .averageKey("Amsterdam")
+    .entries(50_000)
+    .recoverPersistedTo(cityPostalCodesFile, false);
+```
+
+The second parameter in `recoverPersistedTo()` method is called
+`sameBuilderConfigAndLibraryVersion`. It has two possible values:
+
+- `true`  - if `ChronicleMapBuilder` is configured
+in exactly the same way, as when the Chronicle Map (persisted to the given file) was created, and
+using the same version of the Chronicle Map library
+- `false` - if the initial configuration is not
+known, or the current version of Chronicle Map library could be different from the version originally used to
+create this Chronicle Map.
+
+If `sameBuilderConfigAndLibraryVersion` is `true`, `recoverPersistedTo()` "knows" all the right
+configurations, and what should be written to the header. It checks if the recovered Chronicle Map's
+header memory (containing serialized configurations) is corrupted or not. If the header is
+corrupted, it is overridden, and the recovery process continues.
+
+If `sameBuilderConfigAndLibraryVersion` is `false`, `recoverPersistedTo()` relies on the
+configurations written to the Chronicle Map's header, assuming it is not corrupted. If it is
+corrupted, `ChronicleHashRecoveryFailedException` is thrown.
+
+However, the subject header memory is never updated on ordinary operations with Chronicle Map, so it
+couldn't be corrupted if an accessing process crashed, or the operating system crashed, or even the
+machine lost power. Only hardware, memory, or disk corruption, or a bug in the file system, could lead
+to Chronicle Map header memory corruption.
+
+`.recoverPersistedTo()` is harmless if the previous process accessing the Chronicle Map terminated
+normally; however this is a computationally expensive procedure that should generally be avoided.
+
+Chronicle Map creation and recovery could be conveniently merged using a single call, `.createOrRecoverPersistedTo(persistenceFile, sameLibraryVersion)` in `ChronicleMapBuilder`. This acts like `createPersistedTo(persistenceFile)` if the persistence file doesn't yet exist, and like
+`recoverPersistedTo(persistenceFile, sameLibraryVersion)`, if the file already exists. For example:
+
+```java
+ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
+    .of(CharSequence.class, PostalCodeRange.class)
+    .averageKey("Amsterdam")
+    .entries(50_000)
+    .createOrRecoverPersistedTo(cityPostalCodesFile, false);
+```
+
+If the Chronicle Map is configured to store entry checksums along with entries, then the recovery procedure checks that the checksum is correct for each entry.
+
+Otherwise, it assumes the entry is corrupted and deletes it from the Chronicle Map. If checksums are to be stored, the recovery procedure cannot guarantee
+correctness of the entry data. See [Entry checksums](#entry-checksums) section for more information.
+
+== Key and Value Types
+
+The key, or value type, of `ChronicleMap<K, V>` could be:
+
+ - Types with best possible out-of-the-box support:
+   ** Any https://github.com/OpenHFT/Chronicle-Values[value interface]
+   ** Any class implementing http://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/Byteable.html[`Byteable`] interface from https://github.com/OpenHFT/Chronicle-Bytes[Chronicle Bytes].
+   ** Any class implementing http://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/BytesMarshallable.html[`BytesMarshallable`].
+   interface from Chronicle Bytes. The implementation class should have a public no-arg constructor.
+   ** `byte[]` and `ByteBuffer`
+   ** `CharSequence`, `String` and `StringBuilder`. Note that these char sequence types are
+   serialized using UTF-8 encoding by default. If you need a different encoding, refer to the
+   example in <<CM_Tutorial_Bytes.adoc#custom-charsequence-encoding,custom `CharSequence` encoding>>.
+   ** `Integer`, `Long` and `Double`
+
+ - Types supported out-of-the-box, but that are not particularly efficiently. You may want to implement
+ more efficient <<CM_Tutorial.adoc#custom-serializers,custom serializers>> for them:
+    ** Any class implementing `java.io.Externalizable`. The implementation class should have a public `no-arg` constructor.
+    ** Any type implementing `java.io.Serializable`, including boxed primitive types (except those listed
+    above) and array types.
+
+ - Any other type, if <<CM_Tutorial.adoc#custom-serializers,custom serializers>> are provided.
+
+https://github.com/OpenHFT/Chronicle-Values[Value interfaces] are preferred as they do not generate garbage, and have close to zero serialization/deserialization costs. They are preferable even to boxed primitives. For example, try to use `net.openhft.chronicle.core.values.IntValue` instead of `Integer`.
+
+Generally, you must provide hints for the `ChronicleMapBuilder` with the average sizes of the keys and the values, which are going to be inserted into the `ChronicleMap`. This is required in order to allocate the proper amount of shared memory. Do this using `averageKey()` (preferred) or `averageKeySize()`, and
+`averageValue()` or `averageValueSize()` respectively.
+
+In the example above, `averageKey("Amsterdam")` is called, because it is assumed that "Amsterdam" (9 bytes in UTF-8 encoding) is the average length for city names. Some names are shorter (Tokyo, 5 bytes), some names are longer (San Francisco, 13 bytes).
+
+Another example could be if values in your `ChronicleMap` are adjacency lists of some social graph, where nodes are represented as `long` identifiers, and adjacency lists are `long[]` arrays. For example, if the average number of friends is 150, you could configure the `ChronicleMap` as follows:
+
+```java
+Map<Long, long[]> socialGraph = ChronicleMap
+    .of(Long.class, long[].class)
+    .name("social-graph-map")
+    .entries(1_000_000_000L)
+    .averageValue(new long[150])
+    .create();
+```
+
+You could omit specifying key, or value, average sizes, if their types are boxed Java primitives or value interfaces. They are constantly-sized and Chronicle Map knows about that.
+
+If the key or value type is constantly sized, or keys or values only of a certain size appear in your Chronicle Map domain, then preferably you should configure `constantKeySizeBySample()` or
+`constantValueSizeBySample()`, instead of `averageKey()` or `averageValue()`. For example:
+
+```java
+ChronicleSet<UUID> uuids =
+    ChronicleSet.of(UUID.class)
+        .name("uuids")
+        // All UUIDs take 16 bytes.
+        .constantKeySizeBySample(UUID.randomUUID())
+        .entries(1_000_000)
+        .create();
+```
+
+== Custom serializers
+
+Chronicle Map allows you to configure custom marshallers for key or value types which are not supported out-of-the-box. You can also serialize supported types like `String` in some custom way (encoded other than UTF-8), or serialize supported types more efficiently than by default.
+
+There are three pairs of serialization interfaces. Only one of them should be chosen in a single implementation, and supplied to the `ChronicleMapBuilder` for the key or value type. These are:
+
+- link:CM_Tutorial_Bytes.adoc[BytesWriter and BytesReader]
+- link:CM_Tutorial_Sized.adoc[SizedWriter and SizedReader]
+- link:CM_Tutorial_DataAccess.adoc[DataAccess and SizedReader]
+
+=== Custom serialization checklist
+
+ 1. Choose the most suitable pair of serialization interfaces; link:CM_Tutorial_Bytes.adoc[BytesWriter and BytesReader], link:CM_Tutorial_Sized.adoc[SizedWriter and SizedReader], or link:CM_Tutorial_DataAccess.adoc[DataAccess and SizedReader]. Recommendations on which pair to choose are given in
+ the linked sections, describing each pair.
+
+ 2. If implementation of the writer or reader part is configuration-less, give it a `private`
+ constructor, and define a single `INSTANCE` constant. A sole instance of this marshaller class in the JVM. Implement `ReadResolvable` and return `INSTANCE` from the `readResolve()` method. Do not make the implementation a Java `enum`.
+
+ 3. If both the writer and reader are configuration-less, merge them into a single `-Marshaller` implementation class.
+
+ 4. Make best efforts to reuse `using` objects on the reader side (`BytesReader` or `SizedReader`); including nesting objects.
+
+ 5. Make best efforts to cache intermediate serialization results on writer side while working with some object. For example, try not to make expensive computations in both `size()` and `write()` methods
+ of the `SizedWriter` implementation. Rather, compute them and cache in an serializer instance
+ field.
+
+ 6. Make best efforts to reuse intermediate objects that are used for reading or writing. Store them in instance fields of the serializer implementation.
+
+ 7. If a serializer implementation is stateful, or has cache fields, implement `StatefulCopyable`. +
+  See link:CM_Tutorial_Understanding.adoc[Understanding `StatefulCopyable`] for more information.
+
+ 8. Implement `writeMarshallable()` and `readMarshallable()` by writing and reading configuration fields (but not the state or cache fields) of the serializer instance one-by-one. Use the given
+ `WireOut`/`WireIn` object. +
+ See [Custom `CharSequence` encoding](#custom-charsequence-encoding)
+ section for some non-trivial example of implementing these methods. See also https://github.com/OpenHFT/Chronicle-Wire#using-wire[Wire tutorial].
+
+ 9. Don't forget to initialize transient/cache/state fileds of the instance in the end of
+ `readMarshallable()` implementation. This is needed, because fefore calling `readMarshallable()`,
+ Wire framework creates a serializer instance by means of `Unsafe.allocateInstance()` rather than
+ calling any constructor.
+
+ 10. If implementing `DataAccess`, consider implementation to be `Data` also, and return `this` from
+ `getData()` method.
+
+ 11. Don't forget to implement `equals()`, `hashCode()` and `toString()` in `Data` implementation,
+ returned from `DataAccess.getData()` method, regardless if this is actually the same `DataAccess`
+ object, or a separate object.
+
+ 12. Except `DataAccess` which is also a `Data`, serializers shouldn't override Object's `equals()`,
+ `hashCode()` and `toString()` (these methods are never called on serializers inside Chronicle Map
+ library); they shouldn't implement `Serializable` or `Externalizable` (but have to implement
+ `net.openhft.chronicle.wire.Marshallable`); shouldn't implement `Cloneable` (but have to implement
+ `StatefulCopyable`, if they are stateful or have cache fields).
+
+ 13. After implementing custom serializers, don't forget to actually apply them to
+ `ChronicleMapBuilder` by `keyMarshallers()`, `keyReaderAndDataAccess()`, `valueMarshallers()` or
+ `valueReaderAndDataAccess()` methods.
+
+== `ChronicleMap` usage patterns
+
+=== Single-key queries
+
+`ChronicleMap` supports all operations from:
+
+ - https://docs.oracle.com/javase/8/docs/api/java/util/Map.html[`Map`]  interfaces; `get()`, `put()`, etc, including
+methods added in Java 8, like `compute()` and `merge()`, and
+  - https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`] interfaces;
+`putIfAbsent()`, `replace()`.
+
+All operations, including those which include "two-steps", for example, `compute()`, are correctly synchronized in terms of the `ConcurrentMap` interface. This means that you could use a `ChronicleMap` instance just like a `HashMap` or `ConcurrentHashMap`.
+
+```java
+PostalCodeRange amsterdamCodes = Values.newHeapInstance(PostalCodeRange.class);
+amsterdamCodes.minCode(1011);
+amsterdamCodes.maxCode(1183);
+cityPostalCodes.put("Amsterdam", amsterdamCodes);
+
+...
+
+PostalCodeRange amsterdamCodes = cityPostalCodes.get("Amsterdam");
+```
+
+However, this approach often generates garbage, because the values should be deserialized from
+off-heap memory to on-heap memory when the new value objects are allocated. There are several possibilities to
+reuse objects efficiently:
+
+==== Value interfaces instead of boxed primitives
+
+If you want to create a `ChronicleMap` where keys are `long` ids, use `LongValue` instead of `Long`
+key:
+
+```java
+ChronicleMap<LongValue, Order> orders = ChronicleMap
+    .of(LongValue.class, Order.class)
+    .name("orders-map")
+    .entries(1_000_000)
+    .create();
+
+LongValue key = Values.newHeapInstance(LongValue.class);
+key.setValue(id);
+orders.put(key, order);
+
+...
+
+long[] orderIds = ...
+// Allocate a single heap instance for inserting all keys from the array.
+// This could be a cached or ThreadLocal value as well, eliminating
+// allocations altogether.
+LongValue key = Values.newHeapInstance(LongValue.class);
+for (long id : orderIds) {
+    // Reuse the heap instance for each key
+    key.setValue(id);
+    Order order = orders.get(key);
+    // process the order...
+}
+```
+
+==== `chronicleMap.getUsing()`
+
+Use `ChronicleMap#getUsing(K key, V using)` to reuse the value object. It works if the value type is `CharSequence`. Pass `StringBuilder` as the `using` argument. For example:
+
+ ```java
+ ChronicleMap<LongValue, CharSequence> names = ...
+ StringBuilder name = new StringBuilder();
+ for (long id : ids) {
+    key.setValue(id);
+    names.getUsing(key, name);
+    // process the name...
+ }
+ ```
+
+In this case, calling `names.getUsing(key, name)` is equivalent to:
+
+ ```java
+ name.setLength(0);
+ name.append(names.get(key));
+ ```
+
+The difference is that it doesn't generate garbage. The value type is the value interface. Pass the heap instance to read the data into it without new object allocation:
+
+ ```java
+ ThreadLocal<PostalCodeRange> cachedPostalCodeRange =
+    ThreadLocal.withInitial(() -> Values.newHeapInstance(PostalCodeRange.class));
+
+ ...
+
+ PostalCodeRange range = cachedPostalCodeRange.get();
+ cityPostalCodes.getUsing(city, range);
+ // process the range...
+ ```
+
+ - If the value type implements `BytesMarshallable`, or `Externalizable`, then `ChronicleMap` attempts to
+ reuse the given `using` object by deserializing the value into the given object.
+
+ - If custom marshaller is configured in the `ChronicleMapBuilder` via `.valueMarshaller()`,
+ then `ChronicleMap` attempts to reuse the given object by calling the `readUsing()` method from the
+ marshaller interface.
+
+If `ChronicleMap` fails to reuse the object in `getUsing()`, it does no harm. It falls back to
+object creation, as in the `get()` method. In particular, even `null` is allowed to be passed as
+`using` object. It allows a "lazy" using object initialization pattern:
+
+```java
+// a field
+PostalCodeRange cachedRange = null;
+
+...
+
+// in a method
+cachedRange = cityPostalCodes.getUsing(city, cachedRange);
+// process the range...
+```
+In this example, `cachedRange` is `null` initially. On the first `getUsing()` call, the heap value
+is allocated and saved in a `cachedRange` field for later reuse.
+
+NOTE: If the value type is a value interface, **do not** use flyweight implementation as the `getUsing()` argument. This is dangerous, because on reusing flyweight points to the `ChronicleMap` memory
+directly, but the access is not synchronized. At best you could read inconsistent value state;
+at worst you could corrupt the `ChronicleMap` memory.
+
+For accessing the `ChronicleMap` value memory directly use the following techniques.
+
+==== Working with an entry within a context
+
+```java
+try (ExternalMapQueryContext<CharSequence, PostalCodeRange, ?> c =
+        cityPostalCodes.queryContext("Amsterdam")) {
+    MapEntry<CharSequence, PostalCodeRange> entry = c.entry();
+    if (entry != null) {
+        PostalCodeRange range = entry.value().get();
+        // Access the off-heap memory directly, by calling range
+        // object getters.
+        // This is very rewarding, when the value has a lot of fields
+        // and expensive to copy to heap all of them, when you need to access
+        // just a few fields.
+    } else {
+        // city not found..
+    }
+}
+```
+
+=== Multi-key queries
+
+In this example, consistent graph edge addition and removals are implemented using multi-key queries:
+
+```java
+public static boolean addEdge(
+        ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
+    if (source == target)
+        throw new IllegalArgumentException("loops are forbidden");
+    ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceC = graph.queryContext(source);
+    ExternalMapQueryContext<Integer, Set<Integer>, ?> targetC = graph.queryContext(target);
+    // order for consistent lock acquisition => avoid dead lock
+    if (sourceC.segmentIndex() <= targetC.segmentIndex()) {
+        return innerAddEdge(source, sourceC, target, targetC);
+    } else {
+        return innerAddEdge(target, targetC, source, sourceC);
+    }
+}
+
+private static boolean innerAddEdge(
+        int source, ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceContext,
+        int target, ExternalMapQueryContext<Integer, Set<Integer>, ?> targetContext) {
+    try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = sourceContext) {
+        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> tc = targetContext) {
+            sc.updateLock().lock();
+            tc.updateLock().lock();
+            MapEntry<Integer, Set<Integer>> sEntry = sc.entry();
+            if (sEntry != null) {
+                MapEntry<Integer, Set<Integer>> tEntry = tc.entry();
+                if (tEntry != null) {
+                    return addEdgeBothPresent(sc, sEntry, source, tc, tEntry, target);
+                } else {
+                    addEdgePresentAbsent(sc, sEntry, source, tc, target);
+                    return true;
+                }
+            } else {
+                MapEntry<Integer, Set<Integer>> tEntry = tc.entry();
+                if (tEntry != null) {
+                    addEdgePresentAbsent(tc, tEntry, target, sc, source);
+                } else {
+                    addEdgeBothAbsent(sc, source, tc, target);
+                }
+                return true;
+            }
+        }
+    }
+}
+
+private static boolean addEdgeBothPresent(
+        MapQueryContext<Integer, Set<Integer>, ?> sc,
+        @NotNull MapEntry<Integer, Set<Integer>> sEntry, int source,
+        MapQueryContext<Integer, Set<Integer>, ?> tc,
+        @NotNull MapEntry<Integer, Set<Integer>> tEntry, int target) {
+    Set<Integer> sNeighbours = sEntry.value().get();
+    if (sNeighbours.add(target)) {
+        Set<Integer> tNeighbours = tEntry.value().get();
+        boolean added = tNeighbours.add(source);
+        assert added;
+        sEntry.doReplaceValue(sc.wrapValueAsData(sNeighbours));
+        tEntry.doReplaceValue(tc.wrapValueAsData(tNeighbours));
+        return true;
+    } else {
+        return false;
+    }
+}
+
+private static void addEdgePresentAbsent(
+        MapQueryContext<Integer, Set<Integer>, ?> sc,
+        @NotNull MapEntry<Integer, Set<Integer>> sEntry, int source,
+        MapQueryContext<Integer, Set<Integer>, ?> tc, int target) {
+    Set<Integer> sNeighbours = sEntry.value().get();
+    boolean added = sNeighbours.add(target);
+    assert added;
+    sEntry.doReplaceValue(sc.wrapValueAsData(sNeighbours));
+
+    addEdgeOneSide(tc, source);
+}
+
+private static void addEdgeBothAbsent(MapQueryContext<Integer, Set<Integer>, ?> sc, int source,
+        MapQueryContext<Integer, Set<Integer>, ?> tc, int target) {
+    addEdgeOneSide(sc, target);
+    addEdgeOneSide(tc, source);
+}
+
+private static void addEdgeOneSide(MapQueryContext<Integer, Set<Integer>, ?> tc, int source) {
+    Set<Integer> tNeighbours = new HashSet<>();
+    tNeighbours.add(source);
+    MapAbsentEntry<Integer, Set<Integer>> tAbsentEntry = tc.absentEntry();
+    assert tAbsentEntry != null;
+    tAbsentEntry.doInsert(tc.wrapValueAsData(tNeighbours));
+}
+
+public static boolean removeEdge(
+        ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
+    ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceC = graph.queryContext(source);
+    ExternalMapQueryContext<Integer, Set<Integer>, ?> targetC = graph.queryContext(target);
+    // order for consistent lock acquisition => avoid dead lock
+    if (sourceC.segmentIndex() <= targetC.segmentIndex()) {
+        return innerRemoveEdge(source, sourceC, target, targetC);
+    } else {
+        return innerRemoveEdge(target, targetC, source, sourceC);
+    }
+}
+
+private static boolean innerRemoveEdge(
+        int source, ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceContext,
+        int target, ExternalMapQueryContext<Integer, Set<Integer>, ?> targetContext) {
+    try (ExternalMapQueryContext<Integer, Set<Integer>, ?> sc = sourceContext) {
+        try (ExternalMapQueryContext<Integer, Set<Integer>, ?> tc = targetContext) {
+            sc.updateLock().lock();
+            MapEntry<Integer, Set<Integer>> sEntry = sc.entry();
+            if (sEntry == null)
+                return false;
+            Set<Integer> sNeighbours = sEntry.value().get();
+            if (!sNeighbours.remove(target))
+                return false;
+
+            tc.updateLock().lock();
+            MapEntry<Integer, Set<Integer>> tEntry = tc.entry();
+            if (tEntry == null)
+                throw new IllegalStateException("target node should be present in the graph");
+            Set<Integer> tNeighbours = tEntry.value().get();
+            if (!tNeighbours.remove(source))
+                throw new IllegalStateException("the target node have an edge to the source");
+            sEntry.doReplaceValue(sc.wrapValueAsData(sNeighbours));
+            tEntry.doReplaceValue(tc.wrapValueAsData(tNeighbours));
+            return true;
+        }
+    }
+}
+```
+
+Usage:
+
+```java
+HashSet<Integer> averageValue = new HashSet<>();
+for (int i = 0; i < AVERAGE_CONNECTIVITY; i++) {
+    averageValue.add(i);
+}
+ChronicleMap<Integer, Set<Integer>> graph = ChronicleMapBuilder
+        .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
+        .name("graph")
+        .entries(100)
+        .averageValue(averageValue)
+        .create();
+
+addEdge(graph, 1, 2);
+removeEdge(graph, 1, 2);
+```
+
+== Close `ChronicleMap`
+Unlike `ConcurrentHashMap`, `ChronicleMap` stores its data off-heap; often in a memory mapped file.
+It is recommended that you call `close()` when you have finished working with a `ChronicleMap`.
+
+``` java
+map.close()
+```
+
+This is especially important when working with Chronicle Map replication, as failure to call close may prevent
+you from restarting a replicated map on the same port.
+
+In the event that your application crashes, it may not
+be possible to call `close()`. Your operating system will usually close dangling ports automatically. So, although it is recommended that you `close()` when you have finished with the map,
+it is not something that you must do; it's just something that we recommend you should do.
+
+WARNING: If you call `close()` too early before you have finished working with the map, this can cause
+your JVM to crash. Close **MUST** be the last thing that you do with the map.
+
+== Behaviour Customization
+
+You can customize the behaviour of Chronicle Map.
+
+See <<CM_Tutorial_Behaviour.adoc#,CM_Tutorial_Behaviour>> for more details.
+
+
+== Entry checksums
+
+Chronicle Map is able to store entry checksums along with entries. With entry checksums it is
+possible to identify partially written entries (in the case of operating system, or power failure),
+and corrupted entries (in the case of hardware, memory, or disk corruption) and clean them up during the <<CM_Tutorial.adoc#recovery,recovery>> procedure.
+
+Entry checksums are `32-bit` numbers, computed by a hash function with good avalanche effect.
+Theoretically, there is still about a one-in-a-billion chance that after entry corruption, it passes the sum check.
+
+By default, entry checksums are:
+
+ - **`ON`** if the Chronicle Map is persisted to disk (i. e. created via
+`createPersistedTo()` method)
+- **`OFF`** if the Chronicle Map is purely in-memory.
+
+Storing checksums for a purely in-memory Chronicle Map hardly makes any practical sense, but you might want to disable storing checksums for a persisted Chronicle Map by calling `.checksumEntries(false)` on the `ChronicleMapBuilder` used to create a map. It makes sense if you don't need extra safety that  checksums provide.
+
+Entry checksums are computed automatically when an entry is inserted into a Chronicle Map, and
+re-computed automatically on operations which update the whole value. For example, `map.put()`,
+`map.replace()`, `map.compute()`, `mapEntry.doReplaceValue()`. See the `MapEntry` interface in
+http://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs]. If you update values directly, bypassing Chronicle Map logic, keeping the entry checksum up-to-date is also your responsibility.
+
+It is strongly recommended to update off-heap memory of values directly only within a context, and update or write lock held. Within a context, you are provided with an entry object of `MapEntry` type. To re-compute entry checksum manually, cast that object to `ChecksumEntry` type and call the `.updateChecksum()` method:
+
+``` java
+try (ChronicleMap<Integer, LongValue> map = ChronicleMap
+        .of(Integer.class, LongValue.class)
+        .entries(1)
+        // Entry checksums make sense only for persisted Chronicle Maps, and are ON by
+        // default for such maps
+        .createPersistedTo(file)) {
+
+    LongValue value = Values.newHeapInstance(LongValue.class);
+    value.setValue(42);
+    map.put(1, value);
+
+    try (ExternalMapQueryContext<Integer, LongValue, ?> c = map.queryContext(1)) {
+        // Update lock required for calling ChecksumEntry.checkSum()
+        c.updateLock().lock();
+        MapEntry<Integer, LongValue> entry = c.entry();
+        Assert.assertNotNull(entry);
+        ChecksumEntry checksumEntry = (ChecksumEntry) entry;
+        Assert.assertTrue(checksumEntry.checkSum());
+
+        // to access off-heap bytes, should call value().getUsing() with Native value
+        // provided. Simple get() return Heap value by default
+        LongValue nativeValue =
+                entry.value().getUsing(Values.newNativeReference(LongValue.class));
+        // This value bytes update bypass Chronicle Map internals, so checksum is not
+        // updated automatically
+        nativeValue.setValue(43);
+        Assert.assertFalse(checksumEntry.checkSum());
+
+        // Restore correct checksum
+        checksumEntry.updateChecksum();
+        Assert.assertTrue(checksumEntry.checkSum());
+    }
+}
+```
+
+'''
+<<../ReadMe.adoc#,Back to ReadMe>>

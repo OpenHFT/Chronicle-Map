@@ -1,0 +1,342 @@
+= Behaviour Customization
+Neil Clifford
+:toc: macro
+:toclevels: 2
+:css-signature: demo
+:toc-placement: macro
+:icons: font
+
+toc::[]
+
+== Customization
+
+You could customize `ChronicleMap` behaviour on several levels:
+
+ - `ChronicleMapBuilder.entryOperations()` define the "inner" listening level. All operations with
+ entries, either during ordinary map method calls, remote calls, replication or modifications during
+ iteration over the map, operate using this configured SPI.
+
+ - `ChronicleMapBuilder.mapMethods()` is the higher-level of listening for local calls of Map
+ methods. Methods in the `MapMethods` interface correspond to `Map` interface methods with the same
+ names, and define their implementations for `ChronicleMap`.
+
+ - `ChronicleMapBuilder.remoteOperations()` is for listening and customizing behaviour of remote
+ calls, and replication events.
+
+All executions around `ChronicleMap` go through all three tiers, or just the last two):
+
+ 1. Query tier: `MapQueryContext` interface
+ 2. Entry tier: `MapEntry` and `MapAbsentEntry` interfaces
+ 3. Data tier: `Data` interface
+
+`MapMethods` and `MapRemoteOperations` methods accept *query context*; SPI is above
+the Query tier.
+
+`MapEntryOperations` methods accept `MapEntry` or `MapAbsentEntry`; SPI is between Query and Entry tiers.
+
+When combined, interception SPI interfaces and the `ChronicleMap.queryContext()` API are powerful enough to:
+
+ - Log all operations of some kind on `ChronicleMap` (for example, all remove, insert, or update operations).
+ - Log some specific operations on `ChronicleMap` (for example, log only `acquireUsing()` calls, which has created a new entry).
+ - Inhibit operations of some kind on the `ChronicleMap` instance.
+ - Backup all changes to `ChronicleMap` to some alternative storage; for example, an SQL database.
+ - Perform multi-Chronicle Map operations correctly in concurrent environment, by acquiring locks on
+ all ChronicleMaps, before updating them.
+ - Perform multi-key operations on a single `ChronicleMap` correctly in a concurrent environment, by acquiring locks on all keys before updating the entries.
+ - Define your own replication/reconciliation logic for distributed Chronicle Maps.
+ - Dump statistics of the Chronicle Map instance; each segment's load, size in bytes of each
+ entry, etc.
+
+== Example - Simple logging
+
+To log all modification operations on `ChronicleMap`:
+
+```java
+class SimpleLoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
+
+    private static final SimpleLoggingMapEntryOperations INSTANCE =
+            new SimpleLoggingMapEntryOperations();
+
+    public static <K, V> MapEntryOperations<K, V, Void> simpleLoggingMapEntryOperations() {
+        return SimpleLoggingMapEntryOperations.INSTANCE;
+    }
+
+    private SimpleLoggingMapEntryOperations() {}
+
+    @Override
+    public Void remove(@NotNull MapEntry<K, V> entry) {
+        System.out.println("remove " + entry.key() + ": " + entry.value());
+        entry.doRemove();
+        return null;
+    }
+
+    @Override
+    public Void replaceValue(@NotNull MapEntry<K, V> entry, Data<V, ?> newValue) {
+        System.out.println("replace " + entry.key() + ": " + entry.value() + " -> " + newValue);
+        entry.doReplaceValue(newValue);
+        return null;
+    }
+
+    @Override
+    public Void insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V, ?> value) {
+        System.out.println("insert " + absentEntry.absentKey() + " -> " + value);
+        absentEntry.doInsert(value);
+        return null;
+    }
+}
+```
+
+Usage:
+
+```java
+ChronicleMap<IntValue, IntValue> map = ChronicleMap
+        .of(Integer.class, IntValue.class)
+        .entries(100)
+        .entryOperations(simpleLoggingMapEntryOperations())
+        .create();
+
+// do anything with the map
+```
+
+== Example - BiMap
+
+Possible bi-directional map (that is, a map that preserves the uniqueness of its values, as well
+as that of its keys) implementation over Chronicle Maps.
+
+```java
+enum DualLockSuccess {SUCCESS, FAIL}
+```
+
+```java
+class BiMapMethods<K, V> implements MapMethods<K, V, DualLockSuccess> {
+    @Override
+    public void remove(MapQueryContext<K, V, DualLockSuccess> q, ReturnValue<V> returnValue) {
+        while (true) {
+            q.updateLock().lock();
+            try {
+                MapEntry<K, V> entry = q.entry();
+                if (entry != null) {
+                    returnValue.returnValue(entry.value());
+                    if (q.remove(entry) == SUCCESS)
+                        return;
+                }
+            } finally {
+                q.readLock().unlock();
+            }
+        }
+    }
+
+    @Override
+    public void put(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value,
+                    ReturnValue<V> returnValue) {
+        while (true) {
+            q.updateLock().lock();
+            try {
+                MapEntry<K, V> entry = q.entry();
+                if (entry != null) {
+                    throw new IllegalStateException();
+                } else {
+                    if (q.insert(q.absentEntry(), value) == SUCCESS)
+                        return;
+                }
+            } finally {
+                q.readLock().unlock();
+            }
+        }
+    }
+
+    @Override
+    public void putIfAbsent(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value,
+                            ReturnValue<V> returnValue) {
+        while (true) {
+            try {
+                if (q.readLock().tryLock()) {
+                    MapEntry<?, V> entry = q.entry();
+                    if (entry != null) {
+                        returnValue.returnValue(entry.value());
+                        return;
+                    }
+                    // Key is absent
+                    q.readLock().unlock();
+                }
+                q.updateLock().lock();
+                MapEntry<?, V> entry = q.entry();
+                if (entry != null) {
+                    returnValue.returnValue(entry.value());
+                    return;
+                }
+                // Key is absent
+                if (q.insert(q.absentEntry(), value) == SUCCESS)
+                    return;
+            } finally {
+                q.readLock().unlock();
+            }
+        }
+    }
+
+    @Override
+    public boolean remove(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value) {
+        while (true) {
+            q.updateLock().lock();
+            MapEntry<K, V> entry = q.entry();
+            try {
+                if (entry != null && bytesEquivalent(entry.value(), value)) {
+                    if (q.remove(entry) == SUCCESS) {
+                        return true;
+                    } else {
+                        //noinspection UnnecessaryContinue
+                        continue;
+                    }
+                } else {
+                    return false;
+                }
+            } finally {
+                q.readLock().unlock();
+            }
+        }
+    }
+
+    @Override
+    public void acquireUsing(MapQueryContext<K, V, DualLockSuccess> q,
+                             ReturnValue<V> returnValue) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void replace(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value,
+                        ReturnValue<V> returnValue) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean replace(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> oldValue,
+                           Data<V, ?> newValue) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void compute(MapQueryContext<K, V, DualLockSuccess> q,
+                        BiFunction<? super K, ? super V, ? extends V> remappingFunction,
+                        ReturnValue<V> returnValue) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void merge(MapQueryContext<K, V, DualLockSuccess> q, Data<V, ?> value,
+                      BiFunction<? super V, ? super V, ? extends V> remappingFunction,
+                      ReturnValue<V> returnValue) {
+        throw new UnsupportedOperationException();
+    }
+}
+```
+
+```java
+class BiMapEntryOperations<K, V> implements MapEntryOperations<K, V, DualLockSuccess> {
+    ChronicleMap<V, K> reverse;
+
+    public void setReverse(ChronicleMap<V, K> reverse) {
+        this.reverse = reverse;
+    }
+
+    @Override
+    public DualLockSuccess remove(@NotNull MapEntry<K, V> entry) {
+        try (ExternalMapQueryContext<V, K, ?> rq = reverse.queryContext(entry.value())) {
+            if (!rq.updateLock().tryLock()) {
+                if (entry.context() instanceof MapQueryContext)
+                    return FAIL;
+                throw new IllegalStateException("Concurrent modifications to reverse map " +
+                        "during remove during iteration");
+            }
+            MapEntry<V, K> reverseEntry = rq.entry();
+            if (reverseEntry != null) {
+                entry.doRemove();
+                reverseEntry.doRemove();
+                return SUCCESS;
+            } else {
+                throw new IllegalStateException(entry.key() + " maps to " + entry.value() +
+                        ", but in the reverse map this value is absent");
+            }
+        }
+    }
+
+    @Override
+    public DualLockSuccess replaceValue(@NotNull MapEntry<K, V> entry, Data<V, ?> newValue) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DualLockSuccess insert(@NotNull MapAbsentEntry<K, V> absentEntry,
+                                  Data<V, ?> value) {
+        try (ExternalMapQueryContext<V, K, ?> rq = reverse.queryContext(value)) {
+            if (!rq.updateLock().tryLock())
+                return FAIL;
+            MapAbsentEntry<V, K> reverseAbsentEntry = rq.absentEntry();
+            if (reverseAbsentEntry != null) {
+                absentEntry.doInsert(value);
+                reverseAbsentEntry.doInsert(absentEntry.absentKey());
+                return SUCCESS;
+            } else {
+                Data<K, ?> reverseKey = rq.entry().value();
+                if (reverseKey.equals(absentEntry.absentKey())) {
+                    // recover
+                    absentEntry.doInsert(value);
+                    return SUCCESS;
+                }
+                throw new IllegalArgumentException("Try to associate " +
+                        absentEntry.absentKey() + " with " + value + ", but in the reverse " +
+                        "map this value already maps to " + reverseKey);
+            }
+        }
+    }
+}
+```
+
+Usage:
+
+```java
+BiMapEntryOperations<Integer, CharSequence> biMapOps1 = new BiMapEntryOperations<>();
+ChronicleMap<Integer, CharSequence> map1 = ChronicleMapBuilder
+        .of(Integer.class, CharSequence.class)
+        .name("direct-bimap")
+        .entries(100)
+        .actualSegments(1)
+        .averageValueSize(10)
+        .entryOperations(biMapOps1)
+        .mapMethods(new BiMapMethods<>())
+        .create();
+
+BiMapEntryOperations<CharSequence, Integer> biMapOps2 = new BiMapEntryOperations<>();
+ChronicleMap<CharSequence, Integer> map2 = ChronicleMapBuilder
+        .of(CharSequence.class, Integer.class)
+        .name("reverse-bimap")
+        .entries(100)
+        .actualSegments(1)
+        .averageKeySize(10)
+        .entryOperations(biMapOps2)
+        .mapMethods(new BiMapMethods<>())
+        .create();
+
+biMapOps1.setReverse(map2);
+biMapOps2.setReverse(map1);
+
+map1.put(1, "1");
+System.out.println(map2.get("1"));
+```
+
+== Example - Monitor Chronicle Map Statistics
+
+```java
+    public static <K, V> void printMapStats(ChronicleMap<K, V> map) {
+        for (int i = 0; i < map.segments(); i++) {
+            try (MapSegmentContext<K, V, ?> c = map.segmentContext(i)) {
+                System.out.printf("segment %d contains %d entries\n", i, c.size());
+                c.forEachSegmentEntry(e -> System.out.printf("%s, %d bytes -> %s, %d bytes\n",
+                        e.key(), e.key().size(), e.value(), e.value().size()));
+            }
+        }
+    }
+```
+
+'''
+<<CM_Tutorial.adoc#,Back to Tutorial>>
+

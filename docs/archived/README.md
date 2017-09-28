@@ -139,7 +139,6 @@ license, please contact sales@chronicle.software.
  http://vanillajava.blogspot.com/2015/09/chronicle-journal-customizable-data.html) - another
  key-value built by Chronicle Software, with different properties.
 
-
 ## Chronicle Map 3 Tutorial
 
 #### Contents

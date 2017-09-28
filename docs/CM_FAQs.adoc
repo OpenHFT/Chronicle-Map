@@ -1,0 +1,27 @@
+= Chronicle Map Frequently Asked Questions
+
+== Question
+
+I am investigating Chronicle Map as a potential replacement of `Redis`; with concurrency in mind.
+
+In our architecture, we would be looking to replace a "large" `Redis` instance that currently has multiple clients connecting to it, causing latency pileups due to ``Redis``'s blocking nature.
+
+The issue is that we need to make requests in random batches of ~1000. With `Redis` we are able to make a single request via a `Lua` script (or multi-get / multi-set commands) and receive a single response. In the documentation on Chronicle Map`s stateless client, I see that the remote calls are blocking, and can be made only one key at a time; so for us the solution is not obvious.
+
+While I am considering passing off each individual key task to a threadpool running `x` blocking threads at a time, I wonder if there might be a better solution, that could take advantage of doing RPC in batches, and perhaps work asynchronously. As I do not see this available currently, my question is whether this is an enhancement that you might consider, or if you could perhaps point me to if/how we could write our own solution for doing this?
+
+Also, is there a reason these `1000` `gets` have be done serially in one thread? Why not submit `1000 get()` tasks to a pool of say `20` threads. Wouldn't this improve throughput and reduce latency?
+
+== Answer
+
+The stateless client has been replaced with Chronicle Engine. The stateless client is not supported in ChronicleMap 3.x.  For  more information, please refer to Chronicle Engine FAQ's.
+
+For `get()s`, parallelizing will reduce costs. For `put()s`, if you have concurrency requirements, that is, multi-key lock before updating all of them, it should be in one thread.
+
+You would not gain a performance benefit by using batches, unless you are compressing the batch of data. All the data will have to be sent via TCP, even if it is in a batch.
+
+NOTE: Under high load, the Chronicle Map stateless client consolidates many small TCP requests into a single request when run with a number of threads.
+
+
+'''
+<<../ReadMe.adoc#,Back to ReadMe>>

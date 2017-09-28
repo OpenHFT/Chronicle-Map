@@ -1,0 +1,122 @@
+= Chronicle Map Compatibility and Versioning
+Neil Clifford
+:toc: macro
+:toclevels: 1
+:css-signature: demo
+:toc-placement: macro
+:icons: font
+
+toc::[]
+
+== Java Implementation Compatibility
+
+=== Public API
+
+The *public API* comprises public classes that are included in
+http://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadoc].
+
+NOTE: Other public classes are not subject to
+the following rules; they may be changed in any way, or even removed.
+
+ - Class and method names, types, and number of parameters in already existing methods, should not be changed.
+
+ - Any methods can be added to the classes and interfaces that are not subject for
+ subclassing or implementing by the library users; such as `ChronicleMap`, `ChronicleMapBuilder`,
+ `MapEntry`. They must be added in such a way that any existing code, calling methods on those classes still compiles; and does not
+ break due to ambiguity in method resolution.
+
+ - Only non-abstract (concrete or default) methods can be added to the classes and interfaces that are subject for subclassing by the library users; such as `MapMethods`, `MapEntryOperations`, `SizedReader`.
+
+=== Behaviour
+
+Semantics and actual effects of API calls may change between Chronicle Map versions with
+different `<minor>` number versioning.
+
+For example, default serialization forms of key or value objects of some types could change, "high level" configurations in `ChronicleMapBuilder` could produce
+Chronicle Maps with different "low level" configurations, etc.
+
+Such changes should be documented in the release notes.
+
+=== Persistence File Binary Form
+
+A persisted Chronicle Map store (a binary file), produced by a production release of the library, should be accessible and updatable by any subsequent production release of the library in the `3.x` branch; unless the older version has bugs that lead to data corruption.
+
+To support this:
+
+ - Serialization forms of any classes should not be changed. For example, when a marshaller class (for example, `StringBytesReader`) of objects of some type is changed, and its serialization form should be changed, a new class called `StringBytesReader_3_5` (`5` is the `<minor>` number of the version of the library, in which this change is made) should be created, and put along with older class.
+
+ - When the specification revision is updated (where the binary form could be completely changed), a new version of the root implementation class (say, `VanillaChronicleMap_3_5`) should be created and put along with older version, which should behave the same as before.
+
+=== Replication Protocol
+
+The replication protocol may change between Chronicle Map versions with different `<minor>` numbers.
+
+Chronicle Map nodes should only communicate with other nodes of the same version.
+
+Chronicle Map nodes running different versions of the library should not communicate with each other. This may lead to failures, but not to data corruption on either of the nodes.
+
+== Specification Compatibility
+
+The Chronicle Map Data Store specification can be updated without changing the revision while it remains backward compatible. Backward compatibility means that the implementation of the newer version of the specification can access and update any persisted Chronicle Map store that was produced by an older version.
+
+In addition, potential *concurrent* accessing implementations of older versions ("within" the same revision) should not lose correctness or corrupt the data.
+
+If more substantial changes to the specification are required, then the revision number should be updated.
+
+The binary form of Chronicle Map and its algorithms could change between revisions to any degree, but link:../spec/1-design-goals.md#guarantees[guarantees] provided by the specification are not weakened.
+
+== Java implementation Versioning
+
+The versioning format is as follows:
+
+`<major>.<minor>.<patch>`
+
+For example:
+`3.14.1`
+
+
+=== The <minor> number should be updated, when:
+
+ - **a feature, or public API** method is added.
+
+ - **the behaviour** of `ChronicleMap`, `ChronicleMapBuilder`, or any other class or method or subsystem, is semantically changed. +
+ For example, when configuration heuristics in `ChronicleMapBuilder` are improved, and
+   `ChronicleMapBuilder` configured the same way constructs a `ChronicleMap` with a different number of segments, or segment's capacity.
+
+ - **any dependency is updated**; even if only the `<patch>` number is updated. For example, `chronicle-bytes` dependency is updated from `1.1.1` to `1.1.2`. +
+ This rule does not apply to dependencies to the umbrella POMs which merely determine versions of other dependencies (namely, `chronicle-bom` and `third-party-bom`), if the versions of actual dependencies do not change between those versions of umbrella POMs. +
+  Also, this rule does not apply to dependencies with Maven scopes of `test` or `provided`.
+
+ - **bug fixes, performance optimization, or feature additions** that requires changes to:
+  ** the binary, or serialized, form of Chronicle Map data store; therefore revising the Chronicle Map data store specification.
+  ** the binary replication protocol, or the serialized form of some marshaller classes, that require creation of new versions of classes.
+
+=== The <minor> number should not be updated when:
+ - **a bug is fixed**, in a way that does not make any working code to change its behaviour semantically.
+ - **performance is optimized**, changing its performance characteristics,
+ but not semantics.
+
+During development, and after the release of the version `3.y.z`, the library should be versioned `3.y.<x+1>-SNAPSHOT`. +
+ +
+As soon as changes are made that are substantial enough for the next released version
+to update the `<minor>` number, then the version should be changed to `3.<y+1>.0-SNAPSHOT`, *in the same
+commit operation* that these changes are made.
+
+Suffixes `-alpha`, `-beta`, `-rc`, mean it is a pre-production release.
+
+NOTE: If the <minor> number is not to be updated, the next release updates the `<patch>` number.
+
+== Specification Versioning
+
+The first Chronicle Map 3 production release designates the Chronicle Map data store specification; revision 1.
+
+When the specification needs to be updated in a way that is not backward compatible, the revision should be updated (revision `2`, `3`, ...) and the Java implementation of this revision should have its '<minor>' version number updated.
+
+During development, and after the release of the revision `x`, while the specification is backward compatible, it should remain versioned `x`. In the same commit operation where the specification becomes
+incompatible, its revision should be set to `<x+1>-pre` until the next production release.
+
+Releases and updates to the `<minor>` number in the library version should be synchronized with updates to the specification revision number.
+
+
+'''
+<<../ReadMe.adoc#,Back to ReadMe>>

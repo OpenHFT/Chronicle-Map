@@ -1,0 +1,83 @@
+= Chronicle Map
+
+Chronicle Map is a super-fast, in-memory, non-blocking, key-value store, designed for low-latency, and/or multi-process
+applications such as trading and financial market applications.
+See <<docs/CM_Features.adoc#,Features doc>> for more information.
+
+The size of a Chronicle Map is not limited by memory (RAM), but rather by the available disk capacity.
+
+image::docs\images\CM_Overview.jpg[]
+
+=== Use cases
+Chronicle Map is used in production around the
+world for:
+
+• **real-time trading systems**. Chronicle Map
+provides in-memory access speeds, and supports
+ultra-low garbage collection. Chronicle Map can support the most demanding of applications.
+• **highly concurrent systems**. Chronicle Map
+supports multiple readers and writers,
+distributed across multiple machines.
+
+=== Why use Chronicle Map?
+Chronicle Map is:
+
+• **fast**. Millions of operations per second, with
+low and stable microsecond latencies for reads and writes. Write queries scale well up
+to the number of hardware execution threads in the server. Read queries never block each
+other.
+• **reliable**. Chronicle Software have a “chaos
+monkey” test which verifies Chronicle Map
+multi-master replication in the face of node
+and network failures. The map can optionally be persisted to disk.
+• **in production** at banks and hedge funds,
+globally.
+• **built using lessons learnt** from real-world
+experience solving real-world problems.
+• **open source** (standard version), and in use at
+hundreds of sites around the world.
+
+=== Our offering
+Chronicle Software provides full support for
+Chronicle Map, consulting to help you make
+best use of the product, and can also deliver
+projects using a mix of our resources and
+your own.
+
+=== Replication Environment Example
+The following diagram shows an example of Chronicle Map replication over three servers (or sites).
+Chronicle Map Replication is part of Chronicle Map (Enterprise Edition); a commercially supported
+version of our successful open source Chronicle Map.
+
+image::docs\images\Configure_Three_Way_Replication.png[]
+
+Replication is multi-master, lock-free, redundant, deterministic, and eventually consistent.
+
+The writer can optionally wait for replication to occur across nodes or regions.
+
+NOTE: See <<docs/CM_Replication.adoc#,Chronicle Map Replication>> for more information.
+
+'''
+== Documentation
+The Chronicle Map documentation comprises:
+
+.Documentation
+|===
+|**Document**|**Purpose**
+|<<docs/CM_Features.adoc#,CM_Features>>
+|Features description.
+|<<docs/CM_Replication.adoc#,CM_Replication>>
+|Replication explanation.
+|<<docs/CM_Tutorial.adoc#,CM_Tutorial>>
+|Tutorial.
+|<<docs/CM_FAQs.adoc#,CM_FAQs>>
+|Frequently asked questions.
+|<<docs/CM_Download.adoc#,CM_Download>>
+|Downloading the software.
+|<<docs/CM_Updates.adoc#,CM_Updates>>
+|Updates from Chronicle Map version 2.
+|<<docs/CM_Compatibility_and_Versioning.adoc#,CM_Compatibility_and_Versioning>>
+|Compatibility and Versioning description.
+|===
+
+Linked documentation is contained in the `docs` folder.

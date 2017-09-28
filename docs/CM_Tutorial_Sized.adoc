@@ -1,0 +1,156 @@
+= `SizedWriter` and `SizedReader`
+Neil Clifford
+:toc: macro
+:toclevels: 1
+:css-signature: demo
+:toc-placement: macro
+:icons: font
+
+toc::[]
+
+This pair of interfaces is configured using `ChronicleMapBuilder.keyMarshallers()` or
+`valueMarshallers()` for the key, or value type, of the map, respectively. Overloaded methods; those
+for [`BytesWriter` and `BytesReader`](#byteswriter-and-bytesreader) interfaces have the same names).
+
+The main two methods to implement in `SizedWriter` interface are:
+
+ - `long size(@NotNull T toWrite);` returns the number of bytes, which is written by the subsequent
+ `write()` method given the same `toWrite` instance of the serialized type.
+ - `void write(Bytes out, long size, @NotNull T toWrite);` writes the given `toWrite` instance to
+ the given `out` bytes sink. Additionally, `size` is provided, which is the value computed for the
+ same `toWrite` instance by calling `size()` method. When `SizedWriter` is used internally,
+ the `size()` method is always called before `write()`; caching logic in `SizedWriter` implementation
+ may rely on this. This method should advance the  `writePosition()` of the given out `Bytes` exactly by
+ the given `size` number of bytes.
+
+`SizedReader`'s `T read(Bytes in, long size, @Nullable T using);` method is similar to the
+corresponding `read()` method in `BytesReader` interface, except that the size of the serialized object is provided.
+
+This pair of interfaces is suitable, if:
+
+ - The serialized form of the type effectively includes the size of the rest of the serialized form
+ in the beginning.
+
+ - The type is not a plain sequence of bytes; for example, `byte[]` or `ByteBuffer`. For `byte[]` or `ByteBuffer`, the <<CM_Tutorial_DataAccess#, `DataAccess` and `SizedReader`>> pair of interfaces is a much better
+ choice.
+
+Examples of such types include lists, and arrays of constant-sized elements.
+
+Compared to `BytesWriter` and `BytesReader`, this pair of interfaces allows the sharing of information
+about the serialized form, between serialization logic, and the Chronicle Map; this saves a few bytes by storing the serialization size only once, rather than twice. This pair of interfaces is not much more difficult to implement, but the gains are also not large.
+
+Example: Serializing lists of simple `Point` structures:
+
+```java
+public final class Point {
+
+    public static Point of(double x, double y) {
+        Point p = new Point();
+        p.x = x;
+        p.y = y;
+        return p;
+    }
+
+    double x, y;
+}
+```
+
+Serializer implementation:
+
+```java
+public final class PointListSizedMarshaller
+        implements SizedReader<List<Point>>, SizedWriter<List<Point>>,
+        ReadResolvable<PointListSizedMarshaller> {
+
+    static final PointListSizedMarshaller INSTANCE = new PointListSizedMarshaller();
+
+    private PointListSizedMarshaller() {}
+
+    /** A point takes 16 bytes in serialized form: 8 bytes for both x and y value */
+    private static final long ELEMENT_SIZE = 16;
+
+    @Override
+    public long size(@NotNull List<Point> toWrite) {
+        return toWrite.size() * ELEMENT_SIZE;
+    }
+
+    @Override
+    public void write(Bytes out, long size, @NotNull List<Point> toWrite) {
+        toWrite.forEach(point -> {
+            out.writeDouble(point.x);
+            out.writeDouble(point.y);
+        });
+    }
+
+    @NotNull
+    @Override
+    public List<Point> read(@NotNull Bytes in, long size, List<Point> using) {
+        if (size % ELEMENT_SIZE != 0) {
+            throw new IORuntimeException("Bytes size should be a multiple of " + ELEMENT_SIZE +
+                    ", " + size + " read");
+        }
+        long listSizeAsLong = size / ELEMENT_SIZE;
+        if (listSizeAsLong > Integer.MAX_VALUE) {
+            throw new IORuntimeException("List size couldn't be more than " + Integer.MAX_VALUE +
+                    ", " + listSizeAsLong + " read");
+        }
+        int listSize = (int) listSizeAsLong;
+        if (using == null) {
+            using = new ArrayList<>(listSize);
+            for (int i = 0; i < listSize; i++) {
+                using.add(null);
+            }
+        } else if (using.size() < listSize) {
+            while (using.size() < listSize) {
+                using.add(null);
+            }
+        } else if (using.size() > listSize) {
+            using.subList(listSize, using.size()).clear();
+        }
+        for (int i = 0; i < listSize; i++) {
+            Point point = using.get(i);
+            if (point == null)
+                using.set(i, point = new Point());
+            point.x = in.readDouble();
+            point.y = in.readDouble();
+        }
+        return using;
+    }
+
+    @Override
+    public void writeMarshallable(@NotNull WireOut wireOut) {
+        // no fields to write
+    }
+
+    @Override
+    public void readMarshallable(@NotNull WireIn wireIn) {
+        // no fields to read
+    }
+
+    @Override
+    public PointListSizedMarshaller readResolve() {
+        return INSTANCE;
+    }
+}
+```
+
+Usage example:
+
+```java
+try (ChronicleMa p<String, List<Point>> objects = ChronicleMap
+        .of(String.class, (Class<List<Point>>) (Class) List.class)
+        .averageKey("range")
+        .valueMarshaller(PointListSizedMarshaller.INSTANCE)
+        .averageValue(asList(of(0, 0), of(1, 1)))
+        .entries(10)
+        .create()) {
+    objects.put("range", asList(of(0, 0), of(1, 1)));
+    objects.put("square", asList(of(0, 0), of(0, 100), of(100, 100), of(100, 0)));
+
+    Assert.assertEquals(2, objects.get("range").size());
+    Assert.assertEquals(4, objects.get("square").size());
+}
+```
+
+'''
+<<CM_Tutorial.adoc#Custom serializers,Back to Tutorial>>

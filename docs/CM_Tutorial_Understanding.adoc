@@ -1,0 +1,69 @@
+= Understanding `StatefulCopyable`
+Neil Clifford
+:toc: macro
+:toclevels: 1
+:css-signature: demo
+:toc-placement: macro
+:icons: font
+
+toc::[]
+
+== Problems
+
+ 1. Sometimes on reading, writing, or in other methods, defined in serialization interfaces, it is needed to operate with intermediate objects; holding some writing/reading state.
+ +
+In the simplest and most common case, those objects are of some kind of buffer between serialized or deserialized instances, and output or input `Bytes`. For example, see writer and reader implementations in <<CM_Tutorial_Bytes.adoc#custom-charsequence-encoding,custom `CharSequence` encoding>>.
+ +
+To avoid generating a lot of garbage, those intermediate objects should be cached.
+
+ 2. `Data` object, returned from `getData()` method of `DataAccess` serialization interface, should be cached in order to avoid generating garbage.
+
+ 3. `SizedWriter` and `DataAccess` serialization interfaces, and the `Data` object, returned from
+ `DataAccess.getData()` method, since it is cached (see the previous point) have several methods:
+ - `size()` and `write()` in `SizedWriter`
+ - `getData()` and `uninit()` in `DataAccess`
+ - many methods in `Data`.
+  +
+  +
+ It is usually essential to save some computation results between calls to those methods from inside the Chronicle Map implementation, while working some key or value during some query to Chronicle Map. This is because, otherwise expensive computations are performed several times, and is very inefficient.
+
+These problems require to access some mutable, context-dependant fields, from within serializer
+interface implementations. Only a *single instance* of the serializer implementation is configured for a Chronicle Map (either by `keyMarshallers()`, `valueMarshallers()`, `keyReaderAndDataAccess()`, or `valueReaderAndDataAccess()` methods in `ChronicleMapBuilder`). On the
+other hand, `ChronicleMap` is a `ConcurrentMap`. That is, serializer implementations could be accessed from multiple threads concurrently. Moreover, a single `ChronicleMapBuilder` (with a single pair of serializer instances configured for keys and values) could be used to construct many independent ``ChronicleMap``s, which could also be accessed concurrently.
+
+An inefficient and fragile solution would be a single instance of serialization interface, static `ThreadLocal` fields in the serializer implementation class.
+
+- It is inefficient, because ``ThreadLocal``s are accessed each time a serializer interface method is called. That is much slower than accessing vanilla object fields.
+
+- It is fragile, because if you need `ThreadLocal` fields for preserving some state between calls to
+multiple methods in serializer interfaces over a single query to a Chronicle Map (the 3rd point in
+the problems list above), then you should consider that a single serializer instance could be used for both keys and values of the same Chronicle Map. Calls to some methods of serializer interface for serializing the key and the value over a Chronicle Map query are interspersed in unspecified order.
+
+In addition, you should consider that a single serializer instance could be used to access multiple independent Chronicle Map instances in the same thread. Calls to serializers within maps could be interspersed using <<CM_Tutorial.adoc#working-with-an-entry-within-a-context,contexts access>>.
+
+So, `ThreadLocal` fields should be isolated; not just per-accessing thread, but also per-serialized object domain, and per-accessing Chronicle Map instance.
+
+== Recommended solution
+Use `StatefulCopyable`.
+
+A serializer implementation has ordinary instance
+fields for caching anything, and preserving the state between calls to different methods. It implements the `StatefulCopyable` interface with a single method, `copy()`. This is like `Object.clone()` but copies only the configuration fields of the serializer instance; not the cache, or state fields.
+
+A call to the `copy()` method, at any point of a serializer instance lifetime, should return an instance of the same serializer implementation, in a state exactly equal to the state of the current instance, at the moment after construction and initial configuration, with an empty cache and state.
+
+As a consequence, the `copy()` method is transitive. `serializer.copy().copy().copy()` should return an object in exactly the same state as after a single `copy()` call.
+
+Chronicle Map implementation recognizes that configured `BytesWriter`, `BytesReader`, `SizedWriter`, `SizedReader`, or `DataAccess` instances implement `StatefulCopyable`, and populates it internally using `copy()` for each thread, Chronicle Map instances and serialized object domain (keys or values).
+
+See examples of implementing this interface in <<CM_Tutorial_Bytes.adoc#custom-charsequence-encoding,custom `CharSequence` encoding>>.
+
+It is permissable to return `this` from the `copy()` method, if the
+serializer implementation doesn't have a state.
+
+Typically this is the case when the serializer is
+configured with sub-serializers, which might be `StatefulCopyable`, or not. For example, the  https://github.com/OpenHFT/Chronicle-Map/blob/master/src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java[`ListMarshaller`]
+class.
+
+
+'''
+<<CM_Tutorial.adoc#,Back to Tutorial>>
