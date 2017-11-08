@@ -151,7 +151,12 @@ public class MemoryLeaksTest {
         Assert.assertNotEquals(0, map.offHeapMemoryUsed());
         try {
             long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
-            assertEquals(expectedNativeMemory, nativeMemoryUsed());
+            assertEquals(String.format(
+                    "used before map: %d, used by map: %d, expected used: %d, actual used: %d",
+                    nativeMemoryUsedBeforeMap,
+                    map.offHeapMemoryUsed(),
+                    expectedNativeMemory, nativeMemoryUsed()),
+                    expectedNativeMemory, nativeMemoryUsed());
         } finally {
             tryCloseFromContext(map);
             map.close();
