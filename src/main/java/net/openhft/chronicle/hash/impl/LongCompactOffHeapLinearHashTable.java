@@ -59,7 +59,7 @@ public final class LongCompactOffHeapLinearHashTable extends CompactOffHeapLinea
 
     @Override
     public void writeEntryVolatile(long addr, long pos, long key, long value) {
-        OS.memory().writeVolatileLong(null, addr + pos, entry(key, value));
+        OS.memory().writeVolatileLong(addr + pos, entry(key, value));
     }
 
     @Override
