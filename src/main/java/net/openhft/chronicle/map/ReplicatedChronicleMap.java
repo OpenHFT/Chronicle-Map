@@ -695,7 +695,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         }
 
         private long bitSetsAddr(TierBulkData tierBulkData) {
-            return tierBulkData.bytesStore.address(tierBulkData.offset) +
+            return tierBulkData.bytesStore.addressForRead(tierBulkData.offset) +
                     offsetToBitSetsWithinATierBulk;
         }
 

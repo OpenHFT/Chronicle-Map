@@ -300,7 +300,7 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     public void alignReadPosition(Bytes entry) {
-        long positionAddr = entry.address(entry.readPosition());
+        long positionAddr = entry.addressForRead(entry.readPosition());
         long skip = alignAddr(positionAddr, alignment) - positionAddr;
         if (skip > 0)
             entry.readSkip(skip);

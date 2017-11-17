@@ -707,7 +707,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public long bsAddress() {
-        return bs.address(0);
+        return bs.addressForRead(0);
     }
 
     public final long segmentBaseAddr(int segmentIndex) {
@@ -819,7 +819,7 @@ public abstract class VanillaChronicleHash<K,
             globalMutableState.setExtraTiersInUse(tiersInUse + 1);
             BytesStore allocatedTierBytes = tierBytesStore(firstFreeTierIndex);
             long allocatedTierOffset = tierBytesOffset(firstFreeTierIndex);
-            long tierBaseAddr = allocatedTierBytes.address(0) + allocatedTierOffset;
+            long tierBaseAddr = allocatedTierBytes.addressForRead(0) + allocatedTierOffset;
             long tierCountersAreaAddr = tierBaseAddr + tierHashLookupOuterSize;
             long nextFreeTierIndex = TierCountersArea.nextTierIndex(tierCountersAreaAddr);
             globalMutableState.setFirstFreeTierIndex(nextFreeTierIndex);
@@ -847,8 +847,8 @@ public abstract class VanillaChronicleHash<K,
 
         // see HCOLL-397
         if (persisted()) {
-            long address = tierBytesStore.address(firstTierOffset - tierBulkInnerOffsetToTiers);
-            long endAddress = tierBytesStore.address(tierBytesOffset(lastTierIndex)) + tierSize;
+            long address = tierBytesStore.addressForRead(firstTierOffset - tierBulkInnerOffsetToTiers);
+            long endAddress = tierBytesStore.addressForRead(tierBytesOffset(lastTierIndex)) + tierSize;
             long length = endAddress - address;
             msync(address, length);
         }
@@ -886,7 +886,7 @@ public abstract class VanillaChronicleHash<K,
             zeroOutNewlyMappedTier(tierBytesStore, tierOffset);
             if (tierIndex < lastTierIndex) {
                 long tierCountersAreaOffset = tierOffset + tierHashLookupOuterSize;
-                TierCountersArea.nextTierIndex(tierBytesStore.address(0) + tierCountersAreaOffset,
+                TierCountersArea.nextTierIndex(tierBytesStore.addressForRead(0) + tierCountersAreaOffset,
                         tierIndex + 1);
             }
         }
@@ -943,7 +943,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     protected long tierAddr(TierBulkData tierBulkData, long tierIndexOffsetWithinBulk) {
-        return tierBulkData.bytesStore.address(0) + tierBulkData.offset +
+        return tierBulkData.bytesStore.addressForRead(0) + tierBulkData.offset +
                 tierBulkInnerOffsetToTiers + tierIndexOffsetWithinBulk * tierSize;
     }
 

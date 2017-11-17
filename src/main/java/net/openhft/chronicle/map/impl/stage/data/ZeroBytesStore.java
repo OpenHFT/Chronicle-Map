@@ -30,6 +30,11 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     INSTANCE;
 
     @Override
+    public long addressForWrite(long offset) throws UnsupportedOperationException, BufferOverflowException {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
     public int peekUnsignedByte(long offset) {
         return 0;
     }
@@ -123,9 +128,10 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     }
 
     @Override
-    public long address(long offset) throws UnsupportedOperationException {
+    public long addressForRead(long offset) throws UnsupportedOperationException {
         return offset;
     }
+
 
     @Override
     public boolean compareAndSwapInt(long offset, int expected, int value)

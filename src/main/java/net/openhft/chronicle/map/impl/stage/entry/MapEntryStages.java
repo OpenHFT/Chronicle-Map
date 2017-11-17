@@ -18,8 +18,6 @@
 package net.openhft.chronicle.map.impl.stage.entry;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.NativeBytesStore;
-import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
 import net.openhft.chronicle.hash.impl.stage.entry.AllocatedChunks;
@@ -64,7 +62,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         segmentBytes.writePosition(valueSizeOffset);
         mh.m().valueSizeMarshaller.writeSize(segmentBytes, valueSize);
         long currentPosition = segmentBytes.writePosition();
-        long currentAddr = segmentBytes.address(currentPosition);
+        long currentAddr = segmentBytes.addressForRead(currentPosition);
         long skip = alignAddr(currentAddr, mh.m().alignment) - currentAddr;
         if (skip > 0)
             segmentBytes.writeSkip(skip);

@@ -195,8 +195,8 @@ public class TierRecovery {
                 try (ExternalMapQueryContext<?, ?, ?> c = m.queryContext(key)) {
                     MapEntry<?, ?> entry2 = c.entry();
                     Data<?> key2 = ((MapEntry) c).key();
-                    long keyAddress = key.bytes().address(key.offset());
-                    long key2Address = key2.bytes().address(key2.offset());
+                    long keyAddress = key.bytes().addressForRead(key.offset());
+                    long key2Address = key2.bytes().addressForRead(key2.offset());
                     if (key2Address != keyAddress) {
                         report(corruptionListener, corruption, s.segmentIndex, () ->
                                 format("entries with duplicate key {} in segment {}: " +
