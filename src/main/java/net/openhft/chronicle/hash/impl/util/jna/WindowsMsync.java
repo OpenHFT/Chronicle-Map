@@ -50,7 +50,7 @@ public final class WindowsMsync {
             // Finally calls FlushFileBuffers
             raf.getChannel().force(false);
         } else {
-            throw new IOException(Kernel32Util.formatMessage(lastError));
+            throw new IOException(Kernel32Util.formatMessageFromLastErrorCode(lastError));
         }
     }
 

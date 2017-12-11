@@ -17,10 +17,8 @@
 
 package net.openhft.chronicle.hash.impl.util.jna;
 
-import com.sun.jna.IntegerType;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
+import net.openhft.chronicle.core.OS;
 
 import java.io.IOException;
 
@@ -36,7 +34,8 @@ public final class PosixMsync {
     private static native int msync(Pointer addr, size_t length, int flags);
 
     static {
-        Native.register(PosixMsync.class, Platform.C_LIBRARY_NAME);
+        NativeLibrary clib = NativeLibrary.getInstance(Platform.C_LIBRARY_NAME);
+        Native.register(PosixMsync.class, clib);
     }
 
     private PosixMsync() {}
