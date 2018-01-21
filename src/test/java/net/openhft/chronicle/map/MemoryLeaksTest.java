@@ -24,7 +24,10 @@ import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.serialization.impl.StringSizedReader;
 import net.openhft.chronicle.hash.serialization.impl.StringUtf8DataAccess;
 import net.openhft.chronicle.values.Values;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -37,22 +40,32 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 
-@Ignore("flaky test")
 @RunWith(Parameterized.class)
 public class MemoryLeaksTest {
 
-    @Parameterized.Parameters
+    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         List<Boolean> booleans = Arrays.asList(false, true);
         // Test with all possible combinations of three boolean parameters.
         return Lists.cartesianProduct(booleans, booleans, booleans)
-                .stream().map(List::toArray).collect(Collectors.toList());
+                .stream().map(flags -> {
+                    final ArrayList<Object> namedFlags = new ArrayList<>(Collections.singletonList(named(flags)));
+                    namedFlags.addAll(flags);
+                    return namedFlags;
+                }).map(List::toArray).collect(Collectors.toList());
+    }
+
+    private static String named(final List<Boolean> flags) {
+        return (!flags.get(0) ? "not " : "") + "replicated, " +
+                (!flags.get(1) ? "not " : "") + "persisted, " +
+                (!flags.get(2) ? "not " : "") + "closed within context";
     }
 
     @Rule
@@ -69,7 +82,7 @@ public class MemoryLeaksTest {
     private final AtomicInteger serializerCount = new AtomicInteger();
     private final List<WeakReference<CountedStringReader>> serializers = new ArrayList<>();
 
-    public MemoryLeaksTest(boolean replicated, boolean persisted, boolean closeWithinContext) {
+    public MemoryLeaksTest(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) {
         this.persisted = persisted;
         this.closeWithinContext = closeWithinContext;
         builder = ChronicleMap

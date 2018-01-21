@@ -26,7 +26,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-map</artifactId>
-    <version>3.14.5-SNAPSHOT</version>
+    <version>3.14.6-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
@@ -45,7 +45,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>1.14.127</version>
+                <version>1.15.25</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
