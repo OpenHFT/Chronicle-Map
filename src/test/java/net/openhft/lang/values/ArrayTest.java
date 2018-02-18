@@ -1,5 +1,6 @@
 package net.openhft.lang.values;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -13,13 +14,11 @@ import static org.junit.Assert.assertEquals;
 
 public class ArrayTest {
 
-    static String TMP = System.getProperty("java.io.tmpdir");
-
     @Test
     public void test0() throws IOException {
         ClassAliasPool.CLASS_ALIASES.addAlias(MovingAverageArray.class);
 
-        File file = new File(TMP + "/pf-PosistionsAndClose-" + System.nanoTime());
+        File file = new File(OS.getTarget() + "/pf-PosistionsAndClose-" + System.nanoTime());
 
         ChronicleMap<Long, MovingAverageArray> mapWrite = ChronicleMap
                 .of(Long.class, MovingAverageArray.class)
