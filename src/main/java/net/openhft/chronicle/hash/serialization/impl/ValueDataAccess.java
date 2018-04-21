@@ -33,7 +33,9 @@ import java.nio.ByteBuffer;
 
 public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T> {
 
-    /** Config field */
+    /**
+     * Config field
+     */
     private Class<T> valueType;
 
     // Cache fields
@@ -42,7 +44,9 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
     private transient Byteable nativeInstance;
     private transient Copyable nativeInstanceAsCopyable;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient Byteable instance;
 
     public ValueDataAccess(Class<T> valueType) {
@@ -50,7 +54,9 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
         initTransients();
     }
 
-    /** Returns the interface of values serialized. */
+    /**
+     * Returns the interface of values serialized.
+     */
     protected Class<T> valueType() {
         return valueType;
     }

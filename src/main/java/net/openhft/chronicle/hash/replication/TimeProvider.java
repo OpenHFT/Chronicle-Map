@@ -18,7 +18,6 @@
 package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 
 import java.util.concurrent.TimeUnit;
@@ -39,18 +38,18 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  */
 public final class TimeProvider {
 
-    private TimeProvider() {}
-
     private static final AtomicLong lastTimeHolder = new AtomicLong();
     private static LongSupplier millisecondSupplier = System::currentTimeMillis;
+    private TimeProvider() {
+    }
 
     /**
      * Returns a non-decreasing number, assumed to be used as a "timestamp".
-     *
+     * <p>
      * <p>Approximate system time interval between two calls of this method is retrievable via
      * {@link #systemTimeIntervalBetween(long, long, TimeUnit)}, applied to the returned values
      * from those {@code currentTime()} calls.
-     *
+     * <p>
      * <p>Safe and scalable for concurrent use from multiple threads.
      *
      * @return the current timestamp
@@ -70,10 +69,10 @@ public final class TimeProvider {
      * Returns system time interval (i. e. wall time interval) between two time values, taken using
      * {@link #currentTime()} method, with the highest possible precision, in the given time units.
      *
-     * @param earlierTime {@link #currentTime()} result, taken at some moment in the past (earlier)
-     * @param laterTime {@link #currentTime()} result, taken at some moment in the past, but later
-     * than {@code earlierTime} was taken ("later" means there is a happens-before relationship
-     * between the two subject {@code currentTime()} calls)
+     * @param earlierTime            {@link #currentTime()} result, taken at some moment in the past (earlier)
+     * @param laterTime              {@link #currentTime()} result, taken at some moment in the past, but later
+     *                               than {@code earlierTime} was taken ("later" means there is a happens-before relationship
+     *                               between the two subject {@code currentTime()} calls)
      * @param systemTimeIntervalUnit the time units to return system time interval in
      * @return wall time interval between the specified moments in the given time unit
      */

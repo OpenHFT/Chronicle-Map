@@ -27,9 +27,12 @@ import org.jetbrains.annotations.NotNull;
 @Staged
 public class ReplicatedMapAbsentDelegating<K, V> implements Absent<K, V> {
 
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef KeySearch<K> ks;
-    @StageRef ReplicatedMapAbsent<K, V> delegate;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    KeySearch<K> ks;
+    @StageRef
+    ReplicatedMapAbsent<K, V> delegate;
 
     @NotNull
     @Override

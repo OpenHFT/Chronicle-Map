@@ -27,11 +27,10 @@ import static java.lang.Math.min;
 public final class StopBitSizeMarshaller
         implements SizeMarshaller, EnumMarshallable<StopBitSizeMarshaller> {
     public static final StopBitSizeMarshaller INSTANCE = new StopBitSizeMarshaller();
-
-    private StopBitSizeMarshaller() {}
-
     private static final long MIN_ENCODABLE_SIZE = Long.MIN_VALUE;
     private static final long MAX_ENCODABLE_SIZE = Long.MAX_VALUE;
+    private StopBitSizeMarshaller() {
+    }
 
     private static void rangeChecks(long minSize, long maxSize) {
         if (minSize > maxSize)

@@ -23,12 +23,13 @@ import org.jetbrains.annotations.NotNull;
 
 public final class NullReturnValue implements InstanceReturnValue {
     private static final NullReturnValue NULL_RETURN_VALUE = new NullReturnValue();
-    
+
+    private NullReturnValue() {
+    }
+
     public static <V> InstanceReturnValue<V> get() {
         return NULL_RETURN_VALUE;
     }
-    
-    private NullReturnValue() {}
 
     @Override
     public Object returnValue() {

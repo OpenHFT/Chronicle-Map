@@ -19,7 +19,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;

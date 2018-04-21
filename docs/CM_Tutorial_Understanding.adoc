@@ -64,6 +64,5 @@ Typically this is the case when the serializer is
 configured with sub-serializers, which might be `StatefulCopyable`, or not. For example, the  https://github.com/OpenHFT/Chronicle-Map/blob/master/src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java[`ListMarshaller`]
 class.
 
-
 '''
 <<CM_Tutorial.adoc#,Back to Tutorial>>

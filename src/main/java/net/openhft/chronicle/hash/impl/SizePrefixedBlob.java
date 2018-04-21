@@ -31,6 +31,9 @@ public final class SizePrefixedBlob {
 
     public static final int SIZE_MASK = (1 << 30) - 1;
 
+    private SizePrefixedBlob() {
+    }
+
     public static boolean isReady(int sizeWord) {
         return sizeWord > 0;
     }
@@ -38,6 +41,4 @@ public final class SizePrefixedBlob {
     public static int extractSize(int sizeWord) {
         return sizeWord & SIZE_MASK;
     }
-
-    private SizePrefixedBlob() {}
 }

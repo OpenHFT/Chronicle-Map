@@ -1,13 +1,15 @@
 package examples.portfolio;
 
-public interface PortfolioAssetInterface
-{
-	public long getAssetId();
-	public void setAssetId(long assetId);
+public interface PortfolioAssetInterface {
+    public long getAssetId();
 
-	public int getShares();
-	public void setShares(int shares);
+    public void setAssetId(long assetId);
 
-	public double getPrice();
-	public void setPrice(double price);
+    public int getShares();
+
+    public void setShares(int shares);
+
+    public double getPrice();
+
+    public void setPrice(double price);
 }

@@ -24,9 +24,10 @@ import net.openhft.sg.Staged;
 
 @Staged
 public class QueryCheckOnEachPublicOperation extends CheckOnEachPublicOperation {
-    
-    @StageRef HashQuery q;
-    
+
+    @StageRef
+    HashQuery q;
+
     @Override
     public void checkOnEachPublicOperation() {
         super.checkOnEachPublicOperation();

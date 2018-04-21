@@ -188,7 +188,6 @@ now contains 200 entries.
 
 This example is available in the repository, https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise/blob/master/src/test/java/software/chronicle/enterprise/map/example/MultiMasterMapReplicationExampleMain.java[MultiMasterMapReplicationExampleMain.java]
 
-
 == Replication event logging
 
 Chronicle Map Enterprise can be configured to log all replication events to a Chronicle Queue for auditing purposes.

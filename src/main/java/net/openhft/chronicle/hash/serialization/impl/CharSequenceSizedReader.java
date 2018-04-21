@@ -37,7 +37,8 @@ public class CharSequenceSizedReader implements SizedReader<CharSequence>,
      * stateless
      */
     @Deprecated
-    public CharSequenceSizedReader() {}
+    public CharSequenceSizedReader() {
+    }
 
     @NotNull
     @Override

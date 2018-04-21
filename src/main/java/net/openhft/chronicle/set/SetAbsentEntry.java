@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * into the {@link ChronicleSet}.
  *
  * @param <K> the set key type
- *
  * @see SetEntryOperations
  * @see SetQueryContext#absentEntry()
  */
@@ -36,12 +35,12 @@ public interface SetAbsentEntry<K> extends HashAbsentEntry<K> {
 
     /**
      * Inserts {@link #absentKey() the new key} into the set.
-     *
+     * <p>
      * <p>This method is the default implementation for {@link SetEntryOperations#insert(
-     * SetAbsentEntry)}, which might be customized over the default.
+     *SetAbsentEntry)}, which might be customized over the default.
      *
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
-     * operation are not met
+     *                               operation are not met
      * @see SetEntryOperations#insert(SetAbsentEntry)
      */
     void doInsert();

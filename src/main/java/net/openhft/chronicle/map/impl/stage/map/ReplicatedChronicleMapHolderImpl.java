@@ -34,7 +34,8 @@ public abstract class ReplicatedChronicleMapHolderImpl<K, V, R>
         extends Chaining
         implements ReplicatedChronicleMapHolder<K, V, R> {
 
-    @Stage("Map") private ReplicatedChronicleMap<K, V, R> m = null;
+    @Stage("Map")
+    private ReplicatedChronicleMap<K, V, R> m = null;
 
     public ReplicatedChronicleMapHolderImpl(VanillaChronicleMap map) {
         super(map);

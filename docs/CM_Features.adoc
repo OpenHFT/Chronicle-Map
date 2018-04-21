@@ -29,7 +29,6 @@ applications, such as trading and financial market applications.
  - Replication *without logs*, with constant footprint cost, guarantees progress even if the network
  doesn't sustain write rates.
 
-
 NOTE: See <<CM_Replication.adoc#,Chronicle Map Replication>> for more information.
 
 **Chronicle Map** has two meanings:
@@ -142,7 +141,6 @@ NOTE: For access to commercially available features please contact mailto:sales@
  - http://stackoverflow.com/tags/chronicle-map[Stackoverflow]
  - https://plus.google.com/communities/111431452027706917722[Chronicle User's group]
  - http://jrvis.com/red-dwarf/?user=openhft&repo=Chronicle-Map[Chronicle Map usage heatmap]
-
 
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>

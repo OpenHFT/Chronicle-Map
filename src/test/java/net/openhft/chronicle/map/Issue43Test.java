@@ -59,13 +59,14 @@ public class Issue43Test {
             EnumMarshallable<ArrayMarshaller> {
         public static final ArrayMarshaller INSTANCE = new ArrayMarshaller();
 
-        private ArrayMarshaller() {}
+        private ArrayMarshaller() {
+        }
 
         @Override
         public void write(Bytes bytes, @NotNull ValueWrapper vw) {
             bytes.writeInt(vw.values.length);
 
-            for (int i = 0; i < vw.values.length; i ++) {
+            for (int i = 0; i < vw.values.length; i++) {
                 bytes.writeDouble(vw.values[i]);
             }
         }

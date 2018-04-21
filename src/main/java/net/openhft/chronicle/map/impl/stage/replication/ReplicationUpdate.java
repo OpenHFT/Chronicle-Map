@@ -28,14 +28,20 @@ import net.openhft.sg.Staged;
 
 @Staged
 public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> {
-    @StageRef SegmentStages s;
-    @StageRef ReplicatedMapEntryStages<K, ?> e;
-    @StageRef ReplicatedChronicleMapHolder<?, ?, ?> mh;
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-
-    @Stage("ReplicationUpdate") public byte innerRemoteIdentifier = (byte) 0;
-    @Stage("ReplicationUpdate") public long innerRemoteTimestamp;
-    @Stage("ReplicationUpdate") public byte innerRemoteNodeIdentifier;
+    @Stage("ReplicationUpdate")
+    public byte innerRemoteIdentifier = (byte) 0;
+    @Stage("ReplicationUpdate")
+    public long innerRemoteTimestamp;
+    @Stage("ReplicationUpdate")
+    public byte innerRemoteNodeIdentifier;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    ReplicatedMapEntryStages<K, ?> e;
+    @StageRef
+    ReplicatedChronicleMapHolder<?, ?, ?> mh;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
 
     public abstract boolean replicationUpdateInit();
 
@@ -50,7 +56,7 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
         }
         innerRemoteNodeIdentifier = remoteNodeIdentifier;
     }
-    
+
     public void dropChange() {
         mh.m().dropChange(s.tierIndex, e.pos);
     }
@@ -62,7 +68,7 @@ public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> 
     public void moveChange(long oldTierIndex, long oldPos, long newPos) {
         mh.m().moveChange(oldTierIndex, oldPos, s.tierIndex, newPos);
     }
-    
+
     public void updateChange() {
         if (!replicationUpdateInit()) {
             raiseChange();

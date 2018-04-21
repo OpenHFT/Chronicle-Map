@@ -29,10 +29,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAccess<byte[]> {
 
-    /** Cache field */
+    /**
+     * Cache field
+     */
     private transient HeapBytesStore<byte[]> bs;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient byte[] array;
 
     public ByteArrayDataAccess() {

@@ -58,7 +58,7 @@ public class Issue62ChronicleServer {
         ChronicleMap<String, Long> cityPostalCodes =
                 cityPostalCodesMapBuilder.createPersistedTo(MAP_FILE_A);
 
-        for(int i = 0; i < 100; i++ ) {
+        for (int i = 0; i < 100; i++) {
             cityPostalCodes.put(STR + i, (long) i);
         }
 

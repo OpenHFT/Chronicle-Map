@@ -37,7 +37,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class StringBytesReader implements BytesReader<String>, StatefulCopyable<StringBytesReader> {
 
-    /** Cache field */
+    /**
+     * Cache field
+     */
     private transient StringBuilder sb;
 
     public StringBytesReader() {

@@ -157,8 +157,8 @@ public class ChronicleMapImportExportTest {
         System.out.println(file.getAbsolutePath());
         ChronicleMapBuilder<CharSequence, CharSequence> builder =
                 ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
-                .averageKeySize("hello".length()).averageValueSize("world".length())
-                .entries(1000);
+                        .averageKeySize("hello".length()).averageValueSize("world".length())
+                        .entries(1000);
         try (ChronicleMap<CharSequence, CharSequence> expected = builder
                 .create()) {
             expected.put("hello", "world");

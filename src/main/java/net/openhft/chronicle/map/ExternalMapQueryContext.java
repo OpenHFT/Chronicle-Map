@@ -26,9 +26,9 @@ import net.openhft.chronicle.hash.ExternalHashQueryContext;
  * @param <K> the map key type
  * @param <V> the map value type
  * @param <R> the return type of {@link MapEntryOperations}, {@link
- * ChronicleMapBuilder#entryOperations(MapEntryOperations) specified} for the queried {@code
- * ChronicleMap}
- * @see ChronicleMap#queryContext(Object)           
+ *            ChronicleMapBuilder#entryOperations(MapEntryOperations) specified} for the queried {@code
+ *            ChronicleMap}
+ * @see ChronicleMap#queryContext(Object)
  */
 public interface ExternalMapQueryContext<K, V, R>
         extends MapQueryContext<K, V, R>, ExternalHashQueryContext<K> {

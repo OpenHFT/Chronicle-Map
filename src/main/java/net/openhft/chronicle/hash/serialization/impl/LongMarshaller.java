@@ -32,7 +32,8 @@ public final class LongMarshaller
         SizedWriter<Long>, BytesWriter<Long>, EnumMarshallable<LongMarshaller> {
     public static final LongMarshaller INSTANCE = new LongMarshaller();
 
-    private LongMarshaller() {}
+    private LongMarshaller() {
+    }
 
     @Override
     public long size(@NotNull Long toWrite) {

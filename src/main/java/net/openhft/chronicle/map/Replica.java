@@ -29,29 +29,6 @@ import java.io.Closeable;
  */
 public interface Replica extends Closeable {
 
-    interface QueryContext<K, V> {
-
-        /**
-         *  @param newValue the value of the replicated entry
-         * @param remoteEntryIdentifier origin identifier of the replicated entry
-         * @param remoteEntryTimestamp timestamp of the replicated entry
-         * @param remoteNodeIdentifier identifier of the remote node this replication came from,
-         *                             or -1 if unknown/not applicable
-         */
-        void remotePut(
-                Data<V> newValue,
-                byte remoteEntryIdentifier, long remoteEntryTimestamp, byte remoteNodeIdentifier);
-
-        /**
-         * @param remoteEntryIdentifier origin identifier of the replicated entry
-         * @param remoteEntryTimestamp timestamp of the replicated entry
-         * @param remoteNodeIdentifier identifier of the remote node this replication came from,
-         *                             or -1 if unknown/not applicable
-         */
-        void remoteRemove(
-                byte remoteEntryIdentifier, long remoteEntryTimestamp, byte remoteNodeIdentifier);
-    }
-
     /**
      * Provides the unique Identifier associated with this map instance. <p> An identifier is used
      * to determine which replicating node made the change. <p> If two nodes update their map at the
@@ -73,7 +50,7 @@ public interface Replica extends Closeable {
      * Gets (if it does not exist, creates) an instance of ModificationIterator associated with a
      * remote node, this weak associated is bound using the {@code identifier}.
      *
-     * @param remoteIdentifier     the identifier of the remote node
+     * @param remoteIdentifier the identifier of the remote node
      * @return the ModificationIterator dedicated for replication to the remote node with the given
      * identifier
      * @see #identifier()
@@ -94,6 +71,29 @@ public interface Replica extends Closeable {
 
     void setRemoteNodeCouldBootstrapFrom(
             byte remoteIdentifier, long bootstrapTimestamp);
+
+    interface QueryContext<K, V> {
+
+        /**
+         * @param newValue              the value of the replicated entry
+         * @param remoteEntryIdentifier origin identifier of the replicated entry
+         * @param remoteEntryTimestamp  timestamp of the replicated entry
+         * @param remoteNodeIdentifier  identifier of the remote node this replication came from,
+         *                              or -1 if unknown/not applicable
+         */
+        void remotePut(
+                Data<V> newValue,
+                byte remoteEntryIdentifier, long remoteEntryTimestamp, byte remoteNodeIdentifier);
+
+        /**
+         * @param remoteEntryIdentifier origin identifier of the replicated entry
+         * @param remoteEntryTimestamp  timestamp of the replicated entry
+         * @param remoteNodeIdentifier  identifier of the remote node this replication came from,
+         *                              or -1 if unknown/not applicable
+         */
+        void remoteRemove(
+                byte remoteEntryIdentifier, long remoteEntryTimestamp, byte remoteNodeIdentifier);
+    }
 
     /**
      * notifies when there is a changed to the modification iterator
@@ -156,7 +156,8 @@ public interface Replica extends Closeable {
 
             /**
              * Called whenever a put() or remove() has occurred to a replicating map.
-             *  @param entry       the entry you will receive, this does not have to be locked, as
+             *
+             * @param entry       the entry you will receive, this does not have to be locked, as
              *                    locking is already provided from the caller.
              * @param chronicleId only assigned when clustering
              */
@@ -182,7 +183,8 @@ public interface Replica extends Closeable {
 
         /**
          * The map implements this method to save its contents.
-         *  @param entry       the byte location of the entry to be stored
+         *
+         * @param entry       the byte location of the entry to be stored
          * @param destination a buffer the entry will be written to, the segment may reject this
          *                    operation and add zeroBytes, if the identifier in the entry did not
          *                    match the maps local
@@ -196,8 +198,9 @@ public interface Replica extends Closeable {
          * in the same sequence and with the same types as were written by {@code
          * writeExternalEntry()}. This method is typically called when we receive a remote
          * replication event, this event could originate from either a remote {@code put(K key, V
-         *value)} or {@code remove(Object key)}
-         * @param source       bytes to read an entry from
+         * value)} or {@code remove(Object key)}
+         *
+         * @param source               bytes to read an entry from
          * @param remoteNodeIdentifier the identifier of the remove node, from which this event came
          *                             (NOT origin id of the entry)
          */

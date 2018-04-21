@@ -55,7 +55,8 @@ public class MapCloseTest {
         Thread t = new Thread(() -> map.close());
         t.start();
         t.join();
-        map.forEach((k, v) -> {});
+        map.forEach((k, v) -> {
+        });
     }
 
     @Test(expected = ChronicleHashClosedException.class)

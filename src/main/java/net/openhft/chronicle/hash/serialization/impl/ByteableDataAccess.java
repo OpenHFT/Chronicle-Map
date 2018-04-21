@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 public class ByteableDataAccess<T extends Byteable> extends InstanceCreatingMarshaller<T>
         implements DataAccess<T>, Data<T> {
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient T instance;
 
     public ByteableDataAccess(Class<T> tClass) {

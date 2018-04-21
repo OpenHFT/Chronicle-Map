@@ -24,6 +24,11 @@ import java.util.function.Supplier;
 
 public class ChronicleHashCorruptionImpl implements ChronicleHashCorruption {
 
+    private int segmentIndex;
+    private Supplier<String> messageSupplier;
+    private Throwable exception;
+    private String message;
+
     public static void report(
             ChronicleHashCorruption.Listener corruptionListener,
             ChronicleHashCorruptionImpl corruption, int segmentIndex,
@@ -43,11 +48,6 @@ public class ChronicleHashCorruptionImpl implements ChronicleHashCorruption {
     public static String format(String message, Object... args) {
         return MessageFormatter.arrayFormat(message, args).getMessage();
     }
-
-    private int segmentIndex;
-    private Supplier<String> messageSupplier;
-    private Throwable exception;
-    private String message;
 
     private void set(int segmentIndex, Supplier<String> messageSupplier, Throwable exception) {
         this.segmentIndex = segmentIndex;

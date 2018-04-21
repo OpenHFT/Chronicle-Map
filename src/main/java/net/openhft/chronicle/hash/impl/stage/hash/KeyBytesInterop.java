@@ -27,7 +27,8 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 @Staged
 public class KeyBytesInterop<K> {
 
-    @StageRef VanillaChronicleHashHolder<K> hh;
+    @StageRef
+    VanillaChronicleHashHolder<K> hh;
 
     public final SizedReader<K> keyReader = copyIfNeeded(hh.h().keyReader);
 }

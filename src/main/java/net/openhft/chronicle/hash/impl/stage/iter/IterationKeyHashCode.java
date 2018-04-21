@@ -31,9 +31,12 @@ import net.openhft.sg.Staged;
 @Staged
 public class IterationKeyHashCode implements KeyHashCode {
 
-    @StageRef VanillaChronicleHashHolder<?> hh;
-    @StageRef SegmentStages s;
-    @StageRef HashEntryStages<?> e;
+    @StageRef
+    VanillaChronicleHashHolder<?> hh;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    HashEntryStages<?> e;
 
     long keyHash = 0;
 

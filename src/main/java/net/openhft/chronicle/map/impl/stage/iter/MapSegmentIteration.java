@@ -31,10 +31,13 @@ import org.jetbrains.annotations.NotNull;
 @Staged
 public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<K, MapEntry<K, V>>
         implements MapEntry<K, V>, IterationContext<K, V, R> {
-    
-    @StageRef MapEntryStages<K, V> entry;
-    @StageRef WrappedValueInstanceDataHolder<V> wrappedValueInstanceDataHolder;
-    @StageRef WrappedValueInstanceDataHolderAccess<K, V, ?> wrappedValueInstanceDataHolderAccess;
+
+    @StageRef
+    MapEntryStages<K, V> entry;
+    @StageRef
+    WrappedValueInstanceDataHolder<V> wrappedValueInstanceDataHolder;
+    @StageRef
+    WrappedValueInstanceDataHolderAccess<K, V, ?> wrappedValueInstanceDataHolderAccess;
 
     @Override
     public void hookAfterEachIteration() {

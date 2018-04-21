@@ -24,10 +24,11 @@ import net.openhft.sg.Staged;
 @Staged
 public abstract class HashLookupPos {
 
-    @StageRef HashLookupSearch hls;
-    @StageRef SegmentStages s;
-
     public long hashLookupPos = -1;
+    @StageRef
+    HashLookupSearch hls;
+    @StageRef
+    SegmentStages s;
 
     public abstract boolean hashLookupPosInit();
 
@@ -50,6 +51,6 @@ public abstract class HashLookupPos {
     public void setHashLookupPos(long hashLookupPos) {
         this.hashLookupPos = hashLookupPos;
     }
-    
+
     public abstract void closeHashLookupPos();
 }

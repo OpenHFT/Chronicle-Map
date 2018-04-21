@@ -36,11 +36,11 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAcce
 /**
  * Dual bytes/object access to keys or values (for {@link ChronicleMap}) and elements (for {@link
  * ChronicleSet}) throughout the Chronicle Map library.
- * 
+ * <p>
  * <p>Bytes access: {@link #bytes()} + {@link #offset()} + {@link #size()}.
- * 
- * <p>Object access: {@link #get()}. 
- * 
+ * <p>
+ * <p>Object access: {@link #get()}.
+ * <p>
  * <p>In most cases, each particular {@code Data} wraps either some object or some bytes. Object
  * is marshalled to bytes lazily on demand, and bytes are lazily deserialized to object,
  * accordingly.
@@ -50,14 +50,27 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAcce
 public interface Data<T> {
 
     /**
+     * Utility method, compares two {@code Data} instances represent equivalent bytes sequences:
+     * by comparing {@linkplain #size() their sizes}, then calling {@link
+     * #equivalent(RandomDataInput, long) d1.equivalent(d2.bytes(), d2.offset())}.
+     *
+     * @param d1 the first {@code Data} to compare
+     * @param d2 the second {@code Data} to compare
+     * @return if the given {@code Data} instances represent equivalent bytes sequences
+     */
+    static boolean bytesEquivalent(Data<?> d1, Data<?> d2) {
+        return d1.size() == d2.size() && d1.equivalent(d2.bytes(), d2.offset());
+    }
+
+    /**
      * Returns the accessor object to the {@code Data}'s bytes.
-     *
+     * <p>
      * <p>If this {@code Data} wraps some bytes, this method just returns a reference to that bytes.
-     *
+     * <p>
      * <p>If this {@code Data} wraps an object, this method performs serialization internally and
      * returns a reference to the output buffer, caching the result for subsequent calls of this
      * method.
-     *
+     * <p>
      * <p>For safety, this interface returns read-only object, because it could expose bytes source
      * that must be immutable, e. g. a `char[]` array behind a {@code String}. But in cases when the
      * {@code Data} instance wraps off-heap bytes, e. g. {@link MapEntry#value()}, it is allowed to
@@ -95,13 +108,13 @@ public interface Data<T> {
     /**
      * Compares bytes of this {@code Data} to the given bytes {@code source}, starting from the
      * given offset.
-     *
+     * <p>
      * <p>Default implementation compares {@link #bytes()} of this {@code Data}, but custom
      * implementation may only check if {@linkplain #get() object} of this {@code Data} <i>would</i>
      * be serialized to the same bytes sequence, if this {@code Data} wraps an object and obtaining
      * {@link #bytes()} requires serialization internally.
      *
-     * @param source the bytes source, to compare this {@code Data}'s bytes with
+     * @param source       the bytes source, to compare this {@code Data}'s bytes with
      * @param sourceOffset the offset in the bytes source, the bytes sequence starts from
      * @return {@code true} if the given bytes sequence is equivalent to this {@code Data}'s bytes,
      * byte-by-byte
@@ -113,14 +126,14 @@ public interface Data<T> {
     /**
      * Writes bytes of this {@code Data} to the given {@code target} from the given {@code
      * targetOffset}.
-     *
+     * <p>
      * <p>Default implementation copies {@link #bytes()} of this {@code Data} using standard IO
      * methods of {@code RandomDataInput} and {@code RandomDataOutput}, but custom implementation
      * may write directly from {@linkplain #get() object}, if this {@code Data} is object-based and
      * obtaining {@link #bytes()} requires serialization internally. This allows to avoid double
      * copy.
      *
-     * @param target the destination to write this data bytes to
+     * @param target       the destination to write this data bytes to
      * @param targetOffset the offset in the target, to write the bytes from.
      */
     default void writeTo(RandomDataOutput target, long targetOffset) {
@@ -129,9 +142,9 @@ public interface Data<T> {
 
     /**
      * Returns object view of this {@code Data}.
-     *
+     * <p>
      * <p>If this {@code Data} wraps some object, this method just returns that object.
-     *
+     * <p>
      * <p>If this {@code Data} wraps some bytes, this method performs deserialization internally
      * and returns the resulting on-heap object, caching it for subsequent calls of this method. The
      * returned object could be reused, therefore it is <i>generally disallowed</i> to use the
@@ -149,19 +162,6 @@ public interface Data<T> {
      * or lambda, etc., which provided the access to this {@code Data} instance.
      */
     T getUsing(@Nullable T using);
-
-    /**
-     * Utility method, compares two {@code Data} instances represent equivalent bytes sequences:
-     * by comparing {@linkplain #size() their sizes}, then calling {@link
-     * #equivalent(RandomDataInput, long) d1.equivalent(d2.bytes(), d2.offset())}.
-     *
-     * @param d1 the first {@code Data} to compare
-     * @param d2 the second {@code Data} to compare
-     * @return if the given {@code Data} instances represent equivalent bytes sequences
-     */
-    static boolean bytesEquivalent(Data<?> d1, Data<?> d2) {
-        return d1.size() == d2.size() && d1.equivalent(d2.bytes(), d2.offset());
-    }
 
     /**
      * {@code Data} implementations should override {@link Object#hashCode()} with delegation to

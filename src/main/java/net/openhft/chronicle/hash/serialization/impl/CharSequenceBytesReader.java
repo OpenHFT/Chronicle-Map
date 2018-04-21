@@ -22,13 +22,8 @@ import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.SetMarshaller;
 import net.openhft.chronicle.hash.serialization.StatefulCopyable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
 /**
  * {@link BytesReader} implementation for {@code CharSequence}. For the primary ChronicleMap's key
@@ -42,7 +37,8 @@ public final class CharSequenceBytesReader implements BytesReader<CharSequence>,
         StatefulCopyable<CharSequenceBytesReader>, EnumMarshallable<CharSequenceBytesReader> {
     public static final CharSequenceBytesReader INSTANCE = new CharSequenceBytesReader();
 
-    private CharSequenceBytesReader() {}
+    private CharSequenceBytesReader() {
+    }
 
     @NotNull
     @Override

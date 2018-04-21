@@ -23,8 +23,9 @@ import net.openhft.sg.Staged;
 
 @Staged
 public class IterationCheckOnEachPublicOperation extends CheckOnEachPublicOperation {
-    
-    @StageRef MapSegmentIteration<?, ?, ?> iteration;
+
+    @StageRef
+    MapSegmentIteration<?, ?, ?> iteration;
 
     @Override
     public void checkOnEachPublicOperation() {

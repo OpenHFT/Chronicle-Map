@@ -26,9 +26,10 @@ package net.openhft.chronicle.hash;
 public abstract class AbstractData<T> implements Data<T> {
 
     /**
-     * Constructor for use by subclasses. 
+     * Constructor for use by subclasses.
      */
-    protected AbstractData() {}
+    protected AbstractData() {
+    }
 
     /**
      * Computes value's hash code by applying a hash function to {@code Data}'s <i>bytes</i>

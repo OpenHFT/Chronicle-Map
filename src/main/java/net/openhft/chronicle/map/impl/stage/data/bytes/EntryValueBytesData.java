@@ -22,7 +22,6 @@ import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.util.CharSequences;
 import net.openhft.chronicle.map.impl.VanillaChronicleMapHolder;
 import net.openhft.chronicle.map.impl.stage.entry.MapEntryStages;
 import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
@@ -33,15 +32,22 @@ import net.openhft.sg.Staged;
 @Staged
 public class EntryValueBytesData<V> extends AbstractData<V> {
 
-    @StageRef VanillaChronicleMapHolder<?, V, ?> mh;
-    @StageRef ValueBytesInterop<V> vi;
-    @StageRef SegmentStages s;
-    @StageRef MapEntryStages<?, V> entry;
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    VanillaChronicleMapHolder<?, V, ?> mh;
+    @StageRef
+    ValueBytesInterop<V> vi;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    MapEntryStages<?, V> entry;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
 
-    @Stage("CachedEntryValue") private V cachedEntryValue =
+    @Stage("CachedEntryValue")
+    private V cachedEntryValue =
             mh.m().valueClass() == CharSequence.class ? (V) new StringBuilder() : null;
-    @Stage("CachedEntryValue") private boolean cachedEntryValueRead = false;
+    @Stage("CachedEntryValue")
+    private boolean cachedEntryValueRead = false;
 
     private void initCachedEntryValue() {
         cachedEntryValue = innerGetUsing(cachedEntryValue);

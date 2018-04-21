@@ -34,7 +34,9 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
     private transient Bytes bytes;
     private transient VanillaBytes targetBytes;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient T instance;
 
     public BytesMarshallableDataAccess(Class<T> tClass) {

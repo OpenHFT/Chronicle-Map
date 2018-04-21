@@ -21,12 +21,11 @@ import net.openhft.chronicle.hash.impl.stage.entry.AllocatedChunks;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
-
 @Staged
 public class SearchAllocatedChunks extends AllocatedChunks {
 
-    @StageRef KeySearch<?> ks;
+    @StageRef
+    KeySearch<?> ks;
 
     /**
      * @return {@code true} if tier has changed

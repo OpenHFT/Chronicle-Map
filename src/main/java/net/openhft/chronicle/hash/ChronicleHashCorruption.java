@@ -23,21 +23,21 @@ import java.io.File;
 /**
  * Information about a corruption, encountered in a persisted Chronicle Map during <a
  * href="https://github.com/OpenHFT/Chronicle-Map#recovery">recovery</a>.
- *
+ * <p>
  * <p>Recovery procedure doesn't guarantee accuracy of the corruption events. Only two things are
  * guaranteed:
  * <ol>
- *     <li>if {@link Listener} didn't receive any corruption events, the recovered Chronicle Map
- *     was not corrupted;
- *     </li>
- *     <li>if {@link Listener} received some corruption events, the recovered Chronicle Map was
- *     corrupted.</li>
+ * <li>if {@link Listener} didn't receive any corruption events, the recovered Chronicle Map
+ * was not corrupted;
+ * </li>
+ * <li>if {@link Listener} received some corruption events, the recovered Chronicle Map was
+ * corrupted.</li>
  * </ol>
- *
+ * <p>
  * <p>{@code ChronicleHashCorruption} objects, passed to {@link Listener}, shouldn't be saved and
  * used outside of the {@link Listener#onCorruption(ChronicleHashCorruption)} method body, because
  * {@code ChronicleHashCorruption} objects could be reused during the recovery procedure.
- *
+ * <p>
  * <p>During a recovery procedure, <i>{@link Listener#onCorruption(ChronicleHashCorruption)} might
  * be called concurrently from multiple threads.</i> If the implementation of this method calls some
  * methods on some objects, that are not safe for concurrent use from multiple threads, the
@@ -79,7 +79,7 @@ public interface ChronicleHashCorruption {
         /**
          * Called when <a href="https://github.com/OpenHFT/Chronicle-Map#recovery">recovery</a>
          * procedure encounters a corruption of a persisted Chronicle Map.
-         *
+         * <p>
          * <p>During a recovery procedure, <i>this method might be called concurrently from multiple
          * threads.</i> If the implementation of this method calls some methods on some objects,
          * that are not safe for concurrent use from multiple threads, the implementation must

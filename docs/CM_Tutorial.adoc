@@ -10,7 +10,6 @@ toc::[]
 
 This document describes the Chronicle Map tutorial supplied with the project.
 
-
 == Create a `ChronicleMap` Instance
 
 Creating an instance of `ChronicleMap` is a little more complex than just calling a constructor.
@@ -20,7 +19,6 @@ To create an instance you have to use the `ChronicleMapBuilder`.
 The following code snippet creates an in-memory Chronicle Map store, to store about 50,000 _city name -> postal code_ mappings.
 
 It is accessible within a single JVM process; the process in which it was created. The data is accessible while the process is alive. When the process is terminated, the data is cleared.
-
 
 ``` java
 import net.openhft.chronicle.map.*
@@ -69,7 +67,6 @@ NOTE: When you create a `ChronicleMap` instance with `.createPersistedTo(file)`,
 file already exists in the system, you open a view to the existing Chronicle Map data store from
 this JVM process, rather than creating a new Chronicle Map data store. That means that the data store may already contain some entries. No special action with the data is performed during such an operation. If you want to clean up corrupted entries, and ensure that the data store is in correct state, see the <<Recovery>> section.
 
-
 == ChronicleMap instance vs Chronicle Map data store
 
 In this tutorial, the term `ChronicleMap` instance (or simply `ChronicleMap`)  is used to refer to an on-heap object providing access to a Chronicle Map data store (or Chronicle Map key-value store, or Chronicle Map store, or simply Chronicle Map, with space between two words in contrast to `ChronicleMap`), which could be purely in-memory, or persisted to disk.
@@ -84,7 +81,6 @@ even to another server. It could even run on different operating systems. When o
 If you don't need the Chronicle Map instance to survive the server restart (that is, you don't need
 persistence to disk; only multi-process access), mount the file on http://en.wikipedia.org/wiki/Tmpfs[tmpfs]. For example, on `Linux` it is as easy as placing you file in `/dev/shm` directory.
 
-
 == Configure entries
 
 You must configure .entries(entries) -- to support the maximum number of entries in the Chronicle Map. Try to configure the entries so that the created Chronicle Map is going to serve about 99% of requests.
@@ -95,7 +91,6 @@ See `ChronicleMapBuilder#entries()` in http://www.javadoc.io/doc/net.openhft/chr
 
 Once a `ChronicleMap` instance is created, its configurations are sealed and cannot be changed
 using the `ChronicleMapBuilder` instance.
-
 
 == Single `ChronicleMap` instance per JVM
 If you want to access a Chronicle Map data store
@@ -605,7 +600,6 @@ your JVM to crash. Close **MUST** be the last thing that you do with the map.
 You can customize the behaviour of Chronicle Map.
 
 See <<CM_Tutorial_Behaviour.adoc#,CM_Tutorial_Behaviour>> for more details.
-
 
 == Entry checksums
 

@@ -46,7 +46,6 @@ Checking maps for equality
 All maps contained the same data
 ....
 
-
 == Running the test in multiple JVMs
 
 To spread the workload over multiple JVMs, use the `-h` parameter, which specifies the nodes that should be started in a particular JVM. The `singleMasterStressTest.yaml` configuration file contains 4 nodes (1 master, 3 slaves). The example below spreads these nodes across two processes.
@@ -131,7 +130,6 @@ Hosts within the cluster:
 
 NOTE: Substitute your own settings as appropriate.
 
-
 **TCP port used for replication**; this port will need to be open on all hosts:
 
 `13000`
@@ -140,9 +138,7 @@ NOTE: Substitute your own settings as appropriate.
 
 `multiHost.yaml`
 
-
 The cluster configuration in `multiHost.yaml` would be:
-
 
 [source,yaml]
 ....
@@ -187,7 +183,6 @@ The cluster configuration in `multiHost.yaml` would be:
     }
 ....
 
-
 === Packaging the test
 
 To run the test on remote machines, the stress test can be packaged up using the following command:
@@ -216,7 +211,6 @@ To run the example multi-machine configuration described above, the following co
 |   **C**   |      `3`    |`10.0.2.30` | `./run_stress_test.sh -c multiHost.yaml -h 3`
 |   **D**   |      `4`    |`10.0.2.22` | `./run_stress_test.sh -c multiHost.yaml -h 4`
 |=======================================
-
 
 == Destructive testing
 
@@ -273,7 +267,6 @@ the slave map receives the entire data-set from the master:
  # higher throughput as slave catches up
  Node 3 received 1646 events/sec, 234KB/sec from remote 1
  ....
-
 
 === Recover existing data and rejoin (Option 2)
 

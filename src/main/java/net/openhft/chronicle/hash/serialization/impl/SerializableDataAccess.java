@@ -39,7 +39,9 @@ public class SerializableDataAccess<T extends Serializable> extends AbstractData
     transient OutputStream out;
     transient InputStream in;
 
-    /** State field */
+    /**
+     * State field
+     */
     transient T instance;
 
     public SerializableDataAccess() {

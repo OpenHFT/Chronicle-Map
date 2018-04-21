@@ -76,16 +76,6 @@ public class HashQueryContextExamples {
         returnValue.returnValue(q.entry().value());
     }
 
-    interface Point {
-        double getX();
-        void setX(double x);
-        double addX(double xAdd);
-
-        double getY();
-        void setY(double y);
-        double addY(double yAdd);
-    }
-
     <K> Point movePoint(ChronicleMap<K, Point> map, K key, double xMove, double yMove,
                         Point using) {
         // Moves existing point by [xMove, yMove], if absent - assumes the default point is [0, 0].
@@ -106,5 +96,19 @@ public class HashQueryContextExamples {
             offHeapPoint.addY(yMove);
             return offHeapPoint;
         }
+    }
+
+    interface Point {
+        double getX();
+
+        void setX(double x);
+
+        double addX(double xAdd);
+
+        double getY();
+
+        void setY(double y);
+
+        double addY(double yAdd);
     }
 }

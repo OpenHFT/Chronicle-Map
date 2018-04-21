@@ -34,7 +34,6 @@ public class MovingAverageCompact extends AbstractBytesMarshallable {
         out.writeDouble(stdDev);
     }
 
-
     public double getMovingAverage() {
         return movingAverage;
     }

@@ -18,9 +18,6 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.hash.impl.util.Throwables;
-
-import java.util.List;
 
 public final class InMemoryChronicleHashResources extends ChronicleHashResources {
     @Override

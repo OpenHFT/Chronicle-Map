@@ -399,6 +399,5 @@ Some notes on this form of custom serialization:
  - Both writer and reader classes have some "cache" fields; their contents are mutated during
  writing and reading. That is why they have to implement the `StatefulCopyable` interface.
 
-
 '''
 <<CM_Tutorial.adoc#,Back to Tutorial>>

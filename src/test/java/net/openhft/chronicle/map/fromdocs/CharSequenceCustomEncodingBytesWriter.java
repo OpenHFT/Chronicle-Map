@@ -51,6 +51,15 @@ public final class CharSequenceCustomEncodingBytesWriter
         initTransients();
     }
 
+    /**
+     * Need this method because {@link CharBuffer#append(CharSequence, int, int)} produces garbage
+     */
+    private static void append(CharBuffer charBuffer, CharSequence cs, int start, int end) {
+        for (int i = start; i < end; i++) {
+            charBuffer.put(cs.charAt(i));
+        }
+    }
+
     private void initTransients() {
         charsetEncoder = charset.newEncoder();
         inputBuffer = CharBuffer.allocate(inputBufferSize);
@@ -118,15 +127,6 @@ public final class CharSequenceCustomEncodingBytesWriter
         int remaining = outputBuffer.remaining();
         out.write(out.writePosition(), outputBuffer, 0, remaining);
         out.writeSkip(remaining);
-    }
-
-    /**
-     * Need this method because {@link CharBuffer#append(CharSequence, int, int)} produces garbage
-     */
-    private static void append(CharBuffer charBuffer, CharSequence cs, int start, int end) {
-        for (int i = start; i < end; i++) {
-            charBuffer.put(cs.charAt(i));
-        }
     }
 
     @Override

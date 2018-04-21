@@ -79,12 +79,12 @@ public class WriteThroughputTest {
         int count = 2 << 10;
         int size = 50 << 10;
 
-        File file3 = new File("bandwidthTest"+System.nanoTime()+ ".Z.deleteme");
+        File file3 = new File("bandwidthTest" + System.nanoTime() + ".Z.deleteme");
         file3.deleteOnExit();
         try (ChronicleMap<CharSequence, CharSequence> map = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
-                .entries(count*3/2)
-                .averageValueSize(size/4)
+                .entries(count * 3 / 2)
+                .averageValueSize(size / 4)
                 .valueMarshaller(DeflatorStringMarshaller.INSTANCE)
                 .putReturnsNull(true)
                 .createPersistedTo(file3)) {
@@ -94,7 +94,7 @@ public class WriteThroughputTest {
         }
     }
 
-    private void doTest(int count, int size,ChronicleMap<CharSequence, CharSequence> map) {
+    private void doTest(int count, int size, ChronicleMap<CharSequence, CharSequence> map) {
         StringBuilder value = new StringBuilder("value");
         while (value.length() < size)
             value.append(value.length());
@@ -118,5 +118,5 @@ public class WriteThroughputTest {
             long time = System.nanoTime() - start;
             System.out.printf("Concurrent %,d MB took %.3f seconds%n", size * count >> 20, time / 1e9);
         }
-}
+    }
 }

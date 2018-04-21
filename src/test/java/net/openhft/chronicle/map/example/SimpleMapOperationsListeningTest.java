@@ -29,16 +29,38 @@ import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest
 
 public class SimpleMapOperationsListeningTest {
 
+    @Test
+    public void simpleLoggingTest() {
+        ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
+                .of(Integer.class, IntValue.class)
+                .entries(100)
+                .entryOperations(simpleLoggingMapEntryOperations())
+                .defaultValueProvider(simpleLoggingDefaultValueProvider())
+                .create();
+
+        IntValue value = Values.newHeapInstance(IntValue.class);
+        value.setValue(2);
+        map.put(1, value);
+        map.remove(1);
+        map.acquireUsing(3, Values.newNativeReference(IntValue.class)).addAtomicValue(1);
+        IntValue value2 = Values.newHeapInstance(IntValue.class);
+        value2.setValue(5);
+        map.forEachEntry(e -> e.context().replaceValue(e, e.context().wrapValueAsData(value2)));
+        map.forEachEntry(e -> e.context().remove(e));
+
+    }
+
     static class SimpleLoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
 
         private static final SimpleLoggingMapEntryOperations INSTANCE =
                 new SimpleLoggingMapEntryOperations();
 
+        private SimpleLoggingMapEntryOperations() {
+        }
+
         public static <K, V> MapEntryOperations<K, V, Void> simpleLoggingMapEntryOperations() {
             return SimpleLoggingMapEntryOperations.INSTANCE;
         }
-
-        private SimpleLoggingMapEntryOperations() {}
 
         @Override
         public Void remove(@NotNull MapEntry<K, V> entry) {
@@ -67,11 +89,12 @@ public class SimpleMapOperationsListeningTest {
         private static final SimpleLoggingDefaultValueProvider INSTANCE =
                 new SimpleLoggingDefaultValueProvider();
 
+        private SimpleLoggingDefaultValueProvider() {
+        }
+
         public static <K, V> DefaultValueProvider<K, V> simpleLoggingDefaultValueProvider() {
             return INSTANCE;
         }
-
-        private SimpleLoggingDefaultValueProvider() {}
 
         @Override
         public Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
@@ -79,26 +102,5 @@ public class SimpleMapOperationsListeningTest {
             System.out.println("default " + absentEntry.absentKey() + " -> " + defaultValue);
             return defaultValue;
         }
-    }
-
-    @Test
-    public void simpleLoggingTest() {
-        ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
-                .of(Integer.class, IntValue.class)
-                .entries(100)
-                .entryOperations(simpleLoggingMapEntryOperations())
-                .defaultValueProvider(simpleLoggingDefaultValueProvider())
-                .create();
-
-        IntValue value = Values.newHeapInstance(IntValue.class);
-        value.setValue(2);
-        map.put(1, value);
-        map.remove(1);
-        map.acquireUsing(3, Values.newNativeReference(IntValue.class)).addAtomicValue(1);
-        IntValue value2 = Values.newHeapInstance(IntValue.class);
-        value2.setValue(5);
-        map.forEachEntry(e -> e.context().replaceValue(e, e.context().wrapValueAsData(value2)));
-        map.forEachEntry(e -> e.context().remove(e));
-
     }
 }

@@ -36,9 +36,12 @@ import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 @Staged
 public class ReplicatedTierRecovery extends TierRecovery {
 
-    @StageRef ReplicatedChronicleMapHolder<?, ?, ?> rh;
-    @StageRef SegmentStages s;
-    @StageRef ReplicatedMapEntryStages<?, ?> e;
+    @StageRef
+    ReplicatedChronicleMapHolder<?, ?, ?> rh;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    ReplicatedMapEntryStages<?, ?> e;
 
     @Override
     public void removeDuplicatesInSegment(
@@ -72,7 +75,7 @@ public class ReplicatedTierRecovery extends TierRecovery {
             long finalDeleted = deleted;
             report(corruptionListener, corruption, s.segmentIndex, () ->
                     format("wrong deleted counter for tier with index {}, stored: {}, should be: {}",
-                    s.tierIndex, s.tierDeleted(), finalDeleted)
+                            s.tierIndex, s.tierDeleted(), finalDeleted)
             );
             s.tierDeleted(deleted);
         }
@@ -83,7 +86,7 @@ public class ReplicatedTierRecovery extends TierRecovery {
         ReplicatedChronicleMap<?, ?, ?>.ModificationIterator[] its =
                 m.acquireAllModificationIterators();
         ReusableBitSet freeList = s.freeList;
-        for (long pos = 0; pos < m.actualChunksPerSegmentTier;) {
+        for (long pos = 0; pos < m.actualChunksPerSegmentTier; ) {
             long nextPos = freeList.nextSetBit(pos);
             if (nextPos > pos) {
                 for (ReplicatedChronicleMap<?, ?, ?>.ModificationIterator it : its) {

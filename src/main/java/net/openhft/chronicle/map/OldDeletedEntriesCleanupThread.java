@@ -86,6 +86,35 @@ class OldDeletedEntriesCleanupThread extends Thread
         inverseSegmentsPermutation = inversePermutation(segmentsPermutation);
     }
 
+    private static int[] randomPermutation(int n) {
+        int[] a = new int[n];
+        for (int i = 0; i < n; i++) {
+            a[i] = i;
+        }
+        shuffle(a);
+        return a;
+    }
+
+    // Implementing Fisher–Yates shuffle
+    private static void shuffle(int[] a) {
+        Random rnd = ThreadLocalRandom.current();
+        for (int i = a.length - 1; i > 0; i--) {
+            int index = rnd.nextInt(i + 1);
+            int e = a[index];
+            a[index] = a[i];
+            a[i] = e;
+        }
+    }
+
+    private static int[] inversePermutation(int[] permutation) {
+        int n = permutation.length;
+        int[] inverse = new int[n];
+        for (int i = 0; i < n; i++) {
+            inverse[permutation[i]] = i;
+        }
+        return inverse;
+    }
+
     @Override
     public void run() {
         while (!shutdown) {
@@ -176,34 +205,5 @@ class OldDeletedEntriesCleanupThread extends Thread
         int permutationIndex = inverseSegmentsPermutation[segmentIndex];
         int nextPermutationIndex = (permutationIndex + 1) % segments;
         return segmentsPermutation[nextPermutationIndex];
-    }
-
-    private static int[] randomPermutation(int n) {
-        int[] a = new int[n];
-        for (int i = 0; i < n; i++) {
-            a[i] = i;
-        }
-        shuffle(a);
-        return a;
-    }
-
-    // Implementing Fisher–Yates shuffle
-    private static void shuffle(int[] a) {
-        Random rnd = ThreadLocalRandom.current();
-        for (int i = a.length - 1; i > 0; i--) {
-            int index = rnd.nextInt(i + 1);
-            int e = a[index];
-            a[index] = a[i];
-            a[i] = e;
-        }
-    }
-
-    private static int[] inversePermutation(int[] permutation) {
-        int n = permutation.length;
-        int[] inverse = new int[n];
-        for (int i = 0; i < n; i++) {
-            inverse[permutation[i]] = i;
-        }
-        return inverse;
     }
 }

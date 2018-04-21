@@ -29,13 +29,12 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
 public class ValueReader<T>
         implements SizedReader<T>, BytesReader<T>, StatefulCopyable<ValueReader<T>> {
 
-    /** Config field */
+    /**
+     * Config field
+     */
     private Class<T> valueType;
 
     // Cache fields
@@ -48,7 +47,9 @@ public class ValueReader<T>
         initTransients();
     }
 
-    /** Returns the interface of values deserialized. */
+    /**
+     * Returns the interface of values deserialized.
+     */
     protected Class<T> valueType() {
         return valueType;
     }

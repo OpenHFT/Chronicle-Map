@@ -26,9 +26,9 @@ import java.util.ConcurrentModificationException;
 @Staged
 public class OwnerThreadHolder {
 
-    @StageRef VanillaChronicleHashHolder<?> hh;
-
     final Thread owner = Thread.currentThread();
+    @StageRef
+    VanillaChronicleHashHolder<?> hh;
 
     public void checkAccessingFromOwnerThread() {
         if (owner != Thread.currentThread()) {

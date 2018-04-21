@@ -25,7 +25,8 @@ import net.openhft.sg.Staged;
 @Staged
 public class IterationAlloc implements Alloc {
 
-    @StageRef public SegmentStages s;
+    @StageRef
+    public SegmentStages s;
 
     /**
      * Move only to next tiers, to avoid double visiting of relocated entries during iteration

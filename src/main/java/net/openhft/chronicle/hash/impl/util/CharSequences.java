@@ -21,6 +21,9 @@ import org.jetbrains.annotations.NotNull;
 
 public final class CharSequences {
 
+    private CharSequences() {
+    }
+
     public static boolean equivalent(@NotNull CharSequence a, @NotNull CharSequence b) {
         if (a.equals(b))
             return true;
@@ -47,6 +50,4 @@ public final class CharSequences {
         }
         return h;
     }
-
-    private CharSequences() {}
 }

@@ -25,7 +25,7 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.decideOnRemoteModification;
 
 public interface SetRemoteOperations<K, R> {
-    
+
     default void remove(SetRemoteQueryContext<K, R> q) {
         SetReplicableEntry<K> entry = q.entry();
         if (entry != null) {

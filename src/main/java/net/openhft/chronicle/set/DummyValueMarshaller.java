@@ -29,7 +29,8 @@ final class DummyValueMarshaller implements DataAccess<DummyValue>, SizedReader<
         EnumMarshallable<DummyValueMarshaller> {
     public static final DummyValueMarshaller INSTANCE = new DummyValueMarshaller();
 
-    private DummyValueMarshaller() {}
+    private DummyValueMarshaller() {
+    }
 
     @Override
     public Data<DummyValue> getData(@NotNull DummyValue instance) {

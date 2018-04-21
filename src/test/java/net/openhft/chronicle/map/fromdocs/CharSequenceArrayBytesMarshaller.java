@@ -35,7 +35,8 @@ public final class CharSequenceArrayBytesMarshaller
 
     static final CharSequenceArrayBytesMarshaller INSTANCE = new CharSequenceArrayBytesMarshaller();
 
-    private CharSequenceArrayBytesMarshaller() {}
+    private CharSequenceArrayBytesMarshaller() {
+    }
 
     @Override
     public void write(Bytes out, @NotNull CharSequence[] toWrite) {

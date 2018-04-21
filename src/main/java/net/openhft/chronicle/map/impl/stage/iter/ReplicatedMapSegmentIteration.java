@@ -41,14 +41,18 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
         implements ReplicatedIterationContext<K, V, R>, ReplicableEntry,
         ReplicatedHashSegmentContext<K, MapEntry<K, V>> {
 
-    @StageRef VanillaChronicleMapHolder<K, V, R> mh;
-    @StageRef ReplicatedMapEntryStages<K, V> e;
-    @StageRef ReplicationUpdate<K> ru;
-    @StageRef DummyValueZeroData<V> dummyValue;
-    @StageRef ReplicatedMapAbsentDelegatingForIteration<K, V> absentEntryDelegating;
-    @StageRef ReplicatedMapEntryDelegating<K, V> entryDelegating;
-
-    enum EntriesToTest {PRESENT, ALL}
+    @StageRef
+    VanillaChronicleMapHolder<K, V, R> mh;
+    @StageRef
+    ReplicatedMapEntryStages<K, V> e;
+    @StageRef
+    ReplicationUpdate<K> ru;
+    @StageRef
+    DummyValueZeroData<V> dummyValue;
+    @StageRef
+    ReplicatedMapAbsentDelegatingForIteration<K, V> absentEntryDelegating;
+    @StageRef
+    ReplicatedMapEntryDelegating<K, V> entryDelegating;
     EntriesToTest entriesToTest = null;
 
     void initEntriesToTest(EntriesToTest entriesToTest) {
@@ -157,4 +161,6 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
                     ": Called SetAbsentEntry.doInsert() from Map context");
         doInsert((Data<V>) DummyValueData.INSTANCE);
     }
+
+    enum EntriesToTest {PRESENT, ALL}
 }

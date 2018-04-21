@@ -225,6 +225,7 @@ public interface MapMethods<K, V, R> {
     /**
      * Backing {@link ChronicleMap#remove(Object, Object)} method.
      *
+     * @return if the entry was removed
      * @implNote the default implementation is equivalent to <pre>{@code
      * // remove(key, value) should find the entry & remove most of the time,
      * // so don't try to check key presence and value equivalence under read lock first,
@@ -237,8 +238,6 @@ public interface MapMethods<K, V, R> {
      * } else {
      *     return false;
      * }}</pre>
-     *
-     * @return if the entry was removed
      */
     default boolean remove(MapQueryContext<K, V, R> q, Data<V> value) {
         // remove(key, value) should find the entry & remove most of the time,
@@ -284,6 +283,7 @@ public interface MapMethods<K, V, R> {
     /**
      * Backing {@link ChronicleMap#replace(Object, Object, Object)} method.
      *
+     * @return if the entry was replaced
      * @implNote the default implementation is equivalent to <pre>{@code
      * // replace(key, old, new) should find the entry & put new value most of the time,
      * // so don't try to check key presence and value equivalence under read lock first,
@@ -296,8 +296,6 @@ public interface MapMethods<K, V, R> {
      * } else {
      *     return false;
      * }}</pre>
-     *
-     * @return if the entry was replaced
      */
     default boolean replace(MapQueryContext<K, V, R> q,
                             Data<V> oldValue, Data<V> newValue) {
@@ -382,7 +380,7 @@ public interface MapMethods<K, V, R> {
         if (entry != null) {
             V oldValue = entry.value().get();
             V newValue = remappingFunction.apply(q.queriedKey().get(), oldValue);
-            if (newValue != null ) {
+            if (newValue != null) {
                 q.replaceValue(entry, q.wrapValueAsData(newValue));
                 returnValue.returnValue(q.entry().value());
             } else {

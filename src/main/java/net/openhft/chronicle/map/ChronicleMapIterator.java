@@ -32,8 +32,8 @@ abstract class ChronicleMapIterator<K, V, E> implements Iterator<E>, Consumer<Ma
     final AbstractChronicleMap<K, V> map;
     private final Thread ownerThread = Thread.currentThread();
     private final Queue<E> entryBuffer = new ArrayDeque<>();
-    private int segmentIndex;
     E returned;
+    private int segmentIndex;
 
     ChronicleMapIterator(AbstractChronicleMap<K, V> map) {
         this.map = map;

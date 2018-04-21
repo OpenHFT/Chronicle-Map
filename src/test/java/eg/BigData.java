@@ -35,11 +35,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class BigData {
     final static long MAXSIZE = 1000 * 1000 * 1000L;
+    static final ChronicleMapBuilder<Long, BigDataStuff> builder =
+            ChronicleMapBuilder.of(Long.class, BigDataStuff.class);
     //run 1st test with no map, and Highwatermark set to 0
     //then switch to Highwatermark set to MAXSIZE for subsequent test repeats
     static AtomicInteger Highwatermark = new AtomicInteger((int) MAXSIZE);
-    static final ChronicleMapBuilder<Long, BigDataStuff> builder =
-            ChronicleMapBuilder.of(Long.class, BigDataStuff.class);
+    static Map<Long, BigDataStuff> theMap;
 
     //    static AtomicInteger Highwatermark = new AtomicInteger(0);
     static {
@@ -50,14 +51,12 @@ public class BigData {
         String chmPath = dir + "/testmap-" + Long.toString(System.nanoTime(), 36);
         new File(chmPath).deleteOnExit();
         try {
-            theMap =  builder.createPersistedTo(new File(chmPath));
+            theMap = builder.createPersistedTo(new File(chmPath));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
-
-    static Map<Long, BigDataStuff> theMap;
 
     public static void main(String[] args) throws IOException, InterruptedException {
         long start = System.currentTimeMillis();

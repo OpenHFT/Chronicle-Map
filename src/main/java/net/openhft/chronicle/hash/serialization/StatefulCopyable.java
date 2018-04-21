@@ -27,7 +27,7 @@ import net.openhft.chronicle.set.ChronicleSet;
  * {@link BytesReader}, {@link BytesWriter} or {@link DataAccess}), configured for {@link
  * ChronicleMap} or {@link ChronicleSet} in builder, should implement the {@code StatefulCopyable}
  * interface.
- *
+ * <p>
  * <p>See <a href="https://github.com/OpenHFT/Chronicle-Map#understanding-statefulcopyable">
  * Understanding {@code StatefulCopyable}</a> section in the Chronicle Map tutorial for more info
  * on how to implement and use this interface properly, and for examples.
@@ -37,28 +37,12 @@ import net.openhft.chronicle.set.ChronicleSet;
 public interface StatefulCopyable<T extends StatefulCopyable<T>> {
 
     /**
-     * Creates a copy of this marshaller, with independent state. The current state itself shouldn't
-     * be copied (it could be "clear" in the copy), only "configuration" of the instance, on which
-     * {@code copy()} is called, should be inherited in the copy (e. g. the class of objects
-     * serialized). So, {@code copy()} should be transitive, i. e. {@code marshaller.copy()} and
-     * {@code marshaller.copy().copy()} should result to identical instances.
-     *
-     * <p>The state of the instance on which {@code copy()} is called shouldn't be changed.
-     *
-     * <p>If some marshaller is ought to implement {@code StatefulCopyable} interface (e. g.
-     * {@link DataAccess}) but is stateless actually, it could return {@code this} from this method.
-     *
-     * @return the copy if this marshaller with the same configuration, but independent state
-     */
-    T copy();
-
-    /**
      * Checks if {@code possiblyStatefulCopyable} implements {@code StatefulCopyable}, then returns
      * {@link #copy()} of it, otherwise returns the {@code possiblyStatefulCopyable} itself.
      *
      * @param possiblyStatefulCopyable the instance to {@code copy()} if it implements {@code
-     * StatefulCopyable}, or to return without modification
-     * @param <T> the type of the passed instance
+     *                                 StatefulCopyable}, or to return without modification
+     * @param <T>                      the type of the passed instance
      * @return the copy of the passed instance with independent state, of the instance back, if it
      * doesn't implement {@code StatefulCopyable}
      */
@@ -69,4 +53,20 @@ public interface StatefulCopyable<T extends StatefulCopyable<T>> {
         }
         return possiblyStatefulCopyable;
     }
+
+    /**
+     * Creates a copy of this marshaller, with independent state. The current state itself shouldn't
+     * be copied (it could be "clear" in the copy), only "configuration" of the instance, on which
+     * {@code copy()} is called, should be inherited in the copy (e. g. the class of objects
+     * serialized). So, {@code copy()} should be transitive, i. e. {@code marshaller.copy()} and
+     * {@code marshaller.copy().copy()} should result to identical instances.
+     * <p>
+     * <p>The state of the instance on which {@code copy()} is called shouldn't be changed.
+     * <p>
+     * <p>If some marshaller is ought to implement {@code StatefulCopyable} interface (e. g.
+     * {@link DataAccess}) but is stateless actually, it could return {@code this} from this method.
+     *
+     * @return the copy if this marshaller with the same configuration, but independent state
+     */
+    T copy();
 }

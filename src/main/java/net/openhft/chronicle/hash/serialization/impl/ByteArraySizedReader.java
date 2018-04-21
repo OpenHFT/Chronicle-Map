@@ -28,7 +28,8 @@ public final class ByteArraySizedReader
 
     public static final ByteArraySizedReader INSTANCE = new ByteArraySizedReader();
 
-    private ByteArraySizedReader() {}
+    private ByteArraySizedReader() {
+    }
 
     @NotNull
     @Override

@@ -32,7 +32,7 @@ import net.openhft.chronicle.wire.Marshallable;
  * works). Also, this interface allows to generalize storing constantly-sized and variable-sized
  * blocks of data. Constantly-sized don't require to store the size actually, the corresponding
  * {@link #constant} {@code SizeMarshaller} consumes 0 bytes.
- *
+ * <p>
  * <p>Some {@code SizeMarshaller} implementations couldn't store the whole {@code long} range, for
  * example each {@link #constant} {@code SizeMarshaller} is able to "store" only a single specific
  * value (it's constant size). If the marshaller is fed with the size it is not able store, it could
@@ -76,7 +76,7 @@ public interface SizeMarshaller extends Marshallable {
      * @param size the size to store
      * @return the number of bytes would be taken to store the given size
      * @throws IllegalArgumentException might be thrown, if the given size if not storable by this
-     * {@code SizeMarshaller}
+     *                                  {@code SizeMarshaller}
      */
     int storingLength(long size);
 
@@ -119,10 +119,10 @@ public interface SizeMarshaller extends Marshallable {
     /**
      * Writes the given size into the streaming output.
      *
-     * @param out the {@code StreamingDataOutput} to write the size to
+     * @param out         the {@code StreamingDataOutput} to write the size to
      * @param sizeToWrite the size to write
      * @throws IllegalArgumentException might be thrown, if the given size if not storable by this
-     * {@code SizeMarshaller}
+     *                                  {@code SizeMarshaller}
      * @see #readSize(Bytes)
      */
     void writeSize(Bytes out, long sizeToWrite);

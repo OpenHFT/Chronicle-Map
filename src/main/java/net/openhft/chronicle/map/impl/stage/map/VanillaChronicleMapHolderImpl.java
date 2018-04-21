@@ -33,7 +33,8 @@ public abstract class VanillaChronicleMapHolderImpl<K, V, R>
         extends Chaining
         implements VanillaChronicleMapHolder<K, V, R> {
 
-    @Stage("Map") private VanillaChronicleMap<K, V, R> m = null;
+    @Stage("Map")
+    private VanillaChronicleMap<K, V, R> m = null;
 
     public VanillaChronicleMapHolderImpl(VanillaChronicleMap map) {
         super(map);

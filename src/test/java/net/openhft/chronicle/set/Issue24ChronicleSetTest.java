@@ -33,7 +33,7 @@ import static com.samskivert.util.CollectionUtil.selectRandomSubset;
 
 public class Issue24ChronicleSetTest {
 
-    public static <K, H extends ChronicleHash<K, ?, ?, ?>,  B extends ChronicleHashBuilder<K, H, B>>
+    public static <K, H extends ChronicleHash<K, ?, ?, ?>, B extends ChronicleHashBuilder<K, H, B>>
     H init(B builder, int entrySize, int averageKeySize) throws IOException {
 
         File file = File.createTempFile("stringSet", ".dat");
@@ -71,20 +71,21 @@ public class Issue24ChronicleSetTest {
 
     public static class WorkerThread implements Runnable {
         private final ChronicleSet<String> set;
-        public WorkerThread(ChronicleSet<String> set){
+
+        public WorkerThread(ChronicleSet<String> set) {
             this.set = set;
         }
 
         @Override
         public void run() {
-            System.out.println(Thread.currentThread().getName()+" Start. Command = " + set.size());
+            System.out.println(Thread.currentThread().getName() + " Start. Command = " + set.size());
             processCommand();
-            System.out.println(Thread.currentThread().getName()+" End.");
+            System.out.println(Thread.currentThread().getName() + " End.");
         }
 
         private void processCommand() {
             Set<String> nomenclatures = new HashSet<>();
-            for(int i = 0; i < 10; i++) {
+            for (int i = 0; i < 10; i++) {
                 String nomenclature = "#############################" + i;
                 nomenclatures.add(nomenclature);
 
@@ -119,5 +120,5 @@ public class Issue24ChronicleSetTest {
                 System.out.println(s);
             }
         }
-}
+    }
 }

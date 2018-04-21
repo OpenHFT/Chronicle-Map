@@ -35,15 +35,22 @@ import net.openhft.sg.Staged;
 @Staged
 public class EntryKeyBytesData<K> extends AbstractData<K> {
 
-    @StageRef VanillaChronicleHashHolder<K> hh;
-    @StageRef KeyBytesInterop<K> ki;
-    @StageRef SegmentStages s;
-    @StageRef HashEntryStages<K> entry;
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    VanillaChronicleHashHolder<K> hh;
+    @StageRef
+    KeyBytesInterop<K> ki;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    HashEntryStages<K> entry;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
 
-    @Stage("CachedEntryKey") private K cachedEntryKey;
-    @Stage("CachedEntryKey") private boolean cachedEntryKeyRead = false;
-    
+    @Stage("CachedEntryKey")
+    private K cachedEntryKey;
+    @Stage("CachedEntryKey")
+    private boolean cachedEntryKeyRead = false;
+
     private void initCachedEntryKey() {
         cachedEntryKey = innerGetUsing(cachedEntryKey);
         cachedEntryKeyRead = true;
@@ -89,7 +96,7 @@ public class EntryKeyBytesData<K> extends AbstractData<K> {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return innerGetUsing(using);
     }
-    
+
     private K innerGetUsing(K usingKey) {
         Bytes bytes = s.segmentBytesForRead();
         bytes.readPosition(entry.keyOffset);

@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +35,9 @@ final class ChronicleHashCloseOnExitHook {
                 closeAll();
             }
         });
+    }
+
+    private ChronicleHashCloseOnExitHook() {
     }
 
     static synchronized void add(VanillaChronicleHash hash) {
@@ -85,6 +87,4 @@ final class ChronicleHashCloseOnExitHook {
             }
         }
     }
-
-    private ChronicleHashCloseOnExitHook() {}
 }

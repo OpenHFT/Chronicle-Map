@@ -225,7 +225,7 @@ public class CHMUseCasesTest {
         for (; t < timeOutMs; t++) {
             if (map1.equals(map2))
                 break;
-                Jvm.pause(1);
+            Jvm.pause(1);
         }
     }
 
@@ -445,7 +445,7 @@ public class CHMUseCasesTest {
                 mpx1030.setAskPx(109.7);
                 mpx1030.setBidPx(107.6);
             }
-}
+        }
 
     }
 
@@ -1022,7 +1022,7 @@ public class CHMUseCasesTest {
 
             } catch (Exception todoMoreSpecificException) {
             }
-}
+        }
     }
 
     @Test

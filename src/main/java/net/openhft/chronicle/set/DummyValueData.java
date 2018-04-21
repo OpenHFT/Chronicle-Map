@@ -26,7 +26,8 @@ public class DummyValueData extends AbstractData<DummyValue> {
 
     public static final DummyValueData INSTANCE = new DummyValueData();
 
-    private DummyValueData() {}
+    private DummyValueData() {
+    }
 
     @Override
     public RandomDataInput bytes() {

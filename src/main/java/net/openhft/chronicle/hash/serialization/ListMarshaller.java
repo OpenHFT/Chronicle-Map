@@ -31,11 +31,11 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 /**
  * Marshaller of {@code List<T>}. Uses {@link ArrayList} as the list implementation to deserialize
  * into.
- *
+ * <p>
  * <p>This marshaller supports multimap emulation on top of Chronicle Map, that is possible but
  * inefficient. See <a href="https://github.com/OpenHFT/Chronicle-Map#chronicle-map-is-not">the
  * README section</a>.
- *
+ * <p>
  * <p>Usage: <pre>{@code
  * ChronicleMap<String, List<Integer>> regNumbers = ChronicleMap
  *     .of(String.class, (Class<List<Integer>>) (Class) List.class)
@@ -45,7 +45,7 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  *     .entries(10_000)
  *     .create();
  * }</pre>
- *
+ * <p>
  * <p>Look for pre-defined element marshallers in {@link
  * net.openhft.chronicle.hash.serialization.impl} package. This package is not included into
  * Javadocs, but present in Chronicle Map distribution. If there are no existing marshallers for
@@ -58,12 +58,30 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 public final class ListMarshaller<T>
         implements BytesReader<List<T>>, BytesWriter<List<T>>, StatefulCopyable<ListMarshaller<T>> {
 
+    // Config fields
+    private BytesReader<T> elementReader;
+    private BytesWriter<? super T> elementWriter;
+
+    /**
+     * Constructs a {@code ListMarshaller} with the given list elements' serializers.
+     * <p>
+     * <p>Use static factory {@link #of(BytesReader, BytesWriter)} instead of this constructor
+     * directly.
+     *
+     * @param elementReader list elements' reader
+     * @param elementWriter list elements' writer
+     */
+    public ListMarshaller(BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
+        this.elementReader = elementReader;
+        this.elementWriter = elementWriter;
+    }
+
     /**
      * Returns a {@code ListMarshaller} which uses the given list elements' serializers.
      *
      * @param elementReader list elements' reader
      * @param elementWriter list elements' writer
-     * @param <T> type of list elements
+     * @param <T>           type of list elements
      * @return a {@code ListMarshaller} which uses the given list elements' serializers
      */
     public static <T> ListMarshaller<T> of(
@@ -78,32 +96,15 @@ public final class ListMarshaller<T>
      *     .of(String.class,{@code (Class<List<Integer>>)} ((Class) List.class))
      *     .valueMarshaller(ListMarshaller.of(IntegerMarshaller.INSTANCE))
      *     ...</code></pre>
+     *
      * @param elementMarshaller list elements' marshaller
-     * @param <T> type of list elements
-     * @param <M> type of list elements' marshaller
+     * @param <T>               type of list elements
+     * @param <M>               type of list elements' marshaller
      * @return a {@code ListMarshaller} which uses the given list elements' marshaller
      */
     public static <T, M extends BytesReader<T> & BytesWriter<? super T>> ListMarshaller<T> of(
             M elementMarshaller) {
         return of(elementMarshaller, elementMarshaller);
-    }
-
-    // Config fields
-    private BytesReader<T> elementReader;
-    private BytesWriter<? super T> elementWriter;
-
-    /**
-     * Constructs a {@code ListMarshaller} with the given list elements' serializers.
-     *
-     * <p>Use static factory {@link #of(BytesReader, BytesWriter)} instead of this constructor
-     * directly.
-     *
-     * @param elementReader list elements' reader
-     * @param elementWriter list elements' writer
-     */
-    public ListMarshaller(BytesReader<T> elementReader, BytesWriter<? super T> elementWriter) {
-        this.elementReader = elementReader;
-        this.elementWriter = elementWriter;
     }
 
     @NotNull

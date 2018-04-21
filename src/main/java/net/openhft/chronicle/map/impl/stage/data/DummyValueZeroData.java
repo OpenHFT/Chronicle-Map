@@ -29,11 +29,13 @@ import net.openhft.sg.Staged;
 @Staged
 public class DummyValueZeroData<V> extends AbstractData<V> {
 
-    @StageRef VanillaChronicleMapHolder<?, ?, ?> mh;
-    @StageRef ValueBytesInterop<V> vi;
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-
     private final Bytes zeroBytes = ZeroBytesStore.INSTANCE.bytesForRead();
+    @StageRef
+    VanillaChronicleMapHolder<?, ?, ?> mh;
+    @StageRef
+    ValueBytesInterop<V> vi;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
 
     @Override
     public RandomDataInput bytes() {

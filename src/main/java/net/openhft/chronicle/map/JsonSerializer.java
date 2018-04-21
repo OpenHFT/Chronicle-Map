@@ -34,6 +34,20 @@ import java.util.zip.GZIPOutputStream;
  */
 class JsonSerializer {
 
+    static final String logErrorSuggestXStreem =
+            "map.getAll(<file>) and map.putAll(<file>) methods require the JSON XStream serializer, " +
+                    "we don't include these artifacts by default as some users don't require this functionality. " +
+                    "Please add the following artifacts to your project\n" +
+                    "<dependency>\n" +
+                    " <groupId>xstream</groupId>\n" +
+                    " <artifactId>xstream</artifactId>\n" +
+                    " <version>1.2.2</version>\n" +
+                    "</dependency>\n" +
+                    "<dependency>\n" +
+                    " <groupId>org.codehaus.jettison</groupId>\n" +
+                    " <artifactId>jettison</artifactId>\n" +
+                    " <version>1.3.6</version>\n" +
+                    "</dependency>\n";
     private static final Logger LOG = LoggerFactory.getLogger(JsonSerializer.class);
 
     static synchronized <K, V> void getAll(File toFile, Map<K, V> map, List jsonConverters) throws IOException {
@@ -78,28 +92,13 @@ class JsonSerializer {
                             " expecting an object of type com.thoughtworks.xstream.converters" +
                             ".Converter");
                 }
-}
+            }
 
             return xstream;
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(logErrorSuggestXStreem, e);
         }
     }
-
-    static final String logErrorSuggestXStreem =
-            "map.getAll(<file>) and map.putAll(<file>) methods require the JSON XStream serializer, " +
-                "we don't include these artifacts by default as some users don't require this functionality. " +
-                "Please add the following artifacts to your project\n" +
-                "<dependency>\n" +
-                " <groupId>xstream</groupId>\n" +
-                " <artifactId>xstream</artifactId>\n" +
-                " <version>1.2.2</version>\n" +
-                "</dependency>\n" +
-                "<dependency>\n" +
-                " <groupId>org.codehaus.jettison</groupId>\n" +
-                " <artifactId>jettison</artifactId>\n" +
-                " <version>1.3.6</version>\n" +
-                "</dependency>\n";
 
     private static <K, V> void registerChronicleMapConverter(Map<K, V> map, XStream xstream) {
         xstream.registerConverter(new VanillaChronicleMapConverter<>(map));

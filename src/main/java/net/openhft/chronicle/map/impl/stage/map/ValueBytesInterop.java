@@ -27,7 +27,8 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
 @Staged
 public class ValueBytesInterop<V> {
 
-    @StageRef VanillaChronicleMapHolder<?, V, ?> mh;
+    @StageRef
+    VanillaChronicleMapHolder<?, V, ?> mh;
 
     public final SizedReader<V> valueReader = copyIfNeeded(mh.m().valueReader);
 

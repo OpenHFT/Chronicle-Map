@@ -87,7 +87,6 @@ in the segment it belongs to).
 > ../src/main/java/net/openhft/chronicle/hash/impl/stage/query/KeySearch.java), [`HashQuery`](
 > ../src/main/java/net/openhft/chronicle/hash/impl/stage/query/HashQuery.java) classes.
 
-
 ## Entry insertion
 
  1. Perform a [key lookup](#key-lookup) for the key that is going to be inserted, ensuring that the
@@ -181,7 +180,6 @@ in the segment it belongs to).
 
 > The reference Java implementation: [`MapAbsent.putEntry()`](
 > ../src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAbsent.java) method.
-
 
 ## Value update
 
@@ -369,7 +367,6 @@ Steps 4-5 are *in-place* value update. Steps from 6 to the end of the operation 
 > The reference Java implementation: mostly [`MapEntryStages.innerDefaultReplaceValue()`](
 > ../src/main/java/net/openhft/chronicle/map/impl/stage/entry/MapEntryStages.java) method.
 
-
 ## Entry removal
 
  1. Perform a [key lookup](#key-lookup) for the key that is going to be removed, ensuring that the
@@ -386,7 +383,6 @@ Steps 4-5 are *in-place* value update. Steps from 6 to the end of the operation 
 
  > The reference Java implementation: [`HashQuery.doRemove()`](
  > ../src/main/java/net/openhft/chronicle/hash/impl/stage/query/HashQuery.java) method.
-
 
 Supplementary operations:
 
@@ -459,7 +455,4 @@ some segment.
 
 > The reference Java implementation: [`SegmentStages.nextTier()`](
 > ../src/main/java/net/openhft/chronicle/hash/impl/stage/entry/SegmentStages.java) method.
-
-
-
 

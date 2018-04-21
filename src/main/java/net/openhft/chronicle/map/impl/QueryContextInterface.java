@@ -26,22 +26,22 @@ import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.map.impl.ret.UsableReturnValue;
 
 public interface QueryContextInterface<K, V, R> extends ExternalMapQueryContext<K, V, R> {
-    
+
     void initInputKey(Data<K> inputKey);
 
     Data<K> getInputKeyBytesAsData(BytesStore bytesStore, long offset, long size);
-    
+
     DataAccess<K> inputKeyDataAccess();
-    
+
     InstanceReturnValue<V> defaultReturnValue();
-    
+
     UsableReturnValue<V> usingReturnValue();
-    
+
     DataAccess<V> inputValueDataAccess();
-    
+
     Closeable acquireHandle();
-    
+
     void initSegmentIndex(int segmentIndex);
-    
+
     boolean segmentIndexInit();
 }

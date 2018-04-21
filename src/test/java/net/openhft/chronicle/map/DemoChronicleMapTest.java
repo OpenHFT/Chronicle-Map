@@ -27,13 +27,28 @@ import java.io.IOException;
 import java.util.Map;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+interface DemoOrderVOInterface {
+    public CharSequence getSymbol();
+//    public StringBuilder getUsingSymbol(StringBuilder sb);
+
+    public void setSymbol(@MaxUtf8Length(20) CharSequence symbol);
+
+    public double addAtomicOrderQty(double toAdd);
+
+    public double getOrderQty();
+
+    public void setOrderQty(double orderQty);
+
+}
 
 public class DemoChronicleMapTest {
 
     @Test
     public void testMap() throws IOException {
-        File file = File.createTempFile("DummyOrders"+System.currentTimeMillis(), ".test");
+        File file = File.createTempFile("DummyOrders" + System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
         try (ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
@@ -75,7 +90,7 @@ public class DemoChronicleMapTest {
 
     @Test
     public void testMapLocked() throws IOException {
-        File file = File.createTempFile("DummyOrders-"+System.currentTimeMillis(), ".test");
+        File file = File.createTempFile("DummyOrders-" + System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
         try (ChronicleMap<IntValue, DemoOrderVOInterface> map = ChronicleMapBuilder
@@ -117,18 +132,4 @@ public class DemoChronicleMapTest {
         }
         file.delete();
     }
-}
-
-interface DemoOrderVOInterface {
-    public CharSequence getSymbol();
-//    public StringBuilder getUsingSymbol(StringBuilder sb);
-
-    public void setSymbol(@MaxUtf8Length(20) CharSequence symbol);
-
-    public double addAtomicOrderQty(double toAdd);
-
-    public double getOrderQty();
-
-    public void setOrderQty(double orderQty);
-
 }

@@ -29,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 public class BytesAsSizedReader<T>
         implements SizedReader<T>, StatefulCopyable<BytesAsSizedReader<T>> {
 
-    /** Config field */
+    /**
+     * Config field
+     */
     private BytesReader<T> reader;
 
     public BytesAsSizedReader(BytesReader<T> reader) {

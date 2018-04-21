@@ -176,7 +176,8 @@ public class NestedContextsInIterationContextTest {
                 .create()) {
             map.put(42, 42);
             try (MapSegmentContext<Integer, Integer, ?> cxt = map.segmentContext(0)) {
-                cxt.forEachSegmentEntry(e -> map.segmentContext(1).forEachSegmentEntry(e2 -> {}));
+                cxt.forEachSegmentEntry(e -> map.segmentContext(1).forEachSegmentEntry(e2 -> {
+                }));
             }
         }
     }

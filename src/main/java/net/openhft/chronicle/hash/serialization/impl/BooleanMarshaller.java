@@ -30,7 +30,8 @@ public final class BooleanMarshaller
         SizedWriter<Boolean>, BytesWriter<Boolean>, EnumMarshallable<BooleanMarshaller> {
     public static final BooleanMarshaller INSTANCE = new BooleanMarshaller();
 
-    private BooleanMarshaller() {}
+    private BooleanMarshaller() {
+    }
 
     @Override
     public long size(@NotNull Boolean e) {

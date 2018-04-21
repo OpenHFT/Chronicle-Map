@@ -24,13 +24,17 @@ import net.openhft.sg.Staged;
 @Staged
 public class AllocatedChunks {
 
-    @StageRef public VanillaChronicleHashHolder<?> hh;
-    @StageRef public SegmentStages s;
-    @StageRef public HashEntryStages<?> entry;
-    @StageRef public Alloc alloc;
+    @StageRef
+    public VanillaChronicleHashHolder<?> hh;
+    @StageRef
+    public SegmentStages s;
+    @StageRef
+    public HashEntryStages<?> entry;
+    @StageRef
+    public Alloc alloc;
 
     public int allocatedChunks = 0;
-    
+
     public void initAllocatedChunks(int allocatedChunks) {
         this.allocatedChunks = allocatedChunks;
     }

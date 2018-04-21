@@ -28,9 +28,12 @@ import net.openhft.sg.Staged;
 @Staged
 public abstract class IterationSegmentStages extends SegmentStages {
 
-    @StageRef VanillaChronicleHashHolder<?> hh;
-    @StageRef HashSegmentIteration it;
-    @StageRef HashLookupSearch hls;
+    @StageRef
+    VanillaChronicleHashHolder<?> hh;
+    @StageRef
+    HashSegmentIteration it;
+    @StageRef
+    HashLookupSearch hls;
 
     /**
      * During iteration, nextTier() is called in doReplaceValue() -> relocation() -> alloc().

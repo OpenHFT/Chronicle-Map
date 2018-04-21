@@ -28,17 +28,17 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Context of {@link ChronicleHash} operations with <i>individual keys</i>.
- *
+ * <p>
  * <p>This context provides access to {@link InterProcessReadWriteUpdateLock}, governing access
  * to the entry. Your have no chance to perform any actions under race with other threads, because
  * all required locks are acquired automatically on each operation, you should deal with locks
  * manually in the following cases:
  * <ul>
- *     <li>You should perform some read operation, and then write. On first operation, the context
- *     will automatically acquire the read lock; on the second, it will try to acquire the update
- *     or write lock, but it will fail with {@link IllegalMonitorStateException}, because this is
- *     dead lock prone. (See {@link InterProcessReadWriteUpdateLock} documentation for explanation.
- *     So, such context code is incorrect: <pre>{@code
+ * <li>You should perform some read operation, and then write. On first operation, the context
+ * will automatically acquire the read lock; on the second, it will try to acquire the update
+ * or write lock, but it will fail with {@link IllegalMonitorStateException}, because this is
+ * dead lock prone. (See {@link InterProcessReadWriteUpdateLock} documentation for explanation.
+ * So, such context code is incorrect: <pre>{@code
  * // INCORRECT
  * try (ExternalMapQueryContext<K, V, ?> q = map.queryContext(key)) {
  *     // q.entry(), checks if the entry is present in the map, and acquires
@@ -50,9 +50,9 @@ import org.jetbrains.annotations.Nullable;
  *         q.remove(entry);
  *     }
  * }}</pre>
- *     So, to workaround this, you should acquire the {@linkplain #updateLock() update lock},
- *     which is upgradable to the write lock, <i>before</i> performing any reading in the context:
- *     <pre>{@code
+ * So, to workaround this, you should acquire the {@linkplain #updateLock() update lock},
+ * which is upgradable to the write lock, <i>before</i> performing any reading in the context:
+ * <pre>{@code
  * // CORRECT
  * try (ExternalMapQueryContext<K, V, ?> q = map.queryContext(key)) {
  *     q.updateLock().lock(); // acquire the update lock before checking the entry presence.
@@ -60,11 +60,11 @@ import org.jetbrains.annotations.Nullable;
  *     if (entry != null)
  *         q.remove(entry);
  * }}</pre>
- *     </li>
- *     <li>You want to try to acquire some lock heuristically, in order to improve total {@code
- *     ChronicleHash} concurrency. You should base on probabilities of making some reading or
- *     writing operations. For example, see how {@link MapMethods#acquireUsing} might be
- *     implemented:<pre>{@code
+ * </li>
+ * <li>You want to try to acquire some lock heuristically, in order to improve total {@code
+ * ChronicleHash} concurrency. You should base on probabilities of making some reading or
+ * writing operations. For example, see how {@link MapMethods#acquireUsing} might be
+ * implemented:<pre>{@code
  * default void acquireUsing(MapQueryContext<K, V, R> q, ReturnValue<V> returnValue) {
  *     // For acquireUsing(), it is assumed to be very probable, that the entry is already
  *     // present in the map, so we will perform the whole acquireUsing() without exclusive locking
@@ -96,9 +96,9 @@ import org.jetbrains.annotations.Nullable;
  *     q.insert(q.absentEntry(), q.defaultValue(q.absentEntry()));
  *     returnValue.returnValue(q.entry().value());
  * }}</pre></li>
- *     <li>If the default {@link InterProcessLock#lock()} policy of trying to acquire the
- *     lock for some time, and then throw {@code RuntimeException}, or need a custom timeout:
- *     <pre>{@code
+ * <li>If the default {@link InterProcessLock#lock()} policy of trying to acquire the
+ * lock for some time, and then throw {@code RuntimeException}, or need a custom timeout:
+ * <pre>{@code
  * try (ExternalHashQueryContext<K> q = hash.queryContext(key)) {
  *     if (q.writeLock().tryLock(5, TimeUnit.SECONDS)) {
  *         // do something
@@ -146,12 +146,12 @@ import org.jetbrains.annotations.Nullable;
  *         return offHeapPoint;
  *     }
  * }}</pre>
- *
+ * <p>
  * <p>{@code HashQueryContext} is the base interface defining the structure, but it has no methods
  * to anything "interesting" with {@code entry()} or {@code absentEntry()}. Use {@link
  * MapQueryContext} or {@link SetQueryContext} interfaces, which provide access to {@link
  * MapEntryOperations} and {@link SetEntryOperations} respectively.
- *  
+ *
  * @param <K> the hash key type
  * @see ChronicleHash#queryContext(Object)
  */
@@ -160,7 +160,7 @@ public interface HashQueryContext<K> extends HashContext<K>, SegmentLock {
     /**
      * Returns the index of the accessed segment, where the queried key is located (or to which
      * the key is going to be put).
-     *
+     * <p>
      * <p>This index might also be used as the {@code InterProcessReadWriteUpdateLock} identifier,
      * because {@code ChronicleHashes} has per-segment locks.
      */
@@ -175,7 +175,7 @@ public interface HashQueryContext<K> extends HashContext<K>, SegmentLock {
     /**
      * Returns the entry context, if the entry with the queried key is <i>present</i>
      * in the {@code ChronicleHash}, returns {@code null} is the entry is <i>absent</i>.
-     *  
+     *
      * @implNote Might acquire {@link #readLock} before searching for the key, if the context
      * is not locked yet.
      */
@@ -184,7 +184,7 @@ public interface HashQueryContext<K> extends HashContext<K>, SegmentLock {
     /**
      * Returns the special <i>absent entry</i> object, if the entry with the queried key
      * is <i>absent</i> in the hash, returns {@code null}, if the entry is <i>present</i>.
-     * 
+     *
      * @implNote Might acquire {@link #readLock} before searching for the key, if the context
      * is not locked yet.
      */

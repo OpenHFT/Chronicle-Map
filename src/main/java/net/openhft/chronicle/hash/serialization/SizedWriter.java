@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * form of any object before actual serialization 2) doesn't include that length in the serialized
  * form itself, assuming it will be passed by the {@link ChronicleHash} into {@link
  * SizedReader#read} deserialization method.
- *
+ * <p>
  * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#sizedwriter-and-sizedreader">{@code
  * SizedWriter} and {@code SizedReader}</a> and
  * <a href="https://github.com/OpenHFT/Chronicle-Map#custom-serialization-checklist">custom
@@ -56,17 +56,17 @@ public interface SizedWriter<T> extends Marshallable {
     /**
      * Serializes the given object to the given {@code out}, without writing the length of the
      * serialized form itself.
-     *
+     * <p>
      * <p>Implementation of this method should increment the {@linkplain Bytes#writePosition()
      * position} of the given {@code out} by {@link #size(Object) size(toWrite)}. The given object
      * should be written into these range between the initial {@code bytes}' position and the
      * position after this method call returns.
      *
-     * @param out the {@code Bytes} to write the given object to
-     * @param size the size, returned by {@link #size(Object)} for the given {@code toWrite} object.
-     * it is given, because size might be needed during serialization, and it's computation has
-     * non-constant complexity, i. e. if serializing a {@code CharSequence} using variable-length
-     * encoding like UTF-8.
+     * @param out     the {@code Bytes} to write the given object to
+     * @param size    the size, returned by {@link #size(Object)} for the given {@code toWrite} object.
+     *                it is given, because size might be needed during serialization, and it's computation has
+     *                non-constant complexity, i. e. if serializing a {@code CharSequence} using variable-length
+     *                encoding like UTF-8.
      * @param toWrite the object to serialize
      * @see SizedReader#read(Bytes, long, Object)
      */

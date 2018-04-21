@@ -26,7 +26,6 @@ license, please contact mailto:sales@chronicle.software.
 [caption="", link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
 image::https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[]
 
-
 ``` xml
 <dependency>
   <groupId>net.openhft</groupId>

@@ -39,7 +39,7 @@ public class TrickyContextCasesTest {
                 .of(Integer.class, IntValue.class)
                 .entries(1).create();
 
-        IntValue v =  Values.newHeapInstance(IntValue.class);
+        IntValue v = Values.newHeapInstance(IntValue.class);
         v.setValue(2);
         map.put(1, v);
         try (ExternalMapQueryContext<Integer, IntValue, ?> q = map.queryContext(1)) {
@@ -61,8 +61,8 @@ public class TrickyContextCasesTest {
                 .of(Integer.class, byte[].class)
                 .averageValue(new byte[1])
                 .entries(100).actualSegments(1).create();
-        map.put(1, new byte[] {1});
-        map.put(2, new byte[] {2});
+        map.put(1, new byte[]{1});
+        map.put(2, new byte[]{2});
         try (ExternalMapQueryContext<Integer, byte[], ?> q = map.queryContext(1)) {
             MapEntry<Integer, byte[]> entry = q.entry(); // acquires read lock implicitly
             assertNotNull(entry);
@@ -70,9 +70,9 @@ public class TrickyContextCasesTest {
                 // this call should try to acquire write lock, that should lead to dead lock
                 // but if not...
                 // relocates the entry for the key 1 after the entry for 2, under update lock
-                map.put(1, new byte[] {1, 2, 3, 4, 5});
+                map.put(1, new byte[]{1, 2, 3, 4, 5});
                 // puts the entry for 3 at the place of the entry for the key 1, under update lock
-                map.put(3, new byte[] {3});
+                map.put(3, new byte[]{3});
             }).get();
             // prints [3]
             System.out.println(Arrays.toString(entry.value().get()));

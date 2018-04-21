@@ -43,7 +43,9 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
     private transient long size;
     private transient VanillaBytes targetBytes;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient T instance;
 
     public SizedMarshallableDataAccess(

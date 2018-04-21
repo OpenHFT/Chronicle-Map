@@ -28,11 +28,13 @@ import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
 @Staged
-public class  ReplicatedMapEntryDelegating<K, V>
+public class ReplicatedMapEntryDelegating<K, V>
         implements MapEntry<K, V>, ReplicableEntryDelegating {
 
-    @StageRef ReplicatedMapSegmentIteration<K, V, ?> delegate;
-    @StageRef ReplicatedMapEntryStages<K, V> e;
+    @StageRef
+    ReplicatedMapSegmentIteration<K, V, ?> delegate;
+    @StageRef
+    ReplicatedMapEntryStages<K, V> e;
 
     @NotNull
     @Override

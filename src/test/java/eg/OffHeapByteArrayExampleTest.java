@@ -31,14 +31,6 @@ import org.junit.Test;
 public class OffHeapByteArrayExampleTest {
 
     public static final char EXPECTED = 'b';
-
-    interface ByteArray {
-        @Array(length = 7)
-        void setByteValueAt(int index, ByteValue value);
-
-        ByteValue getByteValueAt(int index);
-    }
-
     private static ChronicleMap<LongValue, ByteArray> chm;
 
     @BeforeClass
@@ -83,5 +75,12 @@ public class OffHeapByteArrayExampleTest {
         byte actual = value.getByteValueAt(1).getValue();
         Assert.assertEquals(EXPECTED, actual);
 
+    }
+
+    interface ByteArray {
+        @Array(length = 7)
+        void setByteValueAt(int index, ByteValue value);
+
+        ByteValue getByteValueAt(int index);
     }
 }

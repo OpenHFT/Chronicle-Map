@@ -25,7 +25,8 @@ import net.openhft.sg.Staged;
 @Staged
 public abstract class QuerySegmentStages extends SegmentStages {
 
-    @StageRef KeyHashCode h;
+    @StageRef
+    KeyHashCode h;
 
     void initSegmentIndex() {
         segmentIndex = hh.h().hashSplitting.segmentIndex(h.keyHashCode());

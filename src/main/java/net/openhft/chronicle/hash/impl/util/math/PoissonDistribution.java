@@ -92,13 +92,13 @@ public class PoissonDistribution {
      * (lower, upper]}. The implementation does simple bisection to find the
      * smallest {@code p}-quantile <code>inf{x in Z | P(X<=x) >= p}</code>.
      *
-     * @param p the cumulative probability
+     * @param p     the cumulative probability
      * @param lower a value satisfying {@code cumulativeProbability(lower) < p}
      * @param upper a value satisfying {@code p <= cumulativeProbability(upper)}
      * @return the smallest {@code p}-quantile of this distribution
      */
     private static long solveInverseCumulativeProbability(double mean, final double p,
-                                                         long lower, long upper) {
+                                                          long lower, long upper) {
 
         while (lower + 1 < upper) {
             long xm = (lower + upper) / 2;

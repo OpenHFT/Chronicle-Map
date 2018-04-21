@@ -32,11 +32,15 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 @Staged
 public class ReadLock implements InterProcessLock {
 
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef SegmentStages s;
-    @StageRef HashEntryStages entry;
-    @StageRef HashLookupPos hlp;
-    
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    HashEntryStages entry;
+    @StageRef
+    HashLookupPos hlp;
+
     @Override
     public boolean isHeldByCurrentThread() {
         checkOnEachPublicOperation.checkOnEachLockOperation();

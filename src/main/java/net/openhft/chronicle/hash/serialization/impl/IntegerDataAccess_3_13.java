@@ -35,7 +35,9 @@ public final class IntegerDataAccess_3_13 extends AbstractData<Integer>
     private transient boolean bsInit;
     private transient BytesStore bs;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient Integer instance;
 
     public IntegerDataAccess_3_13() {

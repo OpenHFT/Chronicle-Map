@@ -24,9 +24,9 @@ public class Histogram {
     static final String[] FRACTION_STR = "worst,99.99,99.9,99,90,50".split(",");
     static final int[] FRACTIONS = {Integer.MAX_VALUE, 10000, 1000, 100, 10, 2};
     static final int BITS_OF_ACCURACY = 5;
-    final int[] counters = new int[40 << BITS_OF_ACCURACY];
     static final int MANTISSA = 52;
     static final int BITS_TO_TRUNCATE = MANTISSA - BITS_OF_ACCURACY;
+    final int[] counters = new int[40 << BITS_OF_ACCURACY];
     long count = 0;
 
     public void sample(long value) {

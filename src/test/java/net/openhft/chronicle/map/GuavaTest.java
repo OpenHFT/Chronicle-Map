@@ -48,7 +48,7 @@ public class GuavaTest extends TestCase {
         TestSuite backedTests = backed
                 .named("Guava tests tests of Chronicle Map, backed with HashMap")
                 .createTestSuite();
-        
+
         TestSuite tests = new TestSuite();
         tests.addTest(chmTests);
         // TODO
@@ -121,9 +121,9 @@ public class GuavaTest extends TestCase {
             return builder.create();
         }
     }
-    
+
     static class BackedUpMapGenerator extends CHMTestGenerator {
-        
+
         @Override
         Map<String, String> newMap() {
             Map<String, String> m = new HashMap<>();

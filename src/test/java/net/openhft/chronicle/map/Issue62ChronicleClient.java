@@ -44,7 +44,7 @@ public class Issue62ChronicleClient {
                 .replication((byte) 2);
 
         try (ChronicleMap<String, Long> map =
-                cityPostalCodesMapBuilder.createPersistedTo(MAP_FILE_B)) {
+                     cityPostalCodesMapBuilder.createPersistedTo(MAP_FILE_B)) {
 
             LOGGER.info("Starting");
             Jvm.pause(3000);

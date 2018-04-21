@@ -37,20 +37,35 @@ import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 @Staged
 public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry {
 
-    @StageRef public VanillaChronicleHashHolder<?> hh;
-    @StageRef public SegmentStages s;
-    @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef public HashLookupPos hlp;
+    @StageRef
+    public VanillaChronicleHashHolder<?> hh;
+    @StageRef
+    public SegmentStages s;
+    @StageRef
+    public CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    public HashLookupPos hlp;
 
     public long pos = -1;
+    @Stage("EntryOffset")
+    public long keySizeOffset = -1;
+    public long keySize = -1;
+    public long keyOffset = -1;
+    public boolean delayedUpdateChecksum = false;
+    @StageRef
+    public EntryKeyBytesData<K> entryKey;
+    @Stage("EntrySizeInChunks")
+    public int entrySizeInChunks = 0;
+    @StageRef
+    HashEntryChecksumStrategy hashEntryChecksumStrategy;
+    public final ChecksumStrategy checksumStrategy = hh.h().checksumEntries ?
+            hashEntryChecksumStrategy : NoChecksumStrategy.INSTANCE;
 
     public void initPos(long pos) {
         this.pos = pos;
     }
 
     public abstract void closePos();
-
-    @Stage("EntryOffset") public long keySizeOffset = -1;
 
     public abstract boolean entryOffsetInit();
 
@@ -64,15 +79,11 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
 
     public abstract void closeEntryOffset();
 
-    public long keySize = -1;
-
     public void initKeySize(long keySize) {
         this.keySize = keySize;
     }
 
     public abstract void closeKeySize();
-
-    public long keyOffset = -1;
 
     public void initKeyOffset(long keyOffset) {
         this.keyOffset = keyOffset;
@@ -134,12 +145,6 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
         return keyEnd();
     }
 
-    @StageRef HashEntryChecksumStrategy hashEntryChecksumStrategy;
-    public final ChecksumStrategy checksumStrategy = hh.h().checksumEntries ?
-            hashEntryChecksumStrategy : NoChecksumStrategy.INSTANCE;
-
-    public boolean delayedUpdateChecksum = false;
-
     public void initDelayedUpdateChecksum(boolean delayedUpdateChecksum) {
         // makes delayedUpdateChecksum dependent on keySizeOffset and Locks stages, to trigger
         // delayedUpdateChecksum close on these stages' close
@@ -186,16 +191,12 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
         return checksumStrategy.extraEntryBytes() + entryEnd() - keySizeOffset;
     }
 
-    @StageRef public EntryKeyBytesData<K> entryKey;
-
     @NotNull
     @Override
     public Data<K> key() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return entryKey;
     }
-
-    @Stage("EntrySizeInChunks") public int entrySizeInChunks = 0;
 
     void initEntrySizeInChunks() {
         entrySizeInChunks = hh.h().inChunks(entrySize());
@@ -204,7 +205,7 @@ public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry 
     public void initEntrySizeInChunks(int actuallyUsedChunks) {
         entrySizeInChunks = actuallyUsedChunks;
     }
-    
+
     public void innerRemoveEntryExceptHashLookupUpdate() {
         s.free(pos, entrySizeInChunks);
         s.incrementModCount();

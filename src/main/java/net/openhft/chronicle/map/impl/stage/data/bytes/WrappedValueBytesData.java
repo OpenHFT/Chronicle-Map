@@ -32,19 +32,35 @@ import static net.openhft.chronicle.bytes.NoBytesStore.NO_BYTES_STORE;
 @Staged
 public class WrappedValueBytesData<V> extends AbstractData<V> {
 
-    @StageRef ValueBytesInterop<V> vi;
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    
+    @Stage("WrappedValueBytes")
+    private final VanillaBytes wrappedValueBytes =
+            new VanillaBytes(NO_BYTES_STORE);
+    @StageRef
+    ValueBytesInterop<V> vi;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
     private WrappedValueBytesData<V> next;
-    
+    @Stage("WrappedValueBytesStore")
+    private BytesStore wrappedValueBytesStore;
+    @Stage("WrappedValueBytesStore")
+    private long wrappedValueBytesOffset;
+    @Stage("WrappedValueBytesStore")
+    private long wrappedValueBytesSize;
+    @Stage("WrappedValueBytes")
+    private boolean wrappedValueBytesUsed = false;
+    @Stage("CachedWrappedValue")
+    private V cachedWrappedValue;
+    @Stage("CachedWrappedValue")
+    private boolean cachedWrappedValueRead = false;
+
     boolean nextInit() {
         return true;
     }
-    
+
     void closeNext() {
         // do nothing
     }
-    
+
     @Stage("Next")
     public WrappedValueBytesData<V> getUnusedWrappedValueBytesData() {
         if (!wrappedValueBytesStoreInit())
@@ -53,10 +69,6 @@ public class WrappedValueBytesData<V> extends AbstractData<V> {
             next = new WrappedValueBytesData<>();
         return next.getUnusedWrappedValueBytesData();
     }
-
-    @Stage("WrappedValueBytesStore") private BytesStore wrappedValueBytesStore;
-    @Stage("WrappedValueBytesStore") private long wrappedValueBytesOffset;
-    @Stage("WrappedValueBytesStore") private long wrappedValueBytesSize;
 
     boolean wrappedValueBytesStoreInit() {
         return wrappedValueBytesStore != null;
@@ -74,10 +86,6 @@ public class WrappedValueBytesData<V> extends AbstractData<V> {
             next.closeWrappedValueBytesStore();
     }
 
-    @Stage("WrappedValueBytes") private final VanillaBytes wrappedValueBytes =
-            new VanillaBytes(NO_BYTES_STORE);
-    @Stage("WrappedValueBytes") private boolean wrappedValueBytesUsed = false;
-
     boolean wrappedValueBytesInit() {
         return wrappedValueBytesUsed;
     }
@@ -92,9 +100,6 @@ public class WrappedValueBytesData<V> extends AbstractData<V> {
         wrappedValueBytes.bytesStore(NO_BYTES_STORE, 0, 0);
         wrappedValueBytesUsed = false;
     }
-
-    @Stage("CachedWrappedValue") private V cachedWrappedValue;
-    @Stage("CachedWrappedValue") private boolean cachedWrappedValueRead = false;
 
     private void initCachedWrappedValue() {
         cachedWrappedValue = innerGetUsing(cachedWrappedValue);

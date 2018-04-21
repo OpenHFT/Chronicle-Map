@@ -78,7 +78,7 @@ public class Issue58 {
                     .collect(toMap(k -> data.get(k), k -> k));
             reverseMap.putAll(reverse);
         }
-}
+    }
 
     public void test1(Map<String, UUID> data) throws IOException {
         try (
@@ -125,13 +125,14 @@ public class Issue58 {
             map.entrySet().forEach(e -> System.out.println(e.getKey() + "->" + e.getValue()));
             reverseMap.forEach((k, v) -> System.out.println(k + " -> " + v));
         }
-}
+    }
 
     static final class UuidMarshaller
             implements BytesReader<UUID>, BytesWriter<UUID>, EnumMarshallable<UuidMarshaller> {
         public static final UuidMarshaller INSTANCE = new UuidMarshaller();
 
-        private UuidMarshaller() {}
+        private UuidMarshaller() {
+        }
 
         @Override
         public void write(Bytes bytes, @NotNull UUID uuid) {

@@ -74,27 +74,27 @@ import net.openhft.sg.Staged;
 
         ReplicatedQueryAlloc.class,
 },
-nested = {
-        ReadLock.class,
-        UpdateLock.class,
-        WriteLock.class,
+        nested = {
+                ReadLock.class,
+                UpdateLock.class,
+                WriteLock.class,
 
-        EntryKeyBytesData.class,
-        EntryValueBytesData.class,
+                EntryKeyBytesData.class,
+                EntryValueBytesData.class,
 
-        InputKeyBytesData.class,
+                InputKeyBytesData.class,
 
-        WrappedValueInstanceDataHolder.class,
-        WrappedValueBytesData.class,
-        AcquireHandle.class,
-        DefaultReturnValue.class,
-        UsingReturnValue.class,
+                WrappedValueInstanceDataHolder.class,
+                WrappedValueBytesData.class,
+                AcquireHandle.class,
+                DefaultReturnValue.class,
+                UsingReturnValue.class,
 
-        ReplicatedMapAbsentDelegating.class,
+                ReplicatedMapAbsentDelegating.class,
 
-        DummyValueZeroData.class,
+                DummyValueZeroData.class,
 
-        HashEntryChecksumStrategy.class,
-})
+                HashEntryChecksumStrategy.class,
+        })
 public class ReplicatedMapQueryContext {
 }

@@ -26,9 +26,12 @@ import static net.openhft.chronicle.hash.impl.stage.entry.ChecksumHashing.hash8T
 @Staged
 public class HashEntryChecksumStrategy implements ChecksumStrategy {
 
-    @StageRef SegmentStages s;
-    @StageRef HashEntryStages<?> e;
-    @StageRef KeyHashCode h;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    HashEntryStages<?> e;
+    @StageRef
+    KeyHashCode h;
 
     @Override
     public void computeAndStoreChecksum() {

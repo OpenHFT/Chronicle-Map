@@ -30,8 +30,10 @@ import org.jetbrains.annotations.NotNull;
 @Staged
 public abstract class MapEntryOperationsDelegation<K, V, R> implements MapContext<K, V, R> {
 
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef VanillaChronicleMapHolder<K, V, R> mh;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    VanillaChronicleMapHolder<K, V, R> mh;
 
     @Override
     public R replaceValue(@NotNull MapEntry<K, V> entry, Data<V> newValue) {
