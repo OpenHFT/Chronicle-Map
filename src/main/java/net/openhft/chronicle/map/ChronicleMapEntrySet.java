@@ -43,9 +43,7 @@ class ChronicleMapEntrySet<K, V> extends AbstractSet<Map.Entry<K, V>> {
         try {
             V v = map.get(e.getKey());
             return v != null && v.equals(e.getValue());
-        } catch (ClassCastException ex) {
-            return false;
-        } catch (NullPointerException ex) {
+        } catch (ClassCastException | NullPointerException ex) {
             return false;
         }
     }
@@ -58,9 +56,7 @@ class ChronicleMapEntrySet<K, V> extends AbstractSet<Map.Entry<K, V>> {
             Object key = e.getKey();
             Object value = e.getValue();
             return map.remove(key, value);
-        } catch (ClassCastException ex) {
-            return false;
-        } catch (NullPointerException ex) {
+        } catch (ClassCastException | NullPointerException ex) {
             return false;
         }
     }

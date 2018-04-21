@@ -198,9 +198,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
                 }
                 return v != null && c.value().equals(c.context().wrapValueAsData(v));
             });
-        } catch (ClassCastException unused) {
-            return false;
-        } catch (NullPointerException unused) {
+        } catch (ClassCastException | NullPointerException unused) {
             return false;
         }
     }

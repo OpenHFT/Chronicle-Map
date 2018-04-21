@@ -210,7 +210,7 @@ registerForReplication: {
 
 ..
 
-# corresponding registration message from remote peer
+== corresponding registration message from remote peer
 targetHostId: 1
 registerForReplication: {
   receiverHostId: 2,
@@ -221,7 +221,7 @@ registerForReplication: {
 
 ..
 
-# accept replication connection
+== accept replication connection
 targetHostId: 2
 acceptingReplicationRequest: {
   acceptingHostId: 1
@@ -229,7 +229,7 @@ acceptingReplicationRequest: {
 
 ..
 
-# encoded replication update sent to remote peer
+== encoded replication update sent to remote peer
 targetHostId: 2
 replicatedEntry: !!binary AYChq5LqwKXqFAFOEwAAAAAAAAD/////////fw==
 ....

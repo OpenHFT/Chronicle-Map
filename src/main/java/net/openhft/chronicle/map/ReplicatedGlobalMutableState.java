@@ -22,7 +22,7 @@ import net.openhft.chronicle.values.*;
 
 interface ReplicatedGlobalMutableState extends VanillaGlobalMutableState {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         System.setProperty("chronicle.values.dumpCode", "true");
         Values.nativeClassFor(ReplicatedGlobalMutableState.class);
     }

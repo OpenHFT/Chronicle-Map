@@ -373,13 +373,16 @@ public abstract class VanillaChronicleHash<K,
     private void initOwnTransients() {
         globalMutableState = createGlobalMutableState();
         tierBulkOffsets = new ArrayList<>();
-        if (tierHashLookupSlotSize == 4) {
-            hashLookup = new IntCompactOffHeapLinearHashTable(this);
-        } else if (tierHashLookupSlotSize == 8) {
-            hashLookup = new LongCompactOffHeapLinearHashTable(this);
-        } else {
-            throw new AssertionError("hash lookup slot size could be 4 or 8, " +
-                    tierHashLookupSlotSize + " observed");
+        switch (tierHashLookupSlotSize) {
+            case 4:
+                hashLookup = new IntCompactOffHeapLinearHashTable(this);
+                break;
+            case 8:
+                hashLookup = new LongCompactOffHeapLinearHashTable(this);
+                break;
+            default:
+                throw new AssertionError("hash lookup slot size could be 4 or 8, " +
+                        tierHashLookupSlotSize + " observed");
         }
         identity = new Identity();
     }

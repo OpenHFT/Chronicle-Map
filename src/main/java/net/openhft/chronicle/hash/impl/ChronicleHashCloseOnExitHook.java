@@ -29,12 +29,7 @@ final class ChronicleHashCloseOnExitHook {
     private static long order = 0;
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                closeAll();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(ChronicleHashCloseOnExitHook::closeAll));
     }
 
     private ChronicleHashCloseOnExitHook() {

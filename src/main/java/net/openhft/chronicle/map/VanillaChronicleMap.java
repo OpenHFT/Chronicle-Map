@@ -342,7 +342,7 @@ public class VanillaChronicleMap<K, V, R>
                 // lambda is used instead of constructor reference because currently stage-compiler
                 // has issues with parsing method/constructor refs.
                 // TODO replace with constructor ref when stage-compiler is improved
-                (c, m) -> new CompiledMapQueryContext<K, V, R>(c, m), this);
+                CompiledMapQueryContext::new, this);
     }
 
     final ChainingInterface i() {
@@ -385,7 +385,7 @@ public class VanillaChronicleMap<K, V, R>
                 // lambda is used instead of constructor reference because currently stage-compiler
                 // has issues with parsing method/constructor refs.
                 // TODO replace with constructor ref when stage-compiler is improved
-                (c, m) -> new CompiledMapIterationContext<K, V, R>(c, m), this);
+                CompiledMapIterationContext::new, this);
     }
 
     @Override

@@ -29,7 +29,7 @@ import net.openhft.chronicle.values.Values;
  */
 public interface VanillaGlobalMutableState extends Byteable {
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         System.setProperty("chronicle.values.dumpCode", "true");
         Values.nativeClassFor(VanillaGlobalMutableState.class);
     }

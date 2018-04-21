@@ -544,7 +544,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 // lambda is used instead of constructor reference because currently stage-compiler
                 // has issues with parsing method/constructor refs.
                 // TODO replace with constructor ref when stage-compiler is improved
-                (c, m) -> new CompiledReplicatedMapQueryContext<K, V, R>(c, m), this);
+                CompiledReplicatedMapQueryContext::new, this);
     }
 
     /**
@@ -575,7 +575,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 // lambda is used instead of constructor reference because currently stage-compiler
                 // has issues with parsing method/constructor refs.
                 // TODO replace with constructor ref when stage-compiler is improved
-                (c, m) -> new CompiledReplicatedMapIterationContext<K, V, R>(c, m), this);
+                CompiledReplicatedMapIterationContext::new, this);
     }
 
     @Override
