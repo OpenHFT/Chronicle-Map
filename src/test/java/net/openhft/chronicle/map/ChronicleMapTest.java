@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
+import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.core.values.LongValue;
@@ -1863,6 +1864,25 @@ public class ChronicleMapTest {
         tmpFile.delete();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testBytesMarshallableMustBeConcreteValueType() {
+        try (ChronicleMap<CharSequence, BMSUper> map = ChronicleMapBuilder
+                .of(CharSequence.class, BMSUper.class)
+                .entries(1)
+                .averageKey("hello")
+                .averageValue(new BMClass())
+                .create()) {
+            map.put("hi", new BMClass());
+        }
+    }
+
+    interface BMSUper {
+
+    }
+
+    static class BMClass implements BytesMarshallable, BMSUper {
+
+    }
     private static final class IncrementRunnable implements Runnable {
 
         private final ChronicleMap<CharSequence, LongValue> map;

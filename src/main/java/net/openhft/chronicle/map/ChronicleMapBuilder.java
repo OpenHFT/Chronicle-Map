@@ -21,6 +21,7 @@ import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
@@ -43,10 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -653,6 +651,14 @@ public final class ChronicleMapBuilder<K, V> implements
      * @see #actualChunkSize(int)
      */
     public ChronicleMapBuilder<K, V> averageValue(V averageValue) {
+        Class<?> valueClass = averageValue.getClass();
+        if (BytesMarshallable.class.isAssignableFrom(valueClass) &&
+                valueBuilder.tClass.isInterface()) {
+            if (Serializable.class.isAssignableFrom(valueClass))
+                LOG.warn("BytesMarshallable " + valueClass + " will be serialized as Serializable as the value class is an interface");
+            else
+                throw new IllegalArgumentException("Using BytesMarshallable and an interface value type not supported");
+        }
         Objects.requireNonNull(averageValue);
         checkSizeIsStaticallyKnown(valueBuilder, "Value");
         this.averageValue = averageValue;
