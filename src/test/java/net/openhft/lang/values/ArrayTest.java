@@ -1,51 +1,22 @@
 package net.openhft.lang.values;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.UUID;
-
-import org.junit.Test;
-
+import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import org.junit.Test;
+
+import java.io.File;
+import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
 public class ArrayTest {
-	
-	static String TMP = System.getProperty("java.io.tmpdir");
-	
-	@Test
-	public void test0() throws IOException{
-		
-		File file = new File(TMP + "/pf-PosistionsAndClose-" + System.nanoTime());
-		
-		ChronicleMap<Long, MovingAverageCompact[]> mapWrite = ChronicleMap
-	    .of(Long.class, MovingAverageCompact[].class)
-	    .entries(100)
-	    .averageValue(createSampleWithSize(6))
-	    .createPersistedTo(file);
-		mapWrite.put(1L, createSampleWithSize(6));
-		mapWrite.close();
+	private static final File TMP = new File(System.getProperty("java.io.tmpdir"));
 
-
-		ChronicleMap<UUID, MovingAverageCompact[]> mapRead = ChronicleMapBuilder
-	    .of(UUID.class, MovingAverageCompact[].class)
-	    .averageValue(createSampleWithSize(6))
-	    .createPersistedTo(file);
-		MovingAverageCompact[] m = mapRead.get(1L);
-	}
-	
-	private MovingAverageCompact[] createSampleWithSize(int size){
-		MovingAverageCompact[] sample = new MovingAverageCompact[size];
-		for(int i=0;i<sample.length;i++){
-			sample[i]=new MovingAverageCompact();
-		}
-		return sample;
-	}
-	
-	
-	@Test
+    @Test
     public void test() throws IOException {
-        File file = new File(TMP + "/pf-PosistionsAndClose-" + System.nanoTime());
+		ClassAliasPool.CLASS_ALIASES.addAlias(Double[].class);
+        File file = new File(TMP + "ArrayTestMap" + System.nanoTime());
+        //write
         ChronicleMap<Long, Double[]> writeMap = ChronicleMapBuilder
 			    .of(Long.class, Double[].class)
 			    .entries(1_000)
@@ -60,5 +31,8 @@ public class ArrayTest {
         		.averageValue(new Double[150])
         		.createPersistedTo(file);
         Double b[] = readMap.get(1L);
-	}
+        
+        assertEquals(a[0],b[0]);
+        file.delete(); 
+    }
 }
