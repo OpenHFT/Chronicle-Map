@@ -35,6 +35,7 @@ public class WordCountTest {
 
     static String[] words;
     static int expectedSize;
+
     static {
         try {
             // english version of war and peace ->  ascii

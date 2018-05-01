@@ -18,7 +18,6 @@
 package net.openhft.chronicle.hash.impl.util.jna;
 
 import com.sun.jna.*;
-import net.openhft.chronicle.core.OS;
 
 import java.io.IOException;
 
@@ -26,19 +25,20 @@ public final class PosixMsync {
 
     private static final int MS_SYNC = 4;
 
+    static {
+        NativeLibrary clib = NativeLibrary.getInstance(Platform.C_LIBRARY_NAME);
+        Native.register(PosixMsync.class, clib);
+    }
+
+    private PosixMsync() {
+    }
+
     public static void msync(long addr, long length) throws IOException {
         if (msync(new Pointer(addr), new size_t(length), MS_SYNC) == -1)
             throw new IOException("msync failed: error code " + Native.getLastError());
     }
 
     private static native int msync(Pointer addr, size_t length, int flags);
-
-    static {
-        NativeLibrary clib = NativeLibrary.getInstance(Platform.C_LIBRARY_NAME);
-        Native.register(PosixMsync.class, clib);
-    }
-
-    private PosixMsync() {}
 
     public static class size_t extends IntegerType {
         private static final long serialVersionUID = 0L;

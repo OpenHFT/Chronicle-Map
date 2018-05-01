@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,12 +29,10 @@ final class ChronicleHashCloseOnExitHook {
     private static long order = 0;
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                closeAll();
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(ChronicleHashCloseOnExitHook::closeAll));
+    }
+
+    private ChronicleHashCloseOnExitHook() {
     }
 
     static synchronized void add(VanillaChronicleHash hash) {
@@ -85,6 +82,4 @@ final class ChronicleHashCloseOnExitHook {
             }
         }
     }
-
-    private ChronicleHashCloseOnExitHook() {}
 }

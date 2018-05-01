@@ -26,7 +26,7 @@ import net.openhft.sg.Staged;
 
 @Staged
 public interface VanillaChronicleMapHolder<K, V, R> extends VanillaChronicleHashHolder<K> {
-    
+
     VanillaChronicleMap<K, V, R> m();
 
     @Override

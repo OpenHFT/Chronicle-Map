@@ -56,7 +56,7 @@ public class KeySegmentDistributionTest {
         for (int i = 0; i < size; i++) {
             random.nextBytes(keyBytes);
             String key = new String(keyBytes, StandardCharsets.US_ASCII);
-            long hash = LongHashFunction.xx_r39().hashBytes(StandardCharsets.UTF_8.encode(key));
+            long hash = LongHashFunction.xx().hashBytes(StandardCharsets.UTF_8.encode(key));
             int segmentIndex = (((int) hash) & Integer.MAX_VALUE) % segments;
             // Put the segment index as a value to the map
             map.put(key, segmentIndex);

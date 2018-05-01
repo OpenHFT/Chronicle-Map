@@ -237,26 +237,30 @@ public class CHMTest5 {
 
         @Group(0)
         long getEntryLockState();
+
         void setEntryLockState(long entryLockState);
 
         @Group(1)
         int getMaxNumberOfProcessesAllowed();
+
         void setMaxNumberOfProcessesAllowed(int max);
+
         boolean compareAndSwapMaxNumberOfProcessesAllowed(int expected, int value);
 
         @Group(1)
         @Array(length = 4)
         void setTimeAt(int index, long time);
+
         long getTimeAt(int index);
 
         @Deprecated()
         default boolean tryLockNanosEntry(long nanos) {
             return AcquisitionStrategies
                     .<ReadWriteLockingStrategy>spinLoop(nanos, TimeUnit.NANOSECONDS).acquire(
-                    TryAcquireOperations.writeLock(),
-                    VanillaReadWriteWithWaitsLockingStrategy.instance(),
-                    checkedBytesStoreAccess(), ((Byteable) this).bytesStore(),
-                    ((Byteable) this).offset());
+                            TryAcquireOperations.writeLock(),
+                            VanillaReadWriteWithWaitsLockingStrategy.instance(),
+                            checkedBytesStoreAccess(), ((Byteable) this).bytesStore(),
+                            ((Byteable) this).offset());
         }
 
         @Deprecated()

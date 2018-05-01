@@ -23,7 +23,8 @@ import java.nio.channels.FileChannel;
 
 public final class FileIOUtils {
 
-    private FileIOUtils() {}
+    private FileIOUtils() {
+    }
 
     public static void readFully(FileChannel fileChannel, long filePosition, ByteBuffer buffer)
             throws IOException {

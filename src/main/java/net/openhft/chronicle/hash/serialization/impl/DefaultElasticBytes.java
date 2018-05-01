@@ -23,6 +23,9 @@ final class DefaultElasticBytes {
 
     static final int DEFAULT_BYTES_CAPACITY = 32;
 
+    private DefaultElasticBytes() {
+    }
+
     static Bytes<?> allocateDefaultElasticBytes(long bytesCapacity) {
         if (bytesCapacity <= Bytes.MAX_BYTE_BUFFER_CAPACITY) {
             return Bytes.elasticHeapByteBuffer((int) bytesCapacity);
@@ -30,6 +33,4 @@ final class DefaultElasticBytes {
             return Bytes.allocateElasticDirect(bytesCapacity);
         }
     }
-
-    private DefaultElasticBytes() {}
 }

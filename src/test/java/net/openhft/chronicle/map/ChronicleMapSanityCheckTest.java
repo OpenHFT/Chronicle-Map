@@ -36,8 +36,7 @@ import java.util.concurrent.locks.LockSupport;
 public class ChronicleMapSanityCheckTest {
 
     @Test
-    public void testSanity1() throws IOException, InterruptedException
-    {
+    public void testSanity1() throws IOException, InterruptedException {
 
         String tmp = System.getProperty("java.io.tmpdir");
 
@@ -120,7 +119,7 @@ public class ChronicleMapSanityCheckTest {
                 throw new RuntimeException(e);
             }
         }
-}
+    }
 
     enum DummyValue {
         DUMMY_VALUE

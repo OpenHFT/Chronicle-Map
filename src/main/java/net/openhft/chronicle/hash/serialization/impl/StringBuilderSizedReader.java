@@ -27,7 +27,8 @@ public final class StringBuilderSizedReader
         implements SizedReader<StringBuilder>, EnumMarshallable<StringBuilderSizedReader> {
     public static final StringBuilderSizedReader INSTANCE = new StringBuilderSizedReader();
 
-    private StringBuilderSizedReader() {}
+    private StringBuilderSizedReader() {
+    }
 
     @NotNull
     @Override

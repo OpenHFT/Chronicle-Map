@@ -33,13 +33,20 @@ import java.util.function.Predicate;
 @Staged
 public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         implements HashEntry<K>, HashSegmentContext<K, E> {
-    
-    @StageRef public IterationSegmentStages s;
-    @StageRef HashEntryStages<K> e;
-    @StageRef VanillaChronicleHashHolder<?> hh;
-    @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef protected HashLookupPos hlp;
-    
+
+    @StageRef
+    public IterationSegmentStages s;
+    @StageRef
+    public CheckOnEachPublicOperation checkOnEachPublicOperation;
+    public boolean entryRemovedOnThisIteration = false;
+    public long hashLookupEntry = 0;
+    @StageRef
+    protected HashLookupPos hlp;
+    @StageRef
+    HashEntryStages<K> e;
+    @StageRef
+    VanillaChronicleHashHolder<?> hh;
+
     public boolean shouldTestEntry() {
         return true;
     }
@@ -52,15 +59,11 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         return s.tierEntries();
     }
 
-    public boolean entryRemovedOnThisIteration = false;
-    
     abstract boolean entryRemovedOnThisIterationInit();
-    
+
     protected void initEntryRemovedOnThisIteration(boolean entryRemovedOnThisIteration) {
         this.entryRemovedOnThisIteration = entryRemovedOnThisIteration;
     }
-
-    public long hashLookupEntry = 0;
 
     public abstract boolean hashLookupEntryInit();
 
@@ -181,7 +184,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
             return true;
         });
     }
-    
+
     public void checkEntryNotRemovedOnThisIteration() {
         if (entryRemovedOnThisIterationInit()) {
             throw new IllegalStateException(

@@ -20,7 +20,9 @@ package net.openhft.chronicle.map.replication;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
-import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.map.MapAbsentEntry;
+import net.openhft.chronicle.map.MapEntryOperations;
 
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.ACCEPT;
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.DISCARD;
@@ -28,7 +30,7 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
 
 /**
  * SPI strategy of performing remote calls and apply replication events for {@link ChronicleMap}.
- *
+ * <p>
  * <p>Example: Grow-only set values CRDT: <pre><code>
  * class GrowOnlySetValuedMapEntryOperations&lt;K, E&gt;
  *         implements MapEntryOperations&lt;K, Set&lt;E&gt;, Void&gt; {
@@ -38,7 +40,7 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
  *                 "doesn't support map value removals");
  *     }
  * }
- *
+ * <p>
  * class GrowOnlySetValuedMapRemoteOperations&lt;K, E&gt;
  *         implements MapRemoteOperations&lt;K, Set&lt;E&gt;, Void&gt; {
  *     &#064;Override
@@ -54,7 +56,7 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
  *             q.entry().updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
  *         }
  *     }
- *
+ * <p>
  *     &#064;Override
  *     public void remove(MapRemoteQueryContext&lt;K, Set&lt;E&gt;, Void&gt; q) {
  *         throw new UnsupportedOperationException();
@@ -65,7 +67,7 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
  * @param <V> the map value type
  * @param <R> the return type of {@link MapEntryOperations} specified fro the queried map
  * @see DefaultEventualConsistencyStrategy
- * @see ChronicleMapBuilderPrivateAPI#remoteOperations(MapRemoteOperations)
+ * @see net.openhft.chronicle.map.ChronicleMapBuilderPrivateAPI#remoteOperations(MapRemoteOperations)
  */
 public interface MapRemoteOperations<K, V, R> {
 
@@ -133,7 +135,7 @@ public interface MapRemoteOperations<K, V, R> {
      * key ({@code q.queriedKey()}) was changed on some remote {@code ChronicleMap} node, with the
      * given {@code newValue}.
      *
-     * @param q the remote operation context
+     * @param q        the remote operation context
      * @param newValue the new value to put
      */
     default void put(MapRemoteQueryContext<K, V, R> q, Data<V> newValue) {

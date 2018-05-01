@@ -34,11 +34,13 @@ public final class PointListSizedMarshaller
         ReadResolvable<PointListSizedMarshaller> {
 
     static final PointListSizedMarshaller INSTANCE = new PointListSizedMarshaller();
-
-    private PointListSizedMarshaller() {}
-
-    /** A point takes 16 bytes in serialized form: 8 bytes for both x and y value */
+    /**
+     * A point takes 16 bytes in serialized form: 8 bytes for both x and y value
+     */
     private static final long ELEMENT_SIZE = 16;
+
+    private PointListSizedMarshaller() {
+    }
 
     @Override
     public long size(@NotNull List<Point> toWrite) {

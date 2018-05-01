@@ -36,12 +36,11 @@ import java.util.zip.InflaterInputStream;
 public final class DeflatorStringMarshaller implements BytesReader<CharSequence>,
         BytesWriter<CharSequence>, EnumMarshallable<DeflatorStringMarshaller> {
     public static final DeflatorStringMarshaller INSTANCE = new DeflatorStringMarshaller();
-
-    private DeflatorStringMarshaller() {}
-
     private static final StringFactory STRING_FACTORY = getStringFactory();
-
     private static final int NULL_LENGTH = -1;
+
+    private DeflatorStringMarshaller() {
+    }
 
     private static StringFactory getStringFactory() {
         try {

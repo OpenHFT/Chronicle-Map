@@ -26,14 +26,42 @@ public abstract class CompactOffHeapLinearHashTable {
     // to fit 64 bits per slot.
     public static final int MAX_TIER_CHUNKS = 1 << 30;
     public static final int MAX_TIER_ENTRIES = 1 << 29;
-    /** Normally, hashLookup capacity is chosen so that the lf varies from 1/3 to 2/3, at most */
-    public static final double MAX_UPPER_BOUND_LOAD_FACTOR = .2/.3;
+    /**
+     * Normally, hashLookup capacity is chosen so that the lf varies from 1/3 to 2/3, at most
+     */
+    public static final double MAX_UPPER_BOUND_LOAD_FACTOR = .2 / .3;
     /**
      * If average key/value sizes are configured wrong, and Chronicle Hash bloats up (size grows
      * beyond configured .entries()), hashLookup might become too full. Stop insertion and trigger
      * segment tiering, when hashLookup load factor > 0.8, because collision chains become too long.
      */
     public static final double MAX_LOAD_FACTOR = 0.8;
+    public static final long UNSET_KEY = 0L;
+    public static final long UNSET_ENTRY = 0L;
+    final long capacityMask2;
+    private final long capacityMask;
+    private final int keyBits;
+    private final long keyMask;
+    private final long valueMask;
+
+    CompactOffHeapLinearHashTable(long capacity, int slotSize, int keyBits, int valueBits) {
+        this.capacityMask = capacity - 1L;
+
+        this.capacityMask2 = capacityMask * slotSize;
+
+        this.keyBits = keyBits;
+        this.keyMask = mask(keyBits);
+        this.valueMask = mask(valueBits);
+    }
+    /**
+     * Must not store {@code h} in a field, to avoid memory leaks.
+     *
+     * @see net.openhft.chronicle.hash.impl.stage.hash.Chaining#initMap
+     */
+    CompactOffHeapLinearHashTable(VanillaChronicleHash h) {
+        this(h.tierHashLookupCapacity, h.tierHashLookupSlotSize, h.tierHashLookupKeyBits,
+                h.tierHashLookupValueBits);
+    }
 
     public static int valueBits(long actualChunksPerSegment) {
         return 64 - Long.numberOfLeadingZeros(actualChunksPerSegment - 1L);
@@ -71,35 +99,6 @@ public abstract class CompactOffHeapLinearHashTable {
 
     public static long mask(int bits) {
         return (1L << bits) - 1L;
-    }
-
-    public static final long UNSET_KEY = 0L;
-    public static final long UNSET_ENTRY = 0L;
-
-    private final long capacityMask;
-    final long capacityMask2;
-    private final int keyBits;
-    private final long keyMask;
-    private final long valueMask;
-
-    CompactOffHeapLinearHashTable(long capacity, int slotSize, int keyBits, int valueBits) {
-        this.capacityMask = capacity - 1L;
-
-        this.capacityMask2 = capacityMask * slotSize;
-
-        this.keyBits = keyBits;
-        this.keyMask = mask(keyBits);
-        this.valueMask = mask(valueBits);
-    }
-
-    /**
-     * Must not store {@code h} in a field, to avoid memory leaks.
-     *
-     * @see net.openhft.chronicle.hash.impl.stage.hash.Chaining#initMap
-     */
-    CompactOffHeapLinearHashTable(VanillaChronicleHash h) {
-        this(h.tierHashLookupCapacity, h.tierHashLookupSlotSize, h.tierHashLookupKeyBits,
-                h.tierHashLookupValueBits);
     }
 
     abstract long indexToPos(long index);

@@ -37,13 +37,15 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.systemTimeInte
 @Staged
 public class ReplicatedQueryAlloc extends QueryAlloc {
 
-    @StageRef ReplicatedChronicleMapHolder<?, ?, ?> mh;
-    @StageRef SegmentStages s;
-
     final CleanupAction cleanupAction = new CleanupAction();
+    @StageRef
+    ReplicatedChronicleMapHolder<?, ?, ?> mh;
+    @StageRef
+    SegmentStages s;
 
     /**
      * Returns {@code true} if at least one old deleted entry was removed.
+     *
      * @param prevPos position to skip during cleanup (because cleaned up separately)
      */
     public boolean forcedOldDeletedEntriesCleanup(long prevPos) {
@@ -57,28 +59,6 @@ public class ReplicatedQueryAlloc extends QueryAlloc {
             ((ReplicatedHashSegmentContext<?, ?>) sc)
                     .forEachSegmentReplicableEntry(cleanupAction);
             return cleanupAction.removedCompletely > 0;
-        }
-    }
-
-    private class CleanupAction implements Consumer<ReplicableEntry> {
-        int removedCompletely;
-        long posToSkip;
-        IterationContext<?, ?, ?> iterationContext;
-
-        @Override
-        public void accept(ReplicableEntry e) {
-            ReplicatedChronicleMap<?, ?, ?> map = mh.m();
-            if (!(e instanceof MapAbsentEntry) || iterationContext.pos() == posToSkip)
-                return;
-            long currentTime = currentTime();
-            if (e.originTimestamp() > currentTime)
-                return; // presumably unsynchronized clocks
-            long deleteTimeout = systemTimeIntervalBetween(
-                    e.originTimestamp(), currentTime, map.cleanupTimeoutUnit);
-            if (deleteTimeout <= map.cleanupTimeout || e.isChanged())
-                return;
-            e.doRemoveCompletely();
-            removedCompletely++;
         }
     }
 
@@ -119,6 +99,28 @@ public class ReplicatedQueryAlloc extends QueryAlloc {
             if (visitingFirstAttemptedTier && prevPos >= 0)
                 s.free(prevPos, prevChunks);
             s.nextTier();
+        }
+    }
+
+    private class CleanupAction implements Consumer<ReplicableEntry> {
+        int removedCompletely;
+        long posToSkip;
+        IterationContext<?, ?, ?> iterationContext;
+
+        @Override
+        public void accept(ReplicableEntry e) {
+            ReplicatedChronicleMap<?, ?, ?> map = mh.m();
+            if (!(e instanceof MapAbsentEntry) || iterationContext.pos() == posToSkip)
+                return;
+            long currentTime = currentTime();
+            if (e.originTimestamp() > currentTime)
+                return; // presumably unsynchronized clocks
+            long deleteTimeout = systemTimeIntervalBetween(
+                    e.originTimestamp(), currentTime, map.cleanupTimeoutUnit);
+            if (deleteTimeout <= map.cleanupTimeout || e.isChanged())
+                return;
+            e.doRemoveCompletely();
+            removedCompletely++;
         }
     }
 }

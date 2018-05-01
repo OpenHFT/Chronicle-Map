@@ -22,6 +22,9 @@ package net.openhft.chronicle.hash.impl.util;
  */
 public final class Throwables {
 
+    private Throwables() {
+    }
+
     public static RuntimeException propagate(Throwable t) {
         // Avoid calling Objects.requireNonNull(), StackOverflowError-sensitive
         if (t == null)
@@ -55,6 +58,4 @@ public final class Throwables {
             return thrown;
         }
     }
-
-    private Throwables() {}
 }

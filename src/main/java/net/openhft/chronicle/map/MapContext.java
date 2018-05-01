@@ -19,8 +19,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.HashContext;
 import net.openhft.chronicle.hash.Data;
+import net.openhft.chronicle.hash.HashContext;
 
 /**
  * Context, in which {@link MapEntry MapEntries} are accessed. {@code MapContext} allows to access
@@ -31,7 +31,7 @@ import net.openhft.chronicle.hash.Data;
  * configured for the accessed {@code ChronicleMap} via {@link
  * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)}, or the default {@code
  * DefaultValueProvider} implementation.
- * 
+ *
  * @param <K> the map key type
  * @param <V> the map value type
  * @param <R> the return type of {@link MapEntryOperations} specified for the queried map
@@ -52,8 +52,8 @@ public interface MapContext<K, V, R>
     /**
      * Wraps the given value as a {@code Data}. Useful when you need to pass a value
      * to some method accepting {@code Data}, for example, {@link MapEntryOperations#replaceValue(
-     * MapEntry, Data)}, without allocating new objects (i. e. garbage) and {@code ThreadLocals}.
-     *
+     *MapEntry, Data)}, without allocating new objects (i. e. garbage) and {@code ThreadLocals}.
+     * <p>
      * <p>The returned {@code Data} object shouldn't outlive this {@code MapContext}.
      *
      * @param value the value object to wrap
@@ -64,13 +64,13 @@ public interface MapContext<K, V, R>
     /**
      * Wraps the given value bytes as a {@code Data}. Useful when you need to pass a value
      * to some method accepting {@code Data}, for example, {@link MapEntryOperations#replaceValue(
-     * MapEntry, Data)}, without allocating manual deserialization and {@code ThreadLocals}.
-     *
+     *MapEntry, Data)}, without allocating manual deserialization and {@code ThreadLocals}.
+     * <p>
      * <p>The returned {@code Data} object shouldn't outlive this {@code MapContext}.
      *
      * @param valueBytes the value bytes to wrap
-     * @param offset offset within the given valueBytes, the actual value bytes start from
-     * @param size length of the value bytes sequence
+     * @param offset     offset within the given valueBytes, the actual value bytes start from
+     * @param size       length of the value bytes sequence
      * @return the value bytes as {@code Data}
      */
     Data<V> wrapValueBytesAsData(BytesStore valueBytes, long offset, long size);

@@ -20,11 +20,17 @@ package net.openhft.chronicle.hash.impl.util.math;
 
 class Precision {
 
-    /** Offset to order signed double numbers lexicographically. */
+    /**
+     * Offset to order signed double numbers lexicographically.
+     */
     private static final long SGN_MASK = 0x8000000000000000L;
-    /** Positive zero bits. */
+    /**
+     * Positive zero bits.
+     */
     private static final long POSITIVE_ZERO_DOUBLE_BITS = Double.doubleToRawLongBits(+0.0);
-    /** Negative zero bits. */
+    /**
+     * Negative zero bits.
+     */
     private static final long NEGATIVE_ZERO_DOUBLE_BITS = Double.doubleToRawLongBits(-0.0);
 
     /**
@@ -32,8 +38,8 @@ class Precision {
      * arguments or the difference between them is within the range of allowed
      * error (inclusive).
      *
-     * @param x First value.
-     * @param y Second value.
+     * @param x   First value.
+     * @param y   Second value.
      * @param eps Amount of allowed absolute error.
      * @return {@code true} if the values are two adjacent floating point
      * numbers or they are within range of each other.
@@ -56,10 +62,10 @@ class Precision {
      * Bruce Dawson</a>
      * </p>
      *
-     * @param x first value
-     * @param y second value
+     * @param x       first value
+     * @param y       second value
      * @param maxUlps {@code (maxUlps - 1)} is the number of floating point
-     * values between {@code x} and {@code y}.
+     *                values between {@code x} and {@code y}.
      * @return {@code true} if there are fewer than {@code maxUlps} floating
      * point values between {@code x} and {@code y}.
      */
@@ -77,10 +83,10 @@ class Precision {
             final long deltaPlus;
             final long deltaMinus;
             if (xInt < yInt) {
-                deltaPlus  = yInt - POSITIVE_ZERO_DOUBLE_BITS;
+                deltaPlus = yInt - POSITIVE_ZERO_DOUBLE_BITS;
                 deltaMinus = xInt - NEGATIVE_ZERO_DOUBLE_BITS;
             } else {
-                deltaPlus  = xInt - POSITIVE_ZERO_DOUBLE_BITS;
+                deltaPlus = xInt - POSITIVE_ZERO_DOUBLE_BITS;
                 deltaMinus = yInt - NEGATIVE_ZERO_DOUBLE_BITS;
             }
 
@@ -89,7 +95,7 @@ class Precision {
             } else {
                 isEqual = deltaMinus <= (maxUlps - deltaPlus);
             }
-}
+        }
 
         return isEqual && !Double.isNaN(x) && !Double.isNaN(y);
 

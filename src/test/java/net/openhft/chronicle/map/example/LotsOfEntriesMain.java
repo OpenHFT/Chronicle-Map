@@ -32,6 +32,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+interface MyFloats {
+    @Array(length = 6)
+    public void setValueAt(int index, float f);
+
+    public float getValueAt(int index);
+}
+
 /**
  * Created by peter.lawrey on 19/12/14.
  */
@@ -82,7 +89,7 @@ public class LotsOfEntriesMain {
                             else
                                 map.getUsing(sb, mf);
                         } catch (Exception e) {
-                            System.out.println("map.size: "+map.size());
+                            System.out.println("map.size: " + map.size());
                             throw e;
                         }
                     }
@@ -98,11 +105,4 @@ public class LotsOfEntriesMain {
                 map.size(), entries * 1e3 / time, add ? "add" : "get");
         map.close();
     }
-}
-
-interface MyFloats {
-    @Array(length = 6)
-    public void setValueAt(int index, float f);
-
-    public float getValueAt(int index);
 }

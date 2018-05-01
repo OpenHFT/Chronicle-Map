@@ -34,10 +34,14 @@ import org.jetbrains.annotations.NotNull;
 public class ReplicatedMapAbsentDelegatingForIteration<K, V>
         implements MapAbsentEntry<K, V>, SetAbsentEntry<K>, ReplicableEntryDelegating {
 
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef ReplicatedMapSegmentIteration<K, V, ?> delegate;
-    @StageRef ReplicatedMapEntryStages<K, V> e;
-    @StageRef DefaultValue<V> defaultValue;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    ReplicatedMapSegmentIteration<K, V, ?> delegate;
+    @StageRef
+    ReplicatedMapEntryStages<K, V> e;
+    @StageRef
+    DefaultValue<V> defaultValue;
 
     @NotNull
     @Override

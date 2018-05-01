@@ -44,7 +44,7 @@ public final class BigSegmentHeader implements SegmentHeader {
      */
     private static final VanillaReadWriteUpdateWithWaitsLockingStrategy LOCK =
             (VanillaReadWriteUpdateWithWaitsLockingStrategy)
-            VanillaReadWriteUpdateWithWaitsLockingStrategy.instance();
+                    VanillaReadWriteUpdateWithWaitsLockingStrategy.instance();
     private static final NativeAccess A = (NativeAccess) Access.nativeAccess();
     private static final int TRY_LOCK_NANOS_THRESHOLD = 2_000_000;
 
@@ -56,8 +56,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         int timeout = 60;
         try {
             timeout = Integer.parseInt(System.getProperty("net.openhft.chronicle.map.lockTimeoutSeconds", String.valueOf(timeout)));
-        }
-        catch (NumberFormatException ex) {
+        } catch (NumberFormatException ex) {
             // ignore
         }
 
@@ -70,29 +69,29 @@ public final class BigSegmentHeader implements SegmentHeader {
     private static InterProcessDeadLockException deadLock() {
         return new InterProcessDeadLockException(
                 "Failed to acquire the lock in " + LOCK_TIMEOUT_SECONDS + " seconds.\n" +
-                "Possible reasons:\n" +
-                " - The lock was not released by the previous holder. If you use contexts API,\n" +
-                " for example map.queryContext(key), in a try-with-resources block.\n" +
-                " - This Chronicle Map (or Set) instance is persisted to disk, and the previous\n" +
-                " process (or one of parallel accessing processes) has crashed while holding\n" +
-                " this lock. In this case you should use ChronicleMapBuilder.recoverPersistedTo()" +
-                " procedure\n" +
-                " to access the Chronicle Map instance.\n" +
-                " - A concurrent thread or process, currently holding this lock, spends\n" +
-                " unexpectedly long time (more than " + LOCK_TIMEOUT_SECONDS + " seconds) in\n" +
-                " the context (try-with-resource block) or one of overridden interceptor\n" +
-                " methods (or MapMethods, or MapEntryOperations, or MapRemoteOperations)\n" +
-                " while performing an ordinary Map operation or replication. You should either\n" +
-                " redesign your logic to spend less time in critical sections (recommended) or\n" +
-                " acquire this lock with tryLock(time, timeUnit) method call, with sufficient\n" +
-                " time specified.\n" +
-                " - Segment(s) in your Chronicle Map are very large, and iteration over them\n" +
-                " takes more than " + LOCK_TIMEOUT_SECONDS + " seconds. In this case you should\n" +
-                " acquire this lock with tryLock(time, timeUnit) method call, with longer\n" +
-                " timeout specified.\n" +
-                " - This is a dead lock. If you perform multi-key queries, ensure you acquire\n" +
-                " segment locks in the order (ascending by segmentIndex()), you can find\n" +
-                " an example here: https://github.com/OpenHFT/Chronicle-Map#multi-key-queries\n");
+                        "Possible reasons:\n" +
+                        " - The lock was not released by the previous holder. If you use contexts API,\n" +
+                        " for example map.queryContext(key), in a try-with-resources block.\n" +
+                        " - This Chronicle Map (or Set) instance is persisted to disk, and the previous\n" +
+                        " process (or one of parallel accessing processes) has crashed while holding\n" +
+                        " this lock. In this case you should use ChronicleMapBuilder.recoverPersistedTo()" +
+                        " procedure\n" +
+                        " to access the Chronicle Map instance.\n" +
+                        " - A concurrent thread or process, currently holding this lock, spends\n" +
+                        " unexpectedly long time (more than " + LOCK_TIMEOUT_SECONDS + " seconds) in\n" +
+                        " the context (try-with-resource block) or one of overridden interceptor\n" +
+                        " methods (or MapMethods, or MapEntryOperations, or MapRemoteOperations)\n" +
+                        " while performing an ordinary Map operation or replication. You should either\n" +
+                        " redesign your logic to spend less time in critical sections (recommended) or\n" +
+                        " acquire this lock with tryLock(time, timeUnit) method call, with sufficient\n" +
+                        " time specified.\n" +
+                        " - Segment(s) in your Chronicle Map are very large, and iteration over them\n" +
+                        " takes more than " + LOCK_TIMEOUT_SECONDS + " seconds. In this case you should\n" +
+                        " acquire this lock with tryLock(time, timeUnit) method call, with longer\n" +
+                        " timeout specified.\n" +
+                        " - This is a dead lock. If you perform multi-key queries, ensure you acquire\n" +
+                        " segment locks in the order (ascending by segmentIndex()), you can find\n" +
+                        " an example here: https://github.com/OpenHFT/Chronicle-Map#multi-key-queries\n");
     }
 
     private static long roundUpNanosToMillis(long nanos) {

@@ -33,7 +33,9 @@ import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.
 
 public class ExternalizableDataAccess<T extends Externalizable> extends SerializableDataAccess<T> {
 
-    /** Config field */
+    /**
+     * Config field
+     */
     private Class<T> tClass;
 
     public ExternalizableDataAccess(Class<T> tClass) {

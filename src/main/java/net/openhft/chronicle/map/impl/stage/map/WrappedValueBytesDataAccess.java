@@ -29,8 +29,10 @@ import net.openhft.sg.Staged;
 @Staged
 public abstract class WrappedValueBytesDataAccess<K, V, R> implements MapContext<K, V, R> {
 
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef WrappedValueBytesData<V> wrappedValueBytesData;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    WrappedValueBytesData<V> wrappedValueBytesData;
 
     @Override
     public Data<V> wrapValueBytesAsData(BytesStore bytesStore, long offset, long size) {

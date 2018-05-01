@@ -28,7 +28,8 @@ public final class ByteBufferSizedReader
         implements SizedReader<ByteBuffer>, EnumMarshallable<ByteBufferSizedReader> {
     public static final ByteBufferSizedReader INSTANCE = new ByteBufferSizedReader();
 
-    private ByteBufferSizedReader() {}
+    private ByteBufferSizedReader() {
+    }
 
     @NotNull
     @Override

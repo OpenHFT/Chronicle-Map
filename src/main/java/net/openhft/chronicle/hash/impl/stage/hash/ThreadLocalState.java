@@ -46,8 +46,8 @@ public abstract class ThreadLocalState {
         }
     }
 
-    private volatile int contextLock = CONTEXT_UNLOCKED;
     public boolean iterationContextLockedInThisThread;
+    private volatile int contextLock = CONTEXT_UNLOCKED;
 
     /**
      * Returns {@code true} if this is the outer context lock in this thread, {@code false} if this
@@ -98,7 +98,7 @@ public abstract class ThreadLocalState {
         if (owner() == Thread.currentThread()) {
             throw new IllegalStateException(chronicleHashIdentityString +
                     ": Attempt to close a Chronicle Hash in the context " +
-                            "of not yet finished query or iteration");
+                    "of not yet finished query or iteration");
         }
         // If the context belongs to a different thread, wait until that thread finishes it's work
         // with the context:

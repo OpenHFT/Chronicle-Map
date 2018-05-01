@@ -32,7 +32,8 @@ public final class DoubleMarshaller
         SizedWriter<Double>, BytesWriter<Double>, EnumMarshallable<DoubleMarshaller> {
     public static final DoubleMarshaller INSTANCE = new DoubleMarshaller();
 
-    private DoubleMarshaller() {}
+    private DoubleMarshaller() {
+    }
 
     @NotNull
     @Override

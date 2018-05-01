@@ -35,10 +35,15 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
         implements MapRemoteQueryContext<K, V, R>, SetRemoteQueryContext<K, R>,
         ReplicableEntry, MapReplicableEntry<K, V>, SetReplicableEntry<K> {
 
-    @StageRef ReplicatedMapEntryStages<K, V> e;
-    @StageRef ReplicationUpdate ru;
+    @StageRef
+    ReplicatedMapEntryStages<K, V> e;
+    @StageRef
+    ReplicationUpdate ru;
 
-    @StageRef ReplicatedMapAbsentDelegating<K, V> absentDelegating;
+    @StageRef
+    ReplicatedMapAbsentDelegating<K, V> absentDelegating;
+    @StageRef
+    DummyValueZeroData<V> dummyValue;
 
     @Nullable
     @Override
@@ -60,8 +65,6 @@ public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
     public boolean entryPresent() {
         return super.entryPresent() && !e.entryDeleted();
     }
-    
-    @StageRef DummyValueZeroData<V> dummyValue;
 
     @Override
     public ReplicatedMapQuery<K, V, R> entry() {

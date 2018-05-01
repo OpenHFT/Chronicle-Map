@@ -44,7 +44,9 @@ public final class IntegerDataAccess extends AbstractData<Integer>
     private transient boolean bsInit;
     private transient BytesStore bs;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient Integer instance;
 
     public IntegerDataAccess() {

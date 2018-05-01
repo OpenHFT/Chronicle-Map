@@ -31,6 +31,9 @@ public final class BuildVersion {
 
     private static String version = null;
 
+    private BuildVersion() {
+    }
+
     public static void main(String[] args) {
         System.out.println(version());
     }
@@ -109,6 +112,4 @@ public final class BuildVersion {
             return null;
         }
     }
-    
-    private BuildVersion() {}
 }

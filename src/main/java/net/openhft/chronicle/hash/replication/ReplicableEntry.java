@@ -18,7 +18,6 @@
 package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.HashAbsentEntry;
 import net.openhft.chronicle.hash.HashEntry;
@@ -38,12 +37,12 @@ public interface ReplicableEntry {
     /**
      * The identifier, associated with this entry. Originally, and by default, this identifier means
      * the identifier of the {@code ChronicleHash} node on which this entry was updated last.
-     *
+     * <p>
      * <p>When the entry is replicated, this identifier comes to remote nodes as {@link
      * RemoteOperationContext#remoteIdentifier()}.
-     *
+     * <p>
      * <p>On {@code ChronicleHash} local operations with entries, like {@link ChronicleMap#put(
-     * Object, Object)}, this identifier is overwritten to the own {@code ChronicleHash} {@link
+     *Object, Object)}, this identifier is overwritten to the own {@code ChronicleHash} {@link
      * Replica#identifier()}. On remote operations, proxied through {@link MapRemoteOperations} or
      * {@link SetRemoteOperations}, you are free to overwrite this identifier to any value, using
      * {@link #updateOrigin(byte, long)} method.
@@ -54,7 +53,7 @@ public interface ReplicableEntry {
 
     /**
      * The timestamp of the last update to this entry.
-     *
+     * <p>
      * <p>When the entry is replicated, this timestamp comes to remote nodes as {@link
      * RemoteOperationContext#remoteTimestamp()}.
      *
@@ -69,7 +68,7 @@ public interface ReplicableEntry {
      * returns the given {@code newTimestamp} respectively.
      *
      * @param newIdentifier the new identifier for the entry
-     * @param newTimestamp the new timestamp for the entry
+     * @param newTimestamp  the new timestamp for the entry
      */
     void updateOrigin(byte newIdentifier, long newTimestamp);
 

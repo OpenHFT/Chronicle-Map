@@ -17,7 +17,6 @@
 
 package net.openhft.chronicle.map.fromdocs.pingpong_latency;
 
-import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.locks.AcquisitionStrategies;
 import net.openhft.chronicle.algo.locks.ReadWriteLockingStrategy;
 import net.openhft.chronicle.algo.locks.TryAcquireOperations;

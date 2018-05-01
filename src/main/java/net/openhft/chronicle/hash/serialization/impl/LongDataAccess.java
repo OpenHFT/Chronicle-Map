@@ -36,7 +36,9 @@ public final class LongDataAccess extends AbstractData<Long>
     private transient boolean bsInit;
     private transient BytesStore bs;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient Long instance;
 
     public LongDataAccess() {

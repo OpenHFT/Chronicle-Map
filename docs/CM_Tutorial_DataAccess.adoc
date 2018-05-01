@@ -159,6 +159,5 @@ public final class ByteArraySizedReader
 
 NOTE: If you configure `byte[]` key, or value type, then this pair of serializers is used as the default.
 
-
 '''
 <<CM_Tutorial.adoc#,Back to Tutorial>>

@@ -25,25 +25,33 @@ public interface BondVOInterface {
 
     @Group(0)
     long getEntryLockState();
+
     void setEntryLockState(long entryLockState);
 
     @Group(1)
     long getIssueDate();
+
     void setIssueDate(long issueDate);  /* time in millis */
 
     @Group(1)
     long getMaturityDate();
+
     void setMaturityDate(long maturityDate);  /* time in millis */
+
     long addAtomicMaturityDate(long toAdd);
 
     @Group(1)
     boolean compareAndSwapCoupon(double expected, double value);
+
     double getCoupon();
+
     void setCoupon(double coupon);
+
     double addAtomicCoupon(double toAdd);
 
     @Group(1)
     String getSymbol();
+
     void setSymbol(@MaxUtf8Length(20) String symbol);
 
     // OpenHFT Off-Heap array[ ] processing notice ‘At’ suffix

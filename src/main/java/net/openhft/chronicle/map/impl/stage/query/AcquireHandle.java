@@ -25,10 +25,13 @@ import net.openhft.sg.Staged;
 
 @Staged
 public class AcquireHandle<K, V> implements Closeable {
-    
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef MapQuery<K, V, ?> q;
-    @StageRef UsingReturnValue<V> usingReturn;
+
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    MapQuery<K, V, ?> q;
+    @StageRef
+    UsingReturnValue<V> usingReturn;
 
     @Override
     public void close() {

@@ -32,7 +32,7 @@ import java.nio.ByteBuffer;
  * that are already in fact sequences of bytes ({@code byte[]}, {@link ByteBuffer}, etc.) and
  * shouldn't be serialized, and allows to avoid extra data copying. Accessed bytes should be later
  * readable by some {@link BytesReader}.
- *
+ * <p>
  * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#dataaccess-and-sizedreader">{@link
  * DataAccess} and {@code SizedReader}</a> and
  * <a href="https://github.com/OpenHFT/Chronicle-Map#custom-serialization-checklist">custom
@@ -59,7 +59,7 @@ public interface DataAccess<T> extends StatefulCopyable<DataAccess<T>>, Marshall
      * Clear references to the accessed object (provided in {@link #getData(Object)} method) in
      * caching fields of this {@code DataAccess} or the cached {@link Data} object, returned from
      * {@link #getData(Object)}.
-     *
+     * <p>
      * {@code DataAccess} is cached itself in thread-local variables for {@link ChronicleHash}
      * instances, this method prevents leaking of accessed objects (they are not eligible for
      * garbage collection while there are some references).

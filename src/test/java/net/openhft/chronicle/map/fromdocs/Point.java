@@ -19,12 +19,12 @@ package net.openhft.chronicle.map.fromdocs;
 
 public final class Point {
 
+    double x, y;
+
     public static Point of(double x, double y) {
         Point p = new Point();
         p.x = x;
         p.y = y;
         return p;
     }
-
-    double x, y;
 }

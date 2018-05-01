@@ -18,7 +18,6 @@
 package net.openhft.chronicle.hash.replication;
 
 import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.replication.SetRemoteOperations;
@@ -31,11 +30,14 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
  * ChronicleHashBuilderPrivateAPI#replication(byte) replicated} {@link ChronicleHash}es:
  * <i>last write wins</i>. If two writes to a single entry occurred simultaneously on different
  * nodes, the write on the node with lower identifier wins.
- * 
+ *
  * @see MapRemoteOperations
- * @see SetRemoteOperations 
+ * @see SetRemoteOperations
  */
 public final class DefaultEventualConsistencyStrategy {
+
+    private DefaultEventualConsistencyStrategy() {
+    }
 
     /**
      * Returns the acceptance decision, should be made about the modification operation in the
@@ -43,8 +45,8 @@ public final class DefaultEventualConsistencyStrategy {
      * changes to {@code entry} nor {@code context} state. {@link MapRemoteOperations} and
      * {@link SetRemoteOperations} method implementations should guide the result of calling this
      * method to do something to <i>actually</i> apply the remote operation.
-     *  
-     * @param entry the entry to be modified
+     *
+     * @param entry   the entry to be modified
      * @param context the remote operation context
      * @return if the remote operation should be accepted or discarded
      */
@@ -81,8 +83,6 @@ public final class DefaultEventualConsistencyStrategy {
         // following condition also plays right (the update is discarded, due to it's redundancy).
         return originIdentifier == context.currentNodeIdentifier() ? DISCARD : ACCEPT;
     }
-    
-    private DefaultEventualConsistencyStrategy() {}
 
     /**
      * Decision, if {@link MapRemoteOperations remote modification operation} should be accepted

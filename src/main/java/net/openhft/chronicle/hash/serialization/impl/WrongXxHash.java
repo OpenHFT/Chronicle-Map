@@ -29,6 +29,9 @@ public final class WrongXxHash {
     private static final long P3 = 1609587929392839161L;
     private static final long P5 = 2870177450012600261L;
 
+    private WrongXxHash() {
+    }
+
     public static long hashInt(int input) {
         long hash = P5 + 4;
         // Preserve old, wrong behaviour. In the correct version, input is widened to long as
@@ -46,6 +49,4 @@ public final class WrongXxHash {
         hash ^= hash >>> 32;
         return hash;
     }
-
-    private WrongXxHash() {}
 }

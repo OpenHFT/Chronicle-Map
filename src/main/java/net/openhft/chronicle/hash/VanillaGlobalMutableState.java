@@ -24,34 +24,40 @@ import net.openhft.chronicle.values.Values;
 
 /**
  * <h1>This interface is a private API, don't use in client code</h1>
- *
+ * <p>
  * Excluding global mutable state lock
  */
 public interface VanillaGlobalMutableState extends Byteable {
 
+    static void main(String[] args) {
+        System.setProperty("chronicle.values.dumpCode", "true");
+        Values.nativeClassFor(VanillaGlobalMutableState.class);
+    }
+
     @Group(1)
     int getAllocatedExtraTierBulks();
+
     void setAllocatedExtraTierBulks(@Range(min = 0, max = 16777215) int allocatedExtraTierBulks);
 
     @Group(2)
     long getFirstFreeTierIndex();
+
     void setFirstFreeTierIndex(@Range(min = 0, max = 1099511627775L) long firstFreeTierIndex);
 
     @Group(3)
     long getExtraTiersInUse();
+
     void setExtraTiersInUse(@Range(min = 0, max = 1099511627775L) long extraTiersInUse);
 
     @Group(4)
     long getSegmentHeadersOffset();
+
     void setSegmentHeadersOffset(@Range(min = 0, max = 4294967295L) long segmentHeadersOffset);
 
     @Group(5)
     long getDataStoreSize();
-    void setDataStoreSize(@Range(min = 0, max = Long.MAX_VALUE) long dataStoreSize);
-    long addDataStoreSize(long addition);
 
-    public static void main(String[] args) {
-        System.setProperty("chronicle.values.dumpCode", "true");
-        Values.nativeClassFor(VanillaGlobalMutableState.class);
-    }
+    void setDataStoreSize(@Range(min = 0, max = Long.MAX_VALUE) long dataStoreSize);
+
+    long addDataStoreSize(long addition);
 }

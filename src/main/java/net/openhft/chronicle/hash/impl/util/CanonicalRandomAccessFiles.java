@@ -27,18 +27,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class CanonicalRandomAccessFiles {
 
-    private static class RafReference {
-        RandomAccessFile raf;
-        int refCount;
-
-        RafReference(RandomAccessFile raf) {
-            this.raf = raf;
-            refCount = 1;
-        }
-    }
-
     private static final ConcurrentHashMap<File, RafReference> canonicalRafs =
             new ConcurrentHashMap<>();
+
+    private CanonicalRandomAccessFiles() {
+    }
 
     public static RandomAccessFile acquire(File file) throws FileNotFoundException {
         return canonicalRafs.compute(file, (f, ref) -> {
@@ -70,5 +63,13 @@ public final class CanonicalRandomAccessFiles {
         });
     }
 
-    private CanonicalRandomAccessFiles() {}
+    private static class RafReference {
+        RandomAccessFile raf;
+        int refCount;
+
+        RafReference(RandomAccessFile raf) {
+            this.raf = raf;
+            refCount = 1;
+        }
+    }
 }

@@ -23,7 +23,6 @@ import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import java.io.File;
 import java.io.IOException;
 
-
 public final class PersistedChronicleHashResources extends ChronicleHashResources {
 
     private File file;

@@ -67,7 +67,7 @@ public class Builder {
                     System.out.println("same");
                     break;
                 }
-}
+            }
             Jvm.pause(1);
             if (System.currentTimeMillis() - startTime > timeOutMs)
                 break;

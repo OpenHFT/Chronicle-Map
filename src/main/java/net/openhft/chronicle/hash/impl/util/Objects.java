@@ -26,6 +26,9 @@ import java.util.Arrays;
  * java.util.Objects since Java 7
  */
 public final class Objects {
+    private Objects() {
+    }
+
     public static int hash(Object... values) {
         return Arrays.hashCode(values);
     }
@@ -44,6 +47,4 @@ public final class Objects {
         if (obj == null)
             throw new NullPointerException();
     }
-    
-    private Objects() {}
 }

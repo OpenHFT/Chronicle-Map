@@ -26,9 +26,10 @@ import net.openhft.sg.Staged;
 
 @Staged
 public abstract class CheckOnEachPublicOperation {
-    
-    @StageRef OwnerThreadHolder holder;
-    
+
+    @StageRef
+    OwnerThreadHolder holder;
+
     public void checkOnEachPublicOperation() {
         checkOnEachLockOperation();
     }

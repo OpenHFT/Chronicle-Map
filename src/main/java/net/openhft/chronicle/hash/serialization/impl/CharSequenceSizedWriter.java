@@ -34,7 +34,8 @@ public final class CharSequenceSizedWriter
         implements SizedWriter<CharSequence>, EnumMarshallable<CharSequenceSizedWriter> {
     public static final CharSequenceSizedWriter INSTANCE = new CharSequenceSizedWriter();
 
-    private CharSequenceSizedWriter() {}
+    private CharSequenceSizedWriter() {
+    }
 
     @Override
     public long size(@NotNull CharSequence toWrite) {

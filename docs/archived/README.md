@@ -2034,7 +2034,6 @@ try (ChronicleMap<Integer, LongValue> map = ChronicleMap
 }
 ```
 
-
 ## FAQ's
 
 ### Question

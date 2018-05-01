@@ -38,12 +38,14 @@ public interface HashSplitting extends Marshallable {
     }
 
     int segmentIndex(long hash);
+
     long segmentHash(long hash);
 
     final class ForSingleSegment implements HashSplitting, EnumMarshallable<ForSingleSegment> {
         public static final ForSingleSegment INSTANCE = new ForSingleSegment();
 
-        private ForSingleSegment() {}
+        private ForSingleSegment() {
+        }
 
         @Override
         public int segmentIndex(long hash) {

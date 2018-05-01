@@ -153,7 +153,7 @@ public abstract class SegmentsRecovery implements IterationContext {
         if (lockState != s.segmentHeader.resetLockState()) {
             report(corruptionListener, corruption, s.segmentIndex, () ->
                     format("lock of segment {} is not clear: {}",
-                    s.segmentIndex, s.segmentHeader.lockStateToString(lockState))
+                            s.segmentIndex, s.segmentHeader.lockStateToString(lockState))
             );
             s.segmentHeader.resetLock(s.segmentHeaderAddress);
         }
@@ -174,14 +174,14 @@ public abstract class SegmentsRecovery implements IterationContext {
         if (TierCountersArea.segmentIndex(tierCountersAreaAddr) != 0) {
             report(corruptionListener, corruption, s.segmentIndex, () ->
                     format("stored segment index in first tier of segment {}: {}, should be 0",
-                    s.segmentIndex, TierCountersArea.segmentIndex(tierCountersAreaAddr))
+                            s.segmentIndex, TierCountersArea.segmentIndex(tierCountersAreaAddr))
             );
             TierCountersArea.segmentIndex(tierCountersAreaAddr, 0);
         }
         if (TierCountersArea.tier(tierCountersAreaAddr) != 0) {
             report(corruptionListener, corruption, s.segmentIndex, () ->
                     format("stored tier in first tier of segment {}: {}, should be 0",
-                    s.segmentIndex, TierCountersArea.tier(tierCountersAreaAddr))
+                            s.segmentIndex, TierCountersArea.tier(tierCountersAreaAddr))
             );
             TierCountersArea.tier(tierCountersAreaAddr, 0);
         }

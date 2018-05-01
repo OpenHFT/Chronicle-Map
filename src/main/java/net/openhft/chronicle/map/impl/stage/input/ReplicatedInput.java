@@ -35,12 +35,18 @@ import net.openhft.sg.Staged;
 public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext<K>,
         MapRemoteQueryContext<K, V, R>, Replica.QueryContext<K, V> {
 
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef ReplicatedChronicleMapHolder<K, V, R> mh;
-    @StageRef ReplicationUpdate<K> ru;
-    @StageRef ReplicatedMapQuery<K, V, ?> q;
-    @StageRef SegmentStages s;
-    @StageRef DummyValueZeroData<V> dummyValue;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    ReplicatedChronicleMapHolder<K, V, R> mh;
+    @StageRef
+    ReplicationUpdate<K> ru;
+    @StageRef
+    ReplicatedMapQuery<K, V, ?> q;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    DummyValueZeroData<V> dummyValue;
 
     @Override
     public Data<V> dummyZeroValue() {

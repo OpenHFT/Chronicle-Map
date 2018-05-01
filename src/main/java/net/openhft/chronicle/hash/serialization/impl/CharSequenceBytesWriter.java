@@ -35,7 +35,8 @@ public final class CharSequenceBytesWriter
         implements BytesWriter<CharSequence>, EnumMarshallable<CharSequenceBytesWriter> {
     public static final CharSequenceBytesWriter INSTANCE = new CharSequenceBytesWriter();
 
-    private CharSequenceBytesWriter() {}
+    private CharSequenceBytesWriter() {
+    }
 
     @Override
     public void write(Bytes out, @NotNull CharSequence toWrite) {

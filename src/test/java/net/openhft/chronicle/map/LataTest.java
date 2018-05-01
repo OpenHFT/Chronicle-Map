@@ -22,12 +22,6 @@ import net.openhft.chronicle.values.Values;
 
 public class LataTest {
 
-    public interface IData {
-        int getData();
-        void setData(int data);
-        int addAtomicData(int addData);
-    }
-
     private static int max = 6000000;
     private static int run = 100;
     private static int currentRun = 0;
@@ -69,8 +63,17 @@ public class LataTest {
         map.close();
     }
 
+    public interface IData {
+        int getData();
+
+        void setData(int data);
+
+        int addAtomicData(int addData);
+    }
+
     interface StringValue {
         CharSequence getValue();
+
         void setValue(@MaxUtf8Length(64) CharSequence value);
     }
 }

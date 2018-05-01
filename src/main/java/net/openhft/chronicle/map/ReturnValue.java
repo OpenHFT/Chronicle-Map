@@ -31,10 +31,10 @@ public interface ReturnValue<V> {
      * Calling this method on a {@code ReturnValue} object, provided as an argument in a method from
      * {@link MapMethods}, designates that the {@code ChronicleMap}'s method (backed by this
      * {@code MapMethods}'s method) should return the given {@code value}.
-     *
+     * <p>
      * <p>It is not allowed to call {@code returnValue()} twice during a single {@code MapMethods}'s
      * method call.
-     *
+     * <p>
      * <p>Not calling {@code returnValue()} during {@code MapMethods}'s method call will make the
      * backed {@code ChronicleMap}'s method to return {@code null}.
      *

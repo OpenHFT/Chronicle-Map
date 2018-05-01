@@ -92,23 +92,23 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R>
         implements Replica, Replica.EntryExternalizable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
-
     public static final int ADDITIONAL_ENTRY_BYTES = 10;
-
     static final byte ENTRY_HUNK = 1;
     static final byte BOOTSTRAP_TIME_HUNK = 2;
-
+    private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
+    public transient boolean cleanupRemovedEntries;
+    public transient long cleanupTimeout;
+    public transient TimeUnit cleanupTimeoutUnit;
+    public transient MapRemoteOperations<K, V, R> remoteOperations;
+    transient BitSetFrame tierModIterFrame;
     private long tierModIterBitSetSizeInBits;
     private long tierModIterBitSetOuterSize;
     private long segmentModIterBitSetsForIdentifierOuterSize;
     private long tierBulkModIterBitSetsForIdentifierOuterSize;
-
     /**
      * Default value is 0, that corresponds to "unset" identifier value (valid ids are positive)
      */
     private transient byte localIdentifier;
-
     /**
      * Idiomatically {@code assignedModificationIterators} should be a {@link CopyOnWriteArraySet},
      * but we should frequently iterate over this array without creating any garbage,
@@ -117,15 +117,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private transient ModificationIterator[] assignedModificationIterators;
     private transient AtomicReferenceArray<ModificationIterator> modificationIterators;
     private transient long startOfModificationIterators;
-
-    public transient boolean cleanupRemovedEntries;
-    public transient long cleanupTimeout;
-    public transient TimeUnit cleanupTimeoutUnit;
-    
-    public transient MapRemoteOperations<K, V, R> remoteOperations;
-
-    transient BitSetFrame tierModIterFrame;
-
     private transient long[] remoteNodeCouldBootstrapFrom;
 
     public ReplicatedChronicleMap(@NotNull ChronicleMapBuilder<K, V> builder) throws IOException {
@@ -553,7 +544,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 // lambda is used instead of constructor reference because currently stage-compiler
                 // has issues with parsing method/constructor refs.
                 // TODO replace with constructor ref when stage-compiler is improved
-                (c, m) -> new CompiledReplicatedMapQueryContext<K, V, R>(c, m), this);
+                CompiledReplicatedMapQueryContext::new, this);
     }
 
     /**
@@ -584,7 +575,17 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 // lambda is used instead of constructor reference because currently stage-compiler
                 // has issues with parsing method/constructor refs.
                 // TODO replace with constructor ref when stage-compiler is improved
-                (c, m) -> new CompiledReplicatedMapIterationContext<K, V, R>(c, m), this);
+                CompiledReplicatedMapIterationContext::new, this);
+    }
+
+    @Override
+    public final V get(Object key) {
+        return defaultGet(key);
+    }
+
+    @Override
+    public final V getUsing(K key, V usingValue) {
+        return defaultGetUsing(key, usingValue);
     }
 
     /**
@@ -922,15 +923,5 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 tierModIterFrame.clearRange(nativeAccess(), null, bitSetAddr, pos, endPosExclusive);
             }
         }
-    }
-
-    @Override
-    public final V get(Object key) {
-        return defaultGet(key);
-    }
-
-    @Override
-    public final V getUsing(K key, V usingValue) {
-        return defaultGetUsing(key, usingValue);
     }
 }

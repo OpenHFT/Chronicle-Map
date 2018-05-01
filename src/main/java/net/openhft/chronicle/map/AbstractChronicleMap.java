@@ -33,6 +33,16 @@ import static net.openhft.chronicle.hash.impl.util.Objects.requireNonNull;
 
 interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
 
+    // TODO quick and dirty. Think about how generic guava/koloboke equivalence interface could be
+    // used. See also BytesInterop.equivalent() and hash().
+    static int hashCode(Object obj) {
+        if (!(obj instanceof CharSequence)) {
+            return obj.hashCode();
+        } else {
+            return CharSequences.hash((CharSequence) obj);
+        }
+    }
+
     @Override
     default <R> R getMapped(K key, @NotNull SerializableFunction<? super V, R> function) {
         requireNonNull(function);
@@ -84,7 +94,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
             @Override
             public Iterator<V> iterator() {
                 return new Iterator<V>() {
-                    private Iterator<Entry<K,V>> i = entrySet().iterator();
+                    private Iterator<Entry<K, V>> i = entrySet().iterator();
 
                     @Override
                     public boolean hasNext() {
@@ -170,7 +180,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
 
         if (!(o instanceof Map))
             return false;
-        Map<?,?> m = (Map<?,?>) o;
+        Map<?, ?> m = (Map<?, ?>) o;
         if ((m instanceof ChronicleMap ? ((ChronicleMap) m).longSize() : m.size()) != longSize())
             return false;
 
@@ -188,9 +198,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
                 }
                 return v != null && c.value().equals(c.context().wrapValueAsData(v));
             });
-        } catch (ClassCastException unused) {
-            return false;
-        } catch (NullPointerException unused) {
+        } catch (ClassCastException | NullPointerException unused) {
             return false;
         }
     }
@@ -199,16 +207,6 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
         int[] h = new int[1];
         forEach((k, v) -> h[0] += hashCode(k) ^ hashCode(v));
         return h[0];
-    }
-
-    // TODO quick and dirty. Think about how generic guava/koloboke equivalence interface could be
-    // used. See also BytesInterop.equivalent() and hash().
-    static int hashCode(Object obj) {
-        if (!(obj instanceof CharSequence)) {
-            return obj.hashCode();
-        } else {
-            return CharSequences.hash((CharSequence) obj);
-        }
     }
 
     default String mapToString() {

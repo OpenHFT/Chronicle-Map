@@ -26,21 +26,22 @@ import net.openhft.sg.Staged;
 
 @Staged
 public class WrappedValueInstanceDataHolder<V> {
-    
-    @StageRef VanillaChronicleMapHolder<?, V, ?> mh;
 
+    public Data<V> wrappedData = null;
+    @StageRef
+    VanillaChronicleMapHolder<?, V, ?> mh;
     private final DataAccess<V> wrappedValueDataAccess = mh.m().valueDataAccess.copy();
-    
     private WrappedValueInstanceDataHolder<V> next;
-    
+    private V value;
+
     boolean nextInit() {
         return true;
     }
-    
+
     void closeNext() {
         // do nothing
     }
-    
+
     @Stage("Next")
     public WrappedValueInstanceDataHolder<V> getUnusedWrappedValueHolder() {
         if (!valueInit())
@@ -49,26 +50,22 @@ public class WrappedValueInstanceDataHolder<V> {
             next = new WrappedValueInstanceDataHolder<>();
         return next.getUnusedWrappedValueHolder();
     }
-    
-    private V value;
-    
+
     public boolean valueInit() {
         return value != null;
     }
-    
+
     public void initValue(V value) {
         mh.m().checkValue(value);
         this.value = value;
     }
-    
+
     public void closeValue() {
         value = null;
         if (next != null)
             next.closeValue();
     }
 
-    public Data<V> wrappedData = null;
-    
     private void initWrappedData() {
         wrappedData = wrappedValueDataAccess.getData(value);
     }

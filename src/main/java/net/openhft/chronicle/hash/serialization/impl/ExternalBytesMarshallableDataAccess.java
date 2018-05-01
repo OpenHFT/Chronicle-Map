@@ -38,10 +38,14 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
     private SizedReader<T> reader;
     private BytesWriter<? super T> writer;
 
-    /** Cache field */
+    /**
+     * Cache field
+     */
     private transient Bytes bytes;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient T instance;
 
     public ExternalBytesMarshallableDataAccess(

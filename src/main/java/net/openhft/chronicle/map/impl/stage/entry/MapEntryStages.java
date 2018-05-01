@@ -38,23 +38,28 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
 public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         implements MapEntry<K, V> {
 
-    @StageRef public VanillaChronicleMapHolder<?, ?, ?> mh;
-    @StageRef public AllocatedChunks allocatedChunks;
-    @StageRef KeySearch<K> ks;
+    @StageRef
+    public VanillaChronicleMapHolder<?, ?, ?> mh;
+    @StageRef
+    public AllocatedChunks allocatedChunks;
+    public long valueSizeOffset = -1;
+    @Stage("ValueSize")
+    public long valueSize = -1;
+    @Stage("ValueSize")
+    public long valueOffset;
+    @StageRef
+    public EntryValueBytesData<V> entryValue;
+    @StageRef
+    KeySearch<K> ks;
 
     long countValueSizeOffset() {
         return keyEnd();
     }
-    
-    public long valueSizeOffset = -1;
 
     @SuppressWarnings("unused")
     void initValueSizeOffset() {
         valueSizeOffset = countValueSizeOffset();
     }
-
-    @Stage("ValueSize") public long valueSize = -1;
-    @Stage("ValueSize") public long valueOffset;
 
     void initValueSize(long valueSize) {
         this.valueSize = valueSize;
@@ -106,8 +111,6 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     public long entryEnd() {
         return valueOffset + valueSize;
     }
-    
-    @StageRef public EntryValueBytesData<V> entryValue;
 
     @NotNull
     @Override
@@ -120,7 +123,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         return valueSizeOffset + mh.m().valueSizeMarshaller.storingLength(newValue.size()) -
                 keySizeOffset;
     }
-    
+
     public void innerDefaultReplaceValue(Data<V> newValue) {
         assert s.innerUpdateLock.isHeldByCurrentThread();
 
@@ -242,7 +245,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     public final void freeExtraAllocatedChunks() {
         // fast path
         if (!mh.m().constantlySizedEntry && mh.m().couldNotDetermineAlignmentBeforeAllocation &&
-                entrySizeInChunks < allocatedChunks.allocatedChunks)  {
+                entrySizeInChunks < allocatedChunks.allocatedChunks) {
             s.freeExtra(pos, allocatedChunks.allocatedChunks, entrySizeInChunks);
         } else {
             initEntrySizeInChunks(allocatedChunks.allocatedChunks);

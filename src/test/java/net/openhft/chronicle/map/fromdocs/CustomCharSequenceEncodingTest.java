@@ -24,8 +24,6 @@ import org.junit.Test;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.assertNotNull;
-
 public class CustomCharSequenceEncodingTest {
 
     @Test

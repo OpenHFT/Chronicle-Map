@@ -32,11 +32,14 @@ import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.
 abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extends AbstractData<T>
         implements DataAccess<T>, Data<T> {
 
-    /** Cache field */
-    private transient Bytes bytes;
-
-    /** State field */
+    /**
+     * State field
+     */
     transient T cs;
+    /**
+     * Cache field
+     */
+    private transient Bytes bytes;
 
     AbstractCharSequenceUtf8DataAccess(long bytesCapacity) {
         initTransients(bytesCapacity);

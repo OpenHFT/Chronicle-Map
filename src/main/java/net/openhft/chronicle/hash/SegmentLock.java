@@ -21,7 +21,7 @@ import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
 
 /**
  * {@link InterProcessReadWriteUpdateLock} of a segment in {@code ChronicleHash}.
- *
+ * <p>
  * <p>In Chronicle-Map off-heap design, locks (and concurrency) are per-segment.
  *
  * @see ChronicleHashBuilder#minSegments(int)

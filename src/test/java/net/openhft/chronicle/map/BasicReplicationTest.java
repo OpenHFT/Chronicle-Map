@@ -6,11 +6,7 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +19,10 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class BasicReplicationTest {
+
+    private static byte asByte(final int i) {
+        return (byte) i;
+    }
 
     @Test
     public void shouldReplicate() throws Exception {
@@ -54,7 +54,7 @@ public class BasicReplicationTest {
             executorService.submit(processorTwo::processPendingChangesLoop);
             executorService.submit(processorThree::processPendingChangesLoop);
 
-            final Map[] maps = new Map[] {mapOne, mapTwo, mapThree};
+            final Map[] maps = new Map[]{mapOne, mapTwo, mapThree};
             final Random random = new Random(0xBAD5EED);
             for (int i = 0; i < 5000; i++) {
                 final int mapIndex = random.nextInt(maps.length);
@@ -77,7 +77,7 @@ public class BasicReplicationTest {
             assertThat(mapOne.size(), is(equalTo(mapTwo.size())));
             assertThat(mapOne.size(), is(equalTo(mapThree.size())));
 
-            for(String key : mapOne.keySet()) {
+            for (String key : mapOne.keySet()) {
                 final String mapOneValue = mapOne.get(key);
                 final String mapTwoValue = mapTwo.get(key);
                 final String mapThreeValue = mapThree.get(key);
@@ -102,8 +102,10 @@ public class BasicReplicationTest {
         }
     }
 
-    private static byte asByte(final int i) {
-        return (byte) i;
+    private ReplicatedChronicleMap<String, String, Object>
+    createReplicatedMap(final ChronicleMapBuilder<String, String> builder, final byte replicaId) {
+        final ChronicleMap<String, String> map = builder.replication(replicaId).create();
+        return (ReplicatedChronicleMap<String, String, Object>) map;
     }
 
     private static final class ReplicationEventProcessor<K, V> {
@@ -131,7 +133,7 @@ public class BasicReplicationTest {
 
             try {
 
-                while(!Thread.currentThread().isInterrupted()) {
+                while (!Thread.currentThread().isInterrupted()) {
                     while (queueEmpty.get() && !Thread.currentThread().isInterrupted()) {
                         LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(7));
                     }
@@ -170,7 +172,7 @@ public class BasicReplicationTest {
 
         @Override
         public void onEntry(final ReplicableEntry entry, final int chronicleId) {
-           try {
+            try {
                 buffer.clear();
                 sourceMap.writeExternalEntry(entry, null, buffer, chronicleId);
 
@@ -202,11 +204,5 @@ public class BasicReplicationTest {
         public void onBootstrapTime(final long bootstrapTime, final int chronicleId) {
             destinationMap.setRemoteNodeCouldBootstrapFrom((byte) chronicleId, bootstrapTime);
         }
-    }
-
-    private ReplicatedChronicleMap<String, String, Object>
-        createReplicatedMap(final ChronicleMapBuilder<String, String> builder, final byte replicaId) {
-        final ChronicleMap<String, String> map = builder.replication(replicaId).create();
-        return (ReplicatedChronicleMap<String, String, Object>) map;
     }
 }

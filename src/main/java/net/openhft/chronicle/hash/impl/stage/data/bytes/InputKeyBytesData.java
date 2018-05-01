@@ -17,7 +17,9 @@
 
 package net.openhft.chronicle.hash.impl.stage.data.bytes;
 
-import net.openhft.chronicle.bytes.*;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.bytes.VanillaBytes;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
@@ -30,22 +32,31 @@ import static net.openhft.chronicle.bytes.NoBytesStore.NO_BYTES_STORE;
 @Staged
 public class InputKeyBytesData<K> extends AbstractData<K> {
 
-    @StageRef KeyBytesInterop<K> ki;
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-
-    @Stage("InputKeyBytesStore") private BytesStore inputKeyBytesStore = null;
-    @Stage("InputKeyBytesStore") private long inputKeyBytesOffset;
-    @Stage("InputKeyBytesStore") private long inputKeyBytesSize;
+    @Stage("InputKeyBytes")
+    private final VanillaBytes inputKeyBytes =
+            new VanillaBytes(NO_BYTES_STORE);
+    @StageRef
+    KeyBytesInterop<K> ki;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @Stage("InputKeyBytesStore")
+    private BytesStore inputKeyBytesStore = null;
+    @Stage("InputKeyBytesStore")
+    private long inputKeyBytesOffset;
+    @Stage("InputKeyBytesStore")
+    private long inputKeyBytesSize;
+    @Stage("InputKeyBytes")
+    private boolean inputKeyBytesUsed = false;
+    @Stage("CachedInputKey")
+    private K cachedInputKey;
+    @Stage("CachedInputKey")
+    private boolean cachedInputKeyRead = false;
 
     public void initInputKeyBytesStore(BytesStore bytesStore, long offset, long size) {
         inputKeyBytesStore = bytesStore;
         inputKeyBytesOffset = offset;
         inputKeyBytesSize = size;
     }
-
-    @Stage("InputKeyBytes") private final VanillaBytes inputKeyBytes =
-            new VanillaBytes(NO_BYTES_STORE);
-    @Stage("InputKeyBytes") private boolean inputKeyBytesUsed = false;
 
     boolean inputKeyBytesInit() {
         return inputKeyBytesUsed;
@@ -61,9 +72,6 @@ public class InputKeyBytesData<K> extends AbstractData<K> {
         inputKeyBytesUsed = false;
     }
 
-    @Stage("CachedInputKey") private K cachedInputKey;
-    @Stage("CachedInputKey") private boolean cachedInputKeyRead = false;
-    
     private void initCachedInputKey() {
         cachedInputKey = innerGetUsing(cachedInputKey);
         cachedInputKeyRead = true;
@@ -98,7 +106,7 @@ public class InputKeyBytesData<K> extends AbstractData<K> {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return innerGetUsing(using);
     }
-    
+
     private K innerGetUsing(K usingKey) {
         inputKeyBytes.readPosition(inputKeyBytesOffset);
         return ki.keyReader.read(inputKeyBytes, inputKeyBytesSize, usingKey);

@@ -38,10 +38,14 @@ import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.*;
 @Staged
 public class TierRecovery {
 
-    @StageRef VanillaChronicleMapHolder<?, ?, ?> mh;
-    @StageRef SegmentStages s;
-    @StageRef MapEntryStages<?, ?> e;
-    @StageRef IterationKeyHashCode khc;
+    @StageRef
+    VanillaChronicleMapHolder<?, ?, ?> mh;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    MapEntryStages<?, ?> e;
+    @StageRef
+    IterationKeyHashCode khc;
 
     public int recoverTier(
             int segmentIndex, ChronicleHashCorruption.Listener corruptionListener,
@@ -63,7 +67,7 @@ public class TierRecovery {
                 if (validEntries >= h.maxEntriesPerHashLookup) {
                     report(corruptionListener, corruption, segmentIndex, () ->
                             format("Too many entries in tier with index {}, max is {}",
-                            s.tierIndex, h.maxEntriesPerHashLookup)
+                                    s.tierIndex, h.maxEntriesPerHashLookup)
                     );
                     break nextHlPos;
                 }
@@ -120,8 +124,8 @@ public class TierRecovery {
                                         s.segmentBS, e.keyOffset, currentKeySize)) {
                             report(corruptionListener, corruption, segmentIndex, () ->
                                     format("Entries with duplicate keys within a tier: " +
-                                            "at pos {} and {} with key {}, first value is {}",
-                                    entryPos, anotherEntryPos, e.key(), e.value())
+                                                    "at pos {} and {} with key {}, first value is {}",
+                                            entryPos, anotherEntryPos, e.key(), e.value())
                             );
                             s.freeList.clearRange(
                                     entryPos, entryPos + currentEntrySizeInChunks);
@@ -200,10 +204,10 @@ public class TierRecovery {
                     if (key2Address != keyAddress) {
                         report(corruptionListener, corruption, s.segmentIndex, () ->
                                 format("entries with duplicate key {} in segment {}: " +
-                                        "with values {} and {}, removing the latter",
-                                key, c.segmentIndex(),
-                                entry2 != null ? ((MapEntry) c).value() : "<deleted>",
-                                !e.entryDeleted() ? e.value() : "<deleted>")
+                                                "with values {} and {}, removing the latter",
+                                        key, c.segmentIndex(),
+                                        entry2 != null ? ((MapEntry) c).value() : "<deleted>",
+                                        !e.entryDeleted() ? e.value() : "<deleted>")
                         );
                         if (hashLookup.remove(currentTierBaseAddr, hlPos) != hlPos) {
                             hlPos = hashLookup.stepBack(hlPos);
@@ -230,7 +234,7 @@ public class TierRecovery {
         if (s.tierEntries() != entries) {
             report(corruptionListener, corruption, s.segmentIndex, () ->
                     format("Wrong number of entries counter for tier with index {}, " +
-                    "stored: {}, should be: {}", s.tierIndex, s.tierEntries(), entries)
+                            "stored: {}, should be: {}", s.tierIndex, s.tierEntries(), entries)
             );
             s.tierEntries(entries);
         }
@@ -246,8 +250,8 @@ public class TierRecovery {
             long finalLowestFreeChunk = lowestFreeChunk;
             report(corruptionListener, corruption, s.segmentIndex, () ->
                     format("wrong lowest free chunk for tier with index {}, " +
-                            "stored: {}, should be: {}",
-                    s.tierIndex, s.lowestPossiblyFreeChunk(), finalLowestFreeChunk)
+                                    "stored: {}, should be: {}",
+                            s.tierIndex, s.lowestPossiblyFreeChunk(), finalLowestFreeChunk)
             );
             s.lowestPossiblyFreeChunk(lowestFreeChunk);
         }
@@ -261,7 +265,7 @@ public class TierRecovery {
         if (entryPos < 0 || entryPos >= h.actualChunksPerSegmentTier) {
             report(corruptionListener, corruption, segmentIndex, () ->
                     format("Entry pos is out of range: {}, should be 0-{}",
-                    entryPos, h.actualChunksPerSegmentTier - 1)
+                            entryPos, h.actualChunksPerSegmentTier - 1)
             );
             return -1;
         }
@@ -284,8 +288,8 @@ public class TierRecovery {
         if (segmentIndexFromKey < 0 || segmentIndexFromKey >= h.actualSegments) {
             report(corruptionListener, corruption, segmentIndex, () ->
                     format("Segment index from the entry key hash code is out of range: {}, " +
-                            "should be 0-{}, entry key: {}",
-                    segmentIndexFromKey, h.actualSegments - 1, e.key())
+                                    "should be 0-{}, entry key: {}",
+                            segmentIndexFromKey, h.actualSegments - 1, e.key())
             );
             return -1;
         }
@@ -295,8 +299,8 @@ public class TierRecovery {
         if (searchKey != searchKeyFromKey) {
             report(corruptionListener, corruption, segmentIndex, () ->
                     format("HashLookup searchKey: {}, HashLookup searchKey " +
-                            "from the entry key hash code: {}, entry key: {}, entry pos: {}",
-                    searchKey, searchKeyFromKey, e.key(), entryPos)
+                                    "from the entry key hash code: {}, entry key: {}, entry pos: {}",
+                            searchKey, searchKeyFromKey, e.key(), entryPos)
             );
             return -1;
         }
@@ -321,8 +325,8 @@ public class TierRecovery {
         if (storedChecksum != checksumFromEntry) {
             report(corruptionListener, corruption, segmentIndex, () ->
                     format("Checksum doesn't match, stored: {}, should be from " +
-                            "the entry bytes: {}, key: {}, value: {}",
-                    storedChecksum, checksumFromEntry, e.key(), e.value())
+                                    "the entry bytes: {}, key: {}, value: {}",
+                            storedChecksum, checksumFromEntry, e.key(), e.value())
             );
             return -1;
         }
@@ -330,7 +334,7 @@ public class TierRecovery {
         if (!s.freeList.isRangeClear(entryPos, entryPos + e.entrySizeInChunks)) {
             report(corruptionListener, corruption, segmentIndex, () ->
                     format("Overlapping entry: positions {}-{}, key: {}, value: {}",
-                    entryPos, entryPos + e.entrySizeInChunks - 1, e.key(), e.value())
+                            entryPos, entryPos + e.entrySizeInChunks - 1, e.key(), e.value())
             );
             return -1;
         }
@@ -340,9 +344,9 @@ public class TierRecovery {
         } else {
             if (segmentIndex != segmentIndexFromKey) {
                 report(corruptionListener, corruption, segmentIndex, () ->
-                format("Expected segment index: {}, segment index from the entry key: {}, " +
-                                "key: {}, value: {}",
-                        segmentIndex, searchKeyFromKey, e.key(), e.value())
+                        format("Expected segment index: {}, segment index from the entry key: {}, " +
+                                        "key: {}, value: {}",
+                                segmentIndex, searchKeyFromKey, e.key(), e.value())
                 );
                 return -1;
             } else {

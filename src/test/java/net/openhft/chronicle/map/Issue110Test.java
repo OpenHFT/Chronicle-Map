@@ -5,12 +5,6 @@ import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
 public class Issue110Test {
-    interface IContainer {
-        @Array(length=10)
-        double getDoubleArrayAt(int i);
-        void setDoubleArrayAt(int i, double d);
-    }
-
     @Test
     public void testChronicleDoubleArray() {
         ChronicleMap<String, IContainer> map =
@@ -21,5 +15,12 @@ public class Issue110Test {
 
         map.put("0", Values.newHeapInstance(IContainer.class));
         assert map.get("0") != null;
+    }
+
+    interface IContainer {
+        @Array(length = 10)
+        double getDoubleArrayAt(int i);
+
+        void setDoubleArrayAt(int i, double d);
     }
 }

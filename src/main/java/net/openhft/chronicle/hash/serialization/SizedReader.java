@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * Deserializer of objects from bytes, pairing {@link SizedWriter}, i. e. assuming the length
  * of the serialized form isn't written in the beginning of the serialized form itself, but managed
  * by {@link ChronicleHash} implementation and passed to the reading methods.
- *
+ * <p>
  * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#sizedwriter-and-sizedreader">{@code
  * SizedWriter} and {@code SizedReader}</a>,
  * <a href="https://github.com/OpenHFT/Chronicle-Map#dataaccess-and-sizedreader">{@link DataAccess}
@@ -54,12 +54,12 @@ public interface SizedReader<T> extends Marshallable {
      * is possible, this objects then returned from this method. If it is impossible for any reason,
      * a new object should be created and returned. The given {@code using} object could be {@code
      * null}, in this case read() should always create a new object.
-     *
+     * <p>
      * <p>This method should increment the position in the given {@code Bytes} by the given {@code
      * size}.
      *
-     * @param in the {@code Bytes} to read the object from
-     * @param size the size of the serialized form of the returned object
+     * @param in    the {@code Bytes} to read the object from
+     * @param size  the size of the serialized form of the returned object
      * @param using the object to read the deserialized data into, could be {@code null}
      * @return the object read from the bytes, either reused or newly created
      */

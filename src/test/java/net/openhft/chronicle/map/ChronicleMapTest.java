@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.HashBiMap;
 import com.google.common.primitives.Ints;
+import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.core.values.LongValue;
@@ -34,7 +35,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.*;
@@ -42,7 +42,13 @@ import static org.junit.Assert.*;
 @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
 public class ChronicleMapTest {
 
+    static final LongValue ONE = Values.newHeapInstance(LongValue.class);
     static long count = 0;
+
+    static {
+        ONE.setValue(1);
+    }
+
     private StringBuilder sb = new StringBuilder();
 
     static void assertKeySet(Set<Integer> keySet, int[] expectedKeys) {
@@ -107,6 +113,20 @@ public class ChronicleMapTest {
         return file;
     }
 
+    private static void printStatus() {
+        if (!new File("/proc/self/status").exists()) return;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader("/proc/self/status"));
+            for (String line; (line = br.readLine()) != null; )
+                if (line.startsWith("Vm"))
+                    System.out.print(line.replaceAll("  +", " ") + ", ");
+
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private ChronicleMap<Integer, CharSequence> getViewTestMap(int noOfElements) throws IOException {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -126,20 +146,6 @@ public class ChronicleMapTest {
 
         return map;
 
-    }
-
-    private static void printStatus() {
-        if (!new File("/proc/self/status").exists()) return;
-        try {
-            BufferedReader br = new BufferedReader(new FileReader("/proc/self/status"));
-            for (String line; (line = br.readLine()) != null; )
-                if (line.startsWith("Vm"))
-                    System.out.print(line.replaceAll("  +", " ") + ", ");
-
-            br.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Test
@@ -226,7 +232,7 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-}
+        }
     }
 
     @Test
@@ -249,7 +255,7 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-}
+        }
     }
 
     @Test
@@ -272,7 +278,7 @@ public class ChronicleMapTest {
 
                 assertEquals(map1, map2);
             }
-}
+        }
     }
 
     @Test
@@ -482,6 +488,37 @@ public class ChronicleMapTest {
         }
     }
 
+    // i7-3970X CPU @ 3.50GHz, hex core: -verbose:gc -Xmx64m
+    // to tmpfs file system
+    // 10M users, updated 12 times. Throughput 19.3 M ops/sec, no GC!
+    // 50M users, updated 12 times. Throughput 19.8 M ops/sec, no GC!
+    // 100M users, updated 12 times. Throughput 19.0M ops/sec, no GC!
+    // 200M users, updated 12 times. Throughput 18.4 M ops/sec, no GC!
+    // 400M users, updated 12 times. Throughput 18.4 M ops/sec, no GC!
+
+    // to ext4 file system.
+    // 10M users, updated 12 times. Throughput 17.7 M ops/sec, no GC!
+    // 50M users, updated 12 times. Throughput 16.5 M ops/sec, no GC!
+    // 100M users, updated 12 times. Throughput 15.9 M ops/sec, no GC!
+    // 200M users, updated 12 times. Throughput 15.4 M ops/sec, no GC!
+    // 400M users, updated 12 times. Throughput 7.8 M ops/sec, no GC!
+    // 600M users, updated 12 times. Throughput 5.8 M ops/sec, no GC!
+
+    // dual E5-2650v2 @ 2.6 GHz, 128 GB: -verbose:gc -Xmx32m
+    // to tmpfs
+    // TODO small GC on startup should be tidied up, [GC 9216K->1886K(31744K), 0.0036750 secs]
+    // 10M users, updated 16 times. Throughput 33.0M ops/sec, VmPeak: 5373848 kB, VmRSS: 544252 kB
+    // 50M users, updated 16 times. Throughput 31.2 M ops/sec, VmPeak: 9091804 kB, VmRSS: 3324732 kB
+    // 250M users, updated 16 times. Throughput 30.0 M ops/sec, VmPeak:	24807836 kB, VmRSS: 14329112 kB
+    // 1000M users, updated 16 times, Throughput 24.1 M ops/sec, VmPeak: 85312732 kB, VmRSS: 57165952 kB
+    // 2500M users, updated 16 times, Throughput 23.5 M ops/sec, VmPeak: 189545308 kB, VmRSS: 126055868 kB
+
+    // to ext4
+    // 10M users, updated 16 times. Throughput 28.4 M ops/sec, VmPeak: 5438652 kB, VmRSS: 544624 kB
+    // 50M users, updated 16 times. Throughput 28.2 M ops/sec, VmPeak: 9091804 kB, VmRSS: 9091804 kB
+    // 250M users, updated 16 times. Throughput 26.1 M ops/sec, VmPeak:	24807836 kB, VmRSS: 24807836 kB
+    // 1000M users, updated 16 times, Throughput 1.3 M ops/sec, TODO FIX this
+
     @Test
     public void testRemoveWithKeyAndValue() {
 
@@ -534,36 +571,17 @@ public class ChronicleMapTest {
         }
     }
 
-    // i7-3970X CPU @ 3.50GHz, hex core: -verbose:gc -Xmx64m
-    // to tmpfs file system
-    // 10M users, updated 12 times. Throughput 19.3 M ops/sec, no GC!
-    // 50M users, updated 12 times. Throughput 19.8 M ops/sec, no GC!
-    // 100M users, updated 12 times. Throughput 19.0M ops/sec, no GC!
-    // 200M users, updated 12 times. Throughput 18.4 M ops/sec, no GC!
-    // 400M users, updated 12 times. Throughput 18.4 M ops/sec, no GC!
+    //  i7-3970X CPU @ 3.50GHz, hex core: -Xmx30g -verbose:gc
+    // 10M users, updated 12 times. Throughput 16.2 M ops/sec, longest [Full GC 853669K->852546K(3239936K), 0.8255960 secs]
+    // 50M users, updated 12 times. Throughput 13.3 M ops/sec,  longest [Full GC 5516214K->5511353K(13084544K), 3.5752970 secs]
+    // 100M users, updated 12 times. Throughput 11.8 M ops/sec, longest [Full GC 11240703K->11233711K(19170432K), 5.8783010 secs]
+    // 200M users, updated 12 times. Throughput 4.2 M ops/sec, longest [Full GC 25974721K->22897189K(27962048K), 21.7962600 secs]
 
-    // to ext4 file system.
-    // 10M users, updated 12 times. Throughput 17.7 M ops/sec, no GC!
-    // 50M users, updated 12 times. Throughput 16.5 M ops/sec, no GC!
-    // 100M users, updated 12 times. Throughput 15.9 M ops/sec, no GC!
-    // 200M users, updated 12 times. Throughput 15.4 M ops/sec, no GC!
-    // 400M users, updated 12 times. Throughput 7.8 M ops/sec, no GC!
-    // 600M users, updated 12 times. Throughput 5.8 M ops/sec, no GC!
-
-    // dual E5-2650v2 @ 2.6 GHz, 128 GB: -verbose:gc -Xmx32m
-    // to tmpfs
-    // TODO small GC on startup should be tidied up, [GC 9216K->1886K(31744K), 0.0036750 secs]
-    // 10M users, updated 16 times. Throughput 33.0M ops/sec, VmPeak: 5373848 kB, VmRSS: 544252 kB
-    // 50M users, updated 16 times. Throughput 31.2 M ops/sec, VmPeak: 9091804 kB, VmRSS: 3324732 kB
-    // 250M users, updated 16 times. Throughput 30.0 M ops/sec, VmPeak:	24807836 kB, VmRSS: 14329112 kB
-    // 1000M users, updated 16 times, Throughput 24.1 M ops/sec, VmPeak: 85312732 kB, VmRSS: 57165952 kB
-    // 2500M users, updated 16 times, Throughput 23.5 M ops/sec, VmPeak: 189545308 kB, VmRSS: 126055868 kB
-
-    // to ext4
-    // 10M users, updated 16 times. Throughput 28.4 M ops/sec, VmPeak: 5438652 kB, VmRSS: 544624 kB
-    // 50M users, updated 16 times. Throughput 28.2 M ops/sec, VmPeak: 9091804 kB, VmRSS: 9091804 kB
-    // 250M users, updated 16 times. Throughput 26.1 M ops/sec, VmPeak:	24807836 kB, VmRSS: 24807836 kB
-    // 1000M users, updated 16 times, Throughput 1.3 M ops/sec, TODO FIX this
+    // dual E5-2650v2 @ 2.6 GHz, 128 GB: -verbose:gc -Xmx100g
+    // 10M users, updated 16 times. Throughput 155.3 M ops/sec, VmPeak: 113291428 kB, VmRSS: 9272176 kB, [Full GC 1624336K->1616457K(7299072K), 2.5381610 secs]
+    // 50M users, updated 16 times. Throughput 120.4 M ops/sec, VmPeak: 113291428 kB, VmRSS: 28436248 kB [Full GC 6545332K->6529639K(18179584K), 6.9053810 secs]
+    // 250M users, updated 16 times. Throughput 114.1 M ops/sec, VmPeak: 113291428 kB, VmRSS: 76441464 kB  [Full GC 41349527K->41304543K(75585024K), 17.3217490 secs]
+    // 1000M users, OutOfMemoryError.
 
     @Test
     public void testGetWithNullContainer() {
@@ -591,18 +609,6 @@ public class ChronicleMapTest {
 
         }
     }
-
-    //  i7-3970X CPU @ 3.50GHz, hex core: -Xmx30g -verbose:gc
-    // 10M users, updated 12 times. Throughput 16.2 M ops/sec, longest [Full GC 853669K->852546K(3239936K), 0.8255960 secs]
-    // 50M users, updated 12 times. Throughput 13.3 M ops/sec,  longest [Full GC 5516214K->5511353K(13084544K), 3.5752970 secs]
-    // 100M users, updated 12 times. Throughput 11.8 M ops/sec, longest [Full GC 11240703K->11233711K(19170432K), 5.8783010 secs]
-    // 200M users, updated 12 times. Throughput 4.2 M ops/sec, longest [Full GC 25974721K->22897189K(27962048K), 21.7962600 secs]
-
-    // dual E5-2650v2 @ 2.6 GHz, 128 GB: -verbose:gc -Xmx100g
-    // 10M users, updated 16 times. Throughput 155.3 M ops/sec, VmPeak: 113291428 kB, VmRSS: 9272176 kB, [Full GC 1624336K->1616457K(7299072K), 2.5381610 secs]
-    // 50M users, updated 16 times. Throughput 120.4 M ops/sec, VmPeak: 113291428 kB, VmRSS: 28436248 kB [Full GC 6545332K->6529639K(18179584K), 6.9053810 secs]
-    // 250M users, updated 16 times. Throughput 114.1 M ops/sec, VmPeak: 113291428 kB, VmRSS: 76441464 kB  [Full GC 41349527K->41304543K(75585024K), 17.3217490 secs]
-    // 1000M users, OutOfMemoryError.
 
     @Test
     public void testAcquireAndGet() throws IOException, ClassNotFoundException,
@@ -709,7 +715,7 @@ public class ChronicleMapTest {
                         assertEquals(j, value3.getValue());
                     }
                 }
-}
+            }
         }
     }
 
@@ -800,7 +806,7 @@ public class ChronicleMapTest {
                 }
             }
         }
-}
+    }
 
     @Test
     public void testLargerEntries() {
@@ -994,12 +1000,6 @@ public class ChronicleMapTest {
         }
         es.shutdown();
         es.awaitTermination(1, TimeUnit.MINUTES);
-    }
-
-    static final LongValue ONE = Values.newHeapInstance(LongValue.class);
-
-    static {
-        ONE.setValue(1);
     }
 
     @Test
@@ -1263,7 +1263,7 @@ public class ChronicleMapTest {
                     assertNull(map.getUsing(key, value));
                 }
             }
-}
+        }
     }
 
     @Test
@@ -1282,7 +1282,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
             assertValues(map.values(), new CharSequence[]{"1", "3"});
         }
-}
+    }
 
     @Test
     public void mapPutReflectedInViews() throws IOException {
@@ -1332,7 +1332,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
 
         }
-}
+    }
 
     @Test
     public void valuesRemoveReflectedInMap() throws IOException {
@@ -1348,7 +1348,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"1", "3"});
 
         }
-}
+    }
 
     @Test
     public void entrySetIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
@@ -1391,7 +1391,7 @@ public class ChronicleMapTest {
             assertValues(values, expectedValues);
 
         }
-}
+    }
 
     @Test
     public void valuesIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
@@ -1418,7 +1418,7 @@ public class ChronicleMapTest {
             assertValues(values, expectedValues);
 
         }
-}
+    }
 
     @Test
     public void entrySetRemoveAllReflectedInMapAndOtherViews() throws IOException {
@@ -1439,7 +1439,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"3"});
 
         }
-}
+    }
 
     @Test
     public void keySetRemoveAllReflectedInMapAndOtherViews() throws IOException {
@@ -1455,7 +1455,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"3"});
 
         }
-}
+    }
 
     @Test
     public void valuesRemoveAllReflectedInMapAndOtherViews() throws IOException {
@@ -1505,7 +1505,7 @@ public class ChronicleMapTest {
             assertValues(values, new CharSequence[]{"2", "1"});
 
         }
-}
+    }
 
     @Test
     public void valuesRetainAllReflectedInMapAndOtherViews() throws IOException {
@@ -1537,7 +1537,7 @@ public class ChronicleMapTest {
             org.junit.Assert.assertTrue(values.isEmpty());
 
         }
-}
+    }
 
     @Test
     public void keySetClearReflectedInMapAndOtherViews() throws IOException {
@@ -1569,7 +1569,7 @@ public class ChronicleMapTest {
             org.junit.Assert.assertTrue(values.isEmpty());
 
         }
-}
+    }
 
     @Test
     public void clearMapViaEntryIteratorRemoves() throws IOException {
@@ -1587,7 +1587,7 @@ public class ChronicleMapTest {
             assertEquals(noOfElements, sum);
 
         }
-}
+    }
 
     @Test
     public void clearMapViaKeyIteratorRemoves() throws IOException {
@@ -1660,7 +1660,7 @@ public class ChronicleMapTest {
             assertValues(map.values(), new String[]{"B"});
 
         }
-}
+    }
 
     @Test
     public void equalsTest() throws IOException {
@@ -1679,40 +1679,7 @@ public class ChronicleMapTest {
                 assertEquals(map1, map2);
             }
         }
-}
-
-    private static final class IncrementRunnable implements Runnable {
-
-        private final ChronicleMap<CharSequence, LongValue> map;
-
-        private final CharSequence key;
-
-        private final int iterations;
-
-        private final CyclicBarrier barrier;
-
-        private IncrementRunnable(ChronicleMap<CharSequence, LongValue> map, CharSequence key,
-                                  int iterations, CyclicBarrier barrier) {
-            this.map = map;
-            this.key = key;
-            this.iterations = iterations;
-            this.barrier = barrier;
-        }
-
-        @Override
-        public void run() {
-            try {
-                LongValue value = Values.newNativeReference(LongValue.class);
-                barrier.await();
-                for (int i = 0; i < iterations; i++) {
-                    map.acquireUsing(key, value);
-                    value.addAtomicValue(1);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-}
+    }
 
     @Test
     public void testPutLongValue() throws IOException {
@@ -1733,7 +1700,7 @@ public class ChronicleMapTest {
             throw new AssertionError("Should throw either IllegalStateException or " +
                     "NullPointerException, but succeed");
         }
-}
+    }
 
     @Test
     public void testOffheapAcquireUsingLocked() throws IOException {
@@ -1789,7 +1756,7 @@ public class ChronicleMapTest {
                 assert value == v;
                 assertEquals(1, c.entry().value().get().getValue());
             }
-}
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1895,6 +1862,58 @@ public class ChronicleMapTest {
             }
         }
         tmpFile.delete();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBytesMarshallableMustBeConcreteValueType() {
+        try (ChronicleMap<CharSequence, BMSUper> map = ChronicleMapBuilder
+                .of(CharSequence.class, BMSUper.class)
+                .entries(1)
+                .averageKey("hello")
+                .averageValue(new BMClass())
+                .create()) {
+            map.put("hi", new BMClass());
+        }
+    }
+
+    interface BMSUper {
+
+    }
+
+    static class BMClass implements BytesMarshallable, BMSUper {
+
+    }
+    private static final class IncrementRunnable implements Runnable {
+
+        private final ChronicleMap<CharSequence, LongValue> map;
+
+        private final CharSequence key;
+
+        private final int iterations;
+
+        private final CyclicBarrier barrier;
+
+        private IncrementRunnable(ChronicleMap<CharSequence, LongValue> map, CharSequence key,
+                                  int iterations, CyclicBarrier barrier) {
+            this.map = map;
+            this.key = key;
+            this.iterations = iterations;
+            this.barrier = barrier;
+        }
+
+        @Override
+        public void run() {
+            try {
+                LongValue value = Values.newNativeReference(LongValue.class);
+                barrier.await();
+                for (int i = 0; i < iterations; i++) {
+                    map.acquireUsing(key, value);
+                    value.addAtomicValue(1);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }

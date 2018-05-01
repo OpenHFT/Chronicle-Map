@@ -27,7 +27,7 @@ public final class InterProcessDeadLockException extends RuntimeException {
      * Constructs a new {@code InterProcessDeadLockException} with the specified detail message.
      *
      * @param message the detail message. The detail message is saved for later retrieval by the
-     * {@link #getMessage()} method.
+     *                {@link #getMessage()} method.
      */
     public InterProcessDeadLockException(String message) {
         super(message);
@@ -38,8 +38,8 @@ public final class InterProcessDeadLockException extends RuntimeException {
      * cause.
      *
      * @param message the detail message. The detail message is saved for later retrieval by the
-     * {@link #getMessage()} method.
-     * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method)
+     *                {@link #getMessage()} method.
+     * @param cause   the cause (which is saved for later retrieval by the {@link #getCause()} method)
      */
     public InterProcessDeadLockException(String message, Throwable cause) {
         super(message, cause);

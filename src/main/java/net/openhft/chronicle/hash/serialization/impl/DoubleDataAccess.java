@@ -36,7 +36,9 @@ public final class DoubleDataAccess extends AbstractData<Double>
     private transient boolean bsInit;
     private transient BytesStore bs;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient Double instance;
 
     public DoubleDataAccess() {

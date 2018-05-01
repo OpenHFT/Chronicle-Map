@@ -33,11 +33,15 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UPDATE_LOCKED;
 @Staged
 public class UpdateLock implements InterProcessLock {
 
-    @StageRef VanillaChronicleHashHolder<?> hh;
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef SegmentStages s;
-    @StageRef HashEntryStages<?> entry;
-    
+    @StageRef
+    VanillaChronicleHashHolder<?> hh;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    HashEntryStages<?> entry;
+
     @Override
     public boolean isHeldByCurrentThread() {
         checkOnEachPublicOperation.checkOnEachLockOperation();

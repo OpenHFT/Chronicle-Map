@@ -36,7 +36,7 @@ public interface ChronicleSet<K>
      * Delegates to {@link ChronicleSetBuilder#of(Class)} for convenience.
      *
      * @param keyClass class of the key type of the {@code ChronicleSet} to create
-     * @param <K> the key type of the {@code ChronicleSet} to create
+     * @param <K>      the key type of the {@code ChronicleSet} to create
      * @return a new {@code ChronicleSetBuilder} for the given key class
      */
     static <K> ChronicleSetBuilder<K> of(Class<K> keyClass) {

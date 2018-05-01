@@ -22,6 +22,9 @@ import java.io.IOException;
 
 public final class MapDiagnostics {
 
+    private MapDiagnostics() {
+    }
+
     public static void main(String[] args) throws IOException {
         String mapFile = args[0];
         try (ChronicleMap map = ChronicleMap.of(Object.class, Object.class)
@@ -39,6 +42,4 @@ public final class MapDiagnostics {
             }
         }
     }
-
-    private MapDiagnostics() {}
 }

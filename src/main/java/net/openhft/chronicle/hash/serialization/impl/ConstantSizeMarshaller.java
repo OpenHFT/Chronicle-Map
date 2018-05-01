@@ -25,7 +25,9 @@ import org.jetbrains.annotations.NotNull;
 
 public final class ConstantSizeMarshaller implements SizeMarshaller {
 
-    /** Config field */
+    /**
+     * Config field
+     */
     private long constantSize;
 
     public ConstantSizeMarshaller(long constantSize) {

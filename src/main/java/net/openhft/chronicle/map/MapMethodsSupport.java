@@ -19,6 +19,9 @@ package net.openhft.chronicle.map;
 
 final class MapMethodsSupport {
 
+    private MapMethodsSupport() {
+    }
+
     static <V> void returnCurrentValueIfPresent(
             MapQueryContext<?, V, ?> q, ReturnValue<V> returnValue) {
         MapEntry<?, V> entry = q.entry();
@@ -45,6 +48,4 @@ final class MapMethodsSupport {
         }
         return false;
     }
-
-    private MapMethodsSupport() {}
 }

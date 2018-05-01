@@ -28,7 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 public class StringSizedReader implements SizedReader<String>, StatefulCopyable<StringSizedReader> {
 
-    /** Cache field */
+    /**
+     * Cache field
+     */
     private transient StringBuilder sb;
 
     public StringSizedReader() {

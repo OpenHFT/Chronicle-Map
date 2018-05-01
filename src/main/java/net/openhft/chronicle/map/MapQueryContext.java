@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @param <K> the map key type
  * @param <V> the map value type
  * @param <R> the return type of {@link MapEntryOperations} specialized for the queried map
- * @see ChronicleMap#queryContext(Object)           
+ * @see ChronicleMap#queryContext(Object)
  */
 public interface MapQueryContext<K, V, R> extends HashQueryContext<K>, MapContext<K, V, R> {
 

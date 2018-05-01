@@ -43,7 +43,7 @@ public final class ChronicleHashRecoveryFailedException extends RuntimeException
      * message.
      *
      * @param message the detail message. The detail message is saved for later retrieval by the
-     * {@link #getMessage()} method.
+     *                {@link #getMessage()} method.
      */
     public ChronicleHashRecoveryFailedException(String message) {
         super(message);

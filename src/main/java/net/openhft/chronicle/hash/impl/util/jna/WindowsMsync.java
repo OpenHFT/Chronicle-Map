@@ -31,6 +31,12 @@ import static com.sun.jna.platform.win32.WinError.ERROR_LOCK_VIOLATION;
 
 public final class WindowsMsync {
 
+    private static final Kernel32Ex KERNEL_32 = (Kernel32Ex)
+            Native.loadLibrary("kernel32", Kernel32Ex.class, W32APIOptions.UNICODE_OPTIONS);
+
+    private WindowsMsync() {
+    }
+
     public static void msync(RandomAccessFile raf, long addr, long length)
             throws IOException {
         int retry = 0;
@@ -57,9 +63,4 @@ public final class WindowsMsync {
     public interface Kernel32Ex extends Kernel32 {
         boolean FlushViewOfFile(Pointer addr, SIZE_T length);
     }
-
-    private static final Kernel32Ex KERNEL_32 = (Kernel32Ex)
-            Native.loadLibrary("kernel32", Kernel32Ex.class, W32APIOptions.UNICODE_OPTIONS);
-
-    private WindowsMsync() {}
 }

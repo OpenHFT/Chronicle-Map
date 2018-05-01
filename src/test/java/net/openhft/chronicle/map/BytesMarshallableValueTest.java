@@ -44,5 +44,5 @@ public class BytesMarshallableValueTest {
             this.x = x;
             this.foo = foo;
         }
-}
+    }
 }

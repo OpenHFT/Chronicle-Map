@@ -55,8 +55,8 @@ public interface ChronicleHashBuilderPrivateAPI<K, RO> {
     /**
      * Configures if replicated Chronicle Hashes, constructed by this builder, should
      * completely erase entries, removed some time ago. See {@link #removedEntryCleanupTimeout(
-     * long, TimeUnit)} for more details on this mechanism.
-     *
+     *long, TimeUnit)} for more details on this mechanism.
+     * <p>
      * <p>Default value is {@code true} -- old removed entries are erased with 1 second timeout.
      *
      * @param cleanupRemovedEntries if stale removed entries should be purged from Chronicle Hash
@@ -76,12 +76,12 @@ public interface ChronicleHashBuilderPrivateAPI<K, RO> {
      * in any way for this {@code removedEntryCleanupTimeout}, Chronicle is allowed to remove this
      * entry completely from the data store. This timeout should depend on your distributed
      * system topology, and typical replication latencies, that should be determined experimentally.
-     *
+     * <p>
      * <p>Default timeout is 1 minute.
      *
      * @param removedEntryCleanupTimeout timeout, after which stale removed entries could be erased
      *                                   from Chronicle Hash data store completely
-     * @param unit time unit, in which the timeout is given
+     * @param unit                       time unit, in which the timeout is given
      * @return this builder back
      * @throws IllegalArgumentException is the specified timeout is less than 1 millisecond
      * @see #cleanupRemovedEntries(boolean)

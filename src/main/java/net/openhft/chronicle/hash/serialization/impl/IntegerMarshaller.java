@@ -32,7 +32,8 @@ public final class IntegerMarshaller
         SizedWriter<Integer>, BytesWriter<Integer>, EnumMarshallable<IntegerMarshaller> {
     public static final IntegerMarshaller INSTANCE = new IntegerMarshaller();
 
-    private IntegerMarshaller() {}
+    private IntegerMarshaller() {
+    }
 
     @NotNull
     @Override

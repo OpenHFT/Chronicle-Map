@@ -35,13 +35,20 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 @Staged
 public abstract class MapAbsent<K, V> implements Absent<K, V> {
 
-    @StageRef public KeySearch<K> ks;
-    @StageRef MapQuery<K, V, ?> q;
-    @StageRef MapEntryStages<K, V> e;
-    @StageRef public HashLookupSearch hashLookupSearch;
-    @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef public SegmentStages s;
-    @StageRef VanillaChronicleMapHolder<K, V, ?> mh;
+    @StageRef
+    public KeySearch<K> ks;
+    @StageRef
+    public HashLookupSearch hashLookupSearch;
+    @StageRef
+    public CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    public SegmentStages s;
+    @StageRef
+    MapQuery<K, V, ?> q;
+    @StageRef
+    MapEntryStages<K, V> e;
+    @StageRef
+    VanillaChronicleMapHolder<K, V, ?> mh;
 
     void putEntry(Data<V> value) {
         assert ks.searchStateAbsent();

@@ -25,7 +25,8 @@ import net.openhft.sg.Staged;
 @Staged
 public class QueryAlloc implements Alloc {
 
-    @StageRef public SegmentStages s;
+    @StageRef
+    public SegmentStages s;
 
     @Override
     public long alloc(int chunks, long prevPos, int prevChunks) {

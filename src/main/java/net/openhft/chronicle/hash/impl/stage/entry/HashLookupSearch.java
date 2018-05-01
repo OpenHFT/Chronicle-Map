@@ -29,15 +29,21 @@ import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.UNSE
 
 @Staged
 public abstract class HashLookupSearch {
-    
-    @StageRef SegmentStages s;
-    @StageRef public VanillaChronicleHashHolder<?> hh;
-    @StageRef HashLookupPos hlp;
-    @StageRef KeySearch<?> ks;
-    @StageRef MapEntryStages<?, ?> e;
-    
-    @Stage("SearchKey") long searchKey = UNSET_KEY;
-    @Stage("SearchKey") public long searchStartPos;
+
+    @StageRef
+    public VanillaChronicleHashHolder<?> hh;
+    @Stage("SearchKey")
+    public long searchStartPos;
+    @StageRef
+    SegmentStages s;
+    @StageRef
+    HashLookupPos hlp;
+    @StageRef
+    KeySearch<?> ks;
+    @StageRef
+    MapEntryStages<?, ?> e;
+    @Stage("SearchKey")
+    long searchKey = UNSET_KEY;
 
     public CompactOffHeapLinearHashTable hl() {
         return hh.h().hashLookup;
@@ -99,7 +105,7 @@ public abstract class HashLookupSearch {
         hl().checkValueForPut(entryPos);
         hl().writeEntryVolatile(addr(), hlp.hashLookupPos, searchKey, entryPos);
     }
-    
+
     public boolean checkSlotContainsExpectedKeyAndValue(long value) {
         // volatile read not needed here because this method is for verifying within-thread
         // invariants

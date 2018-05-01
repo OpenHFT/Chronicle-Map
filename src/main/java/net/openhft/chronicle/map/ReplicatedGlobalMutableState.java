@@ -22,14 +22,21 @@ import net.openhft.chronicle.values.*;
 
 interface ReplicatedGlobalMutableState extends VanillaGlobalMutableState {
 
+    static void main(String[] args) {
+        System.setProperty("chronicle.values.dumpCode", "true");
+        Values.nativeClassFor(ReplicatedGlobalMutableState.class);
+    }
+
     @Group(6)
     int getCurrentCleanupSegmentIndex();
+
     void setCurrentCleanupSegmentIndex(
             @Range(min = 0, max = Integer.MAX_VALUE) int currentCleanupSegmentIndex);
 
     @Group(7)
     @Align(offset = 1)
     int getModificationIteratorsCount();
+
     int addModificationIteratorsCount(@Range(min = 0, max = 128) int addition);
 
     @Group(8)
@@ -38,10 +45,6 @@ interface ReplicatedGlobalMutableState extends VanillaGlobalMutableState {
     @Align(offset = 2)
     @Array(length = 128)
     boolean getModificationIteratorInitAt(int index);
-    void setModificationIteratorInitAt(int index, boolean init);
 
-    public static void main(String[] args) {
-        System.setProperty("chronicle.values.dumpCode", "true");
-        Values.nativeClassFor(ReplicatedGlobalMutableState.class);
-    }
+    void setModificationIteratorInitAt(int index, boolean init);
 }

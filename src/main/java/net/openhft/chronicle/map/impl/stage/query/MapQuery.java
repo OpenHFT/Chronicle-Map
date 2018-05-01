@@ -45,22 +45,30 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
         implements MapEntry<K, V>, ExternalMapQueryContext<K, V, R>,
         ExternalSetQueryContext<K, R>, QueryContextInterface<K, V, R>, MapAndSetContext<K, V, R> {
 
-    @StageRef VanillaChronicleMapHolder<K, V, R> mh;
-    @StageRef MapEntryStages<K, V> e;
-    @StageRef SearchAllocatedChunks allocatedChunks;
-    @StageRef KeySearch<K> ks;
-    @StageRef public AcquireHandle<K, V> acquireHandle;
-    @StageRef InputKeyBytesData<K> inputKeyBytesData;
-    
-    @StageRef public DefaultReturnValue<V> defaultReturnValue;
-    @StageRef public UsingReturnValue<V> usingReturnValue;
-
-    @StageRef public MapAbsent<K, V> absent;
-
+    @StageRef
+    public AcquireHandle<K, V> acquireHandle;
+    @StageRef
+    public DefaultReturnValue<V> defaultReturnValue;
+    @StageRef
+    public UsingReturnValue<V> usingReturnValue;
+    @StageRef
+    public MapAbsent<K, V> absent;
+    @StageRef
+    VanillaChronicleMapHolder<K, V, R> mh;
     final DataAccess<V> innerInputValueDataAccess = mh.m().valueDataAccess.copy();
-
-    /** Same as {@link #inputKeyDataAccessInitialized} */
-    @Stage("InputValueDataAccess") private boolean inputValueDataAccessInitialized = false;
+    @StageRef
+    MapEntryStages<K, V> e;
+    @StageRef
+    SearchAllocatedChunks allocatedChunks;
+    @StageRef
+    KeySearch<K> ks;
+    @StageRef
+    InputKeyBytesData<K> inputKeyBytesData;
+    /**
+     * Same as {@link #inputKeyDataAccessInitialized}
+     */
+    @Stage("InputValueDataAccess")
+    private boolean inputValueDataAccessInitialized = false;
 
     void initInputValueDataAccess() {
         inputValueDataAccessInitialized = true;
@@ -89,7 +97,7 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return entryPresent() ? null : absent;
     }
-    
+
     protected void putPrefix() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (!s.innerUpdateLock.isHeldByCurrentThread())

@@ -27,8 +27,10 @@ import org.jetbrains.annotations.NotNull;
 @Staged
 public abstract class DefaultValue<V> {
 
-    @StageRef CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef DummyValueZeroData<V> zeroValueData;
+    @StageRef
+    CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    DummyValueZeroData<V> zeroValueData;
 
     @NotNull
     public Data<V> defaultValue() {

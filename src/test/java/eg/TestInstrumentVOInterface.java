@@ -26,6 +26,7 @@ import net.openhft.chronicle.values.MaxUtf8Length;
 public interface TestInstrumentVOInterface {
 
     int getSizeOfInstrumentIDArray();
+
     void setSizeOfInstrumentIDArray(int sizeOfInstrumentIDArray);
 
     String getSymbol();

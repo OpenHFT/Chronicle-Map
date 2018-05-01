@@ -58,7 +58,8 @@ public class PointListSerializationTest {
             EnumMarshallable<AMarshaller> {
         public static final AMarshaller INSTANCE = new AMarshaller();
 
-        private AMarshaller() {}
+        private AMarshaller() {
+        }
 
         @Override
         public void write(Bytes out, @NotNull A toWrite) {

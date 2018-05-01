@@ -21,10 +21,10 @@ import net.openhft.chronicle.hash.HashEntry;
 
 /**
  * A context of a <i>present</i> entry in the {@link ChronicleSet}.
- *  
+ *
  * @param <K> the set key type
  * @see SetEntryOperations
- * @see SetQueryContext#entry() 
+ * @see SetQueryContext#entry()
  */
 public interface SetEntry<K> extends HashEntry<K> {
     @Override
@@ -32,7 +32,7 @@ public interface SetEntry<K> extends HashEntry<K> {
 
     /**
      * Removes the entry from the {@code ChronicleSet}.
-     * 
+     * <p>
      * <p>This method is the default implementation for {@link SetEntryOperations#remove(SetEntry)},
      * which might be customized over the default.
      */

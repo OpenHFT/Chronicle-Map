@@ -35,21 +35,29 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 @Staged
 public abstract class HashQuery<K> implements SetEntry<K> {
 
-    @StageRef public VanillaChronicleHashHolder<K> hh;
-    @StageRef public SegmentStages s;
-    @StageRef public HashEntryStages<K> entry;
-    @StageRef public HashLookupSearch hashLookupSearch;
-    @StageRef public CheckOnEachPublicOperation checkOnEachPublicOperation;
-    @StageRef public HashLookupPos hlp;
-    @StageRef public KeySearch<K> ks;
-
+    @StageRef
+    public VanillaChronicleHashHolder<K> hh;
     final DataAccess<K> innerInputKeyDataAccess = hh.h().keyDataAccess.copy();
-
+    @StageRef
+    public SegmentStages s;
+    @StageRef
+    public HashEntryStages<K> entry;
+    @StageRef
+    public HashLookupSearch hashLookupSearch;
+    @StageRef
+    public CheckOnEachPublicOperation checkOnEachPublicOperation;
+    @StageRef
+    public HashLookupPos hlp;
+    @StageRef
+    public KeySearch<K> ks;
     /**
      * This stage exists for hooking {@link #innerInputKeyDataAccess} usage, to trigger {@link
      * DataAccess#uninit()} on context exit
      */
-    @Stage("InputKeyDataAccess") private boolean inputKeyDataAccessInitialized = false;
+    @Stage("InputKeyDataAccess")
+    private boolean inputKeyDataAccessInitialized = false;
+    @Stage("PresenceOfEntry")
+    private EntryPresence entryPresence = null;
 
     void initInputKeyDataAccess() {
         inputKeyDataAccessInitialized = true;
@@ -64,7 +72,7 @@ public abstract class HashQuery<K> implements SetEntry<K> {
         initInputKeyDataAccess();
         return innerInputKeyDataAccess;
     }
-    
+
     public void dropSearchIfNestedContextsAndPresentHashLookupSlotCheckFailed() {
         if (s.locksInit()) {
             if (s.nestedContextsLockedOnSameSegment &&
@@ -82,10 +90,6 @@ public abstract class HashQuery<K> implements SetEntry<K> {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return ks.inputKey;
     }
-
-    public enum EntryPresence {PRESENT, ABSENT}
-
-    @Stage("PresenceOfEntry") private EntryPresence entryPresence = null;
 
     private void initPresenceOfEntry() {
         if (ks.searchStatePresent() || tieredEntryPresent()) {
@@ -141,4 +145,6 @@ public abstract class HashQuery<K> implements SetEntry<K> {
                     hh.h().toIdentityString() + ": Entry is absent when doRemove() is called");
         }
     }
+
+    public enum EntryPresence {PRESENT, ABSENT}
 }

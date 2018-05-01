@@ -21,7 +21,7 @@ package net.openhft.chronicle.hash.impl.util.math;
 /**
  * Provides a generic means to evaluate continued fractions.  Subclasses simply
  * provided the a and b coefficients to evaluate the continued fraction.
- *
+ * <p>
  * <p>
  * References:
  * <ul>
@@ -29,13 +29,13 @@ package net.openhft.chronicle.hash.impl.util.math;
  * Continued Fraction</a></li>
  * </ul>
  * </p>
- *
  */
 abstract class ContinuedFraction {
 
     /**
      * Access the n-th a coefficient of the continued fraction.  Since a can be
      * a function of the evaluation point, x, that is passed in as well.
+     *
      * @param n the coefficient index to retrieve.
      * @param x the evaluation point.
      * @return the n-th a coefficient.
@@ -45,6 +45,7 @@ abstract class ContinuedFraction {
     /**
      * Access the n-th b coefficient of the continued fraction.  Since b can be
      * a function of the evaluation point, x, that is passed in as well.
+     *
      * @param n the coefficient index to retrieve.
      * @param x the evaluation point.
      * @return the n-th b coefficient.
@@ -57,18 +58,18 @@ abstract class ContinuedFraction {
      * The implementation of this method is based on the modified Lentz algorithm as described
      * on page 18 ff. in:
      * <ul>
-     *   <li>
-     *   I. J. Thompson,  A. R. Barnett. "Coulomb and Bessel Functions of Complex Arguments and Order."
-     *   <a target="_blank" href="http://www.fresco.org.uk/papers/Thompson-JCP64p490.pdf">
-     *   http://www.fresco.org.uk/papers/Thompson-JCP64p490.pdf</a>
-     *   </li>
+     * <li>
+     * I. J. Thompson,  A. R. Barnett. "Coulomb and Bessel Functions of Complex Arguments and Order."
+     * <a target="_blank" href="http://www.fresco.org.uk/papers/Thompson-JCP64p490.pdf">
+     * http://www.fresco.org.uk/papers/Thompson-JCP64p490.pdf</a>
+     * </li>
      * </ul>
      * <b>Note:</b> the implementation uses the terms a<sub>i</sub> and b<sub>i</sub> as defined in
      * <a href="http://mathworld.wolfram.com/ContinuedFraction.html">Continued Fraction @ MathWorld</a>.
      * </p>
      *
-     * @param x the evaluation point.
-     * @param epsilon maximum error allowed.
+     * @param x             the evaluation point.
+     * @param epsilon       maximum error allowed.
      * @param maxIterations maximum number of convergents
      * @return the value of the continued fraction evaluated at x.
      * @throws IllegalStateException if the algorithm fails to converge.

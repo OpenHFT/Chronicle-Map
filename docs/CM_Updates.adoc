@@ -38,6 +38,5 @@ Changes between Chronicle Map 3 and the previous Chronicle Map version are detai
 
  - Chronicle Map 3 has <<CM_Compatibility_and_Versioning.adoc#,versioning and compatibility policies>>.
 
-
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>

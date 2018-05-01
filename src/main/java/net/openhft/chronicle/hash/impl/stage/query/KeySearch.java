@@ -18,7 +18,6 @@
 package net.openhft.chronicle.hash.impl.stage.query;
 
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.HashLookupSearch;
@@ -34,25 +33,23 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 @Staged
 public abstract class KeySearch<K> {
 
-    @StageRef VanillaChronicleMapHolder<?, ?, ?> mh;
-    @StageRef public SegmentStages s;
-    @StageRef public HashLookupSearch hashLookupSearch;
-    @StageRef public HashEntryStages<K> entry;
-
+    @StageRef
+    public SegmentStages s;
+    @StageRef
+    public HashLookupSearch hashLookupSearch;
+    @StageRef
+    public HashEntryStages<K> entry;
     public Data<K> inputKey = null;
+    @Stage("KeySearch")
+    protected SearchState searchState = null;
+    @StageRef
+    VanillaChronicleMapHolder<?, ?, ?> mh;
 
     public abstract boolean inputKeyInit();
 
     public void initInputKey(Data<K> inputKey) {
         this.inputKey = inputKey;
     }
-
-    public enum SearchState {
-        PRESENT,
-        ABSENT
-    }
-
-    @Stage("KeySearch") protected SearchState searchState = null;
 
     public abstract boolean keySearchInit();
 
@@ -62,7 +59,7 @@ public abstract class KeySearch<K> {
     }
 
     public void initKeySearch() {
-        for (long pos; (pos = hashLookupSearch.nextPos()) >= 0L;) {
+        for (long pos; (pos = hashLookupSearch.nextPos()) >= 0L; ) {
             // otherwise we are inside iteration relocation.
             // During iteration, key search occurs when doReplaceValue() exhausts space in
             // the current segment, and insertion into the tiered segment requires to locate
@@ -94,5 +91,10 @@ public abstract class KeySearch<K> {
 
     public boolean searchStateAbsent() {
         return searchState == ABSENT;
+    }
+
+    public enum SearchState {
+        PRESENT,
+        ABSENT
     }
 }

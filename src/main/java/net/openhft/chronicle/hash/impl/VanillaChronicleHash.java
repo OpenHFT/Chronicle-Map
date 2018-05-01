@@ -25,6 +25,8 @@ import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
+import net.openhft.chronicle.hash.impl.util.Cleaner;
+import net.openhft.chronicle.hash.impl.util.CleanerUtils;
 import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
 import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -38,7 +40,6 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import sun.misc.Cleaner;
 
 import java.io.Closeable;
 import java.io.File;
@@ -71,112 +72,83 @@ public abstract class VanillaChronicleHash<K,
     public static final long RESERVED_GLOBAL_MUTABLE_STATE_BYTES = 1024;
 
     // --- Start of instance fields ---
-
-    /////////////////////////////////////////////////
-    private String dataFileVersion;
-
+    /**
+     * Global mutable state lock doesn't yet need read-write levels and waits;
+     * Used the same locking strategy as in segment locks
+     * (VanillaReadWriteUpdateWithWaitsLockingStrategy) in order to simplify Chronicle Map
+     * specification (having only one kind of locks to specify and implement).
+     */
+    static final LockingStrategy globalMutableStateLockingStrategy =
+            VanillaReadWriteUpdateWithWaitsLockingStrategy.instance();
+    static final TryAcquireOperation<LockingStrategy> globalMutableStateLockTryAcquireOperation =
+            TryAcquireOperations.lock();
+    static final
+    AcquisitionStrategy<LockingStrategy, RuntimeException>
+            globalMutableStateLockAcquisitionStrategy =
+            AcquisitionStrategies.spinLoopOrFail(2, TimeUnit.SECONDS);
+    private static final long GLOBAL_MUTABLE_STATE_LOCK_OFFSET = 0L;
+    private static final long GLOBAL_MUTABLE_STATE_VALUE_OFFSET = 8L;
     /////////////////////////////////////////////////
     // If the hash was created in the first place, or read from disk
     public transient boolean createdOrInMemory;
-
     /////////////////////////////////////////////////
     // Key Data model
     public Class<K> keyClass;
     public SizeMarshaller keySizeMarshaller;
     public SizedReader<K> keyReader;
     public DataAccess<K> keyDataAccess;
-
     /////////////////////////////////////////////////
     public boolean checksumEntries;
-
     /////////////////////////////////////////////////
     // Concurrency (number of segments), memory management and dependent fields
     public int actualSegments;
     public HashSplitting hashSplitting;
-
     public long chunkSize;
     public int maxChunksPerEntry;
     public long actualChunksPerSegmentTier;
-
-    /////////////////////////////////////////////////
-    // Precomputed offsets and sizes for fast Context init
-    int segmentHeaderSize;
-
     public int tierHashLookupValueBits;
     public int tierHashLookupKeyBits;
     public int tierHashLookupSlotSize;
     public long tierHashLookupCapacity;
     public long maxEntriesPerHashLookup;
-    long tierHashLookupInnerSize;
     public long tierHashLookupOuterSize;
-
     public long tierFreeListInnerSize;
     public long tierFreeListOuterSize;
-
-    long tierEntrySpaceInnerSize;
     public int tierEntrySpaceInnerOffset;
-    long tierEntrySpaceOuterSize;
-
     public long tierSize;
-
+    public long tiersInBulk;
+    public transient List<TierBulkData> tierBulkOffsets;
+    public transient long headerSize;
+    public transient long segmentHeadersOffset;
+    /////////////////////////////////////////////////
+    // Miscellaneous fields
+    public transient CompactOffHeapLinearHashTable hashLookup;
+    public transient Identity identity;
+    protected int log2TiersInBulk;
+    /////////////////////////////////////////////////
+    // Bytes Store (essentially, the base address) and serialization-dependent offsets
+    protected transient BytesStore bs;
+    /////////////////////////////////////////////////
+    // Precomputed offsets and sizes for fast Context init
+    int segmentHeaderSize;
+    long tierHashLookupInnerSize;
+    long tierEntrySpaceInnerSize;
+    long tierEntrySpaceOuterSize;
     long maxExtraTiers;
     long tierBulkSizeInBytes;
     long tierBulkInnerOffsetToTiers;
-    public long tiersInBulk;
-    protected int log2TiersInBulk;
-
+    transient long segmentsOffset;
+    /////////////////////////////////////////////////
+    private String dataFileVersion;
     /////////////////////////////////////////////////
     // Resources
     private transient File file;
     private transient RandomAccessFile raf;
-    private transient ChronicleHashResources resources;
-    private transient Cleaner cleaner;
-
-    /////////////////////////////////////////////////
-    // Bytes Store (essentially, the base address) and serialization-dependent offsets
-    protected transient BytesStore bs;
-
-    public static class TierBulkData {
-        public final BytesStore bytesStore;
-        public final long offset;
-
-        public TierBulkData(BytesStore bytesStore, long offset) {
-            this.bytesStore = bytesStore;
-            this.offset = offset;
-        }
-
-        public TierBulkData(TierBulkData data, long offset) {
-            this.bytesStore = data.bytesStore;
-            this.offset = offset;
-        }
-    }
-
-    public transient List<TierBulkData> tierBulkOffsets;
-
-    public transient long headerSize;
-    public transient long segmentHeadersOffset;
-    transient long segmentsOffset;
-
-    /////////////////////////////////////////////////
-    // Miscellaneous fields
-    public transient CompactOffHeapLinearHashTable hashLookup;
-
-    private transient VanillaGlobalMutableState globalMutableState;
-
-    /**
-     * {@link ChronicleHashCloseOnExitHook} needs to use {@code VanillaChronicleHash}es as
-     * WeakHashMap keys, but with identity comparison, not Map's equals() and hashCode().
-     */
-    public class Identity {
-        public VanillaChronicleHash hash() {
-            return VanillaChronicleHash.this;
-        }
-    }
-
-    public transient Identity identity;
 
     // --- End of instance fields ---
-
+    private transient ChronicleHashResources resources;
+    private transient Cleaner cleaner;
+    private transient VanillaGlobalMutableState globalMutableState;
 
     public VanillaChronicleHash(ChronicleMapBuilder<K, ?> builder) {
         // Version
@@ -236,6 +208,20 @@ public abstract class VanillaChronicleHash<K,
         tierBulkSizeInBytes = computeTierBulkBytesSize(tiersInBulk);
 
         checksumEntries = privateAPI.checksumEntries();
+    }
+
+    public static IOException throwRecoveryOrReturnIOException(
+            File file, String message, boolean recover) {
+        message = "file=" + file + " " + message;
+        if (recover) {
+            throw new ChronicleHashRecoveryFailedException(message);
+        } else {
+            return new IOException(message);
+        }
+    }
+
+    private static long roundUpMapHeaderSize(long headerSize) {
+        return CACHE_LINES.align(headerSize, BYTES);
     }
 
     @Override
@@ -388,13 +374,16 @@ public abstract class VanillaChronicleHash<K,
     private void initOwnTransients() {
         globalMutableState = createGlobalMutableState();
         tierBulkOffsets = new ArrayList<>();
-        if (tierHashLookupSlotSize == 4) {
-            hashLookup = new IntCompactOffHeapLinearHashTable(this);
-        } else if (tierHashLookupSlotSize == 8) {
-            hashLookup = new LongCompactOffHeapLinearHashTable(this);
-        } else {
-            throw new AssertionError("hash lookup slot size could be 4 or 8, " +
-                    tierHashLookupSlotSize + " observed");
+        switch (tierHashLookupSlotSize) {
+            case 4:
+                hashLookup = new IntCompactOffHeapLinearHashTable(this);
+                break;
+            case 8:
+                hashLookup = new LongCompactOffHeapLinearHashTable(this);
+                break;
+            default:
+                throw new AssertionError("hash lookup slot size could be 4 or 8, " +
+                        tierHashLookupSlotSize + " observed");
         }
         identity = new Identity();
     }
@@ -422,20 +411,6 @@ public abstract class VanillaChronicleHash<K,
             globalMutableState.bytesStore(BytesStore.wrap(globalMutableStateBuffer), 0,
                     globalMutableState.maxSize());
         }
-    }
-
-    public static IOException throwRecoveryOrReturnIOException(
-            File file, String message, boolean recover) {
-        message = "file=" + file + " " + message;
-        if (recover) {
-            throw new ChronicleHashRecoveryFailedException(message);
-        } else {
-            return new IOException(message);
-        }
-    }
-
-    private static long roundUpMapHeaderSize(long headerSize) {
-        return CACHE_LINES.align(headerSize, BYTES);
     }
 
     public final void createInMemoryStoreAndSegments(ChronicleHashResources resources)
@@ -491,7 +466,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void registerCleaner() {
-        this.cleaner = Cleaner.create(this, resources);
+        this.cleaner = CleanerUtils.createCleaner(this, resources);
     }
 
     public void addToOnExitHook() {
@@ -739,24 +714,6 @@ public abstract class VanillaChronicleHash<K,
         return actualSegments;
     }
 
-    /**
-     * Global mutable state lock doesn't yet need read-write levels and waits;
-     * Used the same locking strategy as in segment locks
-     * (VanillaReadWriteUpdateWithWaitsLockingStrategy) in order to simplify Chronicle Map
-     * specification (having only one kind of locks to specify and implement).
-     */
-    static final LockingStrategy globalMutableStateLockingStrategy =
-            VanillaReadWriteUpdateWithWaitsLockingStrategy.instance();
-    static final TryAcquireOperation<LockingStrategy> globalMutableStateLockTryAcquireOperation =
-            TryAcquireOperations.lock();
-    static final
-    AcquisitionStrategy<LockingStrategy, RuntimeException>
-            globalMutableStateLockAcquisitionStrategy =
-            AcquisitionStrategies.spinLoopOrFail(2, TimeUnit.SECONDS);
-
-    private static final long GLOBAL_MUTABLE_STATE_LOCK_OFFSET = 0L;
-    private static final long GLOBAL_MUTABLE_STATE_VALUE_OFFSET = 8L;
-
     private long globalMutableStateAddress() {
         return bsAddress() + headerSize;
     }
@@ -773,7 +730,9 @@ public abstract class VanillaChronicleHash<K,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
-    /** For tests */
+    /**
+     * For tests
+     */
     public boolean hasExtraTierBulks() {
         return globalMutableState.getAllocatedExtraTierBulks() > 0;
     }
@@ -1041,8 +1000,35 @@ public abstract class VanillaChronicleHash<K,
         resources.addCloseable(closeable);
     }
 
-    /** For testing only */
+    /**
+     * For testing only
+     */
     public List<WeakReference<ContextHolder>> allContexts() {
         return Collections.unmodifiableList(resources.contexts());
+    }
+
+    public static class TierBulkData {
+        public final BytesStore bytesStore;
+        public final long offset;
+
+        public TierBulkData(BytesStore bytesStore, long offset) {
+            this.bytesStore = bytesStore;
+            this.offset = offset;
+        }
+
+        public TierBulkData(TierBulkData data, long offset) {
+            this.bytesStore = data.bytesStore;
+            this.offset = offset;
+        }
+    }
+
+    /**
+     * {@link ChronicleHashCloseOnExitHook} needs to use {@code VanillaChronicleHash}es as
+     * WeakHashMap keys, but with identity comparison, not Map's equals() and hashCode().
+     */
+    public class Identity {
+        public VanillaChronicleHash hash() {
+            return VanillaChronicleHash.this;
+        }
     }
 }

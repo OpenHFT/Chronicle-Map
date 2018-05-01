@@ -22,12 +22,9 @@ import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.map.MapSegmentContext;
 
-import java.util.List;
-import java.util.Set;
-
 public interface IterationContext<K, V, R> extends MapEntry<K, V>, MapSegmentContext<K, V, R> {
     long pos();
-    
+
     void initSegmentIndex(int segmentIndex);
 
     void recoverSegments(

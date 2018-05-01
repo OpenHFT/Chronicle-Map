@@ -188,7 +188,6 @@ now contains 200 entries.
 
 This example is available in the repository, https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise/blob/master/src/test/java/software/chronicle/enterprise/map/example/MultiMasterMapReplicationExampleMain.java[MultiMasterMapReplicationExampleMain.java]
 
-
 == Replication event logging
 
 Chronicle Map Enterprise can be configured to log all replication events to a Chronicle Queue for auditing purposes.
@@ -211,7 +210,7 @@ registerForReplication: {
 
 ..
 
-# corresponding registration message from remote peer
+== corresponding registration message from remote peer
 targetHostId: 1
 registerForReplication: {
   receiverHostId: 2,
@@ -222,7 +221,7 @@ registerForReplication: {
 
 ..
 
-# accept replication connection
+== accept replication connection
 targetHostId: 2
 acceptingReplicationRequest: {
   acceptingHostId: 1
@@ -230,7 +229,7 @@ acceptingReplicationRequest: {
 
 ..
 
-# encoded replication update sent to remote peer
+== encoded replication update sent to remote peer
 targetHostId: 2
 replicatedEntry: !!binary AYChq5LqwKXqFAFOEwAAAAAAAAD/////////fw==
 ....

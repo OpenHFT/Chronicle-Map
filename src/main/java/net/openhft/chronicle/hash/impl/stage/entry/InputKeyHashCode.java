@@ -25,7 +25,8 @@ import net.openhft.sg.Staged;
 @Staged
 public class InputKeyHashCode implements KeyHashCode {
 
-    @StageRef public KeySearch ks;
+    @StageRef
+    public KeySearch ks;
 
     public long keyHash = 0;
 

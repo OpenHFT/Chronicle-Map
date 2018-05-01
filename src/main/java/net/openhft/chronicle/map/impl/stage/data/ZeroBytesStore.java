@@ -132,7 +132,6 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
         return offset;
     }
 
-
     @Override
     public boolean compareAndSwapInt(long offset, int expected, int value)
             throws BufferOverflowException, IllegalArgumentException {
@@ -237,6 +236,5 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     public void nativeWrite(long l, long l1, long l2) {
         throw new UnsupportedOperationException();
     }
-
 
 }

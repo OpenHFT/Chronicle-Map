@@ -34,6 +34,26 @@ public class MarkTest {
 
     static int ENTRIES = 25_000_000;
 
+    private static void test(
+            Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>
+                    createMap) {
+        long ms = System.currentTimeMillis();
+        try (ChronicleMap<Integer, Integer> map = createMap.apply(ChronicleMapBuilder
+                .of(Integer.class, Integer.class)
+                .entries(ENTRIES)
+                .entriesPerSegment((1 << 15) / 3)
+                .checksumEntries(false)
+                .putReturnsNull(true)
+                .removeReturnsNull(true))) {
+
+            Random r = ThreadLocalRandom.current();
+            for (int i = 0; i < ENTRIES; i++) {
+                map.put(r.nextInt(), r.nextInt());
+            }
+        }
+        System.out.println(System.currentTimeMillis() - ms);
+    }
+
     @Ignore("often out of time, that is a parf issue, not a bug")
     @Test(timeout = 25000)
     public void inMemoryTest() {
@@ -60,25 +80,5 @@ public class MarkTest {
         } finally {
             db.delete();
         }
-    }
-
-    private static void test(
-            Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>
-                    createMap) {
-        long ms = System.currentTimeMillis();
-        try (ChronicleMap<Integer, Integer> map = createMap.apply(ChronicleMapBuilder
-                .of(Integer.class, Integer.class)
-                .entries(ENTRIES)
-                .entriesPerSegment((1 << 15) / 3)
-                .checksumEntries(false)
-                .putReturnsNull(true)
-                .removeReturnsNull(true))) {
-
-            Random r = ThreadLocalRandom.current();
-            for (int i = 0; i < ENTRIES; i++) {
-                map.put(r.nextInt(), r.nextInt());
-            }
-        }
-        System.out.println(System.currentTimeMillis() - ms);
     }
 }

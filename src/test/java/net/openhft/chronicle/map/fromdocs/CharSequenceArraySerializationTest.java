@@ -33,7 +33,7 @@ public class CharSequenceArraySerializationTest {
                 .entries(2)
                 .create()) {
             map.put("fruits", new CharSequence[]{"banana", "pineapple"});
-            map.put("vegetables", new CharSequence[] {"carrot", "potato"});
+            map.put("vegetables", new CharSequence[]{"carrot", "potato"});
             Assert.assertEquals(2, map.get("fruits").length);
             Assert.assertEquals(2, map.get("vegetables").length);
         }

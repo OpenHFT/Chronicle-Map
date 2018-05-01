@@ -25,7 +25,7 @@ import net.openhft.chronicle.hash.ExternalHashQueryContext;
  *
  * @param <K> the set key type
  * @param <R> the return type of {@link SetEntryOperations}, specified for the queried {@code
- * ChronicleSet}
+ *            ChronicleSet}
  * @see ChronicleSet#queryContext(Object)
  */
 public interface ExternalSetQueryContext<K, R>

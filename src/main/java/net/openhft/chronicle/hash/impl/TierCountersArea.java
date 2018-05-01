@@ -29,9 +29,6 @@ import net.openhft.chronicle.core.OS;
 public enum TierCountersArea {
     ;
 
-    private static Memory memory = OS.memory();
-    private static final long UNSIGNED_INT_MASK = 0xFFFFFFFFL;
-
     public static final long NEXT_TIER_INDEX_OFFSET = 0L;
     public static final long PREV_TIER_INDEX_OFFSET = NEXT_TIER_INDEX_OFFSET + 8L;
     public static final long LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET = PREV_TIER_INDEX_OFFSET + 8L;
@@ -39,6 +36,8 @@ public enum TierCountersArea {
     public static final long TIER_OFFSET = SEGMENT_INDEX_OFFSET + 4L;
     public static final long ENTRIES_OFFSET = TIER_OFFSET + 4L;
     public static final long DELETED_OFFSET = ENTRIES_OFFSET + 4L;
+    private static final long UNSIGNED_INT_MASK = 0xFFFFFFFFL;
+    private static Memory memory = OS.memory();
 
     public static long nextTierIndex(long address) {
         return memory.readLong(address + NEXT_TIER_INDEX_OFFSET);

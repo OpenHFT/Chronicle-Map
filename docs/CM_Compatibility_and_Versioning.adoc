@@ -74,7 +74,6 @@ The versioning format is as follows:
 For example:
 `3.14.1`
 
-
 === The <minor> number should be updated, when:
 
  - **a feature, or public API** method is added.
@@ -116,7 +115,6 @@ During development, and after the release of the revision `x`, while the specifi
 incompatible, its revision should be set to `<x+1>-pre` until the next production release.
 
 Releases and updates to the `<minor>` number in the library version should be synchronized with updates to the specification revision number.
-
 
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>

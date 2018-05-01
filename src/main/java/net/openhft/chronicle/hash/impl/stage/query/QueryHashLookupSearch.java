@@ -25,7 +25,8 @@ import net.openhft.sg.Staged;
 @Staged
 public abstract class QueryHashLookupSearch extends HashLookupSearch {
 
-    @StageRef KeyHashCode h;
+    @StageRef
+    KeyHashCode h;
 
     void initSearchKey() {
         initSearchKey(hl().maskUnsetKey(hh.h().hashSplitting.segmentHash(h.keyHashCode())));

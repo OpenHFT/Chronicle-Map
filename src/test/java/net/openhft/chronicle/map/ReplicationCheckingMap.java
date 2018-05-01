@@ -93,7 +93,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
                 return r1;
 
             if (i > 30) {
-                    Jvm.pause(i);
+                Jvm.pause(i);
             } else {
                 Thread.yield();
             }

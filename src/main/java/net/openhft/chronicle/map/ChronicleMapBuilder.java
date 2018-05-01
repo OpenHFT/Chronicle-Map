@@ -21,6 +21,7 @@ import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
@@ -43,10 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -86,29 +84,29 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  *     .of(Key.class, Value.class)
  *     .entries(..)
  *     // ... other configurations
- *
+ * <p>
  * ChronicleMap<Key, Value> map1 = builder.create();
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
  * i. e. created {@code ChronicleMap} instances don't depend on the builder.
- *
+ * <p>
  * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
  * documentation.
- *
+ * <p>
  * <p>Later in this documentation, "ChronicleMap" means "ChronicleMaps, created by {@code
  * ChronicleMapBuilder}", unless specified different, because theoretically someone might provide
  * {@code ChronicleMap} implementations with completely different properties.
- *
+ * <p>
  * <p>In addition to the key and value types, you <i>must</i> configure {@linkplain #entries(long)
  * number of entries} you are going to insert into the created map <i>at most</i>. See {@link
  * #entries(long)} method documentation for more information on this.
- *
+ * <p>
  * <p>If you key or value type is not constantly sized and known to {@code ChronicleHashBuilder}, i.
  * e. it is not a boxed primitive, {@linkplain net.openhft.chronicle.values.Values value interface},
  * or {@link Byteable}, you <i>must</i> provide the {@code ChronicleHashBuilder} with some
  * information about you keys or values: if they are constantly-sized, call {@link
  * #constantKeySizeBySample(Object)}, otherwise {@link #averageKey(Object)} or {@link
  * #averageKeySize(double)} method, and accordingly for values.
- *
+ * <p>
  * <p><a name="jvm-configurations"></a>
  * There are some JVM-level configurations, which are not stored in the ChronicleMap's persistence
  * file (or the other way to say this: they are not parts of <a
@@ -118,12 +116,12 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  * other hand, JVM-level configurations could be different for different views of the same Chronicle
  * Map data store. The list of JVM-level configurations:
  * <ul>
- *     <li>{@link #name(String)}</li>
- *     <li>{@link #putReturnsNull(boolean)}</li>
- *     <li>{@link #removeReturnsNull(boolean)}</li>
- *     <li>{@link #entryOperations(MapEntryOperations)}</li>
- *     <li>{@link #mapMethods(MapMethods)}</li>
- *     <li>{@link #defaultValueProvider(DefaultValueProvider)}</li>
+ * <li>{@link #name(String)}</li>
+ * <li>{@link #putReturnsNull(boolean)}</li>
+ * <li>{@link #removeReturnsNull(boolean)}</li>
+ * <li>{@link #entryOperations(MapEntryOperations)}</li>
+ * <li>{@link #mapMethods(MapMethods)}</li>
+ * <li>{@link #defaultValueProvider(DefaultValueProvider)}</li>
  * </ul>
  *
  * @param <K> key type of the maps, produced by this builder
@@ -143,7 +141,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * to store all segment indexes -- so it could be current JVM max array size,
      * not Integer.MAX_VALUE (which is an obvious limitation, as many APIs and internals use int
      * type for representing segment index).
-     *
+     * <p>
      * Anyway, unlikely anyone ever need more than 1 billion segments.
      */
     private static final int MAX_SEGMENTS = (1 << 30);
@@ -153,7 +151,6 @@ public final class ChronicleMapBuilder<K, V> implements
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
     private static final ConcurrentHashMap<File, Void> fileLockingControl =
             new ConcurrentHashMap<>(128);
-    private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
     private static final Logger chronicleMapLogger = LoggerFactory.getLogger(ChronicleMap.class);
     private static final ChronicleHashCorruption.Listener defaultChronicleMapCorruptionListener =
             corruption -> {
@@ -163,8 +160,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     chronicleMapLogger.error(corruption.message());
                 }
             };
-
-    private String name;
+    private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
     K averageKey;
@@ -178,7 +174,6 @@ public final class ChronicleMapBuilder<K, V> implements
     long cleanupTimeout = 1;
     TimeUnit cleanupTimeoutUnit = TimeUnit.MINUTES;
     boolean cleanupRemovedEntries = true;
-
     //////////////////////////////
     // Configuration fields
     DefaultValueProvider<K, V> defaultValueProvider = DefaultSpi.defaultValueProvider();
@@ -186,6 +181,7 @@ public final class ChronicleMapBuilder<K, V> implements
     MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
     MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
     MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
+    private String name;
     // not final because of cloning
     private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
             new ChronicleMapBuilderPrivateAPI<>(this);
@@ -422,6 +418,52 @@ public final class ChronicleMapBuilder<K, V> implements
         writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
 
+    /**
+     * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
+     */
+    private static ByteBuffer readSelfBootstrappingHeader(
+            File file, RandomAccessFile raf, int headerSize, boolean recover,
+            ChronicleHashCorruption.Listener corruptionListener,
+            ChronicleHashCorruptionImpl corruption) throws IOException {
+        if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
+            throw throwRecoveryOrReturnIOException(file,
+                    "The file is shorter than the header size: " + headerSize +
+                            ", file size: " + raf.length(), recover);
+        }
+        FileChannel fileChannel = raf.getChannel();
+        ByteBuffer headerBuffer = ByteBuffer.allocate(
+                SELF_BOOTSTRAPPING_HEADER_OFFSET + headerSize);
+        headerBuffer.order(LITTLE_ENDIAN);
+        readFully(fileChannel, 0, headerBuffer);
+        if (headerBuffer.remaining() > 0) {
+            throw throwRecoveryOrReturnIOException(file, "Unable to read the header fully, " +
+                    headerBuffer.remaining() + " is remaining to read, likely the file was " +
+                    "truncated", recover);
+        }
+        int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
+        if (!SizePrefixedBlob.isReady(sizeWord)) {
+            if (recover) {
+                report(corruptionListener, corruption, -1, () ->
+                        format("file={}: size-prefixed blob readiness bit is set to NOT_COMPLETE",
+                                file)
+                );
+                // the bit will be overwritten to READY in the end of recovery procedure, so nothing
+                // to fix right here
+            } else {
+                throw new IOException("file=" + file + ": sizeWord is not ready: " + sizeWord);
+            }
+        }
+        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        return headerBuffer;
+    }
+
+    private static boolean checkSumSelfBootstrappingHeader(
+            ByteBuffer headerBuffer, int headerSize) {
+        long checkSum = headerChecksum(headerBuffer, headerSize);
+        long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
+        return storedChecksum == checkSum;
+    }
+
     @Override
     public ChronicleMapBuilder<K, V> clone() {
         try {
@@ -462,7 +504,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p>Example: if keys in your map(s) are English words in {@link String} form, average English
      * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleMap<String, LongValue> wordFrequencies = ChronicleMapBuilder
@@ -474,7 +516,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * encoded (and each character takes 2 bytes on-heap), because default off-heap {@link String}
      * encoding is UTF-8 in {@code ChronicleMap}.)
      *
-     * @param averageKeySize  the average size of the key
+     * @param averageKeySize the average size of the key
      * @throws IllegalStateException    {@inheritDoc}
      * @throws IllegalArgumentException {@inheritDoc}
      * @see #averageKey(Object)
@@ -515,7 +557,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     /**
      * {@inheritDoc}
-     *
+     * <p>
      * <p>For example, if your keys are Git commit hashes:<pre>{@code
      * Map<byte[], String> gitCommitMessagesByHash =
      *     ChronicleMapBuilder.of(byte[].class, String.class)
@@ -545,17 +587,17 @@ public final class ChronicleMapBuilder<K, V> implements
      * created by this builder. However, in many cases {@link #averageValue(Object)} might be easier
      * to use and more reliable. If value size is always the same, call {@link
      * #constantValueSizeBySample(Object)} method instead of this one.
-     *
+     * <p>
      * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
      * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
      * that, however, might result to quite high internal fragmentation, i. e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average value size
      * configuration, which is anyway needed.
-     *
+     * <p>
      * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
-     *
+     * <p>
      * <p>Calling this method clears any previous {@link #constantValueSizeBySample(Object)} and
      * {@link #averageValue(Object)} configurations.
      *
@@ -585,17 +627,17 @@ public final class ChronicleMapBuilder<K, V> implements
      * #averageValueSize(double)} might be easier to use, than constructing the "average value".
      * If value size is always the same, call {@link #constantValueSizeBySample(Object)} method
      * instead of this one.
-     *
+     * <p>
      * <p>{@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
      * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
      * that, however, might result to quite high internal fragmentation, i. e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average value size
      * configuration, which is anyway needed.
-     *
+     * <p>
      * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
-     *
+     * <p>
      * <p>Calling this method clears any previous {@link #constantValueSizeBySample(Object)}
      * and {@link #averageValueSize(double)} configurations.
      *
@@ -609,6 +651,14 @@ public final class ChronicleMapBuilder<K, V> implements
      * @see #actualChunkSize(int)
      */
     public ChronicleMapBuilder<K, V> averageValue(V averageValue) {
+        Class<?> valueClass = averageValue.getClass();
+        if (BytesMarshallable.class.isAssignableFrom(valueClass) &&
+                valueBuilder.tClass.isInterface()) {
+            if (Serializable.class.isAssignableFrom(valueClass))
+                LOG.warn("BytesMarshallable " + valueClass + " will be serialized as Serializable as the value class is an interface");
+            else
+                throw new IllegalArgumentException("Using BytesMarshallable and an interface value type not supported");
+        }
         Objects.requireNonNull(averageValue);
         checkSizeIsStaticallyKnown(valueBuilder, "Value");
         this.averageValue = averageValue;
@@ -621,13 +671,13 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures the constant number of bytes, taken by serialized form of values, put into maps,
      * created by this builder. This is done by providing the {@code sampleValue}, all values should
      * take the same number of bytes in serialized form, as this sample object.
-     *
+     * <p>
      * <p>If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
      * known statically, it is automatically accounted and this method shouldn't be called.
-     *
+     * <p>
      * <p>If value size varies, method {@link #averageValue(Object)} or {@link
      * #averageValueSize(double)} should be called instead of this one.
-     *
+     * <p>
      * <p>Calling this method clears any previous {@link #averageValue(Object)} and
      * {@link #averageValueSize(double)} configurations.
      *
@@ -666,7 +716,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * {@inheritDoc}
      *
      * @throws IllegalStateException is sizes of both keys and values of maps created by this
-     * builder are constant, hence chunk size shouldn't be configured by user
+     *                               builder are constant, hence chunk size shouldn't be configured by user
      * @see #entryAndValueOffsetAlignment(int)
      * @see #entries(long)
      * @see #maxChunksPerEntry(int)
@@ -849,14 +899,14 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures alignment of address in memory of entries and independently of address in memory
      * of values within entries ((i. e. final addresses in native memory are multiples of the given
      * alignment) for ChronicleMaps, created by this builder.
-     *
+     * <p>
      * <p>Useful when values of the map are updated intensively, particularly fields with volatile
      * access, because it doesn't work well if the value crosses cache lines. Also, on some
      * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
-     *
+     * <p>
      * <p>If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or a value
      * interface), alignment configuration makes no sense.
-     *
+     * <p>
      * <p>Default is {@link ValueModel#recommendedOffsetAlignment()} if the value type is a value
      * interface, otherwise 1 (that is effectively no alignment) or chosen heuristically (configure
      * explicitly for being sure and to compare performance in your case).
@@ -1155,15 +1205,15 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures if the maps created by this {@code ChronicleMapBuilder} should return {@code null}
      * instead of previous mapped values on {@link ChronicleMap#put(Object, Object)
      * ChornicleMap.put(key, value)} calls.
-     *
+     * <p>
      * <p>{@link Map#put(Object, Object) Map.put()} returns the previous value, functionality
      * which is rarely used but fairly cheap for simple in-process, on-heap implementations like
      * {@link HashMap}. But an off-heap collection has to create a new object and deserialize
      * the data from off-heap memory. A collection hiding remote queries over the network should
      * send the value back in addition to that. It's expensive for something you probably don't use.
-     *
+     * <p>
      * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
-     *
+     * <p>
      * <p>By default, {@code ChronicleMap} conforms the general {@code Map} contract and returns the
      * previous mapped value on {@code put()} calls.
      *
@@ -1186,15 +1236,15 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures if the maps created by this {@code ChronicleMapBuilder} should return {@code null}
      * instead of the last mapped value on {@link ChronicleMap#remove(Object)
      * ChronicleMap.remove(key)} calls.
-     *
+     * <p>
      * <p>{@link Map#remove(Object) Map.remove()} returns the previous value, functionality which is
      * rarely used but fairly cheap for simple in-process, on-heap implementations like {@link
      * HashMap}. But an off-heap collection has to create a new object and deserialize the data
      * from off-heap memory. A collection hiding remote queries over the network should send
      * the value back in addition to that. It's expensive for something you probably don't use.
-     *
+     * <p>
      * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
-     *
+     * <p>
      * <p>By default, {@code ChronicleMap} conforms the general {@code Map} contract and returns the
      * mapped value on {@code remove()} calls.
      *
@@ -1318,7 +1368,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     @Override
     public <M extends SizedReader<K> & SizedWriter<? super K>>
-    ChronicleMapBuilder<K, V> keyMarshaller(@NotNull  M sizedMarshaller) {
+    ChronicleMapBuilder<K, V> keyMarshaller(@NotNull M sizedMarshaller) {
         return keyMarshallers(sizedMarshaller, sizedMarshaller);
     }
 
@@ -1332,7 +1382,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     @Override
     public <M extends BytesReader<K> & BytesWriter<? super K>>
-    ChronicleMapBuilder<K, V> keyMarshaller(@NotNull  M marshaller) {
+    ChronicleMapBuilder<K, V> keyMarshaller(@NotNull M marshaller) {
         return keyMarshallers(marshaller, marshaller);
     }
 
@@ -1357,10 +1407,14 @@ public final class ChronicleMapBuilder<K, V> implements
 
     boolean checksumEntries() {
         switch (checksumEntries) {
-            case NO: return false;
-            case YES: return true;
-            case IF_PERSISTED: return persisted;
-            default: throw new AssertionError();
+            case NO:
+                return false;
+            case YES:
+                return true;
+            case IF_PERSISTED:
+                return persisted;
+            default:
+                throw new AssertionError();
         }
     }
 
@@ -1372,7 +1426,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * Configures the {@code DataAccess} and {@code SizedReader} used to serialize and deserialize
      * values to and from off-heap memory in maps, created by this builder.
      *
-     * @param valueReader the new bytes &rarr; value object reader strategy
+     * @param valueReader     the new bytes &rarr; value object reader strategy
      * @param valueDataAccess the new strategy of accessing the values' bytes for writing
      * @return this builder back
      * @see #valueMarshallers(SizedReader, SizedWriter)
@@ -1442,7 +1496,7 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * Configures the marshaller used to serialize actual value sizes to off-heap memory in maps,
      * created by this builder.
-     *
+     * <p>
      * <p>Default value size marshaller is so-called "stop bit encoding" marshalling, unless {@link
      * #constantValueSizeBySample(Object)} or the builder statically knows the value size is
      * constant -- special constant size marshalling is used by default in these cases.
@@ -1461,7 +1515,7 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * Specifies the function to obtain a value for the key during {@link ChronicleMap#acquireUsing
      * acquireUsing()} calls, if the key is absent in the map, created by this builder.
-     *
+     * <p>
      * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
      *
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
@@ -1677,52 +1731,6 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    /**
-     * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
-     */
-    private static ByteBuffer readSelfBootstrappingHeader(
-            File file, RandomAccessFile raf, int headerSize, boolean recover,
-            ChronicleHashCorruption.Listener corruptionListener,
-            ChronicleHashCorruptionImpl corruption) throws IOException {
-        if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
-            throw throwRecoveryOrReturnIOException(file,
-                    "The file is shorter than the header size: " + headerSize +
-                            ", file size: " + raf.length(), recover);
-        }
-        FileChannel fileChannel = raf.getChannel();
-        ByteBuffer headerBuffer = ByteBuffer.allocate(
-                SELF_BOOTSTRAPPING_HEADER_OFFSET + headerSize);
-        headerBuffer.order(LITTLE_ENDIAN);
-        readFully(fileChannel, 0, headerBuffer);
-        if (headerBuffer.remaining() > 0) {
-            throw throwRecoveryOrReturnIOException(file, "Unable to read the header fully, " +
-                    headerBuffer.remaining() + " is remaining to read, likely the file was " +
-                    "truncated", recover);
-        }
-        int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
-        if (!SizePrefixedBlob.isReady(sizeWord)) {
-            if (recover) {
-                report(corruptionListener, corruption, -1, () ->
-                        format("file={}: size-prefixed blob readiness bit is set to NOT_COMPLETE",
-                                file)
-                );
-                // the bit will be overwritten to READY in the end of recovery procedure, so nothing
-                // to fix right here
-            } else {
-                throw new IOException("file=" + file + ": sizeWord is not ready: " + sizeWord);
-            }
-        }
-        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
-        return headerBuffer;
-    }
-
-    private static boolean checkSumSelfBootstrappingHeader(
-            ByteBuffer headerBuffer, int headerSize) {
-        long checkSum = headerChecksum(headerBuffer, headerSize);
-        long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
-        return storedChecksum == checkSum;
-    }
-
     private VanillaChronicleMap<K, V, ?> createWithNewFile(
             VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
             ChronicleHashResources resources, ByteBuffer headerBuffer, int headerSize)
@@ -1890,11 +1898,11 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * Inject your SPI code around basic {@code ChronicleMap}'s operations with entries:
      * removing entries, replacing entries' value and inserting new entries.
-     *
+     * <p>
      * <p>This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
      * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
      * <i>internal replication operations</i>.
-     *
+     * <p>
      * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
      *
      * @return this builder back
@@ -1909,9 +1917,9 @@ public final class ChronicleMapBuilder<K, V> implements
      * Inject your SPI around logic of all {@code ChronicleMap}'s operations with individual keys:
      * from {@link ChronicleMap#containsKey} to {@link ChronicleMap#acquireUsing} and
      * {@link ChronicleMap#merge}.
-     *
+     * <p>
      * <p>This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
-     *
+     * <p>
      * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
      *
      * @return this builder back

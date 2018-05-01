@@ -32,51 +32,6 @@ import static org.junit.Assert.assertTrue;
 
 public class NestedContextsTest {
 
-    @Test
-    public void nestedContextsTest() throws ExecutionException, InterruptedException {
-        HashSet<Integer> averageValue = new HashSet<>();
-        for (int i = 0; i < 5; i++) {
-            averageValue.add(i);
-        }
-        ChronicleMap<Integer, Set<Integer>> graph = ChronicleMap
-                .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
-                .entries(10)
-                .averageValue(averageValue)
-                .actualSegments(2)
-                .create();
-
-        addEdge(graph, 1, 2);
-        addEdge(graph, 2, 3);
-        addEdge(graph, 1, 3);
-
-        assertEquals(ImmutableSet.of(2, 3), graph.get(1));
-        assertEquals(ImmutableSet.of(1, 3), graph.get(2));
-        assertEquals(ImmutableSet.of(1, 2), graph.get(3));
-
-        verifyGraphConsistent(graph);
-
-        ForkJoinPool pool = new ForkJoinPool(8);
-        try {
-            pool.submit(() -> {
-                ThreadLocalRandom.current().ints().limit(10_000).parallel().forEach(i -> {
-                    int sourceNode = Math.abs(i % 10);
-                    int targetNode;
-                    do {
-                        targetNode = ThreadLocalRandom.current().nextInt(10);
-                    } while (targetNode == sourceNode);
-                    if (i % 2 == 0) {
-                        addEdge(graph, sourceNode, targetNode);
-                    } else {
-                        removeEdge(graph, sourceNode, targetNode);
-                    }
-                });
-            }).get();
-            verifyGraphConsistent(graph);
-        } finally {
-            pool.shutdownNow();
-        }
-    }
-
     private static void verifyGraphConsistent(ChronicleMap<Integer, Set<Integer>> graph) {
         graph.forEach((node, neighbours) ->
                 neighbours.forEach(neighbour -> assertTrue(graph.get(neighbour).contains(node))));
@@ -156,7 +111,7 @@ public class NestedContextsTest {
     }
 
     private static void addEdgeBothAbsent(MapQueryContext<Integer, Set<Integer>, ?> sc, int source,
-            MapQueryContext<Integer, Set<Integer>, ?> tc, int target) {
+                                          MapQueryContext<Integer, Set<Integer>, ?> tc, int target) {
         addEdgeOneSide(sc, target);
         addEdgeOneSide(tc, source);
     }
@@ -205,6 +160,51 @@ public class NestedContextsTest {
                 tEntry.doReplaceValue(tc.wrapValueAsData(tNeighbours));
                 return true;
             }
+        }
+    }
+
+    @Test
+    public void nestedContextsTest() throws ExecutionException, InterruptedException {
+        HashSet<Integer> averageValue = new HashSet<>();
+        for (int i = 0; i < 5; i++) {
+            averageValue.add(i);
+        }
+        ChronicleMap<Integer, Set<Integer>> graph = ChronicleMap
+                .of(Integer.class, (Class<Set<Integer>>) (Class) Set.class)
+                .entries(10)
+                .averageValue(averageValue)
+                .actualSegments(2)
+                .create();
+
+        addEdge(graph, 1, 2);
+        addEdge(graph, 2, 3);
+        addEdge(graph, 1, 3);
+
+        assertEquals(ImmutableSet.of(2, 3), graph.get(1));
+        assertEquals(ImmutableSet.of(1, 3), graph.get(2));
+        assertEquals(ImmutableSet.of(1, 2), graph.get(3));
+
+        verifyGraphConsistent(graph);
+
+        ForkJoinPool pool = new ForkJoinPool(8);
+        try {
+            pool.submit(() -> {
+                ThreadLocalRandom.current().ints().limit(10_000).parallel().forEach(i -> {
+                    int sourceNode = Math.abs(i % 10);
+                    int targetNode;
+                    do {
+                        targetNode = ThreadLocalRandom.current().nextInt(10);
+                    } while (targetNode == sourceNode);
+                    if (i % 2 == 0) {
+                        addEdge(graph, sourceNode, targetNode);
+                    } else {
+                        removeEdge(graph, sourceNode, targetNode);
+                    }
+                });
+            }).get();
+            verifyGraphConsistent(graph);
+        } finally {
+            pool.shutdownNow();
         }
     }
 }

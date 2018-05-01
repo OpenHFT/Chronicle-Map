@@ -22,6 +22,5 @@ You would not gain a performance benefit by using batches, unless you are compre
 
 NOTE: Under high load, the Chronicle Map stateless client consolidates many small TCP requests into a single request when run with a number of threads.
 
-
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>

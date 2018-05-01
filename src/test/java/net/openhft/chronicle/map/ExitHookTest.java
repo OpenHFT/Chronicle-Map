@@ -32,6 +32,44 @@ public class ExitHookTest {
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
+    public static void main(String[] args) throws IOException, InterruptedException {
+        System.out.println("Other process started");
+        File mapFile = new File(args[0]);
+        ChronicleMap<Integer, Integer> map = createMap(mapFile);
+        try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
+            c.writeLock().lock();
+            try {
+                map.close();
+            } finally {
+                Thread.sleep(30_000);
+            }
+        }
+    }
+
+    private static ChronicleMap<Integer, Integer> createMap(File mapFile) throws IOException {
+        return ChronicleMap
+                .of(Integer.class, Integer.class)
+                .entries(1)
+                .createPersistedTo(mapFile);
+    }
+
+    // http://stackoverflow.com/a/33171840/648955
+    public static long getPidOfProcess(Process p) {
+        long pid = -1;
+
+        try {
+            if (p.getClass().getName().equals("java.lang.UNIXProcess")) {
+                Field f = p.getClass().getDeclaredField("pid");
+                f.setAccessible(true);
+                pid = f.getLong(p);
+                f.setAccessible(false);
+            }
+        } catch (Exception e) {
+            pid = -1;
+        }
+        return pid;
+    }
+
     @Test
     public void testExitHook() throws IOException, InterruptedException {
         if (!OS.isLinux() && !OS.isMacOSX())
@@ -55,27 +93,6 @@ public class ExitHookTest {
         }
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
-        System.out.println("Other process started");
-        File mapFile = new File(args[0]);
-        ChronicleMap<Integer, Integer> map = createMap(mapFile);
-        try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
-            c.writeLock().lock();
-            try {
-                map.close();
-            } finally {
-                Thread.sleep(30_000);
-            }
-        }
-    }
-
-    private static ChronicleMap<Integer, Integer> createMap(File mapFile) throws IOException {
-        return ChronicleMap
-                .of(Integer.class, Integer.class)
-                .entries(1)
-                .createPersistedTo(mapFile);
-    }
-
     // http://stackoverflow.com/a/7835467/648955
     private void interruptProcess(long pidOfProcess) throws IOException {
         Runtime.getRuntime().exec("kill -SIGINT " + pidOfProcess);
@@ -95,22 +112,5 @@ public class ExitHookTest {
                 javaBin, "-cp", classpath, className, mapFile.getAbsolutePath());
         builder.inheritIO();
         return builder.start();
-    }
-
-    // http://stackoverflow.com/a/33171840/648955
-    public static long getPidOfProcess(Process p) {
-        long pid = -1;
-
-        try {
-            if (p.getClass().getName().equals("java.lang.UNIXProcess")) {
-                Field f = p.getClass().getDeclaredField("pid");
-                f.setAccessible(true);
-                pid = f.getLong(p);
-                f.setAccessible(false);
-            }
-        } catch (Exception e) {
-            pid = -1;
-        }
-        return pid;
     }
 }

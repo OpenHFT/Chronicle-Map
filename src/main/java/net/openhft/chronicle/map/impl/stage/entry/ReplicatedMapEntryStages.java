@@ -32,11 +32,14 @@ import static net.openhft.chronicle.map.ReplicatedChronicleMap.ADDITIONAL_ENTRY_
 @Staged
 public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V>
         implements MapReplicableEntry<K, V> {
-    
-    @StageRef ReplicatedChronicleMapHolder<?, ?, ?> mh;
-    @StageRef ReplicationUpdate ru;
 
-    @Stage("ReplicationState") long replicationBytesOffset = -1;
+    @StageRef
+    ReplicatedChronicleMapHolder<?, ?, ?> mh;
+    @StageRef
+    ReplicationUpdate ru;
+
+    @Stage("ReplicationState")
+    long replicationBytesOffset = -1;
 
     void initReplicationState() {
         replicationBytesOffset = keyEnd();

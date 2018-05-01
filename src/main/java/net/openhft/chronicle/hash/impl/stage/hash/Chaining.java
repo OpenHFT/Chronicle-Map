@@ -34,6 +34,10 @@ public abstract class Chaining extends ChainingInterface {
      * First context, ever created in this thread. rootContextInThisThread === contextChain.get(0).
      */
     public final ChainingInterface rootContextInThisThread;
+    @Stage("Used")
+    public boolean used;
+    @Stage("Used")
+    private boolean firstContextLockedInThisThread;
 
     public Chaining(VanillaChronicleMap map) {
         contextChain = new ArrayList<>();
@@ -42,13 +46,29 @@ public abstract class Chaining extends ChainingInterface {
         rootContextInThisThread = this;
         initMap(map);
     }
-    
+
     public Chaining(ChainingInterface rootContextInThisThread, VanillaChronicleMap map) {
         contextChain = rootContextInThisThread.getContextChain();
         indexInContextChain = contextChain.size();
         contextChain.add(this);
         this.rootContextInThisThread = rootContextInThisThread;
         initMap(map);
+    }
+
+    private static <T extends ChainingInterface> T initUsedAndReturn(
+            VanillaChronicleMap map, ChainingInterface context) {
+        try {
+            context.initUsed(true, map);
+            //noinspection unchecked
+            return (T) context;
+        } catch (Throwable throwable) {
+            try {
+                ((AutoCloseable) context).close();
+            } catch (Throwable t) {
+                throwable.addSuppressed(t);
+            }
+            throw throwable;
+        }
     }
 
     @Override
@@ -67,7 +87,7 @@ public abstract class Chaining extends ChainingInterface {
      * set only once during context creation. It was preventing ChronicleMap objects from becoming
      * dead and collected by the GC, while any thread, from which the ChronicleMap was accessed
      * (hence a thread local context created), is alive.
-     *
+     * <p>
      * <p>The chain of strong references:
      * 1) Thread ->
      * 2) ThreadLocalMap ->
@@ -77,14 +97,11 @@ public abstract class Chaining extends ChainingInterface {
      * 4) final reference to the owner {@link VanillaChronicleMap} ->
      * 5) ThreadLocal {@link net.openhft.chronicle.map.VanillaChronicleMap#cxt} (a strong reference
      * this time! note that this ThreadLocal is an instance field of VanillaChronicleMap)
-     *
+     * <p>
      * <p>So in order to break this chain at step 4), contexts store references to their owner
      * ChronicleMaps only when contexts are used.
      */
     public abstract void initMap(VanillaChronicleMap map);
-
-    @Stage("Used") public boolean used;
-    @Stage("Used") private boolean firstContextLockedInThisThread;
 
     @Override
     public boolean usedInit() {
@@ -132,21 +149,5 @@ public abstract class Chaining extends ChainingInterface {
         //noinspection unchecked
         T context = createChaining.apply(this, map);
         return initUsedAndReturn(map, context);
-    }
-
-    private static <T extends ChainingInterface> T initUsedAndReturn(
-            VanillaChronicleMap map, ChainingInterface context) {
-        try {
-            context.initUsed(true, map);
-            //noinspection unchecked
-            return (T) context;
-        } catch (Throwable throwable) {
-            try {
-                ((AutoCloseable) context).close();
-            } catch (Throwable t) {
-                throwable.addSuppressed(t);
-            }
-            throw throwable;
-        }
     }
 }
