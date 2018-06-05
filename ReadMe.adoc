@@ -1,5 +1,15 @@
 = Chronicle Map
 
+image::docs\images\Map_line.png[width=20%]
+
+==== Version
+
+[#image-maven]
+[caption="", link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
+image::https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[]
+
+== Overview
+
 Chronicle Map is a super-fast, in-memory, non-blocking, key-value store, designed for low-latency, and/or multi-process
 applications such as trading and financial market applications.
 See <<docs/CM_Features.adoc#,Features doc>> for more information.

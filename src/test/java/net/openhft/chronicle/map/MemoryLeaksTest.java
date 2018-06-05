@@ -24,10 +24,7 @@ import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.serialization.impl.StringSizedReader;
 import net.openhft.chronicle.hash.serialization.impl.StringUtf8DataAccess;
 import net.openhft.chronicle.values.Values;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -148,6 +145,7 @@ public class MemoryLeaksTest {
         }
     }
 
+    @Ignore("see https://github.com/OpenHFT/Chronicle-Map/issues/153")
     @Test(timeout = 60_000)
     public void testExplicitChronicleMapCloseReleasesMemory()
             throws IOException, InterruptedException {
