@@ -17,6 +17,8 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
@@ -40,12 +42,12 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -67,6 +69,9 @@ public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         ECQ extends ExternalHashQueryContext<K>>
         implements ChronicleHash<K, C, SC, ECQ>, Marshallable {
+
+    private static final Logger LOG =
+            LoggerFactory.getLogger(VanillaChronicleHash.class.getName());
 
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
     public static final long RESERVED_GLOBAL_MUTABLE_STATE_BYTES = 1024;
@@ -944,6 +949,36 @@ public abstract class VanillaChronicleHash<K,
                 firstBulkToMapOffsetWithinMapping);
     }
 
+    private static class PosixFallocateProxy {
+
+        static {
+            Native.register(Platform.C_LIBRARY_NAME);
+        }
+
+        private static native int posix_fallocate(int fd, long offset, long length);
+
+        private static int getNativeFileDescriptor(FileDescriptor descriptor) {
+            try {
+                final Field field = descriptor.getClass().getDeclaredField("fd");
+                field.setAccessible(true);
+                return (int) field.get(descriptor);
+            } catch (final Exception e) {
+                LOG.warn("unsupported FileDescriptor implementation: e={}", e.getLocalizedMessage());
+                return -1;
+            }
+        }
+
+        static void posixFallocate(FileDescriptor descriptor, long offset, long length) {
+            int fd = getNativeFileDescriptor(descriptor);
+            if (fd != -1) {
+                int ret = posix_fallocate(getNativeFileDescriptor(descriptor), offset, length);
+                if (ret != 0) {
+                    LOG.warn("posix_fallocate() returned {}", ret);
+                }
+            }
+        }
+    }
+
     /**
      * @see net.openhft.chronicle.bytes.MappedFile#acquireByteStore(long, MappedBytesStoreFactory)
      */
@@ -958,6 +993,16 @@ public abstract class VanillaChronicleHash<K,
             // globalMutableStateLock), or on map creation, when race condition should be excluded
             // by self-bootstrapping header spec
             raf.setLength(minFileSize);
+
+            // RandomAccessFile#setLength() only calls ftruncate,
+            // which will not preallocate space on XFS filesystem of Linux.
+            // And writing that file will create a sparse file with a large number of extents.
+            // This kind of fragmented file may hang the program and cause dmesg reports
+            // "XFS: ... possible memory allocation deadlock size ... in kmem_alloc (mode:0x250)".
+            // We can fix this by trying calling posix_fallocate to preallocate the space.
+            if (Platform.isLinux()) {
+                PosixFallocateProxy.posixFallocate(raf.getFD(), 0, minFileSize);
+            }
         }
         long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
         resources.addMemoryResource(address, mapSize);
