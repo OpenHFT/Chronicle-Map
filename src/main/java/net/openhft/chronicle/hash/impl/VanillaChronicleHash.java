@@ -17,7 +17,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import com.sun.jna.Platform;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
@@ -964,7 +963,7 @@ public abstract class VanillaChronicleHash<K,
             // This kind of fragmented file may hang the program and cause dmesg reports
             // "XFS: ... possible memory allocation deadlock size ... in kmem_alloc (mode:0x250)".
             // We can fix this by trying calling posix_fallocate to preallocate the space.
-            if (Platform.isLinux()) {
+            if (OS.isLinux()) {
                 PosixFallocate.fallocate(raf.getFD(), 0, minFileSize);
             }
         }
