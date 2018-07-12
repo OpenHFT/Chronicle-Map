@@ -60,7 +60,7 @@ public class MemoryLeaksTest {
         this.persisted = persisted;
         this.closeWithinContext = closeWithinContext;
         builder = ChronicleMap
-                .of(IntValue.class, String.class)
+                .of(IntValue.class, String.class).constantKeySizeBySample(Values.newHeapInstance(IntValue.class))
                 .valueReaderAndDataAccess(new CountedStringReader(), new StringUtf8DataAccess());
         if (replicated)
             builder.replication((byte) 1);
