@@ -21,6 +21,8 @@ import com.google.common.collect.Lists;
 import net.openhft.chronicle.bytes.NoBytesStore;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.hash.impl.util.Cleaner;
+import net.openhft.chronicle.hash.impl.util.CleanerUtils;
 import net.openhft.chronicle.hash.serialization.impl.StringSizedReader;
 import net.openhft.chronicle.hash.serialization.impl.StringUtf8DataAccess;
 import net.openhft.chronicle.values.Values;
@@ -28,7 +30,6 @@ import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import sun.misc.Cleaner;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -225,7 +226,7 @@ public class MemoryLeaksTest {
         CountedStringReader() {
             serializerCount.incrementAndGet();
             serializers.add(new WeakReference<>(this));
-            cleaner = Cleaner.create(this, serializerCount::decrementAndGet);
+            cleaner = CleanerUtils.createCleaner(this, serializerCount::decrementAndGet);
             try (StringWriter stringWriter = new StringWriter();
                  PrintWriter printWriter = new PrintWriter(stringWriter)) {
                 new Exception().printStackTrace(printWriter);
