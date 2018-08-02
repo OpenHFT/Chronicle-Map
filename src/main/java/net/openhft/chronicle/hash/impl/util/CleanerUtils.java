@@ -16,9 +16,11 @@ public class CleanerUtils {
 
     static {
         try {
-            Class cleanerClass = Class.forName(Jvm.isJava9Plus() ? "jdk.internal.ref.Cleaner" : "sun.misc.Cleaner");
+            Class<?> cleanerClass = Class.forName(Jvm.isJava9Plus() ? "jdk.internal.ref.Cleaner" : "sun.misc.Cleaner");
             CREATE_METHOD = cleanerClass.getDeclaredMethod("create", Object.class, Runnable.class);
+            Jvm.setAccessible(CREATE_METHOD);
             CLEAN_METHOD = cleanerClass.getDeclaredMethod("clean");
+            Jvm.setAccessible(CLEAN_METHOD);
         } catch (ClassNotFoundException | NoSuchMethodException e) {
             LOGGER.error("Unable to initialise CleanerUtils", e);
             throw new RuntimeException(e);
