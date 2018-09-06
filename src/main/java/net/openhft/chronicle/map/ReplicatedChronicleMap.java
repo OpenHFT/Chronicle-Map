@@ -181,8 +181,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
         super.initTransientsFromBuilder(builder);
         this.localIdentifier = builder.replicationIdentifier;
-        if (localIdentifier == -1)
-            throw new IllegalStateException("localIdentifier should not be -1");
         //noinspection unchecked
         this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
         cleanupRemovedEntries = builder.cleanupRemovedEntries;
