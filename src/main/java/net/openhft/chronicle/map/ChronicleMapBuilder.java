@@ -250,7 +250,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * entries are not even landing the map, because compute() always returns null.
      */
     private static void fileLockedIO(
-            File file, FileChannel fileChannel, FileIOAction fileIOAction) throws IOException {
+            File file, FileChannel fileChannel, FileIOAction fileIOAction) {
         fileLockingControl.compute(file, (k, v) -> {
             try {
                 try (FileLock ignored = fileChannel.lock()) {
@@ -805,7 +805,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return valueBuilder.constantSize();
     }
 
-    boolean constantlySizedKeys() {
+    public boolean constantlySizedKeys() {
         return keyBuilder.constantSizeMarshaller() || sampleKey != null;
     }
 
@@ -891,7 +891,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return result;
     }
 
-    boolean constantlySizedValues() {
+    public boolean constantlySizedValues() {
         return valueBuilder.constantSizeMarshaller() || sampleValue != null;
     }
 
@@ -1881,7 +1881,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private void establishReplication(
-            VanillaChronicleMap<K, V, ?> map) throws IOException {
+            VanillaChronicleMap<K, V, ?> map) {
         if (map instanceof ReplicatedChronicleMap) {
             ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
             if (cleanupRemovedEntries)
