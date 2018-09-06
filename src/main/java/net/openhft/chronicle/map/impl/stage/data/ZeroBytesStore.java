@@ -158,6 +158,11 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     }
 
     @Override
+    public boolean tryReserve() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    @Override
     public ZeroBytesStore writeByte(long l, byte b) {
         throw new UnsupportedOperationException();
     }
