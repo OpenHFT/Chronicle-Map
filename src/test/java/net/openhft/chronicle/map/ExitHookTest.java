@@ -25,6 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
+import static org.junit.Assert.assertEquals;
+
 public class ExitHookTest {
 
     private static final int KEY = 1;
@@ -38,11 +40,7 @@ public class ExitHookTest {
         ChronicleMap<Integer, Integer> map = createMap(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             c.writeLock().lock();
-            try {
-                map.close();
-            } finally {
-                Thread.sleep(30_000);
-            }
+            Thread.sleep(30_000);
         }
     }
 
@@ -84,7 +82,7 @@ public class ExitHookTest {
         // Interrupt that process to trigger Chronicle Map's shutdown hooks
         interruptProcess(getPidOfProcess(process));
         process.waitFor();
-        System.out.println("other process exit code: " + process.exitValue());
+        assertEquals(130, process.exitValue()); // 130 is exit code for SIGINT (interruption).
         ChronicleMap<Integer, Integer> map = createMap(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             // Test that we are able to lock the segment, i. e. the lock was released in other
