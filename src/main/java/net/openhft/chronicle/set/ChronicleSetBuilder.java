@@ -353,6 +353,11 @@ public final class ChronicleSetBuilder<K>
         return new SetFromMap<>((VanillaChronicleMap<K, DummyValue, ?>) map);
     }
 
+    @Override
+    public void setPreShutdownAction(Runnable preShutdownAction) {
+        chronicleMapBuilder.setPreShutdownAction(preShutdownAction);
+    }
+
     /**
      * @deprecated don't use private API in the client code
      */

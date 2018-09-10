@@ -90,4 +90,12 @@ public interface ChronicleHashBuilderPrivateAPI<K, RO> {
     void removedEntryCleanupTimeout(long removedEntryCleanupTimeout, TimeUnit unit);
 
     void remoteOperations(RO remoteOperations);
+
+    /**
+     * Provides registered action to be executed before closing a {@link ChronicleHash} in a JVM
+     * shutdown hook.
+     *
+     * @return registered pre-shutdown action.
+     */
+    Runnable getPreShutdownAction();
 }

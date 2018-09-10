@@ -116,4 +116,9 @@ class ChronicleMapBuilderPrivateAPI<K, V>
     public void remoteOperations(MapRemoteOperations<K, V, ?> remoteOperations) {
         b.remoteOperations(remoteOperations);
     }
+
+    @Override
+    public Runnable getPreShutdownAction() {
+        return b.preShutdownAction;
+    }
 }

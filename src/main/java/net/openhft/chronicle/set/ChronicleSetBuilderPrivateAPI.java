@@ -134,4 +134,9 @@ class ChronicleSetBuilderPrivateAPI<K>
             }
         });
     }
+
+    @Override
+    public Runnable getPreShutdownAction() {
+        return mapB.getPreShutdownAction();
+    }
 }

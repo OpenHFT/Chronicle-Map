@@ -125,6 +125,7 @@ public abstract class VanillaChronicleHash<K,
     public transient CompactOffHeapLinearHashTable hashLookup;
     public transient Identity identity;
     protected int log2TiersInBulk;
+    private Runnable preShutdownAction;
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     protected transient BytesStore bs;
@@ -208,6 +209,8 @@ public abstract class VanillaChronicleHash<K,
         tierBulkSizeInBytes = computeTierBulkBytesSize(tiersInBulk);
 
         checksumEntries = privateAPI.checksumEntries();
+
+        preShutdownAction = privateAPI.getPreShutdownAction();
     }
 
     public static IOException throwRecoveryOrReturnIOException(
@@ -228,6 +231,10 @@ public abstract class VanillaChronicleHash<K,
     public void readMarshallable(@NotNull WireIn wire) {
         readMarshallableFields(wire);
         initTransients();
+    }
+
+    public Runnable getPreShutdownAction() {
+        return preShutdownAction;
     }
 
     protected void readMarshallableFields(@NotNull WireIn wireIn) {
