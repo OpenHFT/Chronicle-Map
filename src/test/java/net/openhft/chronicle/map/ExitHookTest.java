@@ -82,7 +82,9 @@ public class ExitHookTest {
         // Interrupt that process to trigger Chronicle Map's shutdown hooks
         interruptProcess(getPidOfProcess(process));
         process.waitFor();
-        assertEquals(130, process.exitValue()); // 130 is exit code for SIGINT (interruption).
+        int actual = process.exitValue();
+        if (actual != 0) // clean shutdown
+            assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
         ChronicleMap<Integer, Integer> map = createMap(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             // Test that we are able to lock the segment, i. e. the lock was released in other
