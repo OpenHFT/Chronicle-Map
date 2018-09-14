@@ -17,7 +17,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.hash.ChecksumEntry;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
@@ -41,7 +40,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.map.ChronicleMapTest.getPersistenceFile;
 import static org.junit.Assert.*;
-import static org.junit.Assume.assumeFalse;
 
 public class RecoverTest {
 
@@ -128,7 +126,6 @@ public class RecoverTest {
 
     @Test
     public void testCorruptedEntryRecovery() throws IOException {
-        assumeFalse(Jvm.isArm());
         File file = getPersistenceFile();
         try (ChronicleMap<Integer, LongValue> map = ChronicleMap
                 .of(Integer.class, LongValue.class)

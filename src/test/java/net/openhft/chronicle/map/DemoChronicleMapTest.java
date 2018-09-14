@@ -17,7 +17,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
@@ -30,7 +29,6 @@ import java.util.Map;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assume.assumeFalse;
 
 interface DemoOrderVOInterface {
     public CharSequence getSymbol();
@@ -50,7 +48,6 @@ public class DemoChronicleMapTest {
 
     @Test
     public void testMap() throws IOException {
-        assumeFalse(Jvm.isArm());
         File file = File.createTempFile("DummyOrders" + System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
@@ -94,7 +91,6 @@ public class DemoChronicleMapTest {
 
     @Test
     public void testMapLocked() throws IOException {
-        assumeFalse(Jvm.isArm());
         File file = File.createTempFile("DummyOrders-" + System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
