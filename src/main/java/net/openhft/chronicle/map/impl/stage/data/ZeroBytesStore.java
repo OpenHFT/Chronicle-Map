@@ -22,7 +22,6 @@ import net.openhft.chronicle.core.OS;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.BufferOverflowException;
-import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 
 public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
@@ -39,22 +38,22 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     }
 
     @Override
-    public byte readVolatileByte(long offset) throws BufferUnderflowException {
+    public byte readVolatileByte(long offset) {
         return 0;
     }
 
     @Override
-    public short readVolatileShort(long offset) throws BufferUnderflowException {
+    public short readVolatileShort(long offset) {
         return 0;
     }
 
     @Override
-    public int readVolatileInt(long offset) throws BufferUnderflowException {
+    public int readVolatileInt(long offset) {
         return 0;
     }
 
     @Override
-    public long readVolatileLong(long offset) throws BufferUnderflowException {
+    public long readVolatileLong(long offset) {
         return 0;
     }
 
@@ -127,21 +126,30 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     }
 
     @Override
-    public long addressForRead(long offset) throws UnsupportedOperationException {
+    public long addressForRead(long offset) {
         return offset;
     }
 
     @Override
-    public boolean compareAndSwapInt(long offset, int expected, int value)
-            throws BufferOverflowException, IllegalArgumentException {
-        throw new UnsupportedOperationException();
+    public boolean compareAndSwapInt(long offset, int expected, int value) {
+        if (expected != 0 || value != 0)
+            throw new UnsupportedOperationException();
+        return true;
     }
 
     @Override
-    public boolean compareAndSwapLong(long offset, long expected, long value)
-            throws BufferOverflowException, IllegalArgumentException {
-        throw new UnsupportedOperationException();
+    public void testAndSetInt(long offset, int expected, int value) {
+        if (expected != 0 || value != 0)
+            throw new UnsupportedOperationException();
     }
+
+    @Override
+    public boolean compareAndSwapLong(long offset, long expected, long value) {
+        if (expected != 0 || value != 0)
+            throw new UnsupportedOperationException();
+        return true;
+    }
+
 
     @Override
     public void reserve() throws IllegalStateException {
