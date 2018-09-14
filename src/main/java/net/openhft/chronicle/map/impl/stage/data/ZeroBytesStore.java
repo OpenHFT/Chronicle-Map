@@ -144,13 +144,13 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
             throw new UnsupportedOperationException();
     }
 
-
     @Override
     public boolean compareAndSwapLong(long offset, long expected, long value) {
         if (expected != 0 || value != 0)
             throw new UnsupportedOperationException();
         return true;
     }
+
 
     @Override
     public void reserve() throws IllegalStateException {

@@ -17,6 +17,7 @@
 
 package net.openhft.chronicle.map.fromdocs;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.hash.ChecksumEntry;
 import net.openhft.chronicle.map.ChronicleMap;
@@ -30,10 +31,13 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import static org.junit.Assume.assumeFalse;
+
 public class ChecksumEntryTest {
 
     @Test
     public void testChecksumEntriesWithValueInterface() throws IOException {
+        assumeFalse(Jvm.isArm());
         File file = Builder.getPersistenceFile();
 
         try (ChronicleMap<Integer, LongValue> map = ChronicleMap

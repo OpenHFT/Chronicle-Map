@@ -619,7 +619,7 @@ public class ChronicleMapTest {
                 .entries((long) entries)
                 .minSegments(1)
                 .averageKeySize(10)
-                .entryAndValueOffsetAlignment(4)
+                .entryAndValueOffsetAlignment(8)
                 .create()) {
             LongValue value4 = Values.newNativeReference(LongValue.class);
             LongValue value22 = Values.newNativeReference(LongValue.class);
@@ -651,9 +651,9 @@ public class ChronicleMapTest {
             try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence.class,
                     LongValue.class)
                     .entries((long) entries)
-                    .minSegments(1)
+//                    .minSegments(1)
                     .averageKeySize(10)
-                    .entryAndValueOffsetAlignment(1)
+//                    .entryAndValueOffsetAlignment(8)
                     .create()) {
                 LongValue value1 = Values.newNativeReference(LongValue.class);
                 LongValue value21 = Values.newNativeReference(LongValue.class);

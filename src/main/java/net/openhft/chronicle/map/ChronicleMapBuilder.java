@@ -750,6 +750,7 @@ public final class ChronicleMapBuilder<K, V> implements
         double valueSize = averageValueSize();
         size += averageSizeStoringLength(valueBuilder, valueSize);
         int alignment = valueAlignment();
+        size = alignAddr((long) Math.ceil(size), alignment); // so the value starts aligned
         int worstAlignment;
         if (worstAlignmentComputationRequiresValueSize(alignment)) {
             long constantSizeBeforeAlignment = toLong(size);
@@ -925,6 +926,8 @@ public final class ChronicleMapBuilder<K, V> implements
             throw new IllegalArgumentException("Alignment should be a power of 2, " + alignment +
                     " given");
         }
+        if (Jvm.isArm() && alignment < 8)
+            return this;
         this.alignment = alignment;
         return this;
     }
