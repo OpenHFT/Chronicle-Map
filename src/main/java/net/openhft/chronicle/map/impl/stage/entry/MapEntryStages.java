@@ -224,21 +224,16 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     }
 
     public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
-        long sizeWithoutChecksum;
-        if (mh.m().constantlySizedEntry) {
-            sizeWithoutChecksum =
-                    alignAddr(sizeOfEverythingBeforeValue + valueSize, mh.m().alignment);
-        } else if (mh.m().couldNotDetermineAlignmentBeforeAllocation) {
-            sizeWithoutChecksum = sizeOfEverythingBeforeValue + mh.m().worstAlignment + valueSize;
-        } else {
-            sizeWithoutChecksum =
-                    alignAddr(sizeOfEverythingBeforeValue, mh.m().alignment) + valueSize;
-        }
-        return sizeWithoutChecksum + checksumStrategy.extraEntryBytes();
+        if (!mh.m().constantlySizedEntry && mh.m().couldNotDetermineAlignmentBeforeAllocation)
+            sizeOfEverythingBeforeValue += mh.m().worstAlignment;
+        int alignment = mh.m().alignment;
+        return alignAddr(sizeOfEverythingBeforeValue, alignment) +
+                alignAddr(valueSize, alignment);
     }
 
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
         return mh.m().keySizeMarshaller.storingLength(keySize) + keySize +
+                checksumStrategy.extraEntryBytes() +
                 mh.m().valueSizeMarshaller.storingLength(valueSize);
     }
 
