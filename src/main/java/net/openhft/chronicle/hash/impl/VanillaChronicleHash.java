@@ -26,6 +26,7 @@ import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
 import net.openhft.chronicle.hash.impl.util.CleanerUtils;
+import net.openhft.chronicle.hash.impl.util.jna.PosixFallocate;
 import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
 import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -40,10 +41,7 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -957,6 +955,16 @@ public abstract class VanillaChronicleHash<K,
             // globalMutableStateLock), or on map creation, when race condition should be excluded
             // by self-bootstrapping header spec
             raf.setLength(minFileSize);
+
+            // RandomAccessFile#setLength() only calls ftruncate,
+            // which will not preallocate space on XFS filesystem of Linux.
+            // And writing that file will create a sparse file with a large number of extents.
+            // This kind of fragmented file may hang the program and cause dmesg reports
+            // "XFS: ... possible memory allocation deadlock size ... in kmem_alloc (mode:0x250)".
+            // We can fix this by trying calling posix_fallocate to preallocate the space.
+            if (OS.isLinux()) {
+                PosixFallocate.fallocate(raf.getFD(), 0, minFileSize);
+            }
         }
         long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
         resources.addMemoryResource(address, mapSize);
