@@ -23,6 +23,7 @@ import net.openhft.chronicle.map.ExternalMapQueryContext;
 import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -99,8 +100,7 @@ public class OpenJDKAndHashMapExamplesTest {
 
         BondVOInterface bond = Values.newNativeReference(BondVOInterface.class);
         // lookup the key and give me a reference I can update in a thread safe way.
-        try (net.openhft.chronicle.core.io.Closeable c =
-                     chm.acquireContext("369604103", bond)) {
+        try (Closeable c = chm.acquireContext("369604103", bond)) {
             // found a key and bond has been set
             // get directly without touching the rest of the record.
             long _matDate = bond.getMaturityDate();

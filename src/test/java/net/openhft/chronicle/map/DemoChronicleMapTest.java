@@ -56,6 +56,7 @@ public class DemoChronicleMapTest {
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
                 .entries(maxEntries)
+                .entryAndValueOffsetAlignment(8)
                 .createPersistedTo(file)) {
             IntValue key = Values.newHeapInstance(IntValue.class);
 
@@ -98,6 +99,7 @@ public class DemoChronicleMapTest {
                 .putReturnsNull(true)
                 .removeReturnsNull(true)
                 .entries(maxEntries)
+                .entryAndValueOffsetAlignment(8)
                 .createPersistedTo(file)) {
             IntValue key = Values.newHeapInstance(IntValue.class);
 

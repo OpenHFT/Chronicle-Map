@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Objects;
 
 import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAccess;
 
@@ -137,7 +138,7 @@ public interface Data<T> {
      * @param targetOffset the offset in the target, to write the bytes from.
      */
     default void writeTo(RandomDataOutput target, long targetOffset) {
-        target.write(targetOffset, bytes(), offset(), size());
+        target.write(targetOffset, Objects.requireNonNull(bytes()), offset(), size());
     }
 
     /**
