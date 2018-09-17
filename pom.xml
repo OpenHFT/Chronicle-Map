@@ -26,7 +26,7 @@
 
     <modelVersion>4.0.0</modelVersion>
     <artifactId>chronicle-map</artifactId>
-    <version>3.16.2-SNAPSHOT</version>
+    <version>3.16.3-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
