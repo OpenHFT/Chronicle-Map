@@ -2,6 +2,7 @@ package net.openhft.chronicle.hash.impl.util.jna;
 
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
+import net.openhft.chronicle.core.Jvm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public final class PosixFallocate {
     private static int getNativeFileDescriptor(FileDescriptor descriptor) {
         try {
             final Field field = descriptor.getClass().getDeclaredField("fd");
-            field.setAccessible(true);
+            Jvm.setAccessible(field);
             return (int) field.get(descriptor);
         } catch (final Exception e) {
             LOG.warn("unsupported FileDescriptor implementation: e={}", e.getLocalizedMessage());
