@@ -17,13 +17,13 @@
 package net.openhft.chronicle.hash;
 
 import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapMethods;
 import net.openhft.chronicle.map.MapQueryContext;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.Closeable;
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
