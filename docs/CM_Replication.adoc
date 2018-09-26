@@ -18,25 +18,14 @@ In addition, you will be fully supported by our technical experts.
 
 For more information on Chronicle Map (Enterprise Edition), please contact mailto:sales@chronicle.software[sales@chronicle.software].
 
-To ensure that Chronicle Map's multi-master replication works under extreme circumstances, we have
-built a stress test to ensure this using the principles introduced by Netflix with their "chaos monkey".
-For more information on the stress test see <<CM_Replication_Stress_Test.adoc#,CM_Replication_Stress_Test>>.
-
 = Replication
 
-Chronicle Map Replication is a multi-master replicated data store. Chronicle Map supports both TCP and UDP replication
+Chronicle Map Replication is a multi-master replicated data store. Chronicle Map supports replication over TCP/IP
 
 image::http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg[TCP/IP Replication]
 
-== TCP / UDP Background
+== TCP Background
 TCP/IP is a reliable protocol. This means that, unless you have a network failure or hardware outage, the data is guaranteed to arrive. TCP/IP provides point-to-point connectivity. For example, if the message was sent to 100 hosts, the message would have to be sent 100 times.
-
-With UDP, the message is only sent once. This is ideal if you have a large number of hosts, and you wish to broadcast the same data to each of them. However, one of the big drawbacks with UDP is that it is not a reliable protocol. This means, if the UDP message is broadcast onto the network, the hosts are not guaranteed to receive it; so they can miss data.
-
-Some solutions attempt to build resilience into UDP, but arguably, this is in effect reinventing TCP/IP.
-
-== How to setup UDP Replication
-On a good quality wired LAN, when using UDP, you will rarely miss messages. Nevertheless, this is a risk that we suggest you do not take. We suggest that whenever you use UDP replication, you use it in conjunction with throttled TCP replication. Therefore, if a host misses a message over UDP, it will pick it up later via TCP/IP.
 
 ==  TCP/IP  Throttling
 We are careful not to swamp your network with too much TCP/IP traffic. We do this by providing a throttled version of TCP replication. This works because Chronicle Map only broadcasts the latest update of each entry.
@@ -114,79 +103,69 @@ map = ChronicleMapBuilder
 
 == Configuration
 
-Configuration of map nodes is done either, programmatically, through configuration files, or by a combination of both.
+Configuration of map nodes is done either, by creating configuration programmatically, or through YAML configuration files.
 
-=== Programmatically
-The example below shows how to set up two map instances that use TCP to replicate entries between them:
-
-[source, java]
-....
-
-// set up some socket aliases
-TCPRegistry.createServerSocketChannelFor("host.port1", "host.port2");
-
-// create replicated maps
-final ReplicatedMap<Long, Long> replicaOne = createMap(1, "host.port1");
-final ReplicatedMap<Long, Long> replicaTwo = createMap(2, "host.port2");
-
-// start replication event loops
-replicaOne.start();
-replicaTwo.start();
-
-// register maps for replication events
-replicaOne.beginReplicationFromPeer("host.port2", (byte) 2);
-replicaTwo.beginReplicationFromPeer("host.port1", (byte) 1);
-
-// allow replication to establish
-Jvm.pause(250L);
-
-// access the underlying maps
-final Map<Long, Long> mapOne = replicaOne.getMap();
-final Map<Long, Long> mapTwo = replicaTwo.getMap();
-
-// enter some data into mapOne
-for (long i = 0; i < 100; i++) {
-    mapOne.put(i, i * 2);
-}
-
-// enter some different data into mapTwo
-for (long i = 100; i < 200; i++) {
-    mapTwo.put(i, i * 7);
-}
-
-// wait for replication between nodes (conservative)
-Jvm.pause(1000L);
-
-System.out.printf("mapOne has %d entries, expected 200%n", mapOne.size());
-System.out.printf("mapTwo has %d entries, expected 200%n", mapTwo.size());
-....
-
-=== Configuration file
-The following example uses a basic `yaml` configuration file to define defaults for the map:
+The following example uses a basic `yaml` configuration file to define clustered replication for the map named `fx`:
 
 [source, yaml]
 ....
-!ReplicatedMapCfg {
-    hostId: 1, # host id must be unique within the cluster
-    listenAddressHostPort: "localhost:9301", # address on which to listen for inbound replication requests
-    entries: 10000, # entries hint suggesting the initial size of the map
-    keyClass: !type long, # class of the key type
-    valueClass: !type long, # class of the value type
-    exampleKey: 17, # an example key (used to size the map)
-    exampleValue: 37, # an example value (used to size the map)
-    name: testLongToLongMap, # a name for the map (used to determine filename)
-    locator: "csp://localhost:9301/map/test", # a locator, used for discovery
-    mapFileDataDirectory: target/mapData, # directory where map file should be stored
-    mapLogDirectory: target/mapReplicationLogs, # directory where replication events should be recorded
-    keysAreConstantSize: true, # determines how keys are serialised
-    valuesAreConstantSize: true # determines how values are serialised
+!MapReplicationCfg {
+  cluster: {
+    host1: {
+      hostId: 1,
+      connectUri: hostport1,
+    },
+    host2: {
+      hostId: 2,
+      connectUri: hostport2,
+    },
+     host3: {
+       hostId: 3,
+       connectUri: hostport3,
+     }
+  },
+  maps: {
+    fx: {
+        entries: 10000,
+        keyClass: !type String,
+        valueClass: !type software.chronicle.enterprise.map.ValueObject,
+        averageKeySize: 64,
+        averageValueSize: 128,
+        mapFileDataDirectory: data/$hostId/,
+        mapLogDirectory: logs/$hostId/,
+        enableReplicationLogging: true
+    },
+  }
 }
 ....
 
-After putting 100 entries into each distinct map, the example demonstrates that the entries have been replicated so that each map
-now contains 200 entries.
+And below is an example using this configuration file to start up cluster and insert entries in different maps, verifying that
+all maps are eventually in sync:
 
-This example is available in the repository, https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise/blob/master/src/test/java/software/chronicle/enterprise/map/example/MultiMasterMapReplicationExampleMain.java[MultiMasterMapReplicationExampleMain.java]
+[source, java]
+....
+try (ReplicatedMap clusterOnHost1 = createCluster(CLUSTER_YAML, 1);
+     ReplicatedMap clusterOnHost3 = createCluster(CLUSTER_YAML, 3);
+     ReplicatedMap clusterOnHost2 = createCluster(CLUSTER_YAML, 2)) {
+
+    final ChronicleMap<String, ValueObject> mapOnHost1 = clusterOnHost1.getReplicatedMap("fx");
+    final ChronicleMap<String, ValueObject> mapOnHost2 = clusterOnHost2.getReplicatedMap("fx");
+    final ChronicleMap<String, ValueObject> mapOnHost3 = clusterOnHost3.getReplicatedMap("fx");
+
+    mapOnHost1.put("USD/GBP", new ValueObject("BATS", System.currentTimeMillis(), 0.767957));
+    mapOnHost2.put("GBP/USD", new ValueObject("BATS", System.currentTimeMillis(), 1.30216));
+    mapOnHost3.put("EUR/USD", new ValueObject("LXN", System.currentTimeMillis(), 1.16337));
+
+    Jvm.pause(500L);
+
+    printMap("one", mapOnHost1);
+    printMap("two", mapOnHost2);
+    printMap("three", mapOnHost3);
+}
+....
+
+
+This example is available in the repository https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise-Demo/blob/master/Example1/src/main/java/software/chronicle/enterprise/map/ThreeWayMapReplicationExampleMain.java[here]
 
 == Replication event logging
 
@@ -200,44 +179,10 @@ The example below shows the message flow for a map with a single remote peer rec
 ....
 .. header omitted
 
-targetHostId: 2 # message destination
-registerForReplication: {
-  receiverHostId: 1, # local peer id
-  keyClassName: java.lang.Long, # key type
-  valueClassName: java.lang.Long, # value type
-  sendAllEventsAfter: 0 # bootstrap timestamp
-}
-
-..
-
-== corresponding registration message from remote peer
-targetHostId: 1
-registerForReplication: {
-  receiverHostId: 2,
-  keyClassName: java.lang.Long,
-  valueClassName: java.lang.Long,
-  sendAllEventsAfter: 0
-}
-
-..
-
-== accept replication connection
-targetHostId: 2
-acceptingReplicationRequest: {
-  acceptingHostId: 1
-}
-
-..
-
 == encoded replication update sent to remote peer
 targetHostId: 2
 replicatedEntry: !!binary AYChq5LqwKXqFAFOEwAAAAAAAAD/////////fw==
 ....
-
-This output can be generated by running the example program, https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise/blob/master/src/test/java/software/chronicle/enterprise/map/example/ReplicationEventLoggingExampleMain.java[ReplicationEventLoggingExampleMain.java]
-
-'''
-For the replication stress test, see <<CM_Replication_Stress_Test.adoc#,CM_Replication_Stress_Test>>.
 
 '''
 <<CM_Features.adoc#,Back to Features>>
