@@ -1,6 +1,7 @@
 ### How to update
 # This is copied from OpenHFT/.gitignore
 # update the original and run OpenHFT/update_gitignore.sh
+data/
 
 ### Compiled class file
 *.class
