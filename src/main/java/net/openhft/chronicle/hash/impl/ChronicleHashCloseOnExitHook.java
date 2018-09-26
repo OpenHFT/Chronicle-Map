@@ -60,6 +60,20 @@ final class ChronicleHashCloseOnExitHook {
             // close later added maps first
             orderedMaps.descendingMap().values().forEach(h -> {
                 try {
+                    Runnable preShutdownAction = h.getPreShutdownAction();
+                    if (preShutdownAction != null) {
+                        try {
+                            preShutdownAction.run();
+                        } catch (Throwable throwable) {
+                            try {
+                                LOG.error("Error running pre-shutdown action for " + h.toIdentityString() +
+                                        " :", throwable);
+                            } catch (Throwable t2) {
+                                throwable.addSuppressed(t2);
+                                throwable.printStackTrace();
+                            }
+                        }
+                    }
                     h.close();
                 } catch (Throwable throwable) {
                     try {
