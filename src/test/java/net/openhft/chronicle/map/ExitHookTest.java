@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import com.google.common.base.Preconditions;
 import net.openhft.chronicle.core.OS;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,12 +25,18 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ExitHookTest {
 
     private static final int KEY = 1;
+    private static final String PRE_SHUTDOWN_ACTION_EXECUTED = "PRE_SHUTDOWN_ACTION_EXECUTED";
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
@@ -37,18 +44,30 @@ public class ExitHookTest {
     public static void main(String[] args) throws IOException, InterruptedException {
         System.out.println("Other process started");
         File mapFile = new File(args[0]);
-        ChronicleMap<Integer, Integer> map = createMap(mapFile);
+        File preShutdownActionExecutionConfirmationFile = new File(args[1]);
+        ChronicleMapBuilder<Integer, Integer> mapBuilder = createMapBuilder();
+        mapBuilder.setPreShutdownAction(() -> {
+            try {
+                System.out.println("Executing pre-shutdown action");
+                Preconditions.checkState(preShutdownActionExecutionConfirmationFile.exists());
+                Files.write(preShutdownActionExecutionConfirmationFile.toPath(),
+                        PRE_SHUTDOWN_ACTION_EXECUTED.getBytes());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+        ChronicleMap<Integer, Integer> map = mapBuilder.createPersistedTo(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             c.writeLock().lock();
             Thread.sleep(30_000);
         }
     }
 
-    private static ChronicleMap<Integer, Integer> createMap(File mapFile) throws IOException {
-        return ChronicleMap
+    private static ChronicleMapBuilder<Integer, Integer> createMapBuilder()
+            throws IOException {
+        return ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
-                .entries(1)
-                .createPersistedTo(mapFile);
+                .entries(1);
     }
 
     // http://stackoverflow.com/a/33171840/648955
@@ -73,9 +92,9 @@ public class ExitHookTest {
         if (!OS.isLinux() && !OS.isMacOSX())
             return; // This test runs only in Unix-like OSes
         File mapFile = folder.newFile();
-        System.out.println("map file: " + mapFile.getAbsolutePath());
+        File preShutdownActionExecutionConfirmationFile = folder.newFile();
         // Create a process which opens the map, acquires the lock and "hangs" for 30 seconds
-        Process process = startOtherProcess(mapFile);
+        Process process = startOtherProcess(mapFile, preShutdownActionExecutionConfirmationFile);
         // Let the other process actually reach the moment when it locks the map
         // (JVM startup and chronicle map creation are not instant)
         Thread.sleep(10_000);
@@ -85,11 +104,18 @@ public class ExitHookTest {
         int actual = process.exitValue();
         if (actual != 0) // clean shutdown
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
-        ChronicleMap<Integer, Integer> map = createMap(mapFile);
+        ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             // Test that we are able to lock the segment, i. e. the lock was released in other
             // process thanks to shutdown hooks
             c.writeLock().lock();
+        }
+        try (Stream<String> lines = Files.lines(preShutdownActionExecutionConfirmationFile.toPath())) {
+            Iterator<String> lineIterator = lines.iterator();
+            assertTrue(lineIterator.hasNext());
+            String line = lineIterator.next();
+            assertEquals(PRE_SHUTDOWN_ACTION_EXECUTED, line);
+            assertFalse(lineIterator.hasNext());
         }
     }
 
@@ -99,7 +125,7 @@ public class ExitHookTest {
     }
 
     // http://stackoverflow.com/a/723914/648955
-    private Process startOtherProcess(File mapFile) throws IOException {
+    private Process startOtherProcess(File mapFile, File outputFile) throws IOException {
         String javaHome = System.getProperty("java.home");
         String javaBin = javaHome +
                 File.separator + "bin" +
@@ -108,8 +134,9 @@ public class ExitHookTest {
         System.out.println("Classpath: " + classpath);
         String className = ExitHookTest.class.getCanonicalName();
 
-        ProcessBuilder builder = new ProcessBuilder(
-                javaBin, "-cp", classpath, className, mapFile.getAbsolutePath());
+        String[] command = new String[] {javaBin, "-cp", classpath, className,
+                mapFile.getAbsolutePath(), outputFile.getAbsolutePath()};
+        ProcessBuilder builder = new ProcessBuilder(command);
         builder.inheritIO();
         return builder.start();
     }

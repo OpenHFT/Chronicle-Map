@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Base interface for {@link ChronicleMapBuilder} and {@link ChronicleSetBuilder}, i. e. defines
@@ -743,6 +744,22 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     H recoverPersistedTo(
             File file, boolean sameBuilderConfigAndLibraryVersion,
             ChronicleHashCorruption.Listener corruptionListener) throws IOException;
+
+    /**
+     * A {@link ChronicleHash} created using this builder is closed using a JVM shutdown hook.
+     * This method lets you perform an action before the {@link ChronicleHash} is closed.
+     * <p>
+     * <p>The registered action is not executed when JVM is running and a
+     * {@link ChronicleHash#close()} is explicitly called.
+     * <p>
+     * <p>Example usage of this call: To carry out a graceful shutdown and explicitly
+     * control when the {@link ChronicleHash} is closed, the action can be a wait on a
+     * {@link CountDownLatch} that would be released appropriately.
+     *
+     * @param preShutdownAction action to run before closing the {@link ChronicleHash} in a
+     *                          JVM shutdown hook.
+     */
+    void setPreShutdownAction(Runnable preShutdownAction);
 
     /**
      * @deprecated don't use private API in the client code

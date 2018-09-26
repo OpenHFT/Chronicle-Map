@@ -180,6 +180,7 @@ public final class ChronicleMapBuilder<K, V> implements
     MapMethods<K, V, ?> methods = DefaultSpi.mapMethods();
     MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
     MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
+    Runnable preShutdownAction;
     private String name;
     // not final because of cloning
     private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
@@ -1587,6 +1588,11 @@ public final class ChronicleMapBuilder<K, V> implements
             ChronicleHashCorruption.Listener corruptionListener) throws IOException {
         return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion,
                 corruptionListener);
+    }
+
+    @Override
+    public void setPreShutdownAction(Runnable preShutdownAction) {
+        this.preShutdownAction = preShutdownAction;
     }
 
     @Override
