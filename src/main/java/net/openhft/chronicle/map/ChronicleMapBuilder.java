@@ -1591,8 +1591,9 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     @Override
-    public void setPreShutdownAction(Runnable preShutdownAction) {
+    public ChronicleMapBuilder<K, V> setPreShutdownAction(Runnable preShutdownAction) {
         this.preShutdownAction = preShutdownAction;
+        return this;
     }
 
     @Override

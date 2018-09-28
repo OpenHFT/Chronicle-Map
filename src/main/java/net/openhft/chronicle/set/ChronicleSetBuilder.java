@@ -353,8 +353,9 @@ public final class ChronicleSetBuilder<K>
     }
 
     @Override
-    public void setPreShutdownAction(Runnable preShutdownAction) {
+    public ChronicleSetBuilder<K> setPreShutdownAction(Runnable preShutdownAction) {
         chronicleMapBuilder.setPreShutdownAction(preShutdownAction);
+        return this;
     }
 
     /**
