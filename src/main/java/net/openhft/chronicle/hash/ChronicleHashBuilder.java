@@ -758,8 +758,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *
      * @param preShutdownAction action to run before closing the {@link ChronicleHash} in a
      *                          JVM shutdown hook.
+     * @return this builder back
      */
-    void setPreShutdownAction(Runnable preShutdownAction);
+    B setPreShutdownAction(Runnable preShutdownAction);
 
     /**
      * @deprecated don't use private API in the client code
