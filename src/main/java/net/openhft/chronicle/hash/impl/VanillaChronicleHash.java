@@ -41,7 +41,10 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -424,7 +427,7 @@ public abstract class VanillaChronicleHash<K,
         createStoreAndSegments(bytesStore);
     }
 
-    private void createStoreAndSegments(BytesStore bytesStore) throws IOException {
+    private void createStoreAndSegments(BytesStore bytesStore) {
         initBytesStoreAndHeadersViews(bytesStore);
         initOffsetsAndBulks();
     }
@@ -701,11 +704,13 @@ public abstract class VanillaChronicleHash<K,
         // TODO optimize for the case when chunkSize is power of 2, that is default (and often) now
         if (sizeInBytes <= chunkSize)
             return 1;
+
+        // todo: we have added padding to prevent the chunks getting corrupted see - net.openhft.chronicle.map.MissSizedMapsTest
+
         // int division is MUCH faster than long on Intel CPUs
-        sizeInBytes -= 1L;
         if (sizeInBytes <= Integer.MAX_VALUE)
-            return (((int) sizeInBytes) / (int) chunkSize) + 1;
-        return (int) (sizeInBytes / chunkSize) + 1;
+            return (((int) sizeInBytes) / (int) chunkSize) + 2;
+        return (int) (sizeInBytes / chunkSize) + 2;
     }
 
     public final int size() {
