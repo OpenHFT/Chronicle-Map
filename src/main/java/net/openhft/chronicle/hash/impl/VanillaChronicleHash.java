@@ -420,8 +420,7 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    public final void createInMemoryStoreAndSegments(ChronicleHashResources resources)
-            throws IOException {
+    public final void createInMemoryStoreAndSegments(ChronicleHashResources resources) {
         this.resources = resources;
         BytesStore bytesStore = nativeBytesStoreWithFixedCapacity(sizeInBytesWithoutTiers());
         createStoreAndSegments(bytesStore);
@@ -709,8 +708,8 @@ public abstract class VanillaChronicleHash<K,
 
         // int division is MUCH faster than long on Intel CPUs
         if (sizeInBytes <= Integer.MAX_VALUE)
-            return (((int) sizeInBytes) / (int) chunkSize) + 2;
-        return (int) (sizeInBytes / chunkSize) + 2;
+            return (((int) sizeInBytes) / (int) chunkSize) + 1;
+        return (int) (sizeInBytes / chunkSize) + 1;
     }
 
     public final int size() {
