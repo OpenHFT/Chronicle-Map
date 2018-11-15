@@ -148,7 +148,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
                 relocation(newValue, newSizeOfEverythingBeforeValue);
                 return;
             } else if (newSizeInChunks < entrySizeInChunks) {
-                s.freeExtra(pos, entrySizeInChunks, newSizeInChunks);
+                s.freeExtra(pos + 1, entrySizeInChunks, newSizeInChunks);
             }
             // new size != old size => size is not constant => size is actually written =>
             // to prevent (at least) this execution:
