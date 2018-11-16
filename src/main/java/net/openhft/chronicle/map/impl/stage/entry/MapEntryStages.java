@@ -145,7 +145,7 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
                 if (s.realloc(pos, entrySizeInChunks, newSizeInChunks)) {
                     break newValueDoesNotFit;
                 }
-                relocation(newValue, newSizeOfEverythingBeforeValue);
+                relocation(newValue, newEntrySize);
                 return;
             } else if (newSizeInChunks < entrySizeInChunks) {
                 s.freeExtra(pos + 1, entrySizeInChunks, newSizeInChunks);
@@ -186,15 +186,14 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
                 newValueOffset + newValue.size() - entryStartOffset;
     }
 
-    protected void relocation(Data<V> newValue, long newSizeOfEverythingBeforeValue) {
-        long entrySize = innerEntrySize(newSizeOfEverythingBeforeValue, newValue.size());
+    protected void relocation(Data<V> newValue, long newEntrySize) {
         // need to copy, because in initEntryAndKeyCopying(), in alloc(), nextTier() called ->
         // hashLookupPos cleared, as a dependant
         long oldHashLookupPos = hlp.hashLookupPos;
         long oldHashLookupAddr = s.tierBaseAddr;
 
         boolean tierHasChanged = allocatedChunks.initEntryAndKeyCopying(
-                entrySize, valueSizeOffset - keySizeOffset, pos, entrySizeInChunks);
+                newEntrySize, valueSizeOffset - keySizeOffset, pos, entrySizeInChunks);
 
         if (tierHasChanged) {
             // implicitly inits key search, locating hashLookupPos on the empty slot
