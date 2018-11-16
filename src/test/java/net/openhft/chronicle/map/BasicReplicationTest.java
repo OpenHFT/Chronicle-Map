@@ -41,13 +41,13 @@ public class BasicReplicationTest {
     }
 
     @Test
-    public void shouldReplicate() throws Exception {
+    public void shouldReplicate() {
         final ChronicleMapBuilder<String, String> builder = ChronicleMap.of(String.class, String.class)
                 .entries(1000).averageKeySize(7).averageValueSize(7);
         try (
                 ReplicatedChronicleMap<String, String, Object> mapOne = createReplicatedMap(builder, asByte(1));
                 ReplicatedChronicleMap<String, String, Object> mapTwo = createReplicatedMap(builder, asByte(2));
-                ReplicatedChronicleMap<String, String, Object> mapThree = createReplicatedMap(builder, asByte(3));
+                ReplicatedChronicleMap<String, String, Object> mapThree = createReplicatedMap(builder, asByte(3))
         ) {
 
             final ReplicationEventProcessor<String, String> processorOne =
