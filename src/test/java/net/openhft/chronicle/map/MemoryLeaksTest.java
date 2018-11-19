@@ -64,7 +64,7 @@ public class MemoryLeaksTest {
                 .valueReaderAndDataAccess(new CountedStringReader(), new StringUtf8DataAccess());
         if (replicated)
             builder.replication((byte) 1);
-        builder.entries(1).averageValueSize(1);
+        builder.entries(1).averageValueSize(10);
     }
 
     @Parameterized.Parameters(name = "{0}")
