@@ -210,7 +210,7 @@ public class Issue63Test {
 
         Path knownItemsPath = Paths.get(persistToDir + "/I-known-items.dat");
 
-        System.err.println("Loading knownItems");
+        //System.err.println("Loading knownItems");
         ArrayList<CharSequence> averageKnownItems = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
             averageKnownItems.add("average sized known item");
@@ -230,7 +230,7 @@ public class Issue63Test {
             knownItems = knownItemsBuilder.createPersistedTo(knownItemsPath.toFile());
         }
 
-        System.err.println("Loading xVectors");
+        //System.err.println("Loading xVectors");
         Path xVectorsPath = Paths.get(persistToDir + "/" + "X-vectors.dat");
         ChronicleMapBuilder<CharSequence, float[]> xVectorsBuilder = ChronicleMap
                 .of(CharSequence.class, float[].class)
@@ -244,7 +244,7 @@ public class Issue63Test {
             xVectors = xVectorsBuilder.createPersistedTo(xVectorsPath.toFile());
         }
 
-        System.err.println("Loading xRecentIds");
+        //System.err.println("Loading xRecentIds");
         Path xRecentIDsPath = Paths.get(persistToDir + "/" + "X-recent-ids.dat");
         ChronicleSetBuilder<CharSequence> xRecentBuilder = ChronicleSet
                 .of(CharSequence.class)
@@ -256,7 +256,7 @@ public class Issue63Test {
             xRecentIDs = xRecentBuilder.createPersistedTo(xRecentIDsPath.toFile());
         }
 
-        System.err.println("Loading yVectors");
+        //System.err.println("Loading yVectors");
         Path yVectorsPath = Paths.get(persistToDir + "/" + "Y-vectors.dat");
         ChronicleMapBuilder<CharSequence, float[]> yVectorsBuilder = ChronicleMap
                 .of(CharSequence.class, float[].class)
@@ -270,7 +270,7 @@ public class Issue63Test {
             yVectors = yVectorsBuilder.createPersistedTo(yVectorsPath.toFile());
         }
 
-        System.err.println("Loading yRecentIDs");
+        //System.err.println("Loading yRecentIDs");
         Path yRecentIDsPath = Paths.get(persistToDir + "/" + "Y-recent-ids.dat");
         ChronicleSetBuilder<CharSequence> yRecentBuilder = ChronicleSet
                 .of(CharSequence.class)
@@ -344,9 +344,9 @@ public class Issue63Test {
        /* ids.forEach((id) -> {
             System.out.println(knownItems2.get(id.subSequence(0, id.length())));
         });*/
-        knownItems2.forEach((id, list) -> {
-            System.out.println(id + " : " + String.join(",", list));
-        });
+//        knownItems2.forEach((id, list) -> {
+//            System.out.println(id + " : " + String.join(",", list));
+//        });
 
     }
 }

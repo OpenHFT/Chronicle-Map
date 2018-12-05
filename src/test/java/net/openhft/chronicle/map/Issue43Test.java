@@ -39,7 +39,7 @@ public class Issue43Test {
                     .valueMarshaller(ArrayMarshaller.INSTANCE)
                     .constantValueSizeBySample(new ValueWrapper(new double[128]))
                     .createPersistedTo(Builder.getPersistenceFile());
-            System.out.println("Created the monkey map ValueWrapper 128");
+            //System.out.println("Created the monkey map ValueWrapper 128");
         } catch (Throwable ex) {
             System.out.println(ex);
         }

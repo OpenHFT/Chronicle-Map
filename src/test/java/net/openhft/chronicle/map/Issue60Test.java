@@ -35,11 +35,11 @@ public class Issue60Test {
                 .maxBloatFactor(maxBloatFactor)
                 .create()) {
 
-            System.out.println("begin test " + map.size());
+            //System.out.println("begin test " + map.size());
             for (int i = 0; i < loop; i++) {
                 map.put("key" + i, "value" + i);
             }
-            System.out.println("map size " + map.size());
+            //System.out.println("map size " + map.size());
 
             int failedGet = 0;
             for (int i = 0; i < loop; i++) {
@@ -49,8 +49,8 @@ public class Issue60Test {
                 }
             }
             Assert.assertEquals(0, failedGet);
-            System.out.println("failedGet " + failedGet);
-            System.out.println("map " + map);
+            //System.out.println("failedGet " + failedGet);
+            //System.out.println("map " + map);
         }
     }
 }

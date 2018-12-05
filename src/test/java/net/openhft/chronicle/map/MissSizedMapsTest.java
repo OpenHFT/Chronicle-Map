@@ -18,7 +18,7 @@ import java.util.Map;
  */
 public class MissSizedMapsTest {
 
-    @Test
+    @Test(timeout = 60000)
     public void testSmallEntries() throws IOException, URISyntaxException {
         ChronicleMap<String, String> actual = ChronicleMapBuilder.of(String.class, String.class)
                 .averageKey("D-6.0149935894066442E18").averageValue("226|16533|4|1|1|testHarness").entries(150 << 10)
