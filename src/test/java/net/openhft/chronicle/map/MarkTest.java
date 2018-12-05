@@ -59,7 +59,7 @@ public class MarkTest {
         test(ChronicleMapBuilder::create);
     }
 
-    @Test
+    @Test(timeout = 25000)
     public void persistedTest() {
         int rnd = new Random().nextInt();
         final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark" + rnd).toFile();

@@ -95,7 +95,7 @@ public class MemoryLeaksTest {
         serializerCount.set(0);
     }
 
-    @Test
+    @Test(timeout = 60_000)
     public void testChronicleMapCollectedAndDirectMemoryReleased()
             throws IOException, InterruptedException {
         if (!OS.isWindows()) {
