@@ -1,0 +1,11 @@
+Hello, Excuse me,because  of I need to refer to this project recently, by looking at the source code of this project:
+
+according to ```ChronicleHash``` class inheritance graph
+   - it is responsible for the memory management of each object in the JVM heap area
+   - it inherits from HashSegFrament to perform lock segmentation similar to courrent HashMap, in which similar lock segmentation granularity settings can be seen.
+
+For example: ```int segments (); ```
+
+but look at the courrent HashMap, wo'shi'fou'ke'mentioned in the project's [workflow](https://github.com/OpenHFT/Chronicle-Map/blob/master/docs/CM_Replication.adoc#how-chronicle-map-replication-works)
+
+   it's provided by the project, can I understand that the project is rebuilt on courrent HashMap, which is actually Chronicle Map?
