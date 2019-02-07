@@ -381,7 +381,7 @@
         <repository>
             <id>central</id>
             <name>Central Repository</name>
-            <url>http://repo.maven.apache.org/maven2</url>
+            <url>https://repo.maven.apache.org/maven2</url>
             <layout>default</layout>
             <snapshots>
                 <enabled>false</enabled>
@@ -399,12 +399,6 @@
                 <enabled>false</enabled>
                 <updatePolicy>never</updatePolicy>
             </releases>
-        </repository>
-        <repository>
-            <!-- For Spoon, a dependency of stage-compiler-->
-            <id>gforge.inria.fr-release</id>
-            <name>Maven Repository for JDT Compiler release</name>
-            <url>http://spoon.gforge.inria.fr/repositories/releases</url>
         </repository>
     </repositories>
 
