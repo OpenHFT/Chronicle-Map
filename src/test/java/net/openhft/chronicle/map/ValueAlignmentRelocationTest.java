@@ -11,7 +11,7 @@ import java.util.Random;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
-public class ValueAlignmentRelocation {
+public class ValueAlignmentRelocationTest {
 
     @Test
     public void testValueAlignmentRelocation() {
