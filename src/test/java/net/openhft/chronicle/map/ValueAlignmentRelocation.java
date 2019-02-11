@@ -1,11 +1,15 @@
 package net.openhft.chronicle.map;
 
+
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Random;
+
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 public class ValueAlignmentRelocation {
 
@@ -47,9 +51,48 @@ public class ValueAlignmentRelocation {
                     map.put(new byte[]{(byte) i}, new byte[]{(byte) i});
                     map.put(("Hello" + i).getBytes(), "world".getBytes());
                 }
+                System.out.println("firstKeySize=" + firstKeySize + ",second key=" + secondKeySize);
                 Assert.assertTrue(Arrays.equals(map.get(firstKey), thirdValue));
             }
         }
+    }
+
+    @Test
+    public void testValueAlignmentRelocationNoRandomTest() {
+        ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
+                .of(byte[].class, byte[].class)
+                .averageKeySize(5)
+                .averageValueSize(5)
+                .keySizeMarshaller(SizeMarshaller.stopBit())
+                .valueSizeMarshaller(SizeMarshaller.stopBit())
+                .entryAndValueOffsetAlignment(8)
+                .actualSegments(1)
+                .actualChunkSize(2)
+                .entries(10)
+                .create();
+
+        byte[] firstKey = "austi".getBytes(ISO_8859_1);
+        byte[] firstValue = "12345678".getBytes(ISO_8859_1);
+
+        byte[] secondKey = "h".getBytes(ISO_8859_1);
+        byte[] secondValue = "a".getBytes(ISO_8859_1);
+
+        map.put(firstKey, firstValue);
+        map.put(secondKey, secondValue);
+
+        byte[] thirdValue = "1234567890123456".getBytes(ISO_8859_1);
+        map.put(firstKey, thirdValue);
+        map.put(("Hello").getBytes(ISO_8859_1), "world".getBytes(ISO_8859_1));
+
+        String actual = toString(map.get(firstKey));
+        String expected = toString(thirdValue);
+
+        Assert.assertEquals(expected, actual);
+    }
+
+    @NotNull
+    private String toString(final byte[] value) {
+        return new String(value, 0, 0, value.length);
     }
 
 }

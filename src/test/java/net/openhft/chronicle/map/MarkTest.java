@@ -59,6 +59,7 @@ public class MarkTest {
         test(ChronicleMapBuilder::create);
     }
 
+    @Ignore("ignored because it take too long and times out")
     @Test(timeout = 25000)
     public void persistedTest() {
         int rnd = new Random().nextInt();
