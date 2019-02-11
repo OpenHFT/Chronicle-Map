@@ -1,11 +1,13 @@
 package net.openhft.chronicle.map;
 
-
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -14,7 +16,10 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 public class ValueAlignmentRelocationTest {
 
     @Test
-    public void testValueAlignmentRelocation() {
+    public void testValueAlignmentRelocation() throws IOException {
+
+        File file = Files.createTempFile("test", "cm3").toFile();
+
         ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
                 .averageKeySize(5)
@@ -25,7 +30,7 @@ public class ValueAlignmentRelocationTest {
                 .actualSegments(1)
                 .actualChunkSize(2)
                 .entries(10)
-                .create();
+                .createPersistedTo(file);
         Random r = new Random(0);
 
         for (int firstKeySize = 1; firstKeySize < 10; firstKeySize++) {
@@ -58,7 +63,9 @@ public class ValueAlignmentRelocationTest {
     }
 
     @Test
-    public void testValueAlignmentRelocationNoRandomTest() {
+    public void testValueAlignmentRelocationNoRandomTest() throws IOException {
+        File file = Files.createTempFile("test", "cm3").toFile();
+
         ChronicleMap<byte[], byte[]> map = ChronicleMapBuilder
                 .of(byte[].class, byte[].class)
                 .averageKeySize(5)
@@ -69,7 +76,7 @@ public class ValueAlignmentRelocationTest {
                 .actualSegments(1)
                 .actualChunkSize(2)
                 .entries(10)
-                .create();
+                .createPersistedTo(file);
 
         byte[] firstKey = "austi".getBytes(ISO_8859_1);
         byte[] firstValue = "12345678".getBytes(ISO_8859_1);
