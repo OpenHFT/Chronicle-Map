@@ -23,6 +23,7 @@ public class ValueAlignmentRelocation {
                 .entries(10)
                 .create();
         Random r = new Random(0);
+
         for (int firstKeySize = 1; firstKeySize < 10; firstKeySize++) {
             byte[] firstKey = new byte[firstKeySize];
             byte[] firstValue = new byte[8];
@@ -31,6 +32,9 @@ public class ValueAlignmentRelocation {
             for (int secondKeySize = 1; secondKeySize < 10; secondKeySize++) {
                 byte[] secondKey = new byte[secondKeySize];
                 r.nextBytes(secondKey);
+                while (Arrays.equals(secondKey, firstKey)) {
+                    r.nextBytes(secondKey);
+                }
                 byte[] secondValue = new byte[1];
                 r.nextBytes(secondValue);
                 map.clear();
@@ -41,6 +45,7 @@ public class ValueAlignmentRelocation {
                 map.put(firstKey, thirdValue);
                 for (int i = 0; i < 10; i++) {
                     map.put(new byte[]{(byte) i}, new byte[]{(byte) i});
+                    map.put(("Hello" + i).getBytes(), "world".getBytes());
                 }
                 Assert.assertTrue(Arrays.equals(map.get(firstKey), thirdValue));
             }
