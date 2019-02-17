@@ -20,7 +20,7 @@ import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.bytes.DynamicallySized;
 import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.core.annotation.NotNull;
+import org.jetbrains.annotations.NotNull;
 import net.openhft.chronicle.core.util.ReadResolvable;
 import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.values.ValueModel;
