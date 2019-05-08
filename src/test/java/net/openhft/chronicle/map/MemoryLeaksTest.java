@@ -41,7 +41,6 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-@Ignore("Long running")
 public class MemoryLeaksTest {
 
     /**
