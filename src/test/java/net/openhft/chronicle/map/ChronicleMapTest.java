@@ -1004,8 +1004,7 @@ public class ChronicleMapTest {
     @Test
     @Ignore("Performance test")
     public void testAcquireLockedPerf()
-            throws IOException, ClassNotFoundException, IllegalAccessException,
-            InstantiationException, InterruptedException, ExecutionException {
+            throws IOException, InterruptedException, ExecutionException {
 //        int runs = Integer.getInteger("runs", 10);
         int procs = Runtime.getRuntime().availableProcessors();
         if (procs > 8) procs--;
