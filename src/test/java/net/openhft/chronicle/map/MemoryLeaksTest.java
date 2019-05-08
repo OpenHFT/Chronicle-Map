@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
+@Ignore("Long running")
 public class MemoryLeaksTest {
 
     /**
@@ -61,7 +62,7 @@ public class MemoryLeaksTest {
         this.closeWithinContext = closeWithinContext;
         builder = ChronicleMap
                 .of(IntValue.class, String.class).constantKeySizeBySample(Values.newHeapInstance(IntValue.class))
-                .valueReaderAndDataAccess(new CountedStringReader(), new StringUtf8DataAccess());
+                .valueReaderAndDataAccess(new CountedStringReader(this), new StringUtf8DataAccess());
         if (replicated)
             builder.replication((byte) 1);
         builder.entries(1).averageValueSize(10);
@@ -220,15 +221,16 @@ public class MemoryLeaksTest {
         }
     }
 
-    private class CountedStringReader extends StringSizedReader {
-
+    private static class CountedStringReader extends StringSizedReader {
+        private transient MemoryLeaksTest memoryLeaksTest;
         private final String creationStackTrace;
         private final Cleaner cleaner;
 
-        CountedStringReader() {
-            serializerCount.incrementAndGet();
-            serializers.add(new WeakReference<>(this));
-            cleaner = CleanerUtils.createCleaner(this, serializerCount::decrementAndGet);
+        CountedStringReader(MemoryLeaksTest memoryLeaksTest) {
+            this.memoryLeaksTest = memoryLeaksTest;
+            this.memoryLeaksTest.serializerCount.incrementAndGet();
+            this.memoryLeaksTest.serializers.add(new WeakReference<>(this));
+            cleaner = CleanerUtils.createCleaner(this, this.memoryLeaksTest.serializerCount::decrementAndGet);
             try (StringWriter stringWriter = new StringWriter();
                  PrintWriter printWriter = new PrintWriter(stringWriter)) {
                 new Exception().printStackTrace(printWriter);
@@ -237,11 +239,12 @@ public class MemoryLeaksTest {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+            this.memoryLeaksTest = memoryLeaksTest;
         }
 
         @Override
         public CountedStringReader copy() {
-            return new CountedStringReader();
+            return new CountedStringReader(this.memoryLeaksTest);
         }
     }
 }

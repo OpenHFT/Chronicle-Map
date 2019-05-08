@@ -29,7 +29,12 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
 
     @Override
     public long addressForWrite(long offset) throws UnsupportedOperationException, BufferOverflowException {
-        throw new UnsupportedOperationException("todo");
+        throw new UnsupportedOperationException("Cannot get the address of nothing");
+    }
+
+    @Override
+    public long addressForWritePosition() throws UnsupportedOperationException, BufferOverflowException {
+        throw new UnsupportedOperationException("Cannot get the address of nothing");
     }
 
     @Override

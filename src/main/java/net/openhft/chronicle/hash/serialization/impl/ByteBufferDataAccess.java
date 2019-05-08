@@ -32,7 +32,6 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
         implements DataAccess<ByteBuffer> {
 
     // Cache fields
-    private transient HeapBytesStore heapBytesStore;
     private transient NativeBytesStore nativeBytesStore;
     private transient VanillaBytes<Void> bytes;
 
@@ -45,7 +44,6 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     }
 
     private void initTransients() {
-        heapBytesStore = HeapBytesStore.uninitialized();
         nativeBytesStore = NativeBytesStore.uninitialized();
         bytes = VanillaBytes.vanillaBytes();
     }
@@ -91,8 +89,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
             nativeBytesStore.init(instance, false);
             bytesStore = nativeBytesStore;
         } else {
-            heapBytesStore.init(instance);
-            bytesStore = heapBytesStore;
+            bytesStore = HeapBytesStore.wrap(instance);
         }
         return this;
     }
@@ -102,8 +99,6 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
         bb = null;
         if (bytesStore == nativeBytesStore) {
             nativeBytesStore.uninit();
-        } else {
-            heapBytesStore.uninit();
         }
     }
 
