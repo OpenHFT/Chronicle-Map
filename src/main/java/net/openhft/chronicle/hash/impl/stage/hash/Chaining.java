@@ -131,7 +131,8 @@ public abstract class Chaining extends ChainingInterface {
             Class<? extends T> contextClass, BiFunction<ChainingInterface,
             VanillaChronicleMap, T> createChaining,
             VanillaChronicleMap map) {
-        for (ChainingInterface context : contextChain) {
+        for (int i = 0; i < contextChain.size(); i++) {
+            ChainingInterface context = contextChain.get(i);
             if (context.getClass() == contextClass && !context.usedInit()) {
                 return initUsedAndReturn(map, context);
             }
