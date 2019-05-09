@@ -102,4 +102,9 @@ public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAcc
         // no fields to read
         initTransients();
     }
+
+    @Override
+    public String toString() {
+        return new String(array, 0, 0, array.length);
+    }
 }

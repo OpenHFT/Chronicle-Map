@@ -708,8 +708,8 @@ public abstract class VanillaChronicleHash<K,
 
         // int division is MUCH faster than long on Intel CPUs
         if (sizeInBytes <= Integer.MAX_VALUE)
-            return (((int) sizeInBytes) / (int) chunkSize) + 1;
-        return (int) (sizeInBytes / chunkSize) + 1;
+            return (int) (sizeInBytes + chunkSize - 1) / (int) chunkSize;
+        return Math.toIntExact((sizeInBytes + chunkSize - 1) / chunkSize);
     }
 
     public final int size() {

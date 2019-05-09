@@ -20,17 +20,24 @@ import static java.nio.charset.StandardCharsets.ISO_8859_1;
 public class ValueAlignmentRelocationTest {
 
     private final boolean persisted;
+    private final int alignment;
+    private final int chunk;
 
-    public ValueAlignmentRelocationTest(String name, boolean persisted) {
+    public ValueAlignmentRelocationTest(String name, boolean persisted, int alignment, int chunk) {
         this.persisted = persisted;
+        this.alignment = alignment;
+        this.chunk = chunk;
     }
 
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                // TODO FIX https://github.com/OpenHFT/Chronicle-Map/issues/169
-//                {"Volatile", false},
-                {"Persisted", true}
+                {"Volatile a=1, c=1", false, 1, 1},
+                {"Volatile a=1, c=2", false, 1, 2},
+                {"Volatile a=4, c=4", false, 4, 4},
+                {"Volatile a=4, c=8", false, 4, 8},
+                {"Persisted a=1, c=1", true, 1, 1},
+                {"Persisted a=4, c=8", true, 4, 8}
         });
     }
 
@@ -42,7 +49,7 @@ public class ValueAlignmentRelocationTest {
     @Test
     public void testValueAlignmentRelocation() throws IOException {
 
-        File file = Files.createTempFile("test", "cm3").toFile();
+        File file = Files.createTempFile("test", ".cm3").toFile();
         file.deleteOnExit();
 
         ChronicleMapBuilder<byte[], byte[]> builder = ChronicleMapBuilder
@@ -51,9 +58,9 @@ public class ValueAlignmentRelocationTest {
                 .averageValueSize(5)
                 .keySizeMarshaller(SizeMarshaller.stopBit())
                 .valueSizeMarshaller(SizeMarshaller.stopBit())
-                .entryAndValueOffsetAlignment(8)
+                .entryAndValueOffsetAlignment(alignment)
                 .actualSegments(1)
-                .actualChunkSize(2)
+                .actualChunkSize(chunk)
                 .entries(10);
         ChronicleMap<byte[], byte[]> map = persisted ? builder.createPersistedTo(file) : builder.create();
         Random r = new Random(0);
@@ -90,7 +97,7 @@ public class ValueAlignmentRelocationTest {
 
     @Test
     public void testValueAlignmentRelocationNoRandomTest() throws IOException {
-        File file = Files.createTempFile("test", "cm3").toFile();
+        File file = Files.createTempFile("test", ".cm3").toFile();
         file.deleteOnExit();
 
         ChronicleMapBuilder<byte[], byte[]> builder = ChronicleMapBuilder
@@ -99,15 +106,15 @@ public class ValueAlignmentRelocationTest {
                 .averageValueSize(5)
                 .keySizeMarshaller(SizeMarshaller.stopBit())
                 .valueSizeMarshaller(SizeMarshaller.stopBit())
-                .entryAndValueOffsetAlignment(8)
+                .entryAndValueOffsetAlignment(alignment)
                 .actualSegments(1)
-                .actualChunkSize(2)
+                .actualChunkSize(chunk)
                 .entries(10);
         ChronicleMap<byte[], byte[]> map = persisted ? builder.createPersistedTo(file) : builder.create();
 
         for (int k = 1; k <= 16; k++) {
             for (int i = 1; i < 10; i++) {
-                for (int j = i + 1; j <= i + 2; j++) {
+                for (int j = i + 1; j <= i + 10; j++) {
                     map.clear();
 
                     byte[] _austi = "abcdefghijklmnopqrstuvwxyz".substring(0, k).getBytes(ISO_8859_1);

@@ -730,6 +730,8 @@ public final class ChronicleMapBuilder<K, V> implements
         }
         if (actualChunkSize <= 0)
             throw new IllegalArgumentException("Chunk size must be positive");
+        if (alignment > 0 && actualChunkSize % alignment != 0)
+            throw new IllegalArgumentException("The chunk size (" + actualChunkSize + ") must be a multiple of the alignment (" + alignment + ")");
         this.actualChunkSize = actualChunkSize;
         return this;
     }
@@ -928,8 +930,15 @@ public final class ChronicleMapBuilder<K, V> implements
         }
         if (Jvm.isArm() && alignment < 8)
             return this;
+        validateAlignment(actualChunkSize, actualChunkSize, alignment);
+
         this.alignment = alignment;
         return this;
+    }
+
+    public void validateAlignment(int ifSet, int actualChunkSize, int alignment) {
+        if (ifSet > 0 && actualChunkSize % alignment != 0)
+            throw new IllegalArgumentException("The chunk size (" + actualChunkSize + ") must be a multiple of the alignment (" + alignment + ")");
     }
 
     int valueAlignment() {
@@ -937,7 +946,9 @@ public final class ChronicleMapBuilder<K, V> implements
             return alignment;
         try {
             if (Values.isValueInterfaceOrImplClass(valueBuilder.tClass)) {
-                return ValueModel.acquire(valueBuilder.tClass).recommendedOffsetAlignment();
+                int alignment = ValueModel.acquire(valueBuilder.tClass).recommendedOffsetAlignment();
+                validateAlignment(alignment, actualChunkSize, alignment);
+                return alignment;
             } else {
                 return NO_ALIGNMENT;
             }
