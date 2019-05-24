@@ -160,6 +160,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 }
             };
     private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
+
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
     K averageKey;
@@ -736,9 +737,14 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
-    SerializationBuilder<K> keyBuilder() {
+    public SerializationBuilder<K> keyBuilder() {
         return keyBuilder;
     }
+
+    public SerializationBuilder<V> valueBuilder() {
+        return valueBuilder;
+    }
+
 
     private EntrySizeInfo entrySizeInfo() {
         double size = 0;
