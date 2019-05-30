@@ -20,7 +20,7 @@ The following code snippet creates an in-memory Chronicle Map store, to store ab
 
 It is accessible within a single JVM process; the process in which it was created. The data is accessible while the process is alive. When the process is terminated, the data is cleared.
 
-``` java
+```java
 import net.openhft.chronicle.map.*
 .....
 
@@ -348,7 +348,7 @@ for (long id : orderIds) {
 
 Use `ChronicleMap#getUsing(K key, V using)` to reuse the value object. It works if the value type is `CharSequence`. Pass `StringBuilder` as the `using` argument. For example:
 
- ```java
+```java
  ChronicleMap<LongValue, CharSequence> names = ...
  StringBuilder name = new StringBuilder();
  for (long id : ids) {
@@ -356,18 +356,18 @@ Use `ChronicleMap#getUsing(K key, V using)` to reuse the value object. It works 
     names.getUsing(key, name);
     // process the name...
  }
- ```
+```
 
 In this case, calling `names.getUsing(key, name)` is equivalent to:
 
- ```java
+```java
  name.setLength(0);
  name.append(names.get(key));
- ```
+```
 
 The difference is that it doesn't generate garbage. The value type is the value interface. Pass the heap instance to read the data into it without new object allocation:
 
- ```java
+```java
  ThreadLocal<PostalCodeRange> cachedPostalCodeRange =
     ThreadLocal.withInitial(() -> Values.newHeapInstance(PostalCodeRange.class));
 
@@ -376,7 +376,7 @@ The difference is that it doesn't generate garbage. The value type is the value 
  PostalCodeRange range = cachedPostalCodeRange.get();
  cityPostalCodes.getUsing(city, range);
  // process the range...
- ```
+```
 
  - If the value type implements `BytesMarshallable`, or `Externalizable`, then `ChronicleMap` attempts to
  reuse the given `using` object by deserializing the value into the given object.
@@ -581,7 +581,7 @@ removeEdge(graph, 1, 2);
 Unlike `ConcurrentHashMap`, `ChronicleMap` stores its data off-heap; often in a memory mapped file.
 It is recommended that you call `close()` when you have finished working with a `ChronicleMap`.
 
-``` java
+```java
 map.close()
 ```
 
@@ -625,7 +625,7 @@ http://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs]. If you update va
 
 It is strongly recommended to update off-heap memory of values directly only within a context, and update or write lock held. Within a context, you are provided with an entry object of `MapEntry` type. To re-compute entry checksum manually, cast that object to `ChecksumEntry` type and call the `.updateChecksum()` method:
 
-``` java
+```java
 try (ChronicleMap<Integer, LongValue> map = ChronicleMap
         .of(Integer.class, LongValue.class)
         .entries(1)
