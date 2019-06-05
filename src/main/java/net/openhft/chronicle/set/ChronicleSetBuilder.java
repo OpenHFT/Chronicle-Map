@@ -358,6 +358,12 @@ public final class ChronicleSetBuilder<K>
         return this;
     }
 
+    @Override
+    public ChronicleSetBuilder<K> skipCloseOnExitHook(boolean skipCloseOnExitHook) {
+        chronicleMapBuilder.skipCloseOnExitHook(skipCloseOnExitHook);
+        return this;
+    }
+
     /**
      * @deprecated don't use private API in the client code
      */

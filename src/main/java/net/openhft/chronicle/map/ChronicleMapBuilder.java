@@ -181,6 +181,7 @@ public final class ChronicleMapBuilder<K, V> implements
     MapEntryOperations<K, V, ?> entryOperations = mapEntryOperations();
     MapRemoteOperations<K, V, ?> remoteOperations = mapRemoteOperations();
     Runnable preShutdownAction;
+    boolean skipCloseOnExitHook = false;
     private String name;
     // not final because of cloning
     private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
@@ -1604,6 +1605,12 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMapBuilder<K, V> setPreShutdownAction(Runnable preShutdownAction) {
         this.preShutdownAction = preShutdownAction;
+        return this;
+    }
+
+    @Override
+    public ChronicleMapBuilder<K, V> skipCloseOnExitHook(boolean skipCloseOnExitHook) {
+        this.skipCloseOnExitHook = skipCloseOnExitHook;
         return this;
     }
 

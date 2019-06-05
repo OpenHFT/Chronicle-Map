@@ -97,4 +97,9 @@ public interface ChronicleHashBuilderPrivateAPI<K, RO> {
      * @return registered pre-shutdown action.
      */
     Runnable getPreShutdownAction();
+
+    /**
+     * Whether to skip closing a {@link ChronicleHash} using the default shutdown hook.
+     */
+    boolean skipCloseOnExitHook();
 }

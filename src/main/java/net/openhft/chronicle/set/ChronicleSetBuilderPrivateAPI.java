@@ -138,4 +138,9 @@ class ChronicleSetBuilderPrivateAPI<K>
     public Runnable getPreShutdownAction() {
         return mapB.getPreShutdownAction();
     }
+
+    @Override
+    public boolean skipCloseOnExitHook() {
+        return mapB.skipCloseOnExitHook();
+    }
 }
