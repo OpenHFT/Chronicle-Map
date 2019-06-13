@@ -120,4 +120,9 @@ class ChronicleMapBuilderPrivateAPI<K, V>
     public Runnable getPreShutdownAction() {
         return b.preShutdownAction;
     }
+
+    @Override
+    public boolean skipCloseOnExitHook() {
+        return b.skipCloseOnExitHook;
+    }
 }

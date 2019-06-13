@@ -126,6 +126,7 @@ public abstract class VanillaChronicleHash<K,
     public transient Identity identity;
     protected int log2TiersInBulk;
     private Runnable preShutdownAction;
+    private boolean skipCloseOnExitHook;
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     protected transient BytesStore bs;
@@ -211,6 +212,7 @@ public abstract class VanillaChronicleHash<K,
         checksumEntries = privateAPI.checksumEntries();
 
         preShutdownAction = privateAPI.getPreShutdownAction();
+        skipCloseOnExitHook = privateAPI.skipCloseOnExitHook();
     }
 
     public static IOException throwRecoveryOrReturnIOException(
@@ -476,7 +478,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void addToOnExitHook() {
-        ChronicleHashCloseOnExitHook.add(this);
+        if (!skipCloseOnExitHook) {
+            ChronicleHashCloseOnExitHook.add(this);
+        }
     }
 
     public final void createMappedStoreAndSegments(ChronicleHashResources resources)
@@ -664,7 +668,9 @@ public abstract class VanillaChronicleHash<K,
         // Releases nothing after resources.releaseManually(), only removes the cleaner
         // from the internal linked list of all cleaners.
         cleaner.clean();
-        ChronicleHashCloseOnExitHook.remove(this);
+        if (!skipCloseOnExitHook) {
+            ChronicleHashCloseOnExitHook.remove(this);
+        }
         // Make GC life easier
         keyReader = null;
         keyDataAccess = null;

@@ -763,6 +763,17 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B setPreShutdownAction(Runnable preShutdownAction);
 
     /**
+     * Skips the default automatic close configuration on the {@link ChronicleHash} created by
+     * this builder. By setting this to true, the caller agrees to closing the built {@link ChronicleHash}
+     * explicitly. Any pre-shutdown action configured via {@link this#setPreShutdownAction(Runnable)}
+     * won't be executed if skipCloseOnExitHook is set to true.
+     *
+     * @param skipCloseOnExitHook if {@code true}, default automatic close configuration is not enabled.
+     * @return this builder back
+     */
+    B skipCloseOnExitHook(boolean skipCloseOnExitHook);
+
+    /**
      * @deprecated don't use private API in the client code
      */
     @Deprecated
