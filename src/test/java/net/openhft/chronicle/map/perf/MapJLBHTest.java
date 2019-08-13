@@ -76,7 +76,6 @@ public class MapJLBHTest implements JLBHTask {
         }
     }
 
-
     private long counter = -WARM_UP_ITERATIONS;
     @Override
     public void run(long startTimeNS) {

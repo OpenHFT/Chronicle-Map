@@ -155,7 +155,6 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
         return true;
     }
 
-
     @Override
     public void reserve() throws IllegalStateException {
     }
