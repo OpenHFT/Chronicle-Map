@@ -46,7 +46,6 @@ public class MovingAverageArray extends AbstractBytesMarshallable implements Dyn
             next.readMarshallable(bytes);
             values.add(next);
         }
-
     }
 
     @Override

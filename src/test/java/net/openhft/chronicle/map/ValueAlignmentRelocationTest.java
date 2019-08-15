@@ -142,7 +142,6 @@ public class ValueAlignmentRelocationTest {
                         System.out.println("k= " + k + ", i= " + i + ", j=" + j);
                 }
             }
-
         }
     }
 }
