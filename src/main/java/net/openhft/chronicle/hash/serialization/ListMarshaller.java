@@ -32,7 +32,7 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * into.
  * <p>
  * <p>This marshaller supports multimap emulation on top of Chronicle Map, that is possible but
- * inefficient. See <a href="https://github.com/OpenHFT/Chronicle-Map#chronicle-map-is-not">the
+ * inefficient. See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/master/docs/CM_Features.adoc#chronicle-map-is-not">the
  * README section</a>.
  * <p>
  * <p>Usage: <pre>{@code
