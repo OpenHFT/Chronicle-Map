@@ -25,6 +25,7 @@ import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -95,6 +96,11 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * @return the class of {@code <K>}
      */
     Class<K> keyClass();
+
+    /**
+     * @return Type as a Class or UnresolvedType if unknown.
+     */
+    Type keyType();
 
     /**
      * Returns a context to perform arbitrary operations with the given key in this store.

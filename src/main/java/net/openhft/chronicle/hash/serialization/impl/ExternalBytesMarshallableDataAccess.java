@@ -27,6 +27,8 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
+
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
@@ -53,7 +55,7 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
     }
 
     private ExternalBytesMarshallableDataAccess(
-            Class<T> tClass, SizedReader<T> reader, BytesWriter<? super T> writer,
+            Type tClass, SizedReader<T> reader, BytesWriter<? super T> writer,
             long bytesCapacity) {
         super(tClass);
         this.writer = writer;
@@ -125,7 +127,7 @@ public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMars
     @Override
     public DataAccess<T> copy() {
         return new ExternalBytesMarshallableDataAccess<>(
-                tClass(), copyIfNeeded(reader), copyIfNeeded(writer), bytes.realCapacity());
+                tType(), copyIfNeeded(reader), copyIfNeeded(writer), bytes.realCapacity());
     }
 
     @Override

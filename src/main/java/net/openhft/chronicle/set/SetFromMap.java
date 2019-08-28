@@ -24,6 +24,7 @@ import net.openhft.chronicle.map.VanillaChronicleMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -132,6 +133,11 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     @Override
     public Class<E> keyClass() {
         return m.keyClass();
+    }
+
+    @Override
+    public Type keyType() {
+        return m.keyType();
     }
 
     // TODO test queryContext methods

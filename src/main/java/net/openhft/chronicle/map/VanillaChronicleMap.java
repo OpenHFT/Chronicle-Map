@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -73,7 +74,7 @@ public class VanillaChronicleMap<K, V, R>
     public transient DefaultValueProvider<K, V> defaultValueProvider;
     /////////////////////////////////////////////////
     // Value Data model
-    Class<V> valueClass;
+    Type valueClass;
     /////////////////////////////////////////////////
     // Behavior
     transient boolean putReturnsNull;
@@ -116,7 +117,7 @@ public class VanillaChronicleMap<K, V, R>
     protected void readMarshallableFields(@NotNull WireIn wireIn) {
         super.readMarshallableFields(wireIn);
 
-        valueClass = wireIn.read(() -> "valueClass").typeLiteral();
+        valueClass = wireIn.read(() -> "valueClass").lenientTypeLiteral();
         valueSizeMarshaller = wireIn.read(() -> "valueSizeMarshaller").object(SizeMarshaller.class);
         valueReader = wireIn.read(() -> "valueReader").object(SizedReader.class);
         valueDataAccess = wireIn.read(() -> "valueDataAccess").object(DataAccess.class);
@@ -185,6 +186,7 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     public final V checkValue(Object value) {
+        Class<V> valueClass = valueClass();
         if (!valueClass.isInstance(value)) {
             throw new ClassCastException(toIdentityString() + ": Value must be a " +
                     valueClass.getName() + " but was a " + value.getClass());
@@ -206,11 +208,21 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public Class<K> keyClass() {
+        return (Class<K>) keyClass;
+    }
+
+    @Override
+    public Type keyType() {
         return keyClass;
     }
 
     @Override
     public Class<V> valueClass() {
+        return (Class<V>) valueClass;
+    }
+
+    @Override
+    public Type valueType() {
         return valueClass;
     }
 

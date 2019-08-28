@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -244,6 +245,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public Type keyType() {
+        return map1.keyType();
+    }
+
+    @Override
     public boolean forEachEntryWhile(Predicate<? super MapEntry<K, V>> predicate) {
         return map1.forEachEntryWhile(predicate);
     }
@@ -256,6 +262,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @Override
     public Class<V> valueClass() {
         return map1.valueClass();
+    }
+
+    @Override
+    public Type valueType() {
+        return map1.valueType();
     }
 
     @Override

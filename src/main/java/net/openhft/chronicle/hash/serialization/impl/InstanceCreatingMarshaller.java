@@ -26,6 +26,8 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.Type;
+
 /**
  * Holds new instance creation logic, common for many {@link DataAccess} and {@link SizedReader}
  * implementations
@@ -34,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
 
-    private Class<T> tClass;
+    private Type tClass;
 
     /**
      * Constructor for use in subclasses.
@@ -45,11 +47,19 @@ public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
         this.tClass = tClass;
     }
 
+    protected InstanceCreatingMarshaller(Type tClass) {
+        this.tClass = tClass;
+    }
+
     /**
      * Returns the class of objects deserialized.
      */
     protected Class<T> tClass() {
-        return tClass;
+        return (Class<T>) tClass;
+    }
+
+    protected Type tType() {
+        return  tClass;
     }
 
     /**
@@ -63,7 +73,7 @@ public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
      */
     protected T createInstance() {
         try {
-            return ObjectUtils.newInstance(tClass);
+            return ObjectUtils.newInstance(tClass());
         } catch (Exception e) {
             throw new IllegalStateException("Some of default marshallers, chosen for the type\n" +
                     tClass + " by default, delegate to \n" +
@@ -80,7 +90,7 @@ public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
         //noinspection unchecked
-        tClass = wireIn.read(() -> "tClass").typeLiteral();
+        tClass = wireIn.read(() -> "tClass").lenientTypeLiteral();
     }
 
     @Override

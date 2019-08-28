@@ -44,7 +44,7 @@ public class EntryValueBytesData<V> extends AbstractData<V> {
 
     @Stage("CachedEntryValue")
     private V cachedEntryValue =
-            mh.m().valueClass() == CharSequence.class ? (V) new StringBuilder() : null;
+            mh.m().valueType() == CharSequence.class ? (V) new StringBuilder() : null;
     @Stage("CachedEntryValue")
     private boolean cachedEntryValueRead = false;
 

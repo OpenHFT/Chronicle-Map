@@ -38,6 +38,7 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
+import net.openhft.chronicle.wire.WireInternal;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -93,7 +95,7 @@ public abstract class VanillaChronicleHash<K,
     public transient boolean createdOrInMemory;
     /////////////////////////////////////////////////
     // Key Data model
-    public Class<K> keyClass;
+    public Type keyClass;
     public SizeMarshaller keySizeMarshaller;
     public SizedReader<K> keyReader;
     public DataAccess<K> keyDataAccess;
@@ -247,7 +249,7 @@ public abstract class VanillaChronicleHash<K,
         // that doesn't guarantee (?) to initialize fields with default values (false for boolean)
         createdOrInMemory = false;
 
-        keyClass = wireIn.read(() -> "keyClass").typeLiteral();
+        keyClass = wireIn.read(() -> "keyClass").lenientTypeLiteral();
         keySizeMarshaller = wireIn.read(() -> "keySizeMarshaller").object(SizeMarshaller.class);
         keyReader = wireIn.read(() -> "keyReader").object(SizedReader.class);
         keyDataAccess = wireIn.read(() -> "keyDataAccess").object(DataAccess.class);
@@ -682,8 +684,10 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public final void checkKey(Object key) {
+        Class<K> keyClass = keyClass();
         if (!keyClass.isInstance(key)) {
-            // key.getClass will cause NPE exactly as needed
+            if (key == null)
+                throw new NullPointerException("null key not supported");
             throw new ClassCastException(toIdentityString() + ": Key must be a " +
                     keyClass.getName() + " but was a " + key.getClass());
         }

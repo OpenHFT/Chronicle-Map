@@ -20,13 +20,16 @@ import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.SizedWriter;
 
+import java.lang.reflect.Type;
+
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
+import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
 public class NotReusingSizedMarshallableDataAccess<T> extends SizedMarshallableDataAccess<T> {
 
     public NotReusingSizedMarshallableDataAccess(
-            Class<T> tClass, SizedReader<T> sizedReader, SizedWriter<? super T> sizedWriter) {
-        super(tClass, sizedReader, sizedWriter);
+            Type tClass, SizedReader<T> sizedReader, SizedWriter<? super T> sizedWriter) {
+        super(tClass, sizedReader, sizedWriter, DEFAULT_BYTES_CAPACITY);
     }
 
     @Override
@@ -37,6 +40,6 @@ public class NotReusingSizedMarshallableDataAccess<T> extends SizedMarshallableD
     @Override
     public DataAccess<T> copy() {
         return new NotReusingSizedMarshallableDataAccess<>(
-                tClass(), copyIfNeeded(sizedReader()), copyIfNeeded(sizedWriter()));
+                tType(), copyIfNeeded(sizedReader()), copyIfNeeded(sizedWriter()));
     }
 }

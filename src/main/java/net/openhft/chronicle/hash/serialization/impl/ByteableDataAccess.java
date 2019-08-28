@@ -23,6 +23,8 @@ import net.openhft.chronicle.hash.serialization.DataAccess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
+
 public class ByteableDataAccess<T extends Byteable> extends InstanceCreatingMarshaller<T>
         implements DataAccess<T>, Data<T> {
 
@@ -31,7 +33,7 @@ public class ByteableDataAccess<T extends Byteable> extends InstanceCreatingMars
      */
     private transient T instance;
 
-    public ByteableDataAccess(Class<T> tClass) {
+    public ByteableDataAccess(Type tClass) {
         super(tClass);
     }
 
@@ -91,6 +93,6 @@ public class ByteableDataAccess<T extends Byteable> extends InstanceCreatingMars
 
     @Override
     public DataAccess<T> copy() {
-        return new ByteableDataAccess<>(tClass());
+        return new ByteableDataAccess<>(tType());
     }
 }

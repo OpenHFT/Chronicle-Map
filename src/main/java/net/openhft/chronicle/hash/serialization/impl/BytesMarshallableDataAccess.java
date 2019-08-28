@@ -23,6 +23,8 @@ import net.openhft.chronicle.wire.WireIn;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
+
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
 public class BytesMarshallableDataAccess<T extends BytesMarshallable>
@@ -42,7 +44,7 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
         this(tClass, DEFAULT_BYTES_CAPACITY);
     }
 
-    private BytesMarshallableDataAccess(Class<T> tClass, long bytesCapacity) {
+    private BytesMarshallableDataAccess(Type tClass, long bytesCapacity) {
         super(tClass);
         initTransients(bytesCapacity);
     }
@@ -140,6 +142,6 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
 
     @Override
     public DataAccess<T> copy() {
-        return new BytesMarshallableDataAccess<>(tClass(), bytes.realCapacity());
+        return new BytesMarshallableDataAccess<>(tType(), bytes.realCapacity());
     }
 }

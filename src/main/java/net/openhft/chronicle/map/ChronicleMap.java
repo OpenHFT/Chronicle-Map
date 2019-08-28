@@ -27,6 +27,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
@@ -207,5 +208,10 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * @return the class of {@code <V>}
      */
     Class<V> valueClass();
+
+    /**
+     * @return the value Class or UnresolvedType if unknown.
+     */
+    Type valueType();
 }
 

@@ -26,6 +26,8 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
+
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
@@ -52,8 +54,8 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
         this(tClass, sizedReader, sizedWriter, DEFAULT_BYTES_CAPACITY);
     }
 
-    private SizedMarshallableDataAccess(
-            Class<T> tClass, SizedReader<T> sizedReader, SizedWriter<? super T> sizedWriter,
+    protected SizedMarshallableDataAccess(
+            Type tClass, SizedReader<T> sizedReader, SizedWriter<? super T> sizedWriter,
             long bytesCapacity) {
         super(tClass);
         this.sizedWriter = sizedWriter;
@@ -151,15 +153,15 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
     @Override
     public DataAccess<T> copy() {
         return new SizedMarshallableDataAccess<>(
-                tClass(), copyIfNeeded(sizedReader), copyIfNeeded(sizedWriter),
+                tType(), copyIfNeeded(sizedReader), copyIfNeeded(sizedWriter),
                 bytes.realCapacity());
     }
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
         super.readMarshallable(wireIn);
-        sizedReader = wireIn.read(() -> "sizedReader").typedMarshallable();
-        sizedWriter = wireIn.read(() -> "sizedWriter").typedMarshallable();
+        sizedReader = wireIn.read(() -> "sizedReader").object(SizedReader.class);
+        sizedWriter = wireIn.read(() -> "sizedWriter").object(SizedWriter.class);
         initTransients(DEFAULT_BYTES_CAPACITY);
     }
 
