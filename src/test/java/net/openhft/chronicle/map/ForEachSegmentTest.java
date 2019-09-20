@@ -6,6 +6,8 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.SizedWriter;
+import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReader;
+import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWriter;
 import net.openhft.chronicle.wire.AbstractBytesMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +16,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class ForEachSeqmentTest {
+public class ForEachSegmentTest {
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyDto.class);
     }
@@ -25,7 +27,7 @@ public class ForEachSeqmentTest {
                 .entries(256)
                 .averageValueSize(128)
                 .actualSegments(1)
-                .valueMarshaller(new MyDtoMarshaller());
+                .valueMarshaller(new BytesMarshallableReaderWriter<>(MyDto.class));
         File tmp = new File(OS.TMP, "stressTest-" + System.nanoTime());
         tmp.deleteOnExit();
         try (ChronicleMap<Integer, MyDto> map = builder.createOrRecoverPersistedTo(tmp)) {
@@ -46,7 +48,7 @@ public class ForEachSeqmentTest {
                 .entries(256)
                 .averageValueSize(128)
                 .actualSegments(1)
-                .valueMarshaller(new MyDtoMarshaller());
+                .valueMarshaller(new BytesMarshallableReaderWriter<>(MyDto.class));
         File tmp = new File(OS.TMP, "stressTest-" + System.nanoTime());
         Thread t = null;
         try (ChronicleMap<Integer, MyDto> map = builder.createOrRecoverPersistedTo(tmp)) {
@@ -88,38 +90,5 @@ public class ForEachSeqmentTest {
     static class MyDto extends AbstractBytesMarshallable {
         String s1;
         String s2;
-
-        public MyDto() {
-        }
-
-        public MyDto(final String s1, final String s2) {
-            this.s1 = s1;
-            this.s2 = s2;
-        }
     }
-
-    static class MyDtoMarshaller implements SizedReader<MyDto>, SizedWriter<MyDto> {
-        transient Bytes bytes = Bytes.elasticByteBuffer();
-
-        @NotNull
-        @Override
-        public MyDto read(final Bytes in, final long size, @Nullable final MyDto using) {
-            MyDto u = using == null ? new MyDto() : using;
-            u.readMarshallable(in);
-            return u;
-        }
-
-        @Override
-        public long size(@NotNull final MyDto toWrite) {
-            bytes.clear();
-            write(bytes, 0, toWrite);
-            return bytes.readRemaining();
-        }
-
-        @Override
-        public void write(final Bytes out, final long size, @NotNull final MyDto toWrite) {
-            toWrite.writeMarshallable(out);
-        }
-    }
-
 }

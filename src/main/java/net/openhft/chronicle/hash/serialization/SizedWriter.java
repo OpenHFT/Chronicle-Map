@@ -50,6 +50,7 @@ public interface SizedWriter<T> extends Marshallable {
      * @param toWrite the object which serialized form length should be returned
      * @return the length (in bytes) of the serialized form of the given object
      */
+    // TODO lift the requirement to give a size first which can involve double serialization.
     long size(@NotNull T toWrite);
 
     /**

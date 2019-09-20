@@ -2557,6 +2557,29 @@ public class CHMUseCasesTest {
             }
         }
     }
+    @Test
+    public void testBytesMarshallable3() throws IOException {
+        BytesMarshallableReaderWriter<IData.Data> bmwr = new BytesMarshallableReaderWriter<>(IData.Data.class);
+        ChronicleMapBuilder<IData.Data, IData.Data> builder = ChronicleMapBuilder
+                .of(IData.Data.class, IData.Data.class)
+                .keyMarshaller(bmwr)
+                .valueMarshaller(bmwr)
+                .actualChunkSize(64)
+                .entries(1000);
+        try (ChronicleMap<IData.Data, IData.Data> map = newInstance(builder)) {
+            for (int i = 0; i < 100; i++) {
+                IData.Data key = new IData.Data();
+                IData.Data value = new IData.Data();
+                key.setText("key-" + i);
+                key.setNumber(i);
+                value.setNumber(i);
+                value.setText("value-" + i);
+                map.put(key, value);
+                // check the map is still valid.
+                map.entrySet().toString();
+            }
+        }
+    }
 
     enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED}
 
