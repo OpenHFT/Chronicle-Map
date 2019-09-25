@@ -1,6 +1,9 @@
 package net.openhft.chronicle.map;
 
-import org.junit.Ignore;
+import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWriter;
+import net.openhft.chronicle.hash.serialization.impl.MarshallableReaderWriter;
+import net.openhft.chronicle.wire.AbstractBytesMarshallable;
+import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.junit.Test;
 
 import java.io.Serializable;
@@ -9,7 +12,7 @@ import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 
-@Ignore("TODO Fix https://github.com/OpenHFT/Chronicle-Map/issues/183")
+// From https://github.com/OpenHFT/Chronicle-Map/issues/183
 public class SerializableTest {
     @Test
     public void test1() {
@@ -40,23 +43,63 @@ public class SerializableTest {
     public void test2() {
         ChronicleMap<Integer, Foo> map = ChronicleMapBuilder.of(Integer.class, Foo.class)
                 .name("bar")
-                .averageValueSize(1024)
+                .averageValueSize(4096)
                 .entries(10)
                 .create();
 
-        String expected = IntStream.range(0, 1100)
-                .mapToObj(i -> i % 50 == 49 ? "\n" : "" + i % 10)
+        String expected = IntStream.range(0, 4096)
+                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
                 .collect(Collectors.joining(""));
 
-
-        map.put(1, new Foo(expected));
+        Foo value = new Foo(expected);
+        map.put(1, value);
         String actual = map.get(1).x;
 
         assertEquals(expected, actual);
     }
 
-    static class Foo implements Serializable {
-        String x;
+    @Test
+    public void test2b() {
+        ChronicleMap<Integer, Bar> map = ChronicleMapBuilder.of(Integer.class, Bar.class)
+                .name("bar")
+                .averageValueSize(4096)
+                .entries(10)
+                .valueMarshaller(new BytesMarshallableReaderWriter<>(Bar.class))
+                .create();
+
+        String expected = IntStream.range(0, 4096)
+                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
+                .collect(Collectors.joining(""));
+
+        Bar value = new Bar(expected);
+        map.put(1, value);
+        String actual = map.get(1).x;
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void test2c() {
+        ChronicleMap<Integer, Bar2> map = ChronicleMapBuilder.of(Integer.class, Bar2.class)
+                .name("bar")
+                .averageValueSize(1024)
+                .entries(10)
+                .valueMarshaller(new MarshallableReaderWriter<>(Bar2.class))
+                .create();
+
+        String expected = IntStream.range(0, 4096)
+                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
+                .collect(Collectors.joining(""));
+
+        Bar2 value = new Bar2(expected);
+        map.put(1, value);
+        String actual = map.get(1).x;
+
+        assertEquals(expected, actual);
+    }
+
+    public static class Foo implements Serializable {
+        public String x;
 
         Foo(int length) {
             this.x = "x" + IntStream.range(0, length)
@@ -64,8 +107,26 @@ public class SerializableTest {
                     .collect(Collectors.joining(""));
         }
 
-        Foo(String expected) {
+        public Foo(String expected) {
             x = expected;
+        }
+    }
+
+    static class Bar extends AbstractBytesMarshallable {
+
+        final String x;
+
+        public Bar(String expected) {
+            this.x = expected;
+        }
+    }
+
+    static class Bar2 extends AbstractMarshallable {
+
+        final String x;
+
+        public Bar2(String expected) {
+            this.x = expected;
         }
     }
 }
