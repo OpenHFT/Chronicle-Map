@@ -1,16 +1,9 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
-import net.openhft.chronicle.hash.serialization.SizedReader;
-import net.openhft.chronicle.hash.serialization.SizedWriter;
-import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReader;
-import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWriter;
 import net.openhft.chronicle.wire.AbstractBytesMarshallable;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
 import java.io.File;
@@ -23,11 +16,9 @@ public class ForEachSegmentTest {
 
     @Test
     public void forEachSegmentEntryWhileReleasesLock() throws IOException {
-        ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.of(Integer.class, MyDto.class)
+        ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.simpleMapOf(Integer.class, MyDto.class)
                 .entries(256)
-                .averageValueSize(128)
-                .actualSegments(1)
-                .valueMarshaller(new BytesMarshallableReaderWriter<>(MyDto.class));
+                .actualSegments(1);
         File tmp = new File(OS.TMP, "stressTest-" + System.nanoTime());
         tmp.deleteOnExit();
         try (ChronicleMap<Integer, MyDto> map = builder.createOrRecoverPersistedTo(tmp)) {
@@ -44,11 +35,9 @@ public class ForEachSegmentTest {
 
     @Test
     public void stressTest() throws IOException, InterruptedException {
-        ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.of(Integer.class, MyDto.class)
+        ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.simpleMapOf(Integer.class, MyDto.class)
                 .entries(256)
-                .averageValueSize(128)
-                .actualSegments(1)
-                .valueMarshaller(new BytesMarshallableReaderWriter<>(MyDto.class));
+                .actualSegments(1);
         File tmp = new File(OS.TMP, "stressTest-" + System.nanoTime());
         Thread t = null;
         try (ChronicleMap<Integer, MyDto> map = builder.createOrRecoverPersistedTo(tmp)) {

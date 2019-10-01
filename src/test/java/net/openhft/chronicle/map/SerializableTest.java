@@ -1,7 +1,5 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWriter;
-import net.openhft.chronicle.hash.serialization.impl.MarshallableReaderWriter;
 import net.openhft.chronicle.wire.AbstractBytesMarshallable;
 import net.openhft.chronicle.wire.AbstractMarshallable;
 import org.junit.Test;
@@ -60,11 +58,10 @@ public class SerializableTest {
 
     @Test
     public void test2b() {
-        ChronicleMap<Integer, Bar> map = ChronicleMapBuilder.of(Integer.class, Bar.class)
+        ChronicleMap<Integer, Bar> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar.class)
                 .name("bar")
                 .averageValueSize(4096)
                 .entries(10)
-                .valueMarshaller(new BytesMarshallableReaderWriter<>(Bar.class))
                 .create();
 
         String expected = IntStream.range(0, 4096)
@@ -80,11 +77,10 @@ public class SerializableTest {
 
     @Test
     public void test2c() {
-        ChronicleMap<Integer, Bar2> map = ChronicleMapBuilder.of(Integer.class, Bar2.class)
+        ChronicleMap<Integer, Bar2> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar2.class)
                 .name("bar")
                 .averageValueSize(1024)
                 .entries(10)
-                .valueMarshaller(new MarshallableReaderWriter<>(Bar2.class))
                 .create();
 
         String expected = IntStream.range(0, 4096)

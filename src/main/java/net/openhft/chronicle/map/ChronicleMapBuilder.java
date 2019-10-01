@@ -32,11 +32,14 @@ import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import net.openhft.chronicle.hash.impl.util.Throwables;
 import net.openhft.chronicle.hash.impl.util.math.PoissonDistribution;
 import net.openhft.chronicle.hash.serialization.*;
+import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWriter;
+import net.openhft.chronicle.hash.serialization.impl.MarshallableReaderWriter;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.values.ValueModel;
 import net.openhft.chronicle.values.Values;
+import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
@@ -280,6 +283,54 @@ public final class ChronicleMapBuilder<K, V> implements
             @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
         return new ChronicleMapBuilder<>(keyClass, valueClass);
     }
+
+    /**
+     * Returns a new {@code ChronicleMapBuilder} instance which is able to {@linkplain #create()
+     * create} maps with the specified key and value classes. It makes some assumptions about the size of entries
+     * and the marshallers used
+     *
+     * @param keyClass   class object used to infer key type and discover it's properties via
+     *                   reflection
+     * @param valueClass class object used to infer value type and discover it's properties via
+     *                   reflection
+     * @param <K>        key type of the maps, created by the returned builder
+     * @param <V>        value type of the maps, created by the returned builder
+     * @return a new builder for the given key and value classes
+     */
+    public static <K, V> ChronicleMapBuilder<K, V> simpleMapOf(
+            @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
+        ChronicleMapBuilder<K, V> builder =
+                new ChronicleMapBuilder<>(keyClass, valueClass)
+                        .putReturnsNull(true)
+                        .removeReturnsNull(true);
+        builder.name(toCamelCase(valueClass.getSimpleName()));
+        if (!builder.isKeySizeKnown())
+            builder.averageKeySize(128);
+        if (!builder.isValueSizeKnown())
+            builder.averageValueSize(512);
+        if (Marshallable.class.isAssignableFrom(valueClass)) {
+            //noinspection unchecked
+            builder.averageValueSize(1024)
+                    .valueMarshaller(new MarshallableReaderWriter<>((Class) valueClass));
+        } else if (BytesMarshallable.class.isAssignableFrom(valueClass)) {
+            builder.valueMarshaller(new BytesMarshallableReaderWriter<>((Class) valueClass));
+        }
+
+        return builder;
+    }
+
+    private static String toCamelCase(String name) {
+        return Character.toLowerCase(name.charAt(0)) + name.substring(1);
+    }
+
+    private boolean isKeySizeKnown() {
+        return keyBuilder.sizeIsStaticallyKnown;
+    }
+
+    private boolean isValueSizeKnown() {
+        return valueBuilder.sizeIsStaticallyKnown;
+    }
+
 
     private static void checkSegments(long segments) {
         if (segments <= 0) {
