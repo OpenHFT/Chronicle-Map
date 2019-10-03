@@ -35,10 +35,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.stream.Stream;
 
@@ -48,7 +50,8 @@ import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 
 /**
- * <h2>A Replicating Multi Master HashMap</h2> <p>Each remote hash map, mirrors its changes over to
+ * <h2>A Replicating Multi Master HashMap</h2>
+ * <p>Each remote hash map, mirrors its changes over to
  * another remote hash map, neither hash map is considered the master store of data, each hash map
  * uses timestamps to reconcile changes. We refer to an instance of a remote hash-map as a node. A
  * node will be connected to any number of other nodes, for the first implementation the maximum
@@ -61,7 +64,9 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
  * nodes local data store. In other words the nodes are only concurrent locally. Its worth realising
  * that another node performing exactly the same operation may return a different value. However
  * reconciliation will ensure the maps themselves become eventually consistent. </p>
- * <h2>Reconciliation </h2> <p>If two ( or more nodes ) were to receive a change to their maps for
+ *
+ * <h2>Reconciliation </h2>
+ * <p>If two ( or more nodes ) were to receive a change to their maps for
  * the same key but different values, say by a user of the maps, calling the put(key, value). Then,
  * initially each node will update its local store and each local store will hold a different value,
  * but the aim of multi master replication is to provide eventual consistency across the nodes. So,
@@ -71,7 +76,8 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
  * and value. Eventual consistency is achieved by looking at the timestamp from the remote node, if
  * for a given key, the remote nodes timestamp is newer than the local nodes timestamp, then the
  * event from the remote node will be applied to the local node, otherwise the event will be
- * ignored. </p> <p>However there is an edge case that we have to concern ourselves with, If two
+ * ignored. </p>
+ * <p>However there is an edge case that we have to concern ourselves with, If two
  * nodes update their map at the same time with different values, we have to deterministically
  * resolve which update wins, because of eventual consistency both nodes should end up locally
  * holding the same data. Although it is rare two remote nodes could receive an update to their maps
@@ -104,6 +110,8 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private long tierModIterBitSetOuterSize;
     private long segmentModIterBitSetsForIdentifierOuterSize;
     private long tierBulkModIterBitSetsForIdentifierOuterSize;
+    private AtomicLong changeCount;
+
     /**
      * Default value is 0, that corresponds to "unset" identifier value (valid ids are positive)
      */
@@ -126,6 +134,8 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 computeSegmentModIterBitSetsForIdentifierOuterSize();
         tierBulkModIterBitSetsForIdentifierOuterSize =
                 computeTierBulkModIterBitSetsForIdentifierOuterSize(tiersInBulk);
+
+        changeCount = new AtomicLong(0);
     }
 
     @Override
@@ -138,6 +148,8 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 wireIn.read(() -> "segmentModIterBitSetsForIdentifierOuterSize").int64();
         tierBulkModIterBitSetsForIdentifierOuterSize =
                 wireIn.read(() -> "tierBulkModIterBitSetsForIdentifierOuterSize").int64();
+
+        changeCount = new AtomicLong(0);
     }
 
     @Override
@@ -327,8 +339,11 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         }
     }
 
+    public long changeCount() { return changeCount.get(); }
+
     public void raiseChange(long tierIndex, long pos) {
         // -1 is invalid remoteIdentifier => raise change for all
+        changeCount.incrementAndGet();
         raiseChangeForAllExcept(tierIndex, pos, (byte) -1);
     }
 
@@ -463,11 +478,11 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public void writeExternalEntry(
-            ReplicableEntry entry, Bytes payload, @NotNull Bytes destination, int chronicleId) {
+            ReplicableEntry entry, Bytes payload, @NotNull Bytes destination, int chronicleId, ArrayList<String> keys) {
         if (payload != null)
             writePayload(payload, destination);
         if (entry != null)
-            writeExternalEntry0(entry, destination);
+            writeExternalEntry0(entry, destination, keys);
     }
 
     private void writePayload(Bytes payload, Bytes destination) {
@@ -479,7 +494,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
      * This method does not set a segment lock, A segment lock should be obtained before calling
      * this method, especially when being used in a multi threaded context.
      */
-    private void writeExternalEntry0(ReplicableEntry entry, Bytes destination) {
+    private void writeExternalEntry0(ReplicableEntry entry, Bytes destination, ArrayList<String> keys) {
         destination.writeByte(ENTRY_HUNK);
 
         destination.writeStopBit(entry.originTimestamp());
@@ -495,6 +510,12 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         } else {
             isDeleted = true;
             key = ((MapAbsentEntry) entry).absentKey();
+        }
+
+        try {
+            keys.add( key.get().toString() );
+        }catch(Exception e){
+            keys.add( "<Binary Data>" );
         }
 
         destination.writeBoolean(isDeleted);
@@ -575,6 +596,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 CompiledReplicatedMapIterationContext::new, this);
     }
 
+
     @Override
     public final V get(Object key) {
         return defaultGet(key);
@@ -585,16 +607,23 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         return defaultGetUsing(key, usingValue);
     }
 
+
     /**
-     * <p>Once a change occurs to a map, map replication requires that these changes are picked up
-     * by another thread, this class provides an iterator like interface to poll for such changes.
-     * </p> <p>In most cases the thread that adds data to the node is unlikely to be the same thread
-     * that replicates the data over to the other nodes, so data will have to be marshaled between
-     * the main thread storing data to the map, and the thread running the replication. </p> <p>One
-     * way to perform this marshalling, would be to pipe the data into a queue. However, This class
-     * takes another approach. It uses a bit set, and marks bits which correspond to the indexes of
-     * the entries that have changed. It then provides an iterator like interface to poll for such
-     * changes. </p>
+     * <p>
+     *     Once a change occurs to a map, map replication requires that these changes are picked up
+     *     by another thread, this class provides an iterator like interface to poll for such changes.
+     * </p>
+     * <p>
+     *     In most cases the thread that adds data to the node is unlikely to be the same thread
+     *     that replicates the data over to the other nodes, so data will have to be marshaled between
+     *     the main thread storing data to the map, and the thread running the replication.
+     * </p>
+     * <p>
+     *     One way to perform this marshalling, would be to pipe the data into a queue. However, This class
+     *     takes another approach. It uses a bit set, and marks bits which correspond to the indexes of
+     *     the entries that have changed. It then provides an iterator like interface to poll for such
+     *     changes.
+     * </p>
      *
      * @author Rob Austin.
      */

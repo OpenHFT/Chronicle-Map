@@ -22,6 +22,7 @@ import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 
 /**
  * @author Rob Austin.
@@ -189,8 +190,7 @@ public interface Replica extends Closeable {
          *                    match the maps local
          * @param chronicleId is the channel id used to identify the canonical map or queue
          */
-        void writeExternalEntry(ReplicableEntry entry, Bytes payload, @NotNull Bytes destination,
-                                int chronicleId);
+        void writeExternalEntry(ReplicableEntry entry, Bytes payload, @NotNull Bytes destination, int chronicleId, ArrayList<String> keys );
 
         /**
          * The map implements this method to restore its contents. This method must read the values
