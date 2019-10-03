@@ -189,6 +189,7 @@ public interface Replica extends Closeable {
          *                    operation and add zeroBytes, if the identifier in the entry did not
          *                    match the maps local
          * @param chronicleId is the channel id used to identify the canonical map or queue
+         * @param keys        list of keys corresponding to given ReplicableEntry (added to during the call)
          */
         void writeExternalEntry(ReplicableEntry entry, Bytes payload, @NotNull Bytes destination, int chronicleId, ArrayList<String> keys );
 

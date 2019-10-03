@@ -177,6 +177,7 @@ public class BasicReplicationTest {
         private final Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer(4096);
         private final ExecutorService delayedExecutor = Executors.newSingleThreadExecutor();
         private final AtomicInteger messagesInflight = new AtomicInteger(0);
+        private final ArrayList<String> keys = new ArrayList<>();
 
         IteratorAndDestinationMap(final ReplicatedChronicleMap<K, V, ?>.ModificationIterator modificationIterator,
                                   final ReplicatedChronicleMap<K, V, ?> sourceMap,
@@ -190,7 +191,8 @@ public class BasicReplicationTest {
         public void onEntry(final ReplicableEntry entry, final int chronicleId) {
             try {
                 buffer.clear();
-                sourceMap.writeExternalEntry(entry, null, buffer, chronicleId);
+                keys.clear();
+                sourceMap.writeExternalEntry(entry, null, buffer, chronicleId,keys);
 
                 buffer.readPosition(0);
                 buffer.readLimit(buffer.writePosition());
