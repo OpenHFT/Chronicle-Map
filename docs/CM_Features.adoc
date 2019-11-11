@@ -139,8 +139,6 @@ NOTE: For access to commercially available features please contact mailto:sales@
  - https://github.com/OpenHFT/Chronicle-Map/issues[Issues]
  - https://groups.google.com/forum/#!forum/chronicle-map[Chronicle Map mailing list]
  - http://stackoverflow.com/tags/chronicle-map[Stackoverflow]
- - https://plus.google.com/communities/111431452027706917722[Chronicle User's group]
- - http://jrvis.com/red-dwarf/?user=openhft&repo=Chronicle-Map[Chronicle Map usage heatmap]
 
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>
