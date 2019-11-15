@@ -308,14 +308,13 @@ public final class ChronicleMapBuilder<K, V> implements
             builder.averageKeySize(128);
         if (!builder.isValueSizeKnown())
             builder.averageValueSize(512);
-        if (Marshallable.class.isAssignableFrom(valueClass)) {
+        if (BytesMarshallable.class.isAssignableFrom(valueClass)) {
+            builder.valueMarshaller(new BytesMarshallableReaderWriter<>((Class) valueClass));
+        } else if (Marshallable.class.isAssignableFrom(valueClass)) {
             //noinspection unchecked
             builder.averageValueSize(1024)
                     .valueMarshaller(new MarshallableReaderWriter<>((Class) valueClass));
-        } else if (BytesMarshallable.class.isAssignableFrom(valueClass)) {
-            builder.valueMarshaller(new BytesMarshallableReaderWriter<>((Class) valueClass));
         }
-
         return builder;
     }
 
