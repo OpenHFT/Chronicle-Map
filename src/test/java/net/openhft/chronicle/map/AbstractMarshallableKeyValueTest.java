@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -34,11 +34,11 @@ public final class AbstractMarshallableKeyValueTest {
         assertThat(map.get(new Key()).number, is(new Value().number));
     }
 
-    private static final class Key extends AbstractMarshallable {
+    private static final class Key extends SelfDescribingMarshallable {
         private String k = "key";
     }
 
-    private static final class Value extends AbstractMarshallable {
-        private Integer number = Integer.valueOf(17);
+    private static final class Value extends SelfDescribingMarshallable {
+        private Integer number = 17;
     }
 }

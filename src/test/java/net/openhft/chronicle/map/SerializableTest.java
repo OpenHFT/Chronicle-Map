@@ -1,7 +1,7 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.wire.AbstractBytesMarshallable;
-import net.openhft.chronicle.wire.AbstractMarshallable;
+import net.openhft.chronicle.wire.BytesInBinaryMarshallable;
+import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import org.junit.Test;
 
 import java.io.Serializable;
@@ -108,7 +108,7 @@ public class SerializableTest {
         }
     }
 
-    static class Bar extends AbstractBytesMarshallable {
+    static class Bar extends BytesInBinaryMarshallable {
 
         final String x;
 
@@ -117,7 +117,7 @@ public class SerializableTest {
         }
     }
 
-    static class Bar2 extends AbstractMarshallable {
+    static class Bar2 extends SelfDescribingMarshallable {
 
         final String x;
 
