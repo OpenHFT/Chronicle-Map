@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.HashEntry;
+import net.openhft.chronicle.set.SetEntry;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @see MapEntryOperations
  * @see MapQueryContext#entry()
  */
-public interface MapEntry<K, V> extends HashEntry<K> {
+public interface MapEntry<K, V> extends SetEntry<K> {
     @Override
     @NotNull
     MapContext<K, V, ?> context();

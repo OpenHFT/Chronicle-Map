@@ -19,7 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.HashContext;
+import net.openhft.chronicle.set.SetContext;
 
 /**
  * Context, in which {@link MapEntry MapEntries} are accessed. {@code MapContext} allows to access
@@ -36,7 +36,7 @@ import net.openhft.chronicle.hash.HashContext;
  * @param <R> the return type of {@link MapEntryOperations} specified for the queried map
  */
 public interface MapContext<K, V, R>
-        extends HashContext<K>, MapEntryOperations<K, V, R>, DefaultValueProvider<K, V> {
+        extends SetContext<K, R>, MapEntryOperations<K, V, R>, DefaultValueProvider<K, V> {
     /**
      * Returns the accessed {@code ChronicleMap}. Synonym to {@link #map()}.
      */
