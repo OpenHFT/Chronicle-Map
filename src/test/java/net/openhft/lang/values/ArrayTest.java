@@ -20,7 +20,9 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import org.json.JSONException;
 import org.junit.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +33,7 @@ import static org.junit.Assert.assertEquals;
 public class ArrayTest {
 
     @Test
-    public void test0() throws IOException {
+    public void test0() throws IOException, JSONException{
         ClassAliasPool.CLASS_ALIASES.addAlias(MovingAverageArray.class);
 
         File file = new File(OS.getTarget() + "/pf-PosistionsAndClose-" + System.nanoTime());
@@ -49,7 +51,7 @@ public class ArrayTest {
                 .of(Long.class, MovingAverageArray.class)
                 .createPersistedTo(file);
         MovingAverageArray m = mapRead.get(1L);
-        assertEquals("!MovingAverageArray {\n" +
+        assertJSONEqualsAfterPrefix("!MovingAverageArray {\n" +
                 "  values: [\n" +
                 "    { movingAverage: 0.1, high: 0.1, low: 0.1, stdDev: 0.1 },\n" +
                 "    { movingAverage: 1.1, high: 1.1, low: 1.1, stdDev: 1.1 },\n" +
@@ -61,7 +63,7 @@ public class ArrayTest {
                 "}\n", m.toString());
         MovingAverageArray m2 = mapRead.getUsing(2L, m);
         assertSame(m, m2); // object is recycled, so no objects are created.
-        assertEquals("!MovingAverageArray {\n" +
+        assertJSONEqualsAfterPrefix("!MovingAverageArray {\n" +
                 "  values: [\n" +
                 "    { movingAverage: 0.2, high: 0.2, low: 0.2, stdDev: 0.2 },\n" +
                 "    { movingAverage: 1.2, high: 1.2, low: 1.2, stdDev: 1.2 },\n" +
@@ -78,5 +80,12 @@ public class ArrayTest {
             sample.add(new MovingAverageCompact(value, value, value, value));
         }
         return sample;
+    }
+
+    private void assertJSONEqualsAfterPrefix(String s1, String s2) throws JSONException {
+        String[] a1 = s1.split(" ", 2);
+        String[] a2 = s2.split(" ", 2);
+        assertEquals(a1[0], a2[0]);
+        JSONAssert.assertEquals(a1[1], a2[1], false);
     }
 }
