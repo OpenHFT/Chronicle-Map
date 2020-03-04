@@ -399,7 +399,7 @@ public class VanillaChronicleMap<K, V, R>
 
     public QueryContextInterface<K, V, R> mapContext() {
         //noinspection unchecked
-        return q().getContext(CompiledMapIterationContext.class,
+        return q().getContext(CompiledMapQueryContext.class,
                 // lambda is used instead of constructor reference because currently stage-compiler
                 // has issues with parsing method/constructor refs.
                 // TODO replace with constructor ref when stage-compiler is improved
