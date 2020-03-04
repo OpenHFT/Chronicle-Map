@@ -231,7 +231,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * This limit is set via the {@code net.openhft.chronicle.map.ChronicleMapBuilder#maxBloatFactor} if the {@code remainingAutoResizes} drops to zero,
      * then the map is no longer able to expand, if subsequently, the free space ( see  {@link net.openhft.chronicle.map.ChronicleMap#percentageFreeSpace})
      *  in the map becomes low ( around 5% ), the map will not be able to take more entries and will fail with an {@code
-     * java.lang.IllegalStateException} for production systems it is recommended you periodically monitor the remainingAutoResizes and {@link
+     * java.lang.IllegalStateException} for production systems it is recommended you periodically monitor the remainingAutoResizes and
      * {@link net.openhft.chronicle.map.ChronicleMap#percentageFreeSpace}.
      */
     default int remainingAutoResizes() {
