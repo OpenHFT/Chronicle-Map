@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import impl.CompiledMapIterationContext;
-import impl.CompiledMapQueryContext;
 import net.openhft.chronicle.algo.bitset.ReusableBitSet;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Bytes;
@@ -37,9 +35,7 @@ import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
-import net.openhft.chronicle.map.impl.IterationContext;
-import net.openhft.chronicle.map.impl.NullReturnValue;
-import net.openhft.chronicle.map.impl.QueryContextInterface;
+import net.openhft.chronicle.map.impl.*;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.WireIn;
@@ -403,7 +399,7 @@ public class VanillaChronicleMap<K, V, R>
 
     public QueryContextInterface<K, V, R> mapContext() {
         //noinspection unchecked
-        return q().getContext(CompiledMapQueryContext.class,
+        return q().getContext(CompiledMapIterationContext.class,
                 // lambda is used instead of constructor reference because currently stage-compiler
                 // has issues with parsing method/constructor refs.
                 // TODO replace with constructor ref when stage-compiler is improved
