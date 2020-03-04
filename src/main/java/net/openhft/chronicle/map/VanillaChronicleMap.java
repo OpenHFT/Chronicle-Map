@@ -16,6 +16,9 @@
 
 package net.openhft.chronicle.map;
 
+import impl.CompiledMapIterationContext;
+import impl.CompiledMapQueryContext;
+import net.openhft.chronicle.algo.bitset.ReusableBitSet;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
@@ -34,7 +37,9 @@ import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
-import net.openhft.chronicle.map.impl.*;
+import net.openhft.chronicle.map.impl.IterationContext;
+import net.openhft.chronicle.map.impl.NullReturnValue;
+import net.openhft.chronicle.map.impl.QueryContextInterface;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.WireIn;
@@ -51,10 +56,13 @@ import java.util.function.Function;
 
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
 
+@SuppressWarnings("JavadocReference")
 public class VanillaChronicleMap<K, V, R>
         extends VanillaChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>,
         ExternalMapQueryContext<K, V, ?>>
         implements AbstractChronicleMap<K, V> {
+
+    private final double maxBloatFactor;
 
     public SizeMarshaller valueSizeMarshaller;
     public SizedReader<V> valueReader;
@@ -98,6 +106,7 @@ public class VanillaChronicleMap<K, V, R>
         valueSizeMarshaller = valueBuilder.sizeMarshaller();
         valueReader = valueBuilder.reader();
         valueDataAccess = valueBuilder.dataAccess();
+        maxBloatFactor = builder.maxBloatFactor;
 
         constantlySizedEntry = builder.constantlySizedEntries();
 
@@ -224,6 +233,51 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     public Type valueType() {
         return valueClass;
+    }
+
+    private long tiersUsed() {
+        return globalMutableState().getExtraTiersInUse();
+    }
+
+    private long maxTiers() {
+        return (long) (maxBloatFactor * actualSegments);
+    }
+
+    @Override
+    public int remainingAutoResizes() {
+        return (int) (maxTiers() - tiersUsed());
+    }
+
+    @Override
+    public short percentageFreeSpace() {
+
+        double totalUsed = 0;
+        double totalSize = 0;
+
+        try (IterationContext<K, V, ?> c = iterationContext()) {
+            for (int segmentIndex = 0; segmentIndex < segments(); segmentIndex++) {
+                c.initSegmentIndex(segmentIndex);
+
+                if (!(c instanceof CompiledMapIterationContext))
+                    continue;
+                CompiledMapIterationContext c1 = (CompiledMapIterationContext) c;
+
+                c1.goToFirstTier();
+                ReusableBitSet freeList = c1.freeList();
+                totalUsed += freeList.cardinality();
+                totalSize += freeList.logicalSize();
+
+                while (c1.hasNextTier()) {
+                    c1.nextTier();
+                    ReusableBitSet freeList0 = c1.freeList();
+                    totalUsed += freeList0.cardinality();
+                    totalSize += freeList.logicalSize();
+                }
+
+            }
+        }
+
+        return (short) (100 - (int) (100 * totalUsed / totalSize));
     }
 
     @NotNull

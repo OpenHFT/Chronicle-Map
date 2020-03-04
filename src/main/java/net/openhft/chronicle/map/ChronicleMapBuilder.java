@@ -204,7 +204,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private int maxChunksPerEntry = -1;
     private int alignment = UNDEFINED_ALIGNMENT_CONFIG;
     private long entries = -1L;
-    private double maxBloatFactor = 1.0;
+    double maxBloatFactor = 1.0;
     private boolean allowSegmentTiering = true;
     private double nonTieredSegmentsPercentile = 0.99999;
     private boolean aligned64BitMemoryOperationsAtomic = OS.is64Bit();

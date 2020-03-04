@@ -19,6 +19,7 @@ package net.openhft.chronicle.map.jsr166.map;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -670,40 +671,37 @@ public class ChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    /**
-     * A deserialized map equals original
-     */
-  /*  @Test public void testSerialization()   {
-        Map x = map5();
-        Map y = serialClone(x);
+    @Test
+    public void testPercentageComplete() {
 
-        assertNotSame(x, y);
-        assertEquals(x.size(), y.size());
-        assertEquals(x, y);
-        assertEquals(y, x);
-    }*/
+        try (ChronicleMap<Integer, Integer> map = ChronicleMap
+                .of(Integer.class, Integer.class)
+                .entries(1600)
+                .actualSegments(3)
+                .maxBloatFactor(2)
+                .create()) {
 
-    /**
-     * TODO : SetValue of an EntrySet entry sets value in the map.
-     */
-    /*@Test public void testSetValueWriteThrough() {
-        // Adapted from a bug report by Eric Zoerner
-        ChronicleMap map = newShmIntString(2, 5.0f, 1);
-        assertTrue(map.isEmpty());
-        for (int i = 0; i < 20; i++)
-            map.put(new Integer(i), new Integer(i));
-        assertFalse(map.isEmpty());
-        Map.Entry entry1 = (Map.Entry) map.entrySet().iterator().next();
-        // Unless it happens to be first (in which case remainder of
-        // test is skipped), remove a possibly-colliding key from map
-        // which, under some implementations, may cause entry1 to be
-        // cloned in map
-        if (!entry1.getKey().equals(new Integer(16))) {
-            map.remove(new Integer(16));
-            entry1.setValue("XYZ");
-            assertTrue(map.containsValue("XYZ")); // fails if write-through broken
+            long remainingAutoResizes = 0;
+            short percentageFreeSpace = 0;
+            try {
+                for (int i = 0; ; i++) {
+
+                    map.put(i, 0);
+                    remainingAutoResizes = map.remainingAutoResizes();
+                    percentageFreeSpace = map.percentageFreeSpace();
+
+                }
+            } catch (IllegalStateException e) {
+                if (e.getMessage().contains("Attempt to allocate")) {
+                    Assert.assertEquals(0, (int) remainingAutoResizes);
+                    Assert.assertTrue(percentageFreeSpace < 6);
+                    return;
+                }
+                Assert.fail();
+            }
+
         }
-    }*/
+    }
 
 }
 
