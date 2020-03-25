@@ -22,7 +22,7 @@ public class StringArrayExample {
     }
 
     public interface CharSequenceWrapper {
-        void setCharSequence(@MaxUtf8Length(6) CharSequence idSource);
+        void setCharSequence(@MaxUtf8Length(6) CharSequence charSequence);
 
         CharSequence getCharSequence();
     }
@@ -32,7 +32,6 @@ public class StringArrayExample {
         ChronicleMap<Integer, CharSequenceArray> map = ChronicleMapBuilder
                 .of(Integer.class, CharSequenceArray.class)
                 .entries(100)
-
                 .create();
         {
             CharSequenceArray charSequenceArray = Values.newHeapInstance(CharSequenceArray.class);
