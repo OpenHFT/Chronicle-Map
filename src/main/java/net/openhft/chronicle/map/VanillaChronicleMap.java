@@ -58,7 +58,7 @@ public class VanillaChronicleMap<K, V, R>
         ExternalMapQueryContext<K, V, ?>>
         implements AbstractChronicleMap<K, V> {
 
-    private final double maxBloatFactor;
+    private double maxBloatFactor;
 
     public SizeMarshaller valueSizeMarshaller;
     public SizedReader<V> valueReader;
@@ -102,7 +102,7 @@ public class VanillaChronicleMap<K, V, R>
         valueSizeMarshaller = valueBuilder.sizeMarshaller();
         valueReader = valueBuilder.reader();
         valueDataAccess = valueBuilder.dataAccess();
-        maxBloatFactor = builder.maxBloatFactor;
+        maxBloatFactor = builder.maxBloatFactor();
 
         constantlySizedEntry = builder.constantlySizedEntries();
 
@@ -131,6 +131,7 @@ public class VanillaChronicleMap<K, V, R>
 
         alignment = wireIn.read(() -> "alignment").int32();
         worstAlignment = wireIn.read(() -> "worstAlignment").int32();
+        maxBloatFactor    = wireIn.read(() -> "maxBloatFactor").float64();
     }
 
     @Override
@@ -146,13 +147,13 @@ public class VanillaChronicleMap<K, V, R>
 
         wireOut.write(() -> "alignment").int32(alignment);
         wireOut.write(() -> "worstAlignment").int32(worstAlignment);
+        wireOut.write(() -> "maxBloatFactor").float64(maxBloatFactor);
     }
 
     void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
         name = builder.name();
         putReturnsNull = builder.putReturnsNull();
         removeReturnsNull = builder.removeReturnsNull();
-
         entryOperations = (MapEntryOperations<K, V, R>) builder.entryOperations;
         methods = (MapMethods<K, V, R>) builder.methods;
         defaultEntryOperationsAndMethods = entryOperations == DefaultSpi.mapEntryOperations() &&
