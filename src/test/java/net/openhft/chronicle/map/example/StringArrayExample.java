@@ -28,7 +28,7 @@ public class StringArrayExample {
     }
 
     @Test
-    public void simpleLoggingTest() {
+    public void examplePutAndGet() {
         ChronicleMap<Integer, CharSequenceArray> map = ChronicleMapBuilder
                 .of(Integer.class, CharSequenceArray.class)
                 .entries(100)
@@ -38,12 +38,12 @@ public class StringArrayExample {
             map.put(1, charSequenceArray);
         }
         {
-            // change the value in the array
+            // compute - change the value in the array
             map.compute(1, this::setToHello);
         }
 
         {
-            // read the value
+            // get - read the value
             CharSequence charSequence = map.getUsing(1, charSequenceArray).getCharSequenceWrapperAt(1).getCharSequence();
             System.out.println(charSequence);
         }
