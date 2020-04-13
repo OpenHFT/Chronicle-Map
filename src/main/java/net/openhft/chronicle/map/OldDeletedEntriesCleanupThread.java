@@ -72,7 +72,7 @@ class OldDeletedEntriesCleanupThread extends Thread
 
     private long prevSegment0ScanStart = -1;
     private long removedCompletely;
-
+    private long startTime = System.currentTimeMillis();
     OldDeletedEntriesCleanupThread(ReplicatedChronicleMap<?, ?, ?> map) {
         super("Cleanup Thread for " + map.toIdentityString());
         setDaemon(true);
@@ -116,6 +116,9 @@ class OldDeletedEntriesCleanupThread extends Thread
 
     @Override
     public void run() {
+        if (System.currentTimeMillis() - startTime < 1_000)
+            return;
+
         while (!shutdown) {
             int nextSegmentIndex = cleanupSegment();
             if (nextSegmentIndex == -1)
