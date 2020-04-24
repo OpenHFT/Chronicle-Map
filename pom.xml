@@ -34,26 +34,44 @@
                 <scope>import</scope>
             </dependency>
 
+            <dependency>
+                <groupId>com.thoughtworks.xstream</groupId>
+                <artifactId>xstream</artifactId>
+                <version>1.4.12</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.hawt</groupId>
+                <artifactId>hawtio-embedded</artifactId>
+                <version>2.7.1</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.skyscreamer</groupId>
+                <artifactId>jsonassert</artifactId>
+                <version>1.5.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>net.openhft</groupId>
+                <artifactId>zero-allocation-hashing</artifactId>
+                <version>0.8</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.samskivert</groupId>
+                <artifactId>samskivert</artifactId>
+                <version>1.9</version>
+            </dependency>
+
         </dependencies>
 
     </dependencyManagement>
     <dependencies>
 
         <dependency>
-            <groupId>com.intellij</groupId>
-            <artifactId>annotations</artifactId>
-            <version>12.0</version>
-        </dependency>
-
-        <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>chronicle-core</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jetbrains</groupId>
-                    <artifactId>annotations</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
 
         <dependency>
@@ -107,7 +125,6 @@
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
-            <version>1.4.12</version>
         </dependency>
 
         <dependency>
@@ -171,22 +188,13 @@
 
         <dependency>
             <groupId>net.openhft</groupId>
-            <artifactId>stage-compiler</artifactId>
-            <version>1.11</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
             <artifactId>zero-allocation-hashing</artifactId>
-            <version>0.8</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>com.samskivert</groupId>
             <artifactId>samskivert</artifactId>
-            <version>1.9</version>
             <scope>test</scope>
         </dependency>
 
@@ -199,15 +207,20 @@
         <dependency>
             <groupId>io.hawt</groupId>
             <artifactId>hawtio-embedded</artifactId>
-            <version>2.7.1</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.skyscreamer</groupId>
             <artifactId>jsonassert</artifactId>
-            <version>1.5.0</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>stage-compiler</artifactId>
+            <version>1.11</version>
+            <scope>provided</scope>
         </dependency>
 
     </dependencies>
