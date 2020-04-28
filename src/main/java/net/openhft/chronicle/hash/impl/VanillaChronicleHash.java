@@ -287,6 +287,7 @@ public abstract class VanillaChronicleHash<K,
         tierBulkInnerOffsetToTiers = wireIn.read(() -> "tierBulkInnerOffsetToTiers").int64();
         tiersInBulk = wireIn.read(() -> "tiersInBulk").int64();
         log2TiersInBulk = wireIn.read(() -> "log2TiersInBulk").int32();
+        skipCloseOnExitHook = wireIn.read(() -> "skipCloseOnExitHook").bool();
     }
 
     @Override
@@ -331,6 +332,7 @@ public abstract class VanillaChronicleHash<K,
         wireOut.write(() -> "tierBulkInnerOffsetToTiers").int64(tierBulkInnerOffsetToTiers);
         wireOut.write(() -> "tiersInBulk").int64(tiersInBulk);
         wireOut.write(() -> "log2TiersInBulk").int32(log2TiersInBulk);
+        wireOut.write(() -> "skipCloseOnExitHook").bool(skipCloseOnExitHook);
     }
 
     protected VanillaGlobalMutableState createGlobalMutableState() {
