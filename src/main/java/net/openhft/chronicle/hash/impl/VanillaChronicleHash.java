@@ -38,7 +38,6 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireInternal;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
@@ -378,6 +377,13 @@ public abstract class VanillaChronicleHash<K,
 
     protected long computeTierBulkInnerOffsetToTiers(long tiersInBulk) {
         return 0L;
+    }
+
+    protected void initTransientsFromBuilder(ChronicleHashBuilder<?, ?, ?> builder) {
+        @SuppressWarnings({"deprecation", "unchecked"})
+        ChronicleHashBuilderPrivateAPI<K, ?> privateAPI =
+                (ChronicleHashBuilderPrivateAPI<K, ?>) builder.privateAPI();
+        preShutdownAction = privateAPI.getPreShutdownAction();
     }
 
     public void initTransients() {

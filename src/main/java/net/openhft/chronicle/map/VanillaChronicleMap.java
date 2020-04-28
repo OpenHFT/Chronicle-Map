@@ -23,6 +23,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.Data;
@@ -150,7 +151,10 @@ public class VanillaChronicleMap<K, V, R>
         wireOut.write(() -> "maxBloatFactor").float64(maxBloatFactor);
     }
 
-    void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
+    @Override
+    protected void initTransientsFromBuilder(ChronicleHashBuilder<?, ?, ?> hashBuilder) {
+        super.initTransientsFromBuilder(hashBuilder);
+        ChronicleMapBuilder<K, V> builder = (ChronicleMapBuilder<K, V>) hashBuilder;
         name = builder.name();
         putReturnsNull = builder.putReturnsNull();
         removeReturnsNull = builder.removeReturnsNull();

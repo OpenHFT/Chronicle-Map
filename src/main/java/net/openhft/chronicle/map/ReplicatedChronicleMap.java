@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.algo.bitset.BitSetFrame;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.hash.impl.TierCountersArea;
@@ -189,8 +190,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     @Override
-    void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
-        super.initTransientsFromBuilder(builder);
+    protected void initTransientsFromBuilder(ChronicleHashBuilder<?, ?, ?> hashBuilder) {
+        super.initTransientsFromBuilder(hashBuilder);
+        ChronicleMapBuilder<?, ?> builder = (ChronicleMapBuilder<?, ?>) hashBuilder;
         this.localIdentifier = builder.replicationIdentifier;
         //noinspection unchecked
         this.remoteOperations = (MapRemoteOperations<K, V, R>) builder.remoteOperations;
