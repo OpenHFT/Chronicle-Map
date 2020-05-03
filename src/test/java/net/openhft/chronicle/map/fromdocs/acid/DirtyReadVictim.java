@@ -28,37 +28,41 @@ public class DirtyReadVictim implements Runnable {
     public void run() {
         Scanner sc= new Scanner(System.in);
         try {
+            System.out.println(
+                    " ,,---------- @t="+System.currentTimeMillis()+
+                            " DirtyReadVictim sleeping 10 seconds"
+            );
             Thread.sleep(10_000);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             chrAig.getCompositeChronicleMap().acquireUsing("369604101", bond);
             System.out.println(
-                    " ---------- @t="+System.currentTimeMillis()+
-                    " DirtyReadVictim calling m.get('369604101')"
+                    " ,,---------- @t="+System.currentTimeMillis()+
+                    " DirtyReadVictim calling chrAig.get('369604101')"
             );
             //sc.nextLine();
             chrAig.setTransactionIsolation(ChronicleAcidIsolation.DIRTY_READ_INTOLERANT);
-            bond = chrAig.getCompositeChronicleMap().get("369604101");
+            bond = chrAig.get("369604101");
             Double coupon = bond.getCoupon();
             System.out.println(
-                            " ---------- @t="+System.currentTimeMillis()+
-                            " DirtyReadVictim calling chrAig.commmit()"
+                            " ,,---------- @t="+System.currentTimeMillis()+
+                            " DirtyReadVictim got() coupon="+coupon+" calling chrAig.commmit()"
             );
             //sc.nextLine();
             chrAig.commit();
             System.out.println(
-                    " ---------- @t="+System.currentTimeMillis()+
+                    " ,,---------- @t="+System.currentTimeMillis()+
                     " DirtyReadVictim COMMITTED"
             );
         } catch (Exception throwables) {
             try {
                 System.out.println(
-                                " ---------- @t="+System.currentTimeMillis()+
+                                " ,,---------- @t="+System.currentTimeMillis()+
                                 " DirtyReadVictim calling chrAig.rollback()"
                 );
-                sc.nextLine();
+                //sc.nextLine();
                 chrAig.rollback();
                 System.out.println(
-                        " ---------- @t="+System.currentTimeMillis()+
+                        " ,,---------- @t="+System.currentTimeMillis()+
                         " DirtyReadVictim ROLLED BACK"
                 );
             } catch (SQLException e) {

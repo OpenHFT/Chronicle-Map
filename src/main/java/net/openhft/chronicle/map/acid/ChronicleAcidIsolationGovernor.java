@@ -16,50 +16,55 @@ import java.util.concurrent.Executor;
 
 public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
 
-    private ChronicleMap<Thread, Integer> transactionIsolationMap;
+    private ChronicleMap<String, Integer> transactionIsolationMap;
     private ChronicleMap<String, BondVOInterface> compositeChronicleMap; //hacked in, not generic
     private String priorCusip;
-    private Double  priorCoupon;
+    private Double  aCoupon;
 
 
     public synchronized void put(String cusip, BondVOInterface bond) throws Exception {
 
         ChronicleMap<String,BondVOInterface> cMap = this.getCompositeChronicleMap();
-        this.priorCusip = cusip;
-        this.priorCoupon = cMap.get(cusip).getCoupon();
+        this.aCoupon = cMap.get(cusip).getCoupon();
 
-        bond.setCoupon(priorCoupon + 0.001);
-        this.getCompositeChronicleMap().put(cusip, bond);
+        bond.setCoupon(aCoupon);
+        cMap.put(cusip, bond);
+        System.out.println(
+                " ,---------- @t="+System.currentTimeMillis()+
+                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                        " inside chrAig.put('"+cusip+"'/"+aCoupon+") DONE"+
+                        "----------, "
+        );
     }
 
 
     //here is where the drama happens
     public synchronized BondVOInterface get(String cusip) throws Exception {
         System.out.println(
-                        " ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread()+
-                        " m.get()"+
-                        "---------- "
+                        " ,---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                        " inside chrAig.get('"+cusip+"') BEGIN"+
+                        "----------, "
         );
         BondVOInterface b = null;
-        Thread tx = Thread.currentThread();
-        ChronicleMap<Thread,Integer> txMap = this.getTransactionIsolationMap();
+        String tx = Thread.currentThread().toString();
+        ChronicleMap<String,Integer> txMap = this.getTransactionIsolationMap();
         if (txMap.size() > 1) { //other ACID transactions are active
             if (txMap.get(tx) <= ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC) {
                 b = this.compositeChronicleMap.get(cusip);
             } else if (txMap.get(tx) >= ChronicleAcidIsolation.DIRTY_READ_INTOLERANT) {
                 System.out.println(
-                                " ---------- @t="+System.currentTimeMillis()+
-                                " Tx="+Thread.currentThread()+
-                                " m.get() WAITING"+
-                                "---------- "
+                                ", ---------- @t="+System.currentTimeMillis()+
+                                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                                " inside chrAig.get() WAITING"+
+                                "---------- ,"
                 );
                 this.wait();
                 System.out.println(
-                                " ---------- @t="+System.currentTimeMillis()+
-                                " Tx="+Thread.currentThread()+
-                                " m.get() RESUMING"+
-                                "---------- "
+                                " ,---------- @t="+System.currentTimeMillis()+
+                                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                                " inside chrAig.get() RESUMING"+
+                                "----------, "
                 );
                 b = this.compositeChronicleMap.get(cusip);
             }
@@ -67,21 +72,21 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
             b = this.compositeChronicleMap.get(cusip);
         }
         System.out.println(
-                        " ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread()+
-                        " m.get() DONE"+
-                        "---------- "
+                        " ,---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                        " inside chrAig.get() DONE"+
+                        "---------- ,"
         );
         return b;
     }
 
-    public ChronicleMap<Thread, Integer> getTransactionIsolationMap() {
+    public ChronicleMap<String, Integer> getTransactionIsolationMap() {
 
         return transactionIsolationMap;
     }
 
-    public void setTransactionIsolationMap(ChronicleMap<Thread, Integer> transactionIsolationMap) {
-        this.transactionIsolationMap = transactionIsolationMap;
+    public void setTransactionIsolationMap(ChronicleMap<String, Integer> txMap) {
+        this.transactionIsolationMap = txMap;
     }
 
     public ChronicleMap<String, BondVOInterface> getCompositeChronicleMap() {
@@ -95,16 +100,16 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     }
 
     @Override
-    public void setTransactionIsolation(int level) throws SQLException {
+    public synchronized void setTransactionIsolation(int level) throws SQLException {
 
         this.getTransactionIsolationMap().put(
-                Thread.currentThread(),
+                Thread.currentThread().toString(),
                 level
         );
     }
 
     @Override
-    public int getTransactionIsolation() throws SQLException {
+    public synchronized int getTransactionIsolation() throws SQLException {
 
         int iL = this.getTransactionIsolationMap().get(Thread.currentThread());
         return(iL);
@@ -113,24 +118,24 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     @Override
     public synchronized void commit() throws SQLException {
         System.out.println(
-                " ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread()+
+                " ,---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " chrAig.commit() BEGIN "+
-                        "---------- "
+                        "----------, "
         );
-        this.getTransactionIsolationMap().remove(Thread.currentThread());
+        this.getTransactionIsolationMap().remove(Thread.currentThread().toString());
         System.out.println(
-                " ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread()+
+                " ,---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " chrAig.commit() END "+
-                        "---------- "
+                        "----------, "
         );
         this.notifyAll();
         System.out.println(
-                " ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread()+
+                ", ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " chrAig.commit() complete notifyAll() to waiting Tx Threads "+
-                        "---------- "
+                        "---------- ,"
         );
 
     }
@@ -139,28 +144,28 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     public synchronized void rollback() throws SQLException {
         BondVOInterface priorBond = this.getCompositeChronicleMap().get("369604101");
         if (priorBond != null) {
-            priorBond.setCoupon(priorCoupon);
+            priorBond.setCoupon(3.50);
             this.getCompositeChronicleMap().put("369604101", priorBond);
         }
         System.out.println(
-                " ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread()+
+                " ,---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " chrAig.rollback() BEGIN "+
-                        "---------- "
+                        "----------, "
         );
-        this.getTransactionIsolationMap().remove(Thread.currentThread());
+        this.getTransactionIsolationMap().remove(Thread.currentThread().toString());
         System.out.println(
-                " ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread()+
+                " ,---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " chrAig.rollback() COMPLETE "+
-                        "---------- "
+                        "----------, "
         );
         this.notifyAll();
         System.out.println(
-                " ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread()+
+                ", ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " chrAig.rollback() completed notifyAll() to waiting Tx Threads"+
-                        "---------- "
+                        "----------, "
         );
     }
     // rest of these java.sql.Connection methods remain unimplemented ...

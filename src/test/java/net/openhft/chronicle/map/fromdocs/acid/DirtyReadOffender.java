@@ -37,15 +37,22 @@ public class DirtyReadOffender implements Runnable {
             chrAig.setTransactionIsolation(ChronicleAcidIsolation.LOWEST_LATENCY);
             bond.setCoupon(4.55);
             chrAig.put("369604101", bond);
-            System.out.println(
-                   " @t=" + System.currentTimeMillis() +
-                   " DirtyReadOffender calling chrAig.commit()  ---------- "
-            );
-            sc.nextLine();
-            chrAig.commit();
+
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
-                    " DirtyReadOffender COMMITTED ---------- "
+                            " DirtyReadOffender sleeping 1 minute.  ---------- "
+            );
+            Thread.sleep(60*1_000);
+            System.out.println(
+                   " @t=" + System.currentTimeMillis() +
+                   " DirtyReadOffender calling chrAig.rollback()  ---------- "
+            );
+            //sc.nextLine();
+            //chrAig.commit();
+            chrAig.rollback();
+            System.out.println(
+                    " @t=" + System.currentTimeMillis() +
+                    " DirtyReadOffender ROLLED BACK ---------- "
             );
         } catch (Exception throwables) {
             try {
