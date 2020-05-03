@@ -15,30 +15,34 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
-    private int transactionIsolation;
-    private ChronicleMap<Thread, Integer> transactionIsolationMap; //to demo in same JVM at first
-    private ChronicleMap<String, BondVOInterface> compositeChronicleMap; //hacked in
+
+    private ChronicleMap<Thread, Integer> transactionIsolationMap;
+    private ChronicleMap<String, BondVOInterface> compositeChronicleMap; //hacked in, not generic
     private String priorCusip;
     private Double  priorCoupon;
 
 
     public synchronized void put(String cusip, BondVOInterface bond) throws Exception {
+
+        ChronicleMap<String,BondVOInterface> cMap = this.getCompositeChronicleMap();
         this.priorCusip = cusip;
-        this.priorCoupon = this.getCompositeChronicleMap().get(cusip).getCoupon();
-        this.getTransactionIsolationMap().put(Thread.currentThread(), this.getTransactionIsolation());
-        bond.setCoupon(priorCoupon + 0.5);
+        this.priorCoupon = cMap.get(cusip).getCoupon();
+
+        bond.setCoupon(priorCoupon + 0.001);
         this.getCompositeChronicleMap().put(cusip, bond);
     }
 
 
     //here is where the drama happens
-    public synchronized BondVOInterface get(String cusip) throws InterruptedException {
+    public synchronized BondVOInterface get(String cusip) throws Exception {
 
         BondVOInterface b = null;
-        if (this.getTransactionIsolationMap().size() > 1) { //other ACID transactions are active
-            if (this.getTransactionIsolationMap().get(Thread.currentThread()) <= ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC) {
+        Thread tx = Thread.currentThread();
+        ChronicleMap<Thread,Integer> txMap = this.getTransactionIsolationMap();
+        if (txMap.size() > 1) { //other ACID transactions are active
+            if (txMap.get(tx) <= ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC) {
                 b = this.compositeChronicleMap.get(cusip);
-            } else if (this.getTransactionIsolationMap().get(Thread.currentThread()) >= ChronicleAcidIsolation.DIRTY_READ_INTOLERANT) {
+            } else if (txMap.get(tx) >= ChronicleAcidIsolation.DIRTY_READ_INTOLERANT) {
                 this.wait();
                 b = this.compositeChronicleMap.get(cusip);
             }
@@ -50,6 +54,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     }
 
     public ChronicleMap<Thread, Integer> getTransactionIsolationMap() {
+
         return transactionIsolationMap;
     }
 
@@ -58,24 +63,34 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     }
 
     public ChronicleMap<String, BondVOInterface> getCompositeChronicleMap() {
+
         return compositeChronicleMap;
     }
 
-    public void setCompositeChronicleMap(ChronicleMap<String, BondVOInterface> compositeChronicleMap) {
-        this.compositeChronicleMap = compositeChronicleMap;
+    public void setCompositeChronicleMap(ChronicleMap<String, BondVOInterface> ccm) {
+
+        this.compositeChronicleMap = ccm;
     }
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
-        this.transactionIsolation = level;
+
+        this.getTransactionIsolationMap().put(
+                Thread.currentThread(),
+                level
+        );
     }
 
     @Override
     public int getTransactionIsolation() throws SQLException {
-        return this.transactionIsolation;
+
+        int iL = this.getTransactionIsolationMap().get(Thread.currentThread());
+        return(iL);
     }
+
     @Override
     public synchronized void commit() throws SQLException {
+
         this.getTransactionIsolationMap().remove(Thread.currentThread());
         this.notifyAll();
 
@@ -89,6 +104,10 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         this.getTransactionIsolationMap().remove(Thread.currentThread());
         this.notifyAll();
     }
+    // rest of these java.sql.Connection methods remain unimplemented ...
+    // pedantics are too
+    // intense.  In the real world, even in Captital Markets 'dirty read' intolerance
+    // is likely the only isolation level Chronicle would accommodate.
 
 
     @Override
@@ -113,10 +132,6 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     }
 
 
-    // rest of these java.sql.Connection methods remain unimplemented ...
-    // pedantics are too
-    // intense.  In the real world, even in Captital Markets 'dirty read' intolerance
-    // is likely the only isolation level Chronicle would accommodate.
 
     @Override
     public Statement createStatement() throws SQLException {

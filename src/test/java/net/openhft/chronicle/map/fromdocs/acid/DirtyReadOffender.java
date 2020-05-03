@@ -10,14 +10,14 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadOffender implements Runnable {
 
-    ChronicleAcidIsolationGovernor craig;
+    ChronicleAcidIsolationGovernor chraig;
 
     public ChronicleAcidIsolationGovernor getCraig() {
-        return craig;
+        return chraig;
     }
 
     public void setCraig(ChronicleAcidIsolationGovernor craig) {
-        this.craig = craig;
+        this.chraig = craig;
     }
 
 
@@ -26,14 +26,14 @@ public class DirtyReadOffender implements Runnable {
 
         try {
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            craig.getCompositeChronicleMap().acquireUsing("369604101", bond);
-            craig.setTransactionIsolation(ChronicleAcidIsolation.LOWEST_LATENCY);
+            chraig.getCompositeChronicleMap().acquireUsing("369604101", bond);
+            chraig.setTransactionIsolation(ChronicleAcidIsolation.LOWEST_LATENCY);
             bond.setCoupon(4.55);
-            craig.put("369604101",bond);
-            craig.commit();
+            chraig.put("369604101",bond);
+            chraig.commit();
         } catch (Exception throwables) {
             try {
-                craig.rollback();
+                chraig.rollback();
             } catch (SQLException e) {
                 e.printStackTrace();
             }

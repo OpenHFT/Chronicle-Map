@@ -27,7 +27,7 @@ public class DirtyReadVictim implements Runnable {
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             craig.getCompositeChronicleMap().acquireUsing("369604101", bond);
 
-            craig.setTransactionIsolation(ChronicleAcidIsolation.DIRTY_READ_INTOLERANT); //start tx
+            craig.setTransactionIsolation(ChronicleAcidIsolation.DIRTY_READ_INTOLERANT);
             bond = craig.getCompositeChronicleMap().get("369604101");
             Double coupon = bond.getCoupon();
             craig.commit();

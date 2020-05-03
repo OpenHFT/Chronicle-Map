@@ -12,7 +12,5 @@ public interface ChronicleAcidIsolation extends java.sql.Connection{
     int REPEATABLE_READS_MANDATORY = ChronicleAcidIsolation.TRANSACTION_REPEATABLE_READ;
     int PHANTOM_READ_INTOLERANT = ChronicleAcidIsolation.TRANSACTION_SERIALIZABLE;
 
-
-
 }
 

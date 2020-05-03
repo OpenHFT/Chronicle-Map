@@ -19,7 +19,7 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadIntolerant {
 
-    public static void main(String... ignored) throws IOException, SQLException {
+    public static void main(String... ignored) throws Exception {
 
         ChronicleMap<String, BondVOInterface> operand =
                 DirtyReadIntolerant.acquireChronicleMapOperand(
