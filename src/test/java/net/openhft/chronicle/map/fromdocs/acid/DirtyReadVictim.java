@@ -4,13 +4,19 @@ package net.openhft.chronicle.map.fromdocs.acid;
 import net.openhft.chronicle.map.acid.BondVOInterface;
 import net.openhft.chronicle.map.acid.ChronicleAcidIsolation;
 import net.openhft.chronicle.map.acid.ChronicleAcidIsolationGovernor;
-
 import java.sql.SQLException;
 import java.util.Scanner;
-
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadVictim implements Runnable {
+    int isoLevel = ChronicleAcidIsolation.LOWEST_LATENCY;
+
+    DirtyReadVictim(String isoL) {
+        if (isoL.equals("DIRTY_READ_INTOLERANT"))
+            this.isoLevel = ChronicleAcidIsolation.DIRTY_READ_INTOLERANT;
+        else if (isoL.equals("DIRTY_READ_OPTIMISTIC"))
+            this.isoLevel = ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC;
+    }
 
     ChronicleAcidIsolationGovernor chrAig;
 
@@ -40,7 +46,9 @@ public class DirtyReadVictim implements Runnable {
                     " DirtyReadVictim calling chrAig.get('369604101')"
             );
             //sc.nextLine();
-            chrAig.setTransactionIsolation(ChronicleAcidIsolation.DIRTY_READ_INTOLERANT);
+            chrAig.setTransactionIsolation(this.isoLevel);
+            //chrAig.setTransactionIsolation(ChronicleAcidIsolation.DIRTY_READ_INTOLERANT);
+            //chrAig.setTransactionIsolation(ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC);
             bond = chrAig.get("369604101");
             Double coupon = bond.getCoupon();
             System.out.println(

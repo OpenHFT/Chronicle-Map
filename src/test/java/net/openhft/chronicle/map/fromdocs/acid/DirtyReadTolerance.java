@@ -17,18 +17,19 @@ import java.util.Arrays;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 
-public class DirtyReadIntolerant {
+public class DirtyReadTolerance<K,V> {
 
-    public static void main(String... ignored) throws Exception {
+    public static void main(String args[]) throws Exception {
 
-        System.out.println("DirtyReadOffender,chrAig,DirtyReadVictim");
+        System.out.println("DirtyReadOffender,chrAig["+args[0]+"],DirtyReadVictim");
+        String isoLevel = args[0];
 
         ChronicleMap<String, BondVOInterface> operand =
-                DirtyReadIntolerant.acquireChronicleMapOperand(
+                DirtyReadTolerance.acquireChronicleMapOperand(
                         "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
                 );
         ChronicleMap<String, Integer> operator =
-                DirtyReadIntolerant.acquireChronicleMapOperator(
+                DirtyReadTolerance.acquireChronicleMapOperator(
                         "C:\\Users\\buddy\\dev\\shm\\OPERATOR_CHRONICLE_MAP"
                 );
         ChronicleAcidIsolationGovernor chrAig = new ChronicleAcidIsolationGovernor();
@@ -40,7 +41,7 @@ public class DirtyReadIntolerant {
         DirtyReadOffender offender = new DirtyReadOffender();
         offender.setCraig(chrAig);
 
-        DirtyReadVictim victim = new DirtyReadVictim();
+        DirtyReadVictim victim = new DirtyReadVictim(isoLevel);
         victim.setCraig(chrAig);
 
         (new Thread(offender)).start();
