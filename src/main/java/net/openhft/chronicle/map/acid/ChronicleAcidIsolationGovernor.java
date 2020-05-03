@@ -35,7 +35,12 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
 
     //here is where the drama happens
     public synchronized BondVOInterface get(String cusip) throws Exception {
-
+        System.out.println(
+                        " ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread()+
+                        " m.get()"+
+                        "---------- "
+        );
         BondVOInterface b = null;
         Thread tx = Thread.currentThread();
         ChronicleMap<Thread,Integer> txMap = this.getTransactionIsolationMap();
@@ -43,13 +48,30 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
             if (txMap.get(tx) <= ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC) {
                 b = this.compositeChronicleMap.get(cusip);
             } else if (txMap.get(tx) >= ChronicleAcidIsolation.DIRTY_READ_INTOLERANT) {
+                System.out.println(
+                                " ---------- @t="+System.currentTimeMillis()+
+                                " Tx="+Thread.currentThread()+
+                                " m.get() WAITING"+
+                                "---------- "
+                );
                 this.wait();
+                System.out.println(
+                                " ---------- @t="+System.currentTimeMillis()+
+                                " Tx="+Thread.currentThread()+
+                                " m.get() RESUMING"+
+                                "---------- "
+                );
                 b = this.compositeChronicleMap.get(cusip);
             }
         } else {
             b = this.compositeChronicleMap.get(cusip);
         }
-
+        System.out.println(
+                        " ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread()+
+                        " m.get() DONE"+
+                        "---------- "
+        );
         return b;
     }
 
@@ -90,19 +112,56 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
 
     @Override
     public synchronized void commit() throws SQLException {
-
+        System.out.println(
+                " ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread()+
+                        " chrAig.commit() BEGIN "+
+                        "---------- "
+        );
         this.getTransactionIsolationMap().remove(Thread.currentThread());
+        System.out.println(
+                " ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread()+
+                        " chrAig.commit() END "+
+                        "---------- "
+        );
         this.notifyAll();
+        System.out.println(
+                " ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread()+
+                        " chrAig.commit() complete notifyAll() to waiting Tx Threads "+
+                        "---------- "
+        );
 
     }
 
     @Override
     public synchronized void rollback() throws SQLException {
-        BondVOInterface priorBond = this.compositeChronicleMap.get(priorCusip);
-        priorBond.setCoupon(priorCoupon);
-        this.getCompositeChronicleMap().put(priorCusip,priorBond);
+        BondVOInterface priorBond = this.getCompositeChronicleMap().get("369604101");
+        if (priorBond != null) {
+            priorBond.setCoupon(priorCoupon);
+            this.getCompositeChronicleMap().put("369604101", priorBond);
+        }
+        System.out.println(
+                " ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread()+
+                        " chrAig.rollback() BEGIN "+
+                        "---------- "
+        );
         this.getTransactionIsolationMap().remove(Thread.currentThread());
+        System.out.println(
+                " ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread()+
+                        " chrAig.rollback() COMPLETE "+
+                        "---------- "
+        );
         this.notifyAll();
+        System.out.println(
+                " ---------- @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread()+
+                        " chrAig.rollback() completed notifyAll() to waiting Tx Threads"+
+                        "---------- "
+        );
     }
     // rest of these java.sql.Connection methods remain unimplemented ...
     // pedantics are too

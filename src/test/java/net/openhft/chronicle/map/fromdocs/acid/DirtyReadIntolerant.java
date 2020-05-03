@@ -29,16 +29,17 @@ public class DirtyReadIntolerant {
                 DirtyReadIntolerant.acquireChronicleMapOperator(
                     "C:\\Users\\buddy\\dev\\shm\\OPERATOR_CHRONICLE_MAP"
                 );
-        ChronicleAcidIsolationGovernor craig = new ChronicleAcidIsolationGovernor();
-        craig.setCompositeChronicleMap(operand);
-        craig.setAutoCommit(Boolean.FALSE);
-        craig.setTransactionIsolationMap(operator);
+        ChronicleAcidIsolationGovernor chrAig = new ChronicleAcidIsolationGovernor();
+        chrAig.setCompositeChronicleMap(operand);
+        chrAig.setAutoCommit(Boolean.FALSE);
+        chrAig.setTransactionIsolationMap(operator);
+        System.out.println("Established chrAig");
 
         DirtyReadOffender offender = new DirtyReadOffender();
-        offender.setCraig(craig);
+        offender.setCraig(chrAig);
 
         DirtyReadVictim victim = new DirtyReadVictim();
-        victim.setCraig(craig);
+        victim.setCraig(chrAig);
 
         (new Thread(offender)).start();
         (new Thread(victim)).start();
