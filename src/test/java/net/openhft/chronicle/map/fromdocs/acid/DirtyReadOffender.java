@@ -31,7 +31,7 @@ public class DirtyReadOffender implements Runnable {
             chrAig.getCompositeChronicleMap().acquireUsing("369604101", bond);
             System.out.println(
                             " @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender calling chrAig.put('369604101',4.55) ---------- "
+                            " DirtyReadOffender calling chrAig.put('369604101'/4.55) ---------- "
             );
             //sc.nextLine();
             chrAig.setTransactionIsolation(ChronicleAcidIsolation.LOWEST_LATENCY);
