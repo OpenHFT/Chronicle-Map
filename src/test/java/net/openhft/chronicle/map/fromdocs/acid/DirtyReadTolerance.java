@@ -8,12 +8,10 @@ import net.openhft.chronicle.map.acid.ChronicleAcidIsolation;
 import net.openhft.chronicle.map.acid.ChronicleAcidIsolationGovernor;
 import net.openhft.chronicle.map.acid.BondVOInterface;
 import net.openhft.chronicle.map.fromdocs.pingpong_latency.PingPongCASLeft;
-
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
-
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 

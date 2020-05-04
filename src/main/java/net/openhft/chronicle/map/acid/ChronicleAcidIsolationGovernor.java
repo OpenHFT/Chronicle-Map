@@ -118,24 +118,24 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     @Override
     public synchronized void commit() throws SQLException {
         System.out.println(
-                " ,---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " chrAig.commit() BEGIN "+
-                        "----------, "
+                " ,@t="+System.currentTimeMillis()+
+                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                " chrAig.commit() BEGIN "+
+                "----------, "
         );
         this.getTransactionIsolationMap().remove(Thread.currentThread().toString());
         System.out.println(
                 " ,---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " chrAig.commit() END "+
-                        "----------, "
+                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                " chrAig.commit() END "+
+                "----------, "
         );
         this.notifyAll();
         System.out.println(
                 ", ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " chrAig.commit() complete notifyAll() to waiting Tx Threads "+
-                        "---------- ,"
+                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                " chrAig.commit() complete notifyAll() to waiting Tx Threads "+
+                "---------- ,"
         );
 
     }
@@ -149,23 +149,23 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         }
         System.out.println(
                 " ,---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " chrAig.rollback() BEGIN "+
-                        "----------, "
+                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                " chrAig.rollback() BEGIN "+
+                "----------, "
         );
         this.getTransactionIsolationMap().remove(Thread.currentThread().toString());
         System.out.println(
                 " ,---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " chrAig.rollback() COMPLETE "+
-                        "----------, "
+                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                " chrAig.rollback() COMPLETE "+
+                "----------, "
         );
         this.notifyAll();
         System.out.println(
                 ", ---------- @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " chrAig.rollback() completed notifyAll() to waiting Tx Threads"+
-                        "----------, "
+                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                " chrAig.rollback() completed notifyAll() to waiting Tx Threads"+
+                "----------, "
         );
     }
     // rest of these java.sql.Connection methods remain unimplemented ...

@@ -52,8 +52,8 @@ public class DirtyReadVictim implements Runnable {
             bond = chrAig.get("369604101");
             Double coupon = bond.getCoupon();
             System.out.println(
-                            " ,,---------- @t="+System.currentTimeMillis()+
-                            " DirtyReadVictim got() coupon="+coupon+" calling chrAig.commmit()"
+                    " ,,---------- @t="+System.currentTimeMillis()+
+                    " DirtyReadVictim got() coupon="+coupon+" calling chrAig.commmit()"
             );
             //sc.nextLine();
             chrAig.commit();
