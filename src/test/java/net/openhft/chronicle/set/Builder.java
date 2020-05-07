@@ -44,8 +44,9 @@ public class Builder {
     		  This will only work if the user is an admin on windows.
     		*/
             file.setWritable(true);//just in case relative path was used.
-            RandomAccessFile raf = new RandomAccessFile(file, "rw");
-            raf.close();//allows closing the file access on windows. forcing to close access. Only works for admin-access.
+            try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
+                //allows closing the file access on windows. forcing to close access. Only works for admin-access.
+            }
         }
 
         //file.delete(); //isnt guaranteed on windows.

@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.util;
 
+import net.openhft.chronicle.core.CleaningRandomAccessFile;
 import net.openhft.chronicle.core.Jvm;
 
 import java.io.File;
@@ -36,7 +37,7 @@ public final class CanonicalRandomAccessFiles {
         return canonicalRafs.compute(file, (f, ref) -> {
             if (ref == null) {
                 try {
-                    return new RafReference(new RandomAccessFile(f, "rw"));
+                    return new RafReference(new CleaningRandomAccessFile(f, "rw"));
                 } catch (FileNotFoundException e) {
                     throw Jvm.rethrow(e);
                 }
