@@ -24,16 +24,22 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
 
     public synchronized void put(String cusip, BondVOInterface bond) throws Exception {
 
+        System.out.println(
+                " , @t="+System.currentTimeMillis()+
+                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
+                        " inside chrAig.put('"+cusip+"'/"+aCoupon+") BEGIN"+
+                        ", "
+        );
         ChronicleMap<String,BondVOInterface> cMap = this.getCompositeChronicleMap();
         this.aCoupon = cMap.get(cusip).getCoupon();
 
         bond.setCoupon(aCoupon);
         cMap.put(cusip, bond);
         System.out.println(
-                " ,---------- @t="+System.currentTimeMillis()+
+                " , @t="+System.currentTimeMillis()+
                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " inside chrAig.put('"+cusip+"'/"+aCoupon+") DONE"+
-                        "----------, "
+                        ", "
         );
     }
 
@@ -41,10 +47,10 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     //here is where the drama happens
     public synchronized BondVOInterface get(String cusip) throws Exception {
         System.out.println(
-                        " ,---------- @t="+System.currentTimeMillis()+
+                        " , @t="+System.currentTimeMillis()+
                         " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " inside chrAig.get('"+cusip+"') BEGIN"+
-                        "----------, "
+                        ", "
         );
         BondVOInterface b = null;
         String tx = Thread.currentThread().toString();
@@ -54,17 +60,17 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
                 b = this.compositeChronicleMap.get(cusip);
             } else if (txMap.get(tx) >= ChronicleAcidIsolation.DIRTY_READ_INTOLERANT) {
                 System.out.println(
-                                ", ---------- @t="+System.currentTimeMillis()+
+                                ", @t="+System.currentTimeMillis()+
                                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                                 " inside chrAig.get() WAITING"+
-                                "---------- ,"
+                                " ,"
                 );
                 this.wait();
                 System.out.println(
-                                " ,---------- @t="+System.currentTimeMillis()+
+                                " , @t="+System.currentTimeMillis()+
                                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                                 " inside chrAig.get() RESUMING"+
-                                "----------, "
+                                ", "
                 );
                 b = this.compositeChronicleMap.get(cusip);
             }
@@ -72,10 +78,10 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
             b = this.compositeChronicleMap.get(cusip);
         }
         System.out.println(
-                        " ,---------- @t="+System.currentTimeMillis()+
+                        " , @t="+System.currentTimeMillis()+
                         " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                         " inside chrAig.get() DONE"+
-                        "---------- ,"
+                        " ,"
         );
         return b;
     }
@@ -121,21 +127,21 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
                 " ,@t="+System.currentTimeMillis()+
                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                 " chrAig.commit() BEGIN "+
-                "----------, "
+                ", "
         );
         this.getTransactionIsolationMap().remove(Thread.currentThread().toString());
         System.out.println(
-                " ,---------- @t="+System.currentTimeMillis()+
+                " , @t="+System.currentTimeMillis()+
                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                 " chrAig.commit() END "+
-                "----------, "
+                ", "
         );
         this.notifyAll();
         System.out.println(
-                ", ---------- @t="+System.currentTimeMillis()+
+                ", @t="+System.currentTimeMillis()+
                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                 " chrAig.commit() complete notifyAll() to waiting Tx Threads "+
-                "---------- ,"
+                ","
         );
 
     }
@@ -148,24 +154,24 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
             this.getCompositeChronicleMap().put("369604101", priorBond);
         }
         System.out.println(
-                " ,---------- @t="+System.currentTimeMillis()+
+                " , @t="+System.currentTimeMillis()+
                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                 " chrAig.rollback() BEGIN "+
-                "----------, "
+                ", "
         );
         this.getTransactionIsolationMap().remove(Thread.currentThread().toString());
         System.out.println(
-                " ,---------- @t="+System.currentTimeMillis()+
+                " ,@t="+System.currentTimeMillis()+
                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                " chrAig.rollback() COMPLETE "+
-                "----------, "
+                " chrAig.rollback() COMPLETE coupon=3.50"+
+                ", "
         );
         this.notifyAll();
         System.out.println(
-                ", ---------- @t="+System.currentTimeMillis()+
+                ", @t="+System.currentTimeMillis()+
                 " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
                 " chrAig.rollback() completed notifyAll() to waiting Tx Threads"+
-                "----------, "
+                ", "
         );
     }
     // rest of these java.sql.Connection methods remain unimplemented ...

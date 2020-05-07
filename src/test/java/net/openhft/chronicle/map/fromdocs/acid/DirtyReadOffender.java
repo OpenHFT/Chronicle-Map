@@ -20,8 +20,7 @@ public class DirtyReadOffender implements Runnable {
     public void setCraig(ChronicleAcidIsolationGovernor craig) {
         this.chrAig = craig;
     }
-
-
+    
     @Override
     public void run() {
         Scanner sc = new Scanner(System.in);
@@ -30,40 +29,40 @@ public class DirtyReadOffender implements Runnable {
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             chrAig.getCompositeChronicleMap().acquireUsing("369604101", bond);
             System.out.println(
-                            " @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender calling chrAig.put('369604101'/4.55) ---------- "
+                    " @t=" + System.currentTimeMillis() +
+                            " DirtyReadOffender calling chrAig.put('369604101'/3.85) "
             );
             //sc.nextLine();
             chrAig.setTransactionIsolation(ChronicleAcidIsolation.LOWEST_LATENCY);
-            bond.setCoupon(4.55);
+            bond.setCoupon(3.85);
             chrAig.put("369604101", bond);
 
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender sleeping 1 minute.  ---------- "
+                            " DirtyReadOffender sleeping 1 minute. "
             );
-            Thread.sleep(60*1_000);
-            System.out.println(
-                   " @t=" + System.currentTimeMillis() +
-                   " DirtyReadOffender calling chrAig.rollback()  ---------- "
-            );
-            //sc.nextLine();
-            //chrAig.commit();
-            chrAig.rollback();
+            Thread.sleep(60 * 1_000);
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
-                    " DirtyReadOffender ROLLED BACK ---------- "
+                            " DirtyReadOffender calling chrAig.rollback() "
+            );
+            //sc.nextLine();
+            //chrAig.commit();  Normally, app would be coded like this.  demo the ROLLBACK
+            chrAig.rollback(); //forced to accommodate demo to Peter
+            System.out.println(
+                    " @t=" + System.currentTimeMillis() +
+                            " DirtyReadOffender ROLLED BACK  "
             );
         } catch (Exception throwables) {
             try {
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
-                        " DirtyReadOffender calling chrAig.rollback ---------- "
+                                " DirtyReadOffender calling chrAig.rollback "
                 );
                 chrAig.rollback();
                 System.out.println(
-                     " @t=" + System.currentTimeMillis() +
-                     " DirtyReadOffender ROLLED BACK---------- "
+                        " @t=" + System.currentTimeMillis() +
+                                " DirtyReadOffender ROLLED BACK "
                 );
             } catch (SQLException e) {
                 e.printStackTrace();

@@ -19,7 +19,7 @@ public class DirtyReadTolerance<K,V> {
 
     public static void main(String args[]) throws Exception {
 
-        System.out.println("DirtyReadOffender,chrAig["+args[0]+"],DirtyReadVictim");
+        System.out.println("DirtyReadOffender,chrAig["+args[0]+"]coupon=3.50,DirtyReadVictim");
         String isoLevel = args[0];
 
         ChronicleMap<String, BondVOInterface> operand =
