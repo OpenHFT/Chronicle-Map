@@ -24,7 +24,7 @@ Also, is there a reason these `1000` `gets` have be done serially in one thread?
 
 ===== Answer
 
-The stateless client has been replaced with Chronicle Engine. The stateless client is not supported in ChronicleMap 3.x.  For  more information, please refer to Chronicle Engine FAQ's.
+The stateless client has been replaced with Chronicle Datagrid. The stateless client is not supported in ChronicleMap 3.x.  For  more information, please refer to Chronicle Datagrid FAQ's.
 
 For `get()s`, parallelizing will reduce costs. For `put()s`, if you have concurrency requirements, that is, multi-key lock before updating all of them, it should be in one thread.
 

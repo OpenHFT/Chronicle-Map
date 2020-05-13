@@ -18,9 +18,9 @@ Changes between Chronicle Map 3 and the previous Chronicle Map version are detai
 
  - "Listeners" mechanism fully reworked; see <<CM_Tutorial_Behaviour.adoc#,Behaviour Customization>>. This has a number of important consequences, most notable is that it is now possible to define "eventual-consistency" replication strategy, different from "last write wins"; any state-based CRDT.
 
- - "Stateless clients" functionality (remote calls) is moved to https://github.com/OpenHFT/Chronicle-Engine[Chronicle Engine].
+ - "Stateless clients" functionality (remote calls) is moved to Chronicle Datagrid.
 
- - Replication is performed using https://github.com/OpenHFT/Chronicle-Engine[Chronicle Engine].
+ - Replication is performed using Chronicle Datagrid.
 
  - Earlier versions of Chronicle Map had hard creation-time limits on the number of entries storable in a Chronicle Map. If the size exceeded this limit, an exception was thrown. +
  In Chronicle Map 3, this limitation is removed. The number of entries still has to be configured when the Chronicle Map is created, Exceeding this configured limit is possible, but discouraged. +
