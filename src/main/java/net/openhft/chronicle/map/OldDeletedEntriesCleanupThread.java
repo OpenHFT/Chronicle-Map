@@ -120,7 +120,14 @@ class OldDeletedEntriesCleanupThread extends Thread
             return;
 
         while (!shutdown) {
-            int nextSegmentIndex = cleanupSegment();
+            int nextSegmentIndex;
+            try {
+                nextSegmentIndex = cleanupSegment();
+            } catch (Exception e) {
+                if (shutdown)
+                    break;
+                throw e;
+            }
             if (nextSegmentIndex == -1)
                 return;
             if (nextSegmentIndex == 0) {
