@@ -27,7 +27,7 @@
  as an implementation bug.
 
  - To provide the ability for Chronicle Map adopters, database developers and researchers to study
- the Chronicle Map design and possibly draw their own conclusions about it's behaviour, guarantees
+ the Chronicle Map design and possibly draw their own conclusions about its behaviour, guarantees
  and efficiency. The reference implementation is quite complex so it's hard to understand how it
  works by solely reading the code, especially for people who don't know Java.
 
