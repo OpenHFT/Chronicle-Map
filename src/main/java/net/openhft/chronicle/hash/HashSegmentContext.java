@@ -57,4 +57,9 @@ public interface HashSegmentContext<K, E extends HashEntry<K>> extends HashConte
      * Returns the number of <i>present</i> entries in this segment.
      */
     long size();
+
+    @Override
+    default boolean isClosed() {
+        throw new UnsupportedOperationException();
+    }
 }

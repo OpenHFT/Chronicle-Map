@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map.impl.stage.query;
 
+import net.openhft.chronicle.core.io.AbstractCloseable;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
@@ -23,7 +24,7 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 @Staged
-public class AcquireHandle<K, V> implements Closeable {
+public class AcquireHandle<K, V> extends AbstractCloseable {
 
     @StageRef
     CheckOnEachPublicOperation checkOnEachPublicOperation;
@@ -33,7 +34,7 @@ public class AcquireHandle<K, V> implements Closeable {
     UsingReturnValue<V> usingReturn;
 
     @Override
-    public void close() {
+    protected void performClose() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         q.replaceValue(q.entry(), q.wrapValueAsData(usingReturn.returnValue()));
         q.close();

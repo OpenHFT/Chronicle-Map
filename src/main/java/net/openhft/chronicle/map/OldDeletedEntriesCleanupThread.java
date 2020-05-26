@@ -210,6 +210,11 @@ class OldDeletedEntriesCleanupThread extends Thread
             this.interrupt(); // unblock
     }
 
+    @Override
+    public boolean isClosed() {
+        throw new UnsupportedOperationException();
+    }
+
     private int nextSegmentIndex(int segmentIndex) {
         int permutationIndex = inverseSegmentsPermutation[segmentIndex];
         int nextPermutationIndex = (permutationIndex + 1) % segments;

@@ -204,6 +204,11 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     }
 
     @Override
+    public boolean isClosed() {
+        return m.isClosed();
+    }
+
+    @Override
     public boolean isOpen() {
         return m.isOpen();
     }

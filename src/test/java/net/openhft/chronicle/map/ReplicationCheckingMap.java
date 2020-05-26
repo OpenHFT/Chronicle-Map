@@ -332,6 +332,11 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
+    public boolean isClosed() {
+        return false;
+    }
+
+    @Override
     public boolean isOpen() {
         throw new UnsupportedOperationException();
     }
