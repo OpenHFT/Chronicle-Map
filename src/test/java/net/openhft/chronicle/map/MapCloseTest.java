@@ -18,13 +18,14 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 public class MapCloseTest {
 
@@ -58,7 +59,7 @@ public class MapCloseTest {
         });
     }
 
-    @Test(expected = ChronicleHashClosedException.class)
+    @Test
     public void testSizeAfterCloseThrowsChronicleHashClosedException()
             throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
@@ -66,7 +67,7 @@ public class MapCloseTest {
         Thread t = new Thread(() -> map.close());
         t.start();
         t.join();
-        map.size();
+        assertEquals(0, map.size());
     }
 
     @Test(expected = RuntimeException.class)
@@ -117,14 +118,14 @@ public class MapCloseTest {
         t1.start();
         t2.start();
         latch.await();
-        Assert.assertEquals(2, map.allContexts().size());
+        assertEquals(2, map.allContexts().size());
         semaphore.release(2);
         t1.join();
         t2.join();
 
         map.get(1);
-        Assert.assertEquals(1, map.allContexts().size());
+        assertEquals(1, map.allContexts().size());
         ChainingInterface cxt = map.allContexts().get(0).get().get();
-        Assert.assertTrue(cxt == map.queryContext(1));
+        assertSame(cxt, map.queryContext(1));
     }
 }

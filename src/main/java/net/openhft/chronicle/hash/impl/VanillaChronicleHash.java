@@ -679,7 +679,12 @@ public abstract class VanillaChronicleHash<K, C extends HashEntry<K>, SC extends
 
     @Override
     public boolean isOpen() {
-        return !resources.closed();
+        return !isClosed();
+    }
+
+    @Override
+    public boolean isClosed() {
+        return super.isClosed() || resources.closed();
     }
 
     public final void checkKey(Object key) {
