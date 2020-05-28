@@ -203,7 +203,7 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     public final long longSize() {
         long result = 0L;
-        if (!isClosed())
+        if (!isClosed() && this.cxt != null)
             try (IterationContext<K, V, ?> c = iterationContext()) {
                 for (int segmentIndex = 0; segmentIndex < segments(); segmentIndex++) {
                     c.initSegmentIndex(segmentIndex);
