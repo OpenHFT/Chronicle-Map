@@ -20,6 +20,7 @@ import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
 public final class AbstractMarshallableKeyValueTest {
@@ -31,7 +32,7 @@ public final class AbstractMarshallableKeyValueTest {
 
         map.put(new Key(), new Value());
 
-        assertThat(map.get(new Key()).number, is(new Value().number));
+        assertEquals(new Value().number, map.get(new Key()).number);
     }
 
     private static final class Key extends SelfDescribingMarshallable {

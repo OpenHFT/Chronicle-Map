@@ -48,6 +48,7 @@ public class ThrowablesTest {
         Throwables.propagateNotWrapping(null, IOException.class);
     }
 
+    @SuppressWarnings("RedundantThrows")
     @Test(expected = NullPointerException.class)
     public void testPropagateNotWrappingNullWrappingType() throws Throwable {
         Throwables.propagateNotWrapping(new IOException(), null);
