@@ -22,7 +22,6 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.Data;
@@ -88,9 +87,8 @@ public class VanillaChronicleMap<K, V, R>
     /////////////////////////////////////////////////
     private transient String name;
     /**
-     * identityString is initialized lazily in {@link #toIdentityString()} rather than in
-     * {@link #initOwnTransients()} because it depends on {@link #file()} which is set after
-     * initOwnTransients().
+     * identityString is initialized lazily in {@link #toIdentityString()} rather than in {@link #initOwnTransients()} because it depends on {@link
+     * #file()} which is set after initOwnTransients().
      */
     private transient String identityString;
     private transient boolean defaultEntryOperationsAndMethods;
@@ -131,7 +129,7 @@ public class VanillaChronicleMap<K, V, R>
 
         alignment = wireIn.read(() -> "alignment").int32();
         worstAlignment = wireIn.read(() -> "worstAlignment").int32();
-        maxBloatFactor    = wireIn.read(() -> "maxBloatFactor").float64();
+        maxBloatFactor = wireIn.read(() -> "maxBloatFactor").float64();
     }
 
     @Override
@@ -279,7 +277,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @NotNull
     @Override
-    public final Closeable acquireContext(K key, V usingValue) {
+    public final MapClosable acquireContext(K key, V usingValue) {
         QueryContextInterface<K, V, R> q = queryContext(key);
         // TODO optimize to update lock in certain cases
         try {

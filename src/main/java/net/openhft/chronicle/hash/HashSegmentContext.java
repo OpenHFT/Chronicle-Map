@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.hash;
 
-import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.core.io.DefaultCloseable;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -28,12 +28,11 @@ import java.util.function.Predicate;
  * @param <E> the entry type
  * @see ChronicleHash#segmentContext(int)
  */
-public interface HashSegmentContext<K, E extends HashEntry<K>> extends HashContext<K>, Closeable {
+public interface HashSegmentContext<K, E extends HashEntry<K>> extends HashContext<K>, DefaultCloseable {
 
     /**
-     * Performs the given action for each <i>present</i> entry in this segment until all entries
-     * have been processed or the action throws an {@code Exception}. Exceptions thrown by the
-     * action are relayed to the caller.
+     * Performs the given action for each <i>present</i> entry in this segment until all entries have been processed or the action throws an {@code
+     * Exception}. Exceptions thrown by the action are relayed to the caller.
      *
      * @param action the action to be performed for each entry in this segment
      */
