@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.core.io.DefaultCloseable;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
@@ -34,7 +33,7 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 import static net.openhft.chronicle.hash.replication.TimeProvider.systemTimeIntervalBetween;
 
 class OldDeletedEntriesCleanupThread extends Thread
-        implements DefaultCloseable, Predicate<ReplicableEntry> {
+        implements MapClosable, Predicate<ReplicableEntry> {
     private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanupThread.class);
 
     /**
