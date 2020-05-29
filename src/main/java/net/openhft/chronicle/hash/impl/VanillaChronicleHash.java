@@ -74,10 +74,9 @@ public abstract class VanillaChronicleHash<K, C extends HashEntry<K>, SC extends
 
     // --- Start of instance fields ---
     /**
-     * Global mutable state lock doesn't yet need read-write levels and waits;
-     * Used the same locking strategy as in segment locks
-     * (VanillaReadWriteUpdateWithWaitsLockingStrategy) in order to simplify Chronicle Map
-     * specification (having only one kind of locks to specify and implement).
+     * Global mutable state lock doesn't yet need read-write levels and waits; Used the same locking strategy as in segment locks
+     * (VanillaReadWriteUpdateWithWaitsLockingStrategy) in order to simplify Chronicle Map specification (having only one kind of locks to specify and
+     * implement).
      */
     static final LockingStrategy globalMutableStateLockingStrategy =
             VanillaReadWriteUpdateWithWaitsLockingStrategy.instance();
@@ -684,7 +683,8 @@ public abstract class VanillaChronicleHash<K, C extends HashEntry<K>, SC extends
 
     @Override
     public boolean isClosed() {
-        return super.isClosed() || resources.closed();
+        ChronicleHashResources resources = this.resources;
+        return super.isClosed() || (resources != null && resources.closed());
     }
 
     public final void checkKey(Object key) {
@@ -1055,8 +1055,8 @@ public abstract class VanillaChronicleHash<K, C extends HashEntry<K>, SC extends
     }
 
     /**
-     * {@link ChronicleHashCloseOnExitHook} needs to use {@code VanillaChronicleHash}es as
-     * WeakHashMap keys, but with identity comparison, not Map's equals() and hashCode().
+     * {@link ChronicleHashCloseOnExitHook} needs to use {@code VanillaChronicleHash}es as WeakHashMap keys, but with identity comparison, not Map's
+     * equals() and hashCode().
      */
     public class Identity {
         public VanillaChronicleHash hash() {
