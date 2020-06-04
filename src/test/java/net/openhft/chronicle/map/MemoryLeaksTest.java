@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 @RunWith(Parameterized.class)
 public class MemoryLeaksTest {
@@ -94,21 +95,21 @@ public class MemoryLeaksTest {
 
     @Before
     public void resetSerializerCount() {
+        System.err.println("This test is expect to print 'ChronicleMap ... is not closed manually, cleaned up from Cleaner'");
         serializerCount.set(0);
     }
 
     @Test(timeout = 60_000)
     public void testChronicleMapCollectedAndDirectMemoryReleased()
             throws IOException, InterruptedException {
-        if (!OS.isWindows()) {
-            // This test is flaky in Linux and Mac OS apparently because some native memory from
-            // running previous/concurrent tests is released during this test, that infers with
-            // the (*) check below. The aim of this test is to check that native memory is not
-            // leaked and it is proven if it succeeds at least sometimes at least in some OSes.
-            // This tests is successful always in Windows and successful in Linux and OS X when run
-            // alone, rather than along all other Chronicle Map's tests.
-            return;
-        }
+        assertFalse(OS.isMacOSX());
+        // This test is flaky in Linux and Mac OS apparently because some native memory from
+        // running previous/concurrent tests is released during this test, that infers with
+        // the (*) check below. The aim of this test is to check that native memory is not
+        // leaked and it is proven if it succeeds at least sometimes at least in some OSes.
+        // This tests is successful always in Windows and successful in Linux and OS X when run
+        // alone, rather than along all other Chronicle Map's tests.
+
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
         int serializersBeforeMap = serializerCount.get();
         // the purpose of the test is to find maps which are not closed properly.
@@ -118,16 +119,14 @@ public class MemoryLeaksTest {
         tryCloseFromContext(map);
         WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(map);
         Assert.assertNotNull(ref.get());
+        //noinspection UnusedAssignment
         map = null;
 
         // Wait until Map is collected by GC
-        while (ref.get() != null) {
-            System.gc();
-            Jvm.pause(100);
-        }
         // Wait until Cleaner is called and memory is returned to the system
         for (int i = 0; i < 6_000; i++) {
-            if (nativeMemoryUsedBeforeMap == nativeMemoryUsed() && // (*)
+            if (ref.get() == null &&
+                    nativeMemoryUsedBeforeMap == nativeMemoryUsed() && // (*)
                     serializerCount.get() == serializersBeforeMap) {
                 break;
             }
