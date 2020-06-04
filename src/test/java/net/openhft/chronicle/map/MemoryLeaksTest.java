@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.Lists;
 import net.openhft.chronicle.bytes.NoBytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
@@ -56,6 +57,7 @@ public class MemoryLeaksTest {
     private boolean persisted;
     private ChronicleMapBuilder<IntValue, String> builder;
     private boolean closeWithinContext;
+
     public MemoryLeaksTest(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) {
         this.persisted = persisted;
         this.closeWithinContext = closeWithinContext;
@@ -109,33 +111,31 @@ public class MemoryLeaksTest {
         }
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
         int serializersBeforeMap = serializerCount.get();
-        try (ChronicleMap<IntValue, String> map = getMap()) {
-            long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
-            assertEquals(expectedNativeMemory, nativeMemoryUsed());
-            tryCloseFromContext(map);
-            WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(map);
-            Assert.assertNotNull(ref.get());
-            // map = null;
+        // the purpose of the test is to find maps which are not closed properly.
+        ChronicleMap<IntValue, String> map = getMap();
+        long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
+        assertEquals(expectedNativeMemory, nativeMemoryUsed());
+        tryCloseFromContext(map);
+        WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(map);
+        Assert.assertNotNull(ref.get());
+        map = null;
 
-            // Wait until Map is collected by GC
-            while (ref.get() != null) {
-                System.gc();
-                byte[] garbage = new byte[10_000_000];
-                Thread.yield();
-            }
-            // Wait until Cleaner is called and memory is returned to the system
-            for (int i = 0; i < 6_000; i++) {
-                if (nativeMemoryUsedBeforeMap == nativeMemoryUsed() && // (*)
-                        serializerCount.get() == serializersBeforeMap) {
-                    break;
-                }
-                System.gc();
-                byte[] garbage = new byte[10_000_000];
-                Thread.sleep(10);
-            }
-            Assert.assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
-            Assert.assertEquals(serializersBeforeMap, serializerCount.get());
+        // Wait until Map is collected by GC
+        while (ref.get() != null) {
+            System.gc();
+            Jvm.pause(100);
         }
+        // Wait until Cleaner is called and memory is returned to the system
+        for (int i = 0; i < 6_000; i++) {
+            if (nativeMemoryUsedBeforeMap == nativeMemoryUsed() && // (*)
+                    serializerCount.get() == serializersBeforeMap) {
+                break;
+            }
+            System.gc();
+            Jvm.pause(100);
+        }
+        Assert.assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
+        Assert.assertEquals(serializersBeforeMap, serializerCount.get());
     }
 
     private long nativeMemoryUsed() {
