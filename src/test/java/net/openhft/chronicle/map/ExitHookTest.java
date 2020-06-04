@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.base.Preconditions;
-import net.bytebuddy.implementation.bytecode.Throw;
 import net.openhft.chronicle.core.OS;
 import org.junit.Rule;
 import org.junit.Test;
@@ -36,7 +35,7 @@ import static org.junit.Assert.*;
 public class ExitHookTest {
 
     private static final int KEY = 1;
-    private static final int JVM_STARTUP_WAIT_TIME_MS = 15_000;
+    private static final int JVM_STARTUP_WAIT_TIME_MS = 5_000;
     private static final String PRE_SHUTDOWN_ACTION_EXECUTED = "PRE_SHUTDOWN_ACTION_EXECUTED";
     private static final String USER_SHUTDOWN_HOOK_EXECUTED = "USER_SHUTDOWN_HOOK_EXECUTED";
 
@@ -44,64 +43,60 @@ public class ExitHookTest {
     public TemporaryFolder folder = new TemporaryFolder();
 
     public static void main(String[] args) throws IOException, InterruptedException {
+
+        System.out.println("Other process started, yo");
+        File mapFile = new File(args[0]);
+        System.out.println("1");
+        File shutdownActionConfirmationFile = new File(args[1]);
+        System.out.println("2");
+        ChronicleMapBuilder<Integer, Integer> mapBuilder = null;
         try {
-            System.out.println("Other process started, yo");
-            File mapFile = new File(args[0]);
-            System.out.println("1");
-            File shutdownActionConfirmationFile = new File(args[1]);
-            System.out.println("2");
-            ChronicleMapBuilder<Integer, Integer> mapBuilder = null;
-            try {
-                mapBuilder = createMapBuilder();
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
-            System.out.println("3");
-            boolean skipCloseOnExitHook = false;
-            System.out.println("4");
-            if (Boolean.parseBoolean(args[2])) {
-                skipCloseOnExitHook = true;
-            }
-            AtomicReference<ChronicleMap<Integer, Integer>> mapReference = new AtomicReference<>();
-            System.out.println("exit hook" + skipCloseOnExitHook);
-            if (skipCloseOnExitHook) {
-                mapBuilder.skipCloseOnExitHook(skipCloseOnExitHook);
-                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                    // In practice, do something with map before shutdown - like create a new map using data from this map.
-                    mapReference.get().close();
-                    try {
-                        System.out.println("Executing user defined shutdown hook");
-                        Preconditions.checkState(shutdownActionConfirmationFile.exists());
-                        Files.write(shutdownActionConfirmationFile.toPath(),
-                                USER_SHUTDOWN_HOOK_EXECUTED.getBytes());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }));
-            } else {
-                mapBuilder.setPreShutdownAction(() -> {
-                    try {
-                        System.out.println("Executing pre-shutdown action");
-                        Preconditions.checkState(shutdownActionConfirmationFile.exists());
-                        Files.write(shutdownActionConfirmationFile.toPath(),
-                                PRE_SHUTDOWN_ACTION_EXECUTED.getBytes());
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-            }
-            mapReference.set(mapBuilder.createPersistedTo(mapFile));
-            try (ExternalMapQueryContext<Integer, Integer, ?> c = mapReference.get().queryContext(KEY)) {
-                c.writeLock().lock();
-                Thread.sleep(30_000);
-            }
-        } catch (Exception e) {
+            mapBuilder = createMapBuilder();
+        } catch (Throwable e) {
             e.printStackTrace();
+        }
+        System.out.println("3");
+        boolean skipCloseOnExitHook = false;
+        System.out.println("4");
+        if (Boolean.parseBoolean(args[2])) {
+            skipCloseOnExitHook = true;
+        }
+        AtomicReference<ChronicleMap<Integer, Integer>> mapReference = new AtomicReference<>();
+        System.out.println("exit hook" + skipCloseOnExitHook);
+        if (skipCloseOnExitHook) {
+            mapBuilder.skipCloseOnExitHook(skipCloseOnExitHook);
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                // In practice, do something with map before shutdown - like create a new map using data from this map.
+                mapReference.get().close();
+                try {
+                    System.out.println("Executing user defined shutdown hook");
+                    Preconditions.checkState(shutdownActionConfirmationFile.exists());
+                    Files.write(shutdownActionConfirmationFile.toPath(),
+                            USER_SHUTDOWN_HOOK_EXECUTED.getBytes());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }));
+        } else {
+            mapBuilder.setPreShutdownAction(() -> {
+                try {
+                    System.out.println("Executing pre-shutdown action");
+                    Preconditions.checkState(shutdownActionConfirmationFile.exists());
+                    Files.write(shutdownActionConfirmationFile.toPath(),
+                            PRE_SHUTDOWN_ACTION_EXECUTED.getBytes());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        mapReference.set(mapBuilder.createPersistedTo(mapFile));
+        try (ExternalMapQueryContext<Integer, Integer, ?> c = mapReference.get().queryContext(KEY)) {
+            c.writeLock().lock();
+            Thread.sleep(30_000);
         }
     }
 
-    private static ChronicleMapBuilder<Integer, Integer> createMapBuilder()
-            throws IOException {
+    private static ChronicleMapBuilder<Integer, Integer> createMapBuilder() {
         return ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .entries(1);
@@ -203,7 +198,7 @@ public class ExitHookTest {
         System.out.println("Classpath: " + classpath);
         String className = ExitHookTest.class.getCanonicalName();
 
-        String[] command = new String[] {javaBin, "-cp", classpath, className,
+        String[] command = new String[]{javaBin, "-cp", classpath, className,
                 mapFile.getAbsolutePath(), outputFile.getAbsolutePath(), String.valueOf(skipCloseOnExitHook)};
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.inheritIO();
