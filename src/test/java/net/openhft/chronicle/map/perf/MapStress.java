@@ -102,15 +102,18 @@ public class MapStress {
                 long written = 0;
                 do {
                     long time = System.currentTimeMillis();
+                    final Random random = randomTL.get();
                     IntStream.range(0, 10).forEach(x -> {
-                        final int keyIdx = randomTL.get().nextInt(N_WRITE_THREADS);
+                        final int keyIdx = random.nextInt(N_WRITE_THREADS * 100);
                         Security sec = secs[x%5];
                         sec.calculationTimeMillis = time;
                         map.put("valuekdljashjgffkljakljsdffhh" + keyIdx, sec);
                     });
+                    int keyIdx = random.nextInt(N_WRITE_THREADS * 100);
+                    map.remove("valuekdljashjgffkljakljsdffhh" + keyIdx);
                     written += 10;
 
-                    if (written % 50_000 == 0)
+                    if (written % 1_000 == 0)
                         System.err.println(id + "Wrote " + written);
                 } while (System.currentTimeMillis() - started < 100_000);
             });
@@ -122,6 +125,9 @@ public class MapStress {
                 final long started = System.currentTimeMillis();
                 AtomicInteger got = new AtomicInteger(0);
                 do {
+                    if (map.size() % 1000 == 0) {
+                        System.err.print(".");
+                    }
                     readerMap.values().forEach(s -> got.incrementAndGet());
                 } while (System.currentTimeMillis() - started < 100_000);
                 System.err.println(id + "Read total: " + got.get());
