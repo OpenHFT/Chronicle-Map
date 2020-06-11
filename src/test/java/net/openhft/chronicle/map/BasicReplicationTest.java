@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
@@ -65,7 +66,8 @@ public class BasicReplicationTest {
             processorThree.addDestinationMap(mapThree.acquireModificationIterator(asByte(1)), mapThree, mapOne);
             processorThree.addDestinationMap(mapThree.acquireModificationIterator(asByte(2)), mapThree, mapTwo);
 
-            final ExecutorService executorService = Executors.newFixedThreadPool(3);
+            final ExecutorService executorService = Executors.newFixedThreadPool(3,
+                    new NamedThreadFactory("test"));
             executorService.submit(processorOne::processPendingChangesLoop);
             executorService.submit(processorTwo::processPendingChangesLoop);
             executorService.submit(processorThree::processPendingChangesLoop);
@@ -175,7 +177,8 @@ public class BasicReplicationTest {
         private final ReplicatedChronicleMap<K, V, ?> sourceMap;
         private final ReplicatedChronicleMap<K, V, ?> destinationMap;
         private final Bytes<ByteBuffer> buffer = Bytes.elasticByteBuffer(4096);
-        private final ExecutorService delayedExecutor = Executors.newSingleThreadExecutor();
+        private final ExecutorService delayedExecutor = Executors.newSingleThreadExecutor(
+                new NamedThreadFactory("delayed"));
         private final AtomicInteger messagesInflight = new AtomicInteger(0);
         private final ArrayList<String> keys = new ArrayList<>();
 

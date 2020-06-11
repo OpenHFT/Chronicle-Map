@@ -20,6 +20,7 @@ import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.MapSegmentContext;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
 import org.apache.commons.lang3.mutable.MutableDouble;
 import org.junit.Test;
@@ -42,7 +43,8 @@ public class PortfolioValueTest {
     private static void computeValueUsingIterator(final ChronicleMap<LongValue, PortfolioAssetInterface> cache) throws ExecutionException, InterruptedException {
         long startTime = System.currentTimeMillis();
 
-        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
+        ExecutorService executor = Executors.newFixedThreadPool(nThreads,
+                new NamedThreadFactory("test"));
         @SuppressWarnings("unchecked")
         Future<Double>[] futures = new Future[nThreads];
         long batchSize = (useIterator ? cache.segments() : nAssets) / nThreads;
@@ -118,7 +120,8 @@ public class PortfolioValueTest {
     private void createData(final ChronicleMap<LongValue, PortfolioAssetInterface> cache) throws ExecutionException, InterruptedException {
         long startTime = System.currentTimeMillis();
 
-        ExecutorService executor = Executors.newFixedThreadPool(nThreads);
+        ExecutorService executor = Executors.newFixedThreadPool(nThreads,
+                new NamedThreadFactory("test"));
         Future<?>[] futures = new Future[nThreads];
         long batchSize = nAssets / nThreads;
 

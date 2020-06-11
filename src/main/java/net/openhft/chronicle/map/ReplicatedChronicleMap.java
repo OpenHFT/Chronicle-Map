@@ -524,11 +524,11 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         key.writeTo(destination, destination.writePosition());
         destination.writeSkip(key.size());
 
-        boolean debugEnabled = LOG.isDebugEnabled();
+        boolean traceEnabled = LOG.isTraceEnabled();
         String message = null;
-        if (debugEnabled) {
+        if (traceEnabled) {
             if (isDeleted) {
-                LOG.debug("WRITING ENTRY TO DEST -  into local-id={}, remove(key={})",
+                LOG.trace("WRITING ENTRY TO DEST -  into local-id={}, remove(key={})",
                         identifier(), key);
             } else {
                 message = String.format(
@@ -545,7 +545,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         value.writeTo(destination, destination.writePosition());
         destination.writeSkip(value.size());
 
-        if (debugEnabled) {
+        if (traceEnabled) {
             LOG.debug(message + "value=" + value + ")");
         }
     }

@@ -18,6 +18,7 @@ package net.openhft.chronicle.set;
 
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.junit.Test;
 
 import java.io.File;
@@ -55,7 +56,8 @@ public class Issue24ChronicleSetTest {
     @Test
     public void issue24ChronicleSetTest() throws IOException {
         ChronicleSet<String> set = initSet(String.class, 1_000_000, 30);
-        ExecutorService executor = Executors.newFixedThreadPool(5);
+        ExecutorService executor = Executors.newFixedThreadPool(5,
+                new NamedThreadFactory("test"));
         for (int i = 0; i < 10; i++) {
             Runnable worker = new WorkerThread(set);
             executor.execute(worker);

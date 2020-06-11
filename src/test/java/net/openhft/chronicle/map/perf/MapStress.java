@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map.perf;
 
 import net.openhft.chronicle.map.ChronicleMap;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +21,8 @@ public class MapStress {
     private ChronicleMap<String, Security> map = ChronicleMap.of(String.class, Security.class).averageKeySize(500).averageValueSize(500).entries(100_000).createOrRecoverPersistedTo(file);
     private ChronicleMap<String, Security> readerMap = ChronicleMap.of(String.class, Security.class).averageKeySize(50).averageValueSize(500).entries(100_000).createOrRecoverPersistedTo(file);
 
-    private ExecutorService executor = Executors.newFixedThreadPool(N_WRITE_THREADS + N_READ_THREADS);
+    private ExecutorService executor = Executors.newFixedThreadPool(N_WRITE_THREADS + N_READ_THREADS,
+            new NamedThreadFactory("mapStress"));
     private ThreadLocal<Random> randomTL = ThreadLocal.withInitial(Random::new);
 
     public MapStress() throws IOException {

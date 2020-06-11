@@ -20,6 +20,7 @@ import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.hash.ChecksumEntry;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -69,7 +70,8 @@ public class RecoverTest {
         // acquires read lock successfully
         assertNull(map.get(0));
 
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        ExecutorService executorService = Executors.newSingleThreadExecutor(
+                new NamedThreadFactory("recoverTest"));
 
         executorService.submit(() -> {
             ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(0);

@@ -19,6 +19,7 @@ package net.openhft.chronicle.map.impl.stage.data;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.ReferenceOwner;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.BufferOverflowException;
@@ -36,6 +37,7 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     public long addressForWritePosition() throws UnsupportedOperationException, BufferOverflowException {
         throw new UnsupportedOperationException("Cannot get the address of nothing");
     }
+
 
     @Override
     public int peekUnsignedByte(long offset) {
@@ -155,22 +157,32 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
         return true;
     }
 
+
     @Override
-    public void reserve() throws IllegalStateException {
+    public void reserve(ReferenceOwner id) throws IllegalStateException {
     }
 
     @Override
-    public void release() throws IllegalStateException {
+    public boolean tryReserve(ReferenceOwner id) throws IllegalStateException {
+        return false;
     }
 
     @Override
-    public long refCount() {
+    public boolean reservedBy(ReferenceOwner owner) {
+        return true;
+    }
+
+    @Override
+    public void release(ReferenceOwner id) throws IllegalStateException {
+    }
+
+    @Override
+    public void releaseLast(ReferenceOwner id) throws IllegalStateException {
+    }
+
+    @Override
+    public int refCount() {
         return 0;
-    }
-
-    @Override
-    public boolean tryReserve() {
-        throw new UnsupportedOperationException("todo");
     }
 
     @Override

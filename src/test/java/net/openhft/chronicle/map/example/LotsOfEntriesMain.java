@@ -18,6 +18,7 @@ package net.openhft.chronicle.map.example;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.Values;
 
@@ -59,7 +60,8 @@ public class LotsOfEntriesMain {
                 .averageKeySize((Math.log(1.024) - Math.log(0.024)) * 24 + 2)
                 .createPersistedTo(file);
         int threads = Runtime.getRuntime().availableProcessors();
-        ExecutorService es = Executors.newFixedThreadPool(threads);
+        ExecutorService es = Executors.newFixedThreadPool(threads,
+                new NamedThreadFactory("test"));
         long block = (entries + threads - 1) / threads;
 
         final long start = System.nanoTime();

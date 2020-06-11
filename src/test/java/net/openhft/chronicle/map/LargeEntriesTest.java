@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -51,7 +52,7 @@ public class LargeEntriesTest {
                 .createPersistedTo(file)) {
             warmUpCompression(ENTRY_SIZE);
             int threads = 4; //Runtime.getRuntime().availableProcessors();
-            ExecutorService es = Executors.newFixedThreadPool(threads);
+            ExecutorService es = Executors.newFixedThreadPool(threads, new NamedThreadFactory("test"));
             final int block = ENTRIES / threads;
             for (int i = 0; i < 3; i++) {
                 long start = System.currentTimeMillis();
@@ -119,7 +120,8 @@ public class LargeEntriesTest {
         {
 //            warmUpCompression(ENTRY_SIZE);
             int threads = Runtime.getRuntime().availableProcessors();
-            ExecutorService es = Executors.newFixedThreadPool(threads);
+            ExecutorService es = Executors.newFixedThreadPool(threads,
+                    new NamedThreadFactory("test"));
             final int block = ENTRIES / threads;
             for (int i = 0; i < 3; i++) {
                 long start = System.currentTimeMillis();
