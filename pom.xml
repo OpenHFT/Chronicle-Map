@@ -70,9 +70,8 @@
     <dependencies>
 
         <dependency>
-            <groupId>com.intellij</groupId>
+            <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>12.0</version>
         </dependency>
 
         <dependency>
