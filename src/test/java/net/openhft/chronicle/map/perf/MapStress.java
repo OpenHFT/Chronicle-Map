@@ -7,10 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -23,7 +20,6 @@ public class MapStress {
 
     private ExecutorService executor = Executors.newFixedThreadPool(N_WRITE_THREADS + N_READ_THREADS,
             new NamedThreadFactory("mapStress"));
-    private ThreadLocal<Random> randomTL = ThreadLocal.withInitial(Random::new);
 
     public MapStress() throws IOException {
     }
@@ -104,7 +100,7 @@ public class MapStress {
                 long written = 0;
                 do {
                     long time = System.currentTimeMillis();
-                    final Random random = randomTL.get();
+                    final Random random = ThreadLocalRandom.current();
                     IntStream.range(0, 10).forEach(x -> {
                         final int keyIdx = random.nextInt(N_WRITE_THREADS * 100);
                         Security sec = secs[x%5];
