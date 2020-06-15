@@ -51,34 +51,42 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     }
 
     public void clear() {
+        throwExceptionIfClosed();
         m.clear();
     }
 
     public int size() {
+        throwExceptionIfClosed();
         return m.size();
     }
 
     public boolean isEmpty() {
+        throwExceptionIfClosed();
         return m.isEmpty();
     }
 
     public boolean contains(Object o) {
+        throwExceptionIfClosed();
         return m.containsKey(o);
     }
 
     public boolean remove(Object o) {
+        throwExceptionIfClosed();
         return m.remove(o, DUMMY_VALUE);
     }
 
     public boolean add(E e) {
+        throwExceptionIfClosed();
         return m.putIfAbsent(e, DUMMY_VALUE) == null;
     }
 
     public Iterator<E> iterator() {
+        throwExceptionIfClosed();
         return s.iterator();
     }
 
     public Object[] toArray() {
+        throwExceptionIfClosed();
         return s.toArray();
     }
 
@@ -92,6 +100,7 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
 
     @Override
     public String toIdentityString() {
+        throwExceptionIfClosed();
         return "ChronicleSet{" +
                 "name=" + name() +
                 ", file=" + file() +
@@ -100,43 +109,52 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     }
 
     public int hashCode() {
+        throwExceptionIfClosed();
         return s.hashCode();
     }
 
     public boolean equals(Object o) {
+        throwExceptionIfClosed();
         return o == this || s.equals(o);
     }
 
     public boolean containsAll(Collection<?> c) {
+        throwExceptionIfClosed();
         return s.containsAll(c);
     }
 
     public boolean removeAll(Collection<?> c) {
+        throwExceptionIfClosed();
         return s.removeAll(c);
     }
 
     public boolean retainAll(Collection<?> c) {
+        throwExceptionIfClosed();
         return s.retainAll(c);
     }
     // addAll is the only inherited implementation
 
     @Override
     public long longSize() {
+        throwExceptionIfClosed();
         return m.longSize();
     }
 
     @Override
     public long offHeapMemoryUsed() {
+        throwExceptionIfClosed();
         return m.offHeapMemoryUsed();
     }
 
     @Override
     public Class<E> keyClass() {
+        throwExceptionIfClosed();
         return m.keyClass();
     }
 
     @Override
     public Type keyType() {
+        throwExceptionIfClosed();
         return m.keyType();
     }
 
@@ -171,6 +189,7 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
 
     @Override
     public int segments() {
+        throwExceptionIfClosed();
         return m.segments();
     }
 
@@ -178,23 +197,27 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
 
     @Override
     public boolean forEachEntryWhile(Predicate<? super SetEntry<E>> predicate) {
+        throwExceptionIfClosed();
         Objects.requireNonNull(predicate);
         return m.forEachEntryWhile(e -> predicate.test(((SetEntry<E>) e)));
     }
 
     @Override
     public void forEachEntry(Consumer<? super SetEntry<E>> action) {
+        throwExceptionIfClosed();
         Objects.requireNonNull(action);
         m.forEachEntry(e -> action.accept(((SetEntry<E>) e)));
     }
 
     @Override
     public File file() {
+        throwExceptionIfClosed();
         return m.file();
     }
 
     @Override
     public String name() {
+        throwExceptionIfClosed();
         return m.name();
     }
 
@@ -205,6 +228,7 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
 
     @Override
     public boolean isOpen() {
+        throwExceptionIfClosed();
         return m.isOpen();
     }
 }

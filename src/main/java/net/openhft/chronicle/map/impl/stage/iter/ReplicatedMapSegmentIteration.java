@@ -60,21 +60,25 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public boolean shouldTestEntry() {
+        throwExceptionIfClosed();
         return entriesToTest == ALL || !e.entryDeleted();
     }
 
     @Override
     public Object entryForIteration() {
+        throwExceptionIfClosed();
         return !e.entryDeleted() ? entryDelegating : absentEntryDelegating;
     }
 
     @Override
     public long tierEntriesForIteration() {
+        throwExceptionIfClosed();
         return entriesToTest == ALL ? s.tierEntries() : s.tierEntries() - s.tierDeleted();
     }
 
     @Override
     public void doReplaceValue(Data<V> newValue) {
+        throwExceptionIfClosed();
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             entry.innerDefaultReplaceValue(newValue);
@@ -87,6 +91,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public boolean forEachSegmentEntryWhile(Predicate<? super MapEntry<K, V>> predicate) {
+        throwExceptionIfClosed();
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         initEntriesToTest(PRESENT);
         s.innerUpdateLock.lock();
@@ -96,6 +101,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     @Override
     public boolean forEachSegmentReplicableEntryWhile(
             Predicate<? super ReplicableEntry> predicate) {
+        throwExceptionIfClosed();
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         initEntriesToTest(ALL);
         s.innerUpdateLock.lock();
@@ -104,6 +110,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public void forEachSegmentReplicableEntry(Consumer<? super ReplicableEntry> action) {
+        throwExceptionIfClosed();
         forEachSegmentReplicableEntryWhile(e -> {
             action.accept(e);
             return true;
@@ -112,6 +119,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public void doRemove() {
+        throwExceptionIfClosed();
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             if (e.valueSize > dummyValue.size())
@@ -128,6 +136,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public void doRemoveCompletely() {
+        throwExceptionIfClosed();
         boolean wasDeleted = e.entryDeleted();
         super.doRemove();
         ru.dropChange();
@@ -136,6 +145,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     }
 
     public void doInsert(Data<V> value) {
+        throwExceptionIfClosed();
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (e.entryDeleted()) {
             try {
@@ -155,6 +165,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     }
 
     public void doInsert() {
+        throwExceptionIfClosed();
         if (mh.set() == null)
             throw new IllegalStateException(mh.h().toIdentityString() +
                     ": Called SetAbsentEntry.doInsert() from Map context");

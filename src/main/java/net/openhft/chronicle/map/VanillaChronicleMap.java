@@ -134,6 +134,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
+        ;
         super.writeMarshallable(wireOut);
 
         wireOut.write(() -> "valueClass").typeLiteral(valueClass);
@@ -161,6 +162,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public void initTransients() {
+        throwExceptionIfClosed();
         super.initTransients();
         initOwnTransients();
     }
@@ -168,6 +170,7 @@ public class VanillaChronicleMap<K, V, R>
     public void recover(
             ChronicleHashResources resources, ChronicleHashCorruption.Listener corruptionListener,
             ChronicleHashCorruptionImpl corruption) throws IOException {
+        throwExceptionIfClosed();
         basicRecover(resources, corruptionListener, corruption);
         try (IterationContext<K, V, ?> iterationContext = iterationContext()) {
             iterationContext.recoverSegments(corruptionListener, corruption);
@@ -212,21 +215,25 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public Class<K> keyClass() {
+        throwExceptionIfClosed();
         return (Class<K>) keyClass;
     }
 
     @Override
     public Type keyType() {
+        throwExceptionIfClosed();
         return keyClass;
     }
 
     @Override
     public Class<V> valueClass() {
+        throwExceptionIfClosed();
         return (Class<V>) valueClass;
     }
 
     @Override
     public Type valueType() {
+        throwExceptionIfClosed();
         return valueClass;
     }
 
@@ -240,11 +247,13 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public int remainingAutoResizes() {
+        throwExceptionIfClosed();
         return (int) (maxTiers() - tiersUsed());
     }
 
     @Override
     public short percentageFreeSpace() {
+        throwExceptionIfClosed();
 
         double totalUsed = 0;
         double totalSize = 0;
@@ -310,11 +319,13 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public int hashCode() {
+        throwExceptionIfClosed();
         return mapHashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
+        throwExceptionIfClosed();
         return mapEquals(obj);
     }
 
@@ -330,6 +341,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public String toIdentityString() {
+        throwExceptionIfClosed();
         if (identityString == null)
             identityString = makeIdentityString();
         return identityString;
@@ -347,6 +359,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public void clear() {
+        throwExceptionIfClosed();
         forEachEntry(c -> c.context().remove(c));
     }
 
@@ -357,6 +370,7 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     public void alignReadPosition(Bytes entry) {
+        throwExceptionIfClosed();
         long positionAddr = entry.addressForRead(entry.readPosition());
         long skip = alignAddr(positionAddr, alignment) - positionAddr;
         if (skip > 0)
@@ -520,6 +534,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V get(Object key) {
+        throwExceptionIfClosed();
         return defaultEntryOperationsAndMethods ? optimizedGet(key, null) : defaultGet(key);
     }
 
@@ -693,6 +708,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V getUsing(K key, V usingValue) {
+        throwExceptionIfClosed();
         return defaultEntryOperationsAndMethods ? optimizedGet(key, usingValue) :
                 defaultGetUsing(key, usingValue);
     }
@@ -707,6 +723,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V acquireUsing(K key, V usingValue) {
+        throwExceptionIfClosed();
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             return acquireUsingBody(q, usingValue);
         }
@@ -720,6 +737,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V putIfAbsent(K key, V value) {
+        throwExceptionIfClosed();
         checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.putIfAbsent(q, q.inputValueDataAccess().getData(value), q.defaultReturnValue());
@@ -729,6 +747,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public boolean remove(Object key, Object value) {
+        throwExceptionIfClosed();
         if (value == null)
             return false; // ConcurrentHashMap compatibility
         V v = checkValue(value);
@@ -739,6 +758,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
+        throwExceptionIfClosed();
         checkValue(oldValue);
         checkValue(newValue);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
@@ -749,6 +769,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V replace(K key, V value) {
+        throwExceptionIfClosed();
         checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.replace(q, q.inputValueDataAccess().getData(value), q.defaultReturnValue());
@@ -758,6 +779,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public boolean containsKey(Object key) {
+        throwExceptionIfClosed();
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             return methods.containsKey(q);
         }
@@ -765,6 +787,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V put(K key, V value) {
+        throwExceptionIfClosed();
         checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             Data<V> valueData = q.inputValueDataAccess().getData(value);
@@ -777,6 +800,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V remove(Object key) {
+        throwExceptionIfClosed();
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             InstanceReturnValue<V> returnValue =
                     removeReturnsNull ? NullReturnValue.get() : q.defaultReturnValue();
@@ -788,6 +812,7 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     public V merge(K key, V value,
                    BiFunction<? super V, ? super V, ? extends V> remappingFunction) {
+        throwExceptionIfClosed();
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.merge(q, q.inputValueDataAccess().getData(value), remappingFunction,
                     q.defaultReturnValue());
@@ -797,6 +822,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V compute(K key, BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        throwExceptionIfClosed();
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.compute(q, remappingFunction, q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
@@ -805,6 +831,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V computeIfAbsent(K key, Function<? super K, ? extends V> mappingFunction) {
+        throwExceptionIfClosed();
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.computeIfAbsent(q, mappingFunction, q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
@@ -814,6 +841,7 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     public V computeIfPresent(K key,
                               BiFunction<? super K, ? super V, ? extends V> remappingFunction) {
+        throwExceptionIfClosed();
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
             methods.computeIfPresent(q, remappingFunction, q.defaultReturnValue());
             return q.defaultReturnValue().returnValue();
@@ -821,6 +849,7 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     public void verifyTierCountersAreaData() {
+        throwExceptionIfClosed();
         for (int i = 0; i < actualSegments; i++) {
             try (MapSegmentContext<K, V, ?> c = segmentContext(i)) {
                 Method verifyTierCountersAreaData =

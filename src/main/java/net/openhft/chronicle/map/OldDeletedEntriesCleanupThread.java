@@ -114,6 +114,7 @@ class OldDeletedEntriesCleanupThread extends Thread
 
     @Override
     public void run() {
+        throwExceptionIfClosed();
         if (System.currentTimeMillis() - startTime < 1_000)
             return;
 
@@ -175,6 +176,7 @@ class OldDeletedEntriesCleanupThread extends Thread
 
     @Override
     public boolean test(ReplicableEntry e) {
+        throwExceptionIfClosed();
         if (shutdown)
             return false;
         if (e instanceof MapAbsentEntry) {

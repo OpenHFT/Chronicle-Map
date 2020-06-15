@@ -44,6 +44,7 @@ public abstract class SegmentsRecovery implements IterationContext {
     public void recoverSegments(
             ChronicleHashCorruption.Listener corruptionListener,
             ChronicleHashCorruptionImpl corruption) {
+        throwExceptionIfClosed();
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         for (int segmentIndex = 0; segmentIndex < h.actualSegments; segmentIndex++) {
             s.initSegmentIndex(segmentIndex);
