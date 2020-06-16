@@ -6,6 +6,7 @@ public interface MapClosable extends Closeable {
 
     @Override
     default boolean isClosed() {
-        throw new UnsupportedOperationException();
+        // if we don't know, pretend it is not.
+        return false;
     }
 }
