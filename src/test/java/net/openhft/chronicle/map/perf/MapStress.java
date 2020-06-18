@@ -91,8 +91,7 @@ public class MapStress {
         secs[4].securityUltimateUnderlyingTicker = "RTYU";
         secs[4].securityUnderlyingTicker = "RTYU";
 
-
-        Future<?>[] futures = new Future[N_WRITE_THREADS + N_READ_THREADS];
+Future<?>[] futures = new Future[N_WRITE_THREADS + N_READ_THREADS];
         for (int i = 0; i < N_WRITE_THREADS; i++) {
             String id = i + " -> ";
             futures[i] = executor.submit(() -> {

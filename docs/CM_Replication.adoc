@@ -164,7 +164,6 @@ try (ReplicatedMap clusterOnHost1 = createCluster(CLUSTER_YAML, 1);
 }
 ....
 
-
 This example is available in the repository https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise-Demo/blob/master/Example1/src/main/java/software/chronicle/enterprise/map/ThreeWayMapReplicationExampleMain.java[here]
 
 == Replication event logging

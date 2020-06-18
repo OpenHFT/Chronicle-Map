@@ -104,8 +104,7 @@ public class MapFileManager extends JMXFileManager implements MapFileManagerMBea
                 map.createMappedStoreAndSegments(
                         new PersistedChronicleHashResources(file));
 
-
-                keyClass = map.keyType();
+keyClass = map.keyType();
                 valueClass = map.valueType();
                 size = map.longSize();
                 name = map.name();
