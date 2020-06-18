@@ -284,8 +284,7 @@ public class VanillaChronicleMap<K, V, R>
                     totalUsed += freeList0.cardinality();
                     totalSize += freeList.logicalSize();
                 }
-
-            }
+ }
         }
 
         return (short) (100 - (int) (100 * totalUsed / totalSize));

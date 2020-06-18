@@ -699,8 +699,7 @@ public class ChronicleMapTest extends JSR166TestCase {
                 }
                 Assert.fail();
             }
-
-        }
+ }
     }
 
 }

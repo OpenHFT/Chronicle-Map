@@ -42,7 +42,6 @@ public class BloatFactorTest {
             Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor,0.0);
 
         }
-
-    }
+ }
 
 }
