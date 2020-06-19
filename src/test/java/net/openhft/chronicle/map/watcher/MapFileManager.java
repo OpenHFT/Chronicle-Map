@@ -115,7 +115,7 @@ keyClass = map.keyType();
             Jvm.warn().on(getClass(), "Unable to update", e);
             header = e.toString();
         } finally {
-            mf.release();
+            mf.releaseLast();
             assert mf.refCount() == 0;
         }
     }

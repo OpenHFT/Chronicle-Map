@@ -62,7 +62,7 @@ public class DoubleArrayTest {
             // expected
         }
         // free the memory.
-        da.bytesStore().release();
+        da.bytesStore().releaseLast();
     }
 
     @Test
