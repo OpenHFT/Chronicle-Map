@@ -702,7 +702,7 @@ public class VanillaChronicleMap<K, V, R>
             }
 
             long keySizeOffset = entrySpaceOffset + (entryPos * chunkSize);
-            bs.readLimit(bs.capacity());
+            bs.readLimitToCapacity();
             bs.readPosition(keySizeOffset);
             long keySize = keySizeMarshaller.readSize(bs);
             long keyOffset = bs.readPosition();

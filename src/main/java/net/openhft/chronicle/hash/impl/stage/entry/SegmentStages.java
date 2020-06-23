@@ -659,7 +659,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Segment")
     public Bytes segmentBytesForRead() {
-        segmentBytes.readLimit(segmentBytes.capacity());
+        segmentBytes.readLimitToCapacity();
         return segmentBytes;
     }
 
