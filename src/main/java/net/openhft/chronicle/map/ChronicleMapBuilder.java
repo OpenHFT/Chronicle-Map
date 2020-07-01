@@ -330,8 +330,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return valueBuilder.sizeIsStaticallyKnown;
     }
 
-
-    private static void checkSegments(long segments) {
+private static void checkSegments(long segments) {
         if (segments <= 0) {
             throw new IllegalArgumentException("segments should be positive, " +
                     segments + " given");

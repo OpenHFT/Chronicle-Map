@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
@@ -65,14 +66,16 @@ public class TrickyContextCasesTest {
         try (ExternalMapQueryContext<Integer, byte[], ?> q = map.queryContext(1)) {
             MapEntry<Integer, byte[]> entry = q.entry(); // acquires read lock implicitly
             assertNotNull(entry);
-            Executors.newFixedThreadPool(1).submit(() -> {
-                // this call should try to acquire write lock, that should lead to dead lock
-                // but if not...
-                // relocates the entry for the key 1 after the entry for 2, under update lock
-                map.put(1, new byte[]{1, 2, 3, 4, 5});
-                // puts the entry for 3 at the place of the entry for the key 1, under update lock
-                map.put(3, new byte[]{3});
-            }).get();
+            Executors.newFixedThreadPool(1,
+                    new NamedThreadFactory("test"))
+                    .submit(() -> {
+                        // this call should try to acquire write lock, that should lead to dead lock
+                        // but if not...
+                        // relocates the entry for the key 1 after the entry for 2, under update lock
+                        map.put(1, new byte[]{1, 2, 3, 4, 5});
+                        // puts the entry for 3 at the place of the entry for the key 1, under update lock
+                        map.put(3, new byte[]{3});
+                    }).get();
             // prints [3]
             System.out.println(Arrays.toString(entry.value().get()));
         }

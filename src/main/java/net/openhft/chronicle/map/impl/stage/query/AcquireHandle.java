@@ -16,14 +16,14 @@
 
 package net.openhft.chronicle.map.impl.stage.query;
 
-import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
+import net.openhft.chronicle.map.MapClosable;
 import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 @Staged
-public class AcquireHandle<K, V> implements Closeable {
+public class AcquireHandle<K, V> implements MapClosable {
 
     @StageRef
     CheckOnEachPublicOperation checkOnEachPublicOperation;

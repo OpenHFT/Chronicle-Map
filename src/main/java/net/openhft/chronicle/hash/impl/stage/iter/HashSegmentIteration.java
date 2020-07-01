@@ -55,7 +55,9 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     }
 
     public long tierEntriesForIteration() {
-        return s.tierEntries();
+        throwExceptionIfClosed();
+
+ return s.tierEntries();
     }
 
     abstract boolean entryRemovedOnThisIterationInit();
@@ -67,14 +69,18 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     public abstract boolean hashLookupEntryInit();
 
     public void initHashLookupEntry(long entry) {
-        hashLookupEntry = entry;
+        throwExceptionIfClosed();
+
+ hashLookupEntry = entry;
     }
 
     abstract void closeHashLookupEntry();
 
     @Override
     public boolean forEachSegmentEntryWhile(Predicate<? super E> predicate) {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        throwExceptionIfClosed();
+
+ checkOnEachPublicOperation.checkOnEachPublicOperation();
         s.innerUpdateLock.lock();
         return innerForEachSegmentEntryWhile(predicate);
     }
@@ -174,18 +180,24 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     }
 
     public void hookAfterEachIteration() {
-    }
+        throwExceptionIfClosed();
+
+ }
 
     @Override
     public void forEachSegmentEntry(Consumer<? super E> action) {
-        forEachSegmentEntryWhile(e -> {
+        throwExceptionIfClosed();
+
+ forEachSegmentEntryWhile(e -> {
             action.accept(e);
             return true;
         });
     }
 
     public void checkEntryNotRemovedOnThisIteration() {
-        if (entryRemovedOnThisIterationInit()) {
+        throwExceptionIfClosed();
+
+ if (entryRemovedOnThisIterationInit()) {
             throw new IllegalStateException(
                     hh.h().toIdentityString() + ": Entry was already removed on this iteration");
         }
@@ -193,7 +205,9 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
 
     @Override
     public void doRemove() {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        throwExceptionIfClosed();
+
+ checkOnEachPublicOperation.checkOnEachPublicOperation();
         s.innerWriteLock.lock();
         try {
             iterationRemove();
@@ -204,7 +218,9 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     }
 
     public void iterationRemove() {
-        // this condition mean -- some other entry taken place of the removed one
+        throwExceptionIfClosed();
+
+ // this condition mean -- some other entry taken place of the removed one
         if (hh.h().hashLookup.remove(s.tierBaseAddr, hlp.hashLookupPos) != hlp.hashLookupPos) {
             // if so, should make step back, to compensate step forward on the next iteration,
             // to consume the shifted entry

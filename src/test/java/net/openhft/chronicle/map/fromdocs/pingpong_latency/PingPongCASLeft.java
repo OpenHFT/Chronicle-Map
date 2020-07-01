@@ -21,7 +21,6 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -29,7 +28,7 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 
 /* on an i7-4500 laptop.
 
-PingPongLEFT: Timing 1 x off-heap operations on /dev/shm/RDR_DIM_Mock
+PingPongLEFT: Timing 1 x off-heap operations on /dev/chm/RDR_DIM_Mock
 #0:  compareAndSwapCoupon() 50/90/99%tile was 41 / 52 / 132
 #1:  compareAndSwapCoupon() 50/90/99%tile was 40 / 56 / 119
 #2:  compareAndSwapCoupon() 50/90/99%tile was 39 / 48 / 54
@@ -46,17 +45,11 @@ public class PingPongCASLeft {
     public static void main(String... ignored) throws IOException {
         ChronicleMap<String, BondVOInterface> chm = PingPongCASLeft.acquireCHM();
 
-        playPingPong(chm, 4, 5, true, "PingPongCASLeft");
+        playPingPong(chm, 4, 5, true, "PingPongCASLEFT");
     }
 
-    static void playPingPong(
-                                        ChronicleMap<String, BondVOInterface> chm,
-                                        double _coupon,
-                                        double _coupon2,
-                                        boolean setFirst,
-                                        final String desc
-    ) {
-
+    static void playPingPong(ChronicleMap<String, BondVOInterface> chm, double _coupon,
+                             double _coupon2, boolean setFirst, final String desc) {
         BondVOInterface bond1 = newNativeReference(BondVOInterface.class);
         BondVOInterface bond2 = newNativeReference(BondVOInterface.class);
         BondVOInterface bond3 = newNativeReference(BondVOInterface.class);
@@ -66,7 +59,7 @@ public class PingPongCASLeft {
         chm.acquireUsing("369604102", bond2);
         chm.acquireUsing("369604103", bond3);
         chm.acquireUsing("369604104", bond4);
-        System.out.printf("\n\n" + desc + ": Timing 1 x off-heap operations on /dev/shm/RDR_DIM_Mock\n");
+        System.out.printf("\n\n" + desc + ": Timing 1 x off-heap operations on /dev/chm/RDR_DIM_Mock\n");
         if (setFirst) {
             bond1.setCoupon(_coupon);
             bond2.setCoupon(_coupon);
@@ -80,9 +73,9 @@ public class PingPongCASLeft {
             for (int i = 0; i < runs; i++) {
                 long _start = System.nanoTime(); //
                 while (!bond1.compareAndSwapCoupon(_coupon, _coupon2)) ;
-                //while (!bond2.compareAndSwapCoupon(_coupon, _coupon2)) ;
-                //while (!bond3.compareAndSwapCoupon(_coupon, _coupon2)) ;
-                //while (!bond4.compareAndSwapCoupon(_coupon, _coupon2)) ;
+                while (!bond2.compareAndSwapCoupon(_coupon, _coupon2)) ;
+                while (!bond3.compareAndSwapCoupon(_coupon, _coupon2)) ;
+                while (!bond4.compareAndSwapCoupon(_coupon, _coupon2)) ;
 
                 timings[i] = (System.nanoTime() - _start - timeToCallNanoTime) / 4;
             }
@@ -97,8 +90,6 @@ public class PingPongCASLeft {
         AffinitySupport.setThreadId();
         return ChronicleMapBuilder.of(String.class, BondVOInterface.class)
                 .entries(16)
-                .averageKeySize("369604101".length())
-                .createPersistedTo(new File("C:\\Users\\buddy\\dev\\shm\\RDR_DIM_MOCK"));
-                //.create();
+                .averageKeySize("369604101".length()).create();
     }
 }

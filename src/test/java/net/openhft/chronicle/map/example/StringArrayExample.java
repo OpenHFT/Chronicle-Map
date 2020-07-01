@@ -52,8 +52,7 @@ public class StringArrayExample {
             // to string all the values
             System.out.println(map.getUsing(1, charSequenceArray).toString());
         }
-
-    }
+ }
 
     private CharSequenceArray setToHello(final Integer integer, final CharSequenceArray charSequenceArray) {
         charSequenceArray.getCharSequenceWrapperAt(1).setCharSequence("hello");

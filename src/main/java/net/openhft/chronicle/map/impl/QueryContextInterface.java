@@ -17,10 +17,10 @@
 package net.openhft.chronicle.map.impl;
 
 import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.map.ExternalMapQueryContext;
+import net.openhft.chronicle.map.MapClosable;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.chronicle.map.impl.ret.UsableReturnValue;
 
@@ -38,7 +38,7 @@ public interface QueryContextInterface<K, V, R> extends ExternalMapQueryContext<
 
     DataAccess<V> inputValueDataAccess();
 
-    Closeable acquireHandle();
+    MapClosable acquireHandle();
 
     void initSegmentIndex(int segmentIndex);
 

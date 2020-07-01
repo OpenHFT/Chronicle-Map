@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.Lists;
 import net.openhft.chronicle.bytes.NoBytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
@@ -39,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 @RunWith(Parameterized.class)
 public class MemoryLeaksTest {
@@ -56,6 +58,7 @@ public class MemoryLeaksTest {
     private boolean persisted;
     private ChronicleMapBuilder<IntValue, String> builder;
     private boolean closeWithinContext;
+
     public MemoryLeaksTest(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) {
         this.persisted = persisted;
         this.closeWithinContext = closeWithinContext;
@@ -92,50 +95,53 @@ public class MemoryLeaksTest {
 
     @Before
     public void resetSerializerCount() {
+        System.err.println("This test is expect to print 'ChronicleMap ... is not closed manually, cleaned up from Cleaner'");
         serializerCount.set(0);
     }
 
-    @Test(timeout = 60_000)
+    @Test(timeout = 10_000)
     public void testChronicleMapCollectedAndDirectMemoryReleased()
             throws IOException, InterruptedException {
-        if (!OS.isWindows()) {
-            // This test is flaky in Linux and Mac OS apparently because some native memory from
-            // running previous/concurrent tests is released during this test, that infers with
-            // the (*) check below. The aim of this test is to check that native memory is not
-            // leaked and it is proven if it succeeds at least sometimes at least in some OSes.
-            // This tests is successful always in Windows and successful in Linux and OS X when run
-            // alone, rather than along all other Chronicle Map's tests.
-            return;
-        }
+        assertFalse(OS.isMacOSX());
+        // This test is flaky in Linux and Mac OS apparently because some native memory from
+        // running previous/concurrent tests is released during this test, that infers with
+        // the (*) check below. The aim of this test is to check that native memory is not
+        // leaked and it is proven if it succeeds at least sometimes at least in some OSes.
+        // This tests is successful always in Windows and successful in Linux and OS X when run
+        // alone, rather than along all other Chronicle Map's tests.
+
+        System.gc();
+        Jvm.pause(100);
+
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
         int serializersBeforeMap = serializerCount.get();
-        try (ChronicleMap<IntValue, String> map = getMap()) {
-            long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
-            assertEquals(expectedNativeMemory, nativeMemoryUsed());
-            tryCloseFromContext(map);
-            WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(map);
-            Assert.assertNotNull(ref.get());
-            // map = null;
+        // the purpose of the test is to find maps which are not closed properly.
+        ChronicleMap<IntValue, String> map = getMap();
+        long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
+        assertEquals(expectedNativeMemory, nativeMemoryUsed());
+        tryCloseFromContext(map);
+        WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(map);
+        Assert.assertNotNull(ref.get());
+        //noinspection UnusedAssignment
+        map = null;
 
-            // Wait until Map is collected by GC
-            while (ref.get() != null) {
-                System.gc();
-                byte[] garbage = new byte[10_000_000];
-                Thread.yield();
+        // Wait until Map is collected by GC
+        // Wait until Cleaner is called and memory is returned to the system
+        for (int i = 1; i <= 10; i++) {
+            if (ref.get() == null &&
+                    nativeMemoryUsedBeforeMap >= nativeMemoryUsed() && // (*)
+                    serializerCount.get() == serializersBeforeMap) {
+                break;
             }
-            // Wait until Cleaner is called and memory is returned to the system
-            for (int i = 0; i < 6_000; i++) {
-                if (nativeMemoryUsedBeforeMap == nativeMemoryUsed() && // (*)
-                        serializerCount.get() == serializersBeforeMap) {
-                    break;
-                }
-                System.gc();
-                byte[] garbage = new byte[10_000_000];
-                Thread.sleep(10);
-            }
-            Assert.assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
-            Assert.assertEquals(serializersBeforeMap, serializerCount.get());
+            System.gc();
+            Jvm.pause(i * 10);
+            System.out.println("ref.get()=" + (ref.get() == null));
+            System.out.println(nativeMemoryUsedBeforeMap + " <=> " + nativeMemoryUsed());
+            System.out.println(serializerCount.get() + " <=> " + serializersBeforeMap);
         }
+        if (nativeMemoryUsedBeforeMap < nativeMemoryUsed())
+            Assert.assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
+        Assert.assertEquals(serializersBeforeMap, serializerCount.get());
     }
 
     private long nativeMemoryUsed() {

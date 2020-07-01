@@ -154,6 +154,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
+        ;
         super.writeMarshallable(wireOut);
 
         wireOut.write(() -> "tierModIterBitSetSizeInBits").int64(tierModIterBitSetSizeInBits);
@@ -171,12 +172,16 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public ReplicatedGlobalMutableState globalMutableState() {
-        return (ReplicatedGlobalMutableState) super.globalMutableState();
+        throwExceptionIfClosed();
+
+ return (ReplicatedGlobalMutableState) super.globalMutableState();
     }
 
     @Override
     public void initTransients() {
-        super.initTransients();
+        throwExceptionIfClosed();
+
+ super.initTransients();
         initOwnTransients();
     }
 
@@ -232,22 +237,30 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public long mapHeaderInnerSize() {
-        return super.mapHeaderInnerSize() + (segmentModIterBitSetsForIdentifierOuterSize * 128);
+        throwExceptionIfClosed();
+
+ return super.mapHeaderInnerSize() + (segmentModIterBitSetsForIdentifierOuterSize * 128);
     }
 
     @Override
     public void setRemoteNodeCouldBootstrapFrom(byte remoteIdentifier, long bootstrapTimestamp) {
-        remoteNodeCouldBootstrapFrom[remoteIdentifier] = bootstrapTimestamp;
+        throwExceptionIfClosed();
+
+ remoteNodeCouldBootstrapFrom[remoteIdentifier] = bootstrapTimestamp;
     }
 
     @Override
     public long remoteNodeCouldBootstrapFrom(byte remoteIdentifier) {
-        return remoteNodeCouldBootstrapFrom[remoteIdentifier];
+        throwExceptionIfClosed();
+
+ return remoteNodeCouldBootstrapFrom[remoteIdentifier];
     }
 
     @Override
     public void onHeaderCreated() {
-        // Pad modification iterators at 3 cache lines from the end of the map header,
+        throwExceptionIfClosed();
+
+ // Pad modification iterators at 3 cache lines from the end of the map header,
         // to avoid false sharing with the header of the first segment
         startOfModificationIterators = super.mapHeaderInnerSize() +
                 RESERVED_GLOBAL_MUTABLE_STATE_BYTES - BYTES.convert(3, CACHE_LINES);
@@ -261,7 +274,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public byte identifier() {
-        byte id = localIdentifier;
+        throwExceptionIfClosed();
+
+ byte id = localIdentifier;
         if (id == 0) {
             throw new IllegalStateException("Replication identifier is not set for this\n" +
                     "replicated Chronicle Map. This should only be possible if persisted\n" +
@@ -282,7 +297,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public ModificationIterator acquireModificationIterator(byte remoteIdentifier) {
-        ModificationIterator modificationIterator = modificationIterators.get(remoteIdentifier);
+        throwExceptionIfClosed();
+
+ ModificationIterator modificationIterator = modificationIterators.get(remoteIdentifier);
         if (modificationIterator != null)
             return modificationIterator;
 
@@ -324,7 +341,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public ModificationIterator[] acquireAllModificationIterators() {
-        for (int remoteIdentifier = 0; remoteIdentifier < 128; remoteIdentifier++) {
+        throwExceptionIfClosed();
+
+ for (int remoteIdentifier = 0; remoteIdentifier < 128; remoteIdentifier++) {
             if (globalMutableState().getModificationIteratorInitAt(remoteIdentifier)) {
                 acquireModificationIterator((byte) remoteIdentifier);
             }
@@ -339,20 +358,30 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         }
     }
 
-    public long changeCount() { return changeCount.get(); }
+    public long changeCount() {
+        throwExceptionIfClosed();
+
+ return changeCount.get();
+    }
 
     public void raiseChange(long tierIndex, long pos) {
-        // -1 is invalid remoteIdentifier => raise change for all
+        throwExceptionIfClosed();
+
+ // -1 is invalid remoteIdentifier => raise change for all
         changeCount.incrementAndGet();
         raiseChangeForAllExcept(tierIndex, pos, (byte) -1);
     }
 
     public void raiseChangeFor(long tierIndex, long pos, byte remoteIdentifier) {
-        acquireModificationIterator(remoteIdentifier).raiseChange0(tierIndex, pos);
+        throwExceptionIfClosed();
+
+ acquireModificationIterator(remoteIdentifier).raiseChange0(tierIndex, pos);
     }
 
     public void raiseChangeForAllExcept(long tierIndex, long pos, byte remoteIdentifier) {
-        updateModificationIteratorsArray();
+        throwExceptionIfClosed();
+
+ updateModificationIteratorsArray();
         if (tierIndex <= actualSegments) {
             long segmentIndex = tierIndex - 1;
             long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
@@ -373,7 +402,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public void dropChange(long tierIndex, long pos) {
-        updateModificationIteratorsArray();
+        throwExceptionIfClosed();
+
+ updateModificationIteratorsArray();
         if (tierIndex <= actualSegments) {
             long segmentIndex = tierIndex - 1;
             long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
@@ -392,11 +423,15 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public void dropChangeFor(long tierIndex, long pos, byte remoteIdentifier) {
-        acquireModificationIterator(remoteIdentifier).dropChange0(tierIndex, pos);
+        throwExceptionIfClosed();
+
+ acquireModificationIterator(remoteIdentifier).dropChange0(tierIndex, pos);
     }
 
     public void moveChange(long oldTierIndex, long oldPos, long newTierIndex, long newPos) {
-        updateModificationIteratorsArray();
+        throwExceptionIfClosed();
+
+ updateModificationIteratorsArray();
         if (oldTierIndex <= actualSegments) {
             long oldSegmentIndex = oldTierIndex - 1;
             long oldOffsetToTierBitSet = oldSegmentIndex * tierModIterBitSetOuterSize;
@@ -450,7 +485,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     public boolean isChanged(long tierIndex, long pos) {
-        updateModificationIteratorsArray();
+        throwExceptionIfClosed();
+
+ updateModificationIteratorsArray();
         if (tierIndex <= actualSegments) {
             long segmentIndex = tierIndex - 1;
             long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
@@ -473,13 +510,17 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public boolean identifierCheck(@NotNull ReplicableEntry entry, int chronicleId) {
-        return entry.originIdentifier() == identifier();
+        throwExceptionIfClosed();
+
+ return entry.originIdentifier() == identifier();
     }
 
     @Override
     public void writeExternalEntry(
             ReplicableEntry entry, Bytes payload, @NotNull Bytes destination, int chronicleId, ArrayList<String> keys) {
-        if (payload != null)
+        throwExceptionIfClosed();
+
+ if (payload != null)
             writePayload(payload, destination);
         if (entry != null)
             writeExternalEntry0(entry, destination, keys);
@@ -524,11 +565,11 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         key.writeTo(destination, destination.writePosition());
         destination.writeSkip(key.size());
 
-        boolean debugEnabled = LOG.isDebugEnabled();
+        boolean traceEnabled = LOG.isTraceEnabled();
         String message = null;
-        if (debugEnabled) {
+        if (traceEnabled) {
             if (isDeleted) {
-                LOG.debug("WRITING ENTRY TO DEST -  into local-id={}, remove(key={})",
+                LOG.trace("WRITING ENTRY TO DEST -  into local-id={}, remove(key={})",
                         identifier(), key);
             } else {
                 message = String.format(
@@ -545,7 +586,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         value.writeTo(destination, destination.writePosition());
         destination.writeSkip(value.size());
 
-        if (debugEnabled) {
+        if (traceEnabled) {
             LOG.debug(message + "value=" + value + ")");
         }
     }
@@ -571,7 +612,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
      */
     @Override
     public void readExternalEntry(@NotNull Bytes source, byte remoteNodeIdentifier) {
-        byte hunk = source.readByte();
+        throwExceptionIfClosed();
+
+ byte hunk = source.readByte();
         if (hunk == BOOTSTRAP_TIME_HUNK) {
             setRemoteNodeCouldBootstrapFrom(remoteNodeIdentifier, source.readLong());
         } else {
@@ -596,8 +639,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 CompiledReplicatedMapIterationContext::new, this);
     }
 
-
-    @Override
+@Override
     public final V get(Object key) {
         return defaultGet(key);
     }
@@ -607,8 +649,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         return defaultGetUsing(key, usingValue);
     }
 
-
-    /**
+/**
      * <p>
      *     Once a change occurs to a map, map replication requires that these changes are picked up
      *     by another thread, this class provides an iterator like interface to poll for such changes.
@@ -681,7 +722,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         }
 
         public void setModificationNotifier(@NotNull ModificationNotifier modificationNotifier) {
-            this.modificationNotifier = modificationNotifier;
+            throwExceptionIfClosed();
+
+ this.modificationNotifier = modificationNotifier;
         }
 
         void raiseChangeInSegment(long offsetToTierBitSet, long pos) {
@@ -735,7 +778,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
          */
         @Override
         public boolean hasNext() {
-            return nextEntryPos(null, 0) != NOT_FOUND;
+            throwExceptionIfClosed();
+
+ return nextEntryPos(null, 0) != NOT_FOUND;
         }
 
         private long nextEntryPos(Callback callback, int chronicleId) {
@@ -823,7 +868,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
          */
         @Override
         public boolean nextEntry(@NotNull Callback callback, int chronicleId) {
-            while (true) {
+            throwExceptionIfClosed();
+
+ while (true) {
                 long nextEntryPos = nextEntryPos(callback, chronicleId);
                 if (nextEntryPos == NOT_FOUND)
                     return false;
@@ -873,7 +920,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
         @Override
         public void dirtyEntries(long fromTimeStamp) {
-            try (CompiledReplicatedMapIterationContext<K, V, R> c = iterationContext()) {
+            throwExceptionIfClosed();
+
+ try (CompiledReplicatedMapIterationContext<K, V, R> c = iterationContext()) {
                 // iterate over all the segments and mark bit in the modification iterator
                 // that correspond to entries with an older timestamp
                 boolean debugEnabled = LOG.isDebugEnabled();
@@ -934,7 +983,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         }
 
         public void clearRange0(long tierIndex, long pos, long endPosExclusive) {
-            if (tierIndex <= actualSegments) {
+            throwExceptionIfClosed();
+
+ if (tierIndex <= actualSegments) {
                 long segmentIndex = tierIndex - 1;
                 long offsetToTierBitSet = segmentIndex * tierModIterBitSetOuterSize;
                 tierModIterFrame.clearRange(nativeAccess(), null,

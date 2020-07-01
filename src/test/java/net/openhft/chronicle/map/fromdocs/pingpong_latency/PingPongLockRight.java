@@ -25,6 +25,6 @@ public class PingPongLockRight {
     public static void main(String... ignored) throws IOException, InterruptedException {
         ChronicleMap<String, BondVOInterface> chm = PingPongCASLeft.acquireCHM();
 
-        PingPongLockLeft.playPingPong(chm, 5, 4, false, "PingPongLockRIGHT");
+        //PingPongLockLeft.playPingPong(chm, 5, 4, false, "PingPongLockRIGHT");
     }
 }

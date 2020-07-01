@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.LongValue;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -116,7 +117,7 @@ public class EntryCountMapTest {
     public void testSmall() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testSmall seeds");
         int procs = Runtime.getRuntime().availableProcessors();
-        ExecutorService es = Executors.newFixedThreadPool(procs);
+        ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
         for (int t = 0; t < ecmTests; t++) {
             List<Future<?>> futures = new ArrayList<>();
             {
@@ -160,7 +161,7 @@ public class EntryCountMapTest {
     public void testMedium() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testMedium seeds");
         int procs = Runtime.getRuntime().availableProcessors();
-        ExecutorService es = Executors.newFixedThreadPool(procs);
+        ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
         for (int t = 0; t < ecmTests; t++) {
             // regression test.
             List<Future<?>> futures = new ArrayList<>();

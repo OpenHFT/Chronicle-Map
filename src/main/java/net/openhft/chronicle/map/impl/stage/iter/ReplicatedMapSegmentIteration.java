@@ -60,22 +60,30 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public boolean shouldTestEntry() {
-        return entriesToTest == ALL || !e.entryDeleted();
+        throwExceptionIfClosed();
+
+ return entriesToTest == ALL || !e.entryDeleted();
     }
 
     @Override
     public Object entryForIteration() {
-        return !e.entryDeleted() ? entryDelegating : absentEntryDelegating;
+        throwExceptionIfClosed();
+
+ return !e.entryDeleted() ? entryDelegating : absentEntryDelegating;
     }
 
     @Override
     public long tierEntriesForIteration() {
-        return entriesToTest == ALL ? s.tierEntries() : s.tierEntries() - s.tierDeleted();
+        throwExceptionIfClosed();
+
+ return entriesToTest == ALL ? s.tierEntries() : s.tierEntries() - s.tierDeleted();
     }
 
     @Override
     public void doReplaceValue(Data<V> newValue) {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        throwExceptionIfClosed();
+
+ checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             entry.innerDefaultReplaceValue(newValue);
             e.updatedReplicationStateOnPresentEntry();
@@ -87,7 +95,9 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public boolean forEachSegmentEntryWhile(Predicate<? super MapEntry<K, V>> predicate) {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        throwExceptionIfClosed();
+
+ checkOnEachPublicOperation.checkOnEachPublicOperation();
         initEntriesToTest(PRESENT);
         s.innerUpdateLock.lock();
         return innerForEachSegmentEntryWhile(predicate);
@@ -96,7 +106,9 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     @Override
     public boolean forEachSegmentReplicableEntryWhile(
             Predicate<? super ReplicableEntry> predicate) {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        throwExceptionIfClosed();
+
+ checkOnEachPublicOperation.checkOnEachPublicOperation();
         initEntriesToTest(ALL);
         s.innerUpdateLock.lock();
         return innerForEachSegmentEntryWhile(predicate);
@@ -104,7 +116,9 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public void forEachSegmentReplicableEntry(Consumer<? super ReplicableEntry> action) {
-        forEachSegmentReplicableEntryWhile(e -> {
+        throwExceptionIfClosed();
+
+ forEachSegmentReplicableEntryWhile(e -> {
             action.accept(e);
             return true;
         });
@@ -112,7 +126,9 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public void doRemove() {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        throwExceptionIfClosed();
+
+ checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             if (e.valueSize > dummyValue.size())
                 e.innerDefaultReplaceValue(dummyValue);
@@ -128,7 +144,9 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
 
     @Override
     public void doRemoveCompletely() {
-        boolean wasDeleted = e.entryDeleted();
+        throwExceptionIfClosed();
+
+ boolean wasDeleted = e.entryDeleted();
         super.doRemove();
         ru.dropChange();
         if (wasDeleted)
@@ -136,7 +154,9 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     }
 
     public void doInsert(Data<V> value) {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        throwExceptionIfClosed();
+
+ checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (e.entryDeleted()) {
             try {
                 s.tierDeleted(s.tierDeleted() - 1);
@@ -155,7 +175,9 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     }
 
     public void doInsert() {
-        if (mh.set() == null)
+        throwExceptionIfClosed();
+
+ if (mh.set() == null)
             throw new IllegalStateException(mh.h().toIdentityString() +
                     ": Called SetAbsentEntry.doInsert() from Map context");
         doInsert((Data<V>) DummyValueData.INSTANCE);

@@ -23,6 +23,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.set.Builder;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -917,7 +918,7 @@ public class ChronicleMapTest {
 //        int runs = Integer.getInteger("runs", 10);
         int procs = 1; // Runtime.getRuntime().availableProcessors();
         int threads = procs * 3;
-        ExecutorService es = Executors.newFixedThreadPool(procs);
+        ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
         for (int runs : new int[]{1, /*10, 250, 500, 1000, 2500*/}) {
             for (int entrySize : new int[]{240, 256}) {
                 int valuePadding = entrySize - 16;
@@ -1009,7 +1010,7 @@ public class ChronicleMapTest {
         int procs = Runtime.getRuntime().availableProcessors();
         if (procs > 8) procs--;
         int threads = procs * 3;
-        ExecutorService es = Executors.newFixedThreadPool(procs);
+        ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
         for (int runs : new int[]{1, 2, 5, 10, 25, 50, 100, 500, 1000, 2500}) {
 
             final long entries = runs * 1000 * 1000L;
@@ -1106,7 +1107,7 @@ public class ChronicleMapTest {
 //        int runs = Integer.getInteger("runs", 10);
         int procs = Runtime.getRuntime().availableProcessors();
         int threads = procs * 3; // runs > 100 ? procs / 2 : procs;
-        ExecutorService es = Executors.newFixedThreadPool(procs);
+        ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
         for (int runs : new int[]{10, 50, 100, 250, 500, 1000, 2500}) {
 // JAVA 8 produces more garbage than previous versions for internal work.
 //            System.gc();
@@ -1185,7 +1186,7 @@ public class ChronicleMapTest {
             for (int j = 0; j < count; j++) {
                 final ConcurrentMap<String, AtomicInteger> map = new ConcurrentHashMap<String, AtomicInteger>((int) (entries * 5 / 4), 1.0f, 1024);
                 long start = System.currentTimeMillis();
-                ExecutorService es = Executors.newFixedThreadPool(procs);
+                ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
                 for (int i = 0; i < threads; i++) {
                     final int t = i;
                     es.submit(new Runnable() {

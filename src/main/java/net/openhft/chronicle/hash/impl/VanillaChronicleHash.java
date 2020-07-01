@@ -38,7 +38,6 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireInternal;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
@@ -233,12 +232,15 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     public void readMarshallable(@NotNull WireIn wire) {
+        ;
         readMarshallableFields(wire);
         initTransients();
     }
 
     public Runnable getPreShutdownAction() {
-        return preShutdownAction;
+        throwExceptionIfClosed();
+
+ return preShutdownAction;
     }
 
     protected void readMarshallableFields(@NotNull WireIn wireIn) {
@@ -291,6 +293,7 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
+        ;
         wireOut.write(() -> "dataFileVersion").text(dataFileVersion);
 
         wireOut.write(() -> "keyClass").typeLiteral(keyClass);
@@ -338,7 +341,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public VanillaGlobalMutableState globalMutableState() {
-        return globalMutableState;
+        throwExceptionIfClosed();
+
+ return globalMutableState;
     }
 
     private long tierSize() {
@@ -379,7 +384,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void initTransients() {
-        initOwnTransients();
+        throwExceptionIfClosed();
+
+ initOwnTransients();
     }
 
     private void initOwnTransients() {
@@ -472,15 +479,21 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void setResourcesName() {
-        resources.setChronicleHashIdentityString(toIdentityString());
+        throwExceptionIfClosed();
+
+ resources.setChronicleHashIdentityString(toIdentityString());
     }
 
     public void registerCleaner() {
-        this.cleaner = CleanerUtils.createCleaner(this, resources);
+        throwExceptionIfClosed();
+
+ this.cleaner = CleanerUtils.createCleaner(this, resources);
     }
 
     public void addToOnExitHook() {
-        if (!skipCloseOnExitHook) {
+        throwExceptionIfClosed();
+
+ if (!skipCloseOnExitHook) {
             ChronicleHashCloseOnExitHook.add(this);
         }
     }
@@ -611,13 +624,17 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void onHeaderCreated() {
-    }
+        throwExceptionIfClosed();
+
+ }
 
     /**
      * @return the version of Chronicle Map that was used to create the current data file
      */
     public String persistedDataVersion() {
-        return dataFileVersion;
+        throwExceptionIfClosed();
+
+ return dataFileVersion;
     }
 
     private long segmentHeadersOffset() {
@@ -636,7 +653,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public long mapHeaderInnerSize() {
-        return headerSize + globalMutableStateTotalUsedSize();
+        throwExceptionIfClosed();
+
+ return headerSize + globalMutableStateTotalUsedSize();
     }
 
     @Override
@@ -680,7 +699,9 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     public boolean isOpen() {
-        return !resources.closed();
+        throwExceptionIfClosed();
+
+ return !resources.closed();
     }
 
     public final void checkKey(Object key) {
@@ -698,7 +719,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public long bsAddress() {
-        return bs.addressForRead(0);
+        throwExceptionIfClosed();
+
+ return bs.addressForRead(0);
     }
 
     public final long segmentBaseAddr(int segmentIndex) {
@@ -729,7 +752,9 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     public int segments() {
-        return actualSegments;
+        throwExceptionIfClosed();
+
+ return actualSegments;
     }
 
     private long globalMutableStateAddress() {
@@ -737,14 +762,18 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void globalMutableStateLock() {
-        globalMutableStateLockAcquisitionStrategy.acquire(
+        throwExceptionIfClosed();
+
+ globalMutableStateLockAcquisitionStrategy.acquire(
                 globalMutableStateLockTryAcquireOperation, globalMutableStateLockingStrategy,
                 nativeAccess(), null,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
     public void globalMutableStateUnlock() {
-        globalMutableStateLockingStrategy.unlock(nativeAccess(), null,
+        throwExceptionIfClosed();
+
+ globalMutableStateLockingStrategy.unlock(nativeAccess(), null,
                 globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
     }
 
@@ -752,16 +781,22 @@ public abstract class VanillaChronicleHash<K,
      * For tests
      */
     public boolean hasExtraTierBulks() {
-        return globalMutableState.getAllocatedExtraTierBulks() > 0;
+        throwExceptionIfClosed();
+
+ return globalMutableState.getAllocatedExtraTierBulks() > 0;
     }
 
     @Override
     public long offHeapMemoryUsed() {
-        return resources.totalMemory();
+        throwExceptionIfClosed();
+
+ return resources.totalMemory();
     }
 
     public long allocateTier() {
-        globalMutableStateLock();
+        throwExceptionIfClosed();
+
+ globalMutableStateLock();
         try {
             long tiersInUse = globalMutableState.getExtraTiersInUse();
             if (tiersInUse >= maxExtraTiers) {
@@ -837,7 +872,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void msync() throws IOException {
-        if (persisted()) {
+        throwExceptionIfClosed();
+
+ if (persisted()) {
             msync(bsAddress(), bs.capacity());
         }
     }
@@ -857,7 +894,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void linkAndZeroOutFreeTiers(long firstTierIndex, long lastTierIndex) {
-        for (long tierIndex = firstTierIndex; tierIndex <= lastTierIndex; tierIndex++) {
+        throwExceptionIfClosed();
+
+ for (long tierIndex = firstTierIndex; tierIndex <= lastTierIndex; tierIndex++) {
             long tierOffset = tierBytesOffset(tierIndex);
             BytesStore tierBytesStore = tierBytesStore(tierIndex);
             zeroOutNewlyMappedTier(tierBytesStore, tierOffset);
@@ -870,11 +909,15 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public long extraTierIndexToTierIndex(long extraTierIndex) {
-        return actualSegments + extraTierIndex + 1;
+        throwExceptionIfClosed();
+
+ return actualSegments + extraTierIndex + 1;
     }
 
     public long tierIndexToBaseAddr(long tierIndex) {
-        // tiers are 1-counted, to allow tierIndex = 0 to be un-initialized in off-heap memory,
+        throwExceptionIfClosed();
+
+ // tiers are 1-counted, to allow tierIndex = 0 to be un-initialized in off-heap memory,
         // convert into 0-based form
         long tierIndexMinusOne = tierIndex - 1;
         if (tierIndexMinusOne < actualSegments)
@@ -883,14 +926,18 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public BytesStore tierBytesStore(long tierIndex) {
-        long tierIndexMinusOne = tierIndex - 1;
+        throwExceptionIfClosed();
+
+ long tierIndexMinusOne = tierIndex - 1;
         if (tierIndexMinusOne < actualSegments)
             return bs;
         return tierBulkData(tierIndexMinusOne).bytesStore;
     }
 
     public long tierBytesOffset(long tierIndex) {
-        long tierIndexMinusOne = tierIndex - 1;
+        throwExceptionIfClosed();
+
+ long tierIndexMinusOne = tierIndex - 1;
         if (tierIndexMinusOne < actualSegments)
             return segmentOffset(tierIndexMinusOne);
         long extraTierIndex = tierIndexMinusOne - actualSegments;
@@ -1025,14 +1072,18 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public void addCloseable(Closeable closeable) {
-        resources.addCloseable(closeable);
+        throwExceptionIfClosed();
+
+ resources.addCloseable(closeable);
     }
 
     /**
      * For testing only
      */
     public List<WeakReference<ContextHolder>> allContexts() {
-        return Collections.unmodifiableList(resources.contexts());
+        throwExceptionIfClosed();
+
+ return Collections.unmodifiableList(resources.contexts());
     }
 
     public static class TierBulkData {
@@ -1056,7 +1107,9 @@ public abstract class VanillaChronicleHash<K,
      */
     public class Identity {
         public VanillaChronicleHash hash() {
-            return VanillaChronicleHash.this;
+            throwExceptionIfClosed();
+
+ return VanillaChronicleHash.this;
         }
     }
 }

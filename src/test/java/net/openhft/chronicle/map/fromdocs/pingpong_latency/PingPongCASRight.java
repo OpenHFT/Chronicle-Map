@@ -27,6 +27,6 @@ public class PingPongCASRight {
     public static void main(String... ignored) throws IOException {
         ChronicleMap<String, BondVOInterface> chm = PingPongCASLeft.acquireCHM();
 
-        playPingPong(chm, 5, 4, false, "PingPongCASRight");
+        playPingPong(chm, 5, 4, false, "PingPongCASLEFT");
     }
 }

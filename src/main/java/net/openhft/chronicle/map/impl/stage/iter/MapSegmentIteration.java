@@ -40,12 +40,16 @@ public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<
 
     @Override
     public void hookAfterEachIteration() {
-        wrappedValueInstanceDataHolder.closeValue();
+        throwExceptionIfClosed();
+
+ wrappedValueInstanceDataHolder.closeValue();
     }
 
     @Override
     public void doReplaceValue(Data<V> newValue) {
-        checkOnEachPublicOperation.checkOnEachPublicOperation();
+        throwExceptionIfClosed();
+
+ checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             entry.innerDefaultReplaceValue(newValue);
         } finally {
