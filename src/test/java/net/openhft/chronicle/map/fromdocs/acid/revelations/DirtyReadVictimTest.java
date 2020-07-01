@@ -59,9 +59,9 @@ public class DirtyReadVictimTest {
                 );
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim sleeping 60 seconds"
+                                " DirtyReadVictim sleeping 10 seconds"
                 );
-                Thread.sleep(60_000);
+                Thread.sleep(10_000);
             } finally {
                 if (offHeapLock.validate(stamp)) {
                     System.out.println(
