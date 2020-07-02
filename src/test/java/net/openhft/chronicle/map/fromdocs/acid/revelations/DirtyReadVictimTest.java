@@ -69,7 +69,7 @@ public class DirtyReadVictimTest {
                                     " DirtyReadVictim OPTIMISTICALLY_READ coupon=" +
                                     coupon + " "
                     );
-
+                    // THIS Test will pass when ChronicleStampedLock is GA
                     Assert.assertFalse(Boolean.TRUE);
                 } else {
                     System.out.println(
@@ -78,6 +78,7 @@ public class DirtyReadVictimTest {
                                     " must apply PESSIMISTIC_POLICY (dirty read endured)" +
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
+                    // THIS Test will execute pass when ChronicleStampedLock is GA
                     Assert.assertFalse(Boolean.FALSE);
                 }
             }

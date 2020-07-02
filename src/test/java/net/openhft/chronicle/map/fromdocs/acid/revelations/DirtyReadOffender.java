@@ -88,6 +88,11 @@ public class DirtyReadOffender  {
              */
         } catch (Exception throwables) {
             throwables.printStackTrace();
+        } finally {
+            System.out.println(
+                    " ,,@t=" + System.currentTimeMillis() +
+                            " DirtyReadOffender COMMITTED"
+            );
         }
     }
 

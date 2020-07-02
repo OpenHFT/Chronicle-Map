@@ -21,7 +21,7 @@ public class DirtyReadVictim {
             long stamp = 0;
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"
+                            " DirtyReadVictim ENTERING offHeapLock.tryOptimisticRead()"
             );
             ChronicleStampedLock offHeapLock = new ChronicleStampedLock();
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
@@ -29,7 +29,7 @@ public class DirtyReadVictim {
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim CALLED offHeapLock.tryOptimisticRead()"
+                            " DirtyReadVictim ENTERED offHeapLock.tryOptimisticRead()"
             );
             try {
                 chm.acquireUsing("369604101", bond);
@@ -48,6 +48,10 @@ public class DirtyReadVictim {
                                 " DirtyReadVictim sleeping 60 seconds"
                 );
                 Thread.sleep(60_000);
+                System.out.println(
+                        " ,,@t=" + System.currentTimeMillis() +
+                                " DirtyReadVictim awakening"
+                );
             } finally {
                 if (offHeapLock.validate(stamp)) {
                     System.out.println(
@@ -64,6 +68,10 @@ public class DirtyReadVictim {
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
                 }
+                System.out.println(
+                        " ,,@t=" + System.currentTimeMillis() +
+                                " DirtyReadVictim EXITED offHeapLock.tryOptimisticRead()"
+                );
             }
             /**
              *  ben.cotton@rutgers.edu   END
