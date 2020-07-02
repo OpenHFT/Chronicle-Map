@@ -1,1 +1,1 @@
-image::../../../../../../../../../../../../Public/Pictures/file.png[]
+image::ChronicleStampedLock=WANTED.png[]
