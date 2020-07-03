@@ -24,10 +24,11 @@ public class DirtyReadOffender  {
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender established chm "
             );
+            StampedLock offHeapLock = new ChronicleStampedLock();
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
+            //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
-            chm.acquireUsing("Offender ", cslMock); // mock ChronicleStampLock
+            //chm.acquireUsing("Offender ", cslMock); // mock ChronicleStampLock
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender sleeping "+sleepT+" seconds "
@@ -49,7 +50,7 @@ public class DirtyReadOffender  {
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
-            StampedLock offHeapLock = new ChronicleStampedLock();
+
             while ((stamp = offHeapLock.tryWriteLock()) == 0) {
                 ;
             }
@@ -66,8 +67,8 @@ public class DirtyReadOffender  {
                 );
                 bond.setCoupon(newCoupon);
                 chm.put("369604101", bond);
-                cslMock.setEntryLockState(System.currentTimeMillis()); //mock'd
-                chm.put("Offender ",cslMock); //mock'd
+                //cslMock.setEntryLockState(System.currentTimeMillis()); //mock'd
+               // chm.put("Offender ",cslMock); //mock'd
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
                                 " DirtyReadOffender coupon=["+
@@ -79,7 +80,7 @@ public class DirtyReadOffender  {
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
                                 " DirtyReadOffender called " +
-                                "offHeapLock.unlockWrite(stamp);"
+                                "offHeapLock.unlockWrite("+stamp+");"
                 );
             }
             /**
