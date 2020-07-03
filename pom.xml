@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>chronicle-map</artifactId>
-    <version>3.19.42-SNAPSHOT</version>
+    <version>3.19.43-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
@@ -227,6 +227,28 @@
         </dependency>
 
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>chronicle-enterprise-snapshots</id>
+            <name>Snapshot Repository</name>
+            <url>
+                https://nexus.chronicle.software/content/repositories/snapshots
+            </url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>chronicle-enterprise-release</id>
+            <url>
+                https://nexus.chronicle.software/content/repositories/releases
+            </url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+        </repository>
+    </repositories>
 
     <build>
 
