@@ -3,6 +3,9 @@ package net.openhft.chronicle.map.fromdocs.acid.revelations;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.chronicle.map.fromdocs.acid.ChronicleAcidIsolation;
+
+import java.util.concurrent.locks.StampedLock;
+
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadVictim {
@@ -27,7 +30,7 @@ public class DirtyReadVictim {
                     " ,,@t=" + System.currentTimeMillis() +
                             " DirtyReadVictim ENTERING offHeapLock.tryOptimisticRead()"
             );
-            ChronicleStampedLock offHeapLock = new ChronicleStampedLock();
+            StampedLock offHeapLock = new ChronicleStampedLock();
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
                 ;
             }

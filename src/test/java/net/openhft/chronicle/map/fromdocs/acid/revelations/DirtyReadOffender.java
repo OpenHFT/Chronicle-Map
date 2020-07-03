@@ -1,10 +1,7 @@
 package net.openhft.chronicle.map.fromdocs.acid.revelations;
 
-
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-import net.openhft.chronicle.map.fromdocs.acid.revelations.DirtyReadTolerance;
-
 import java.util.Scanner;
 import java.util.concurrent.locks.StampedLock;
 
@@ -17,7 +14,7 @@ public class DirtyReadOffender  {
 
         try {
             String isoLevel = args[0];
-            long sleepMock = Long.parseLong(args[1]);
+            long sleepT = Long.parseLong(args[1]);
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
@@ -33,9 +30,9 @@ public class DirtyReadOffender  {
             chm.acquireUsing("Offender ", cslMock); // mock ChronicleStampLock
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender sleeping "+sleepMock+" seconds "
+                            " DirtyReadOffender sleeping "+sleepT+" seconds "
             );
-            Thread.sleep(sleepMock * 1_000);
+            Thread.sleep(sleepT * 1_000);
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender awakening "
@@ -47,13 +44,12 @@ public class DirtyReadOffender  {
              *  START
              *
              */
-
             long stamp = 0;
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
-            ChronicleStampedLock offHeapLock = new ChronicleStampedLock();
+            StampedLock offHeapLock = new ChronicleStampedLock();
             while ((stamp = offHeapLock.tryWriteLock()) == 0) {
                 ;
             }
@@ -82,7 +78,8 @@ public class DirtyReadOffender  {
                 offHeapLock.unlockWrite(stamp);
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
-                                " DirtyReadOffender called offHeapLock.unlockWrite(stamp);"
+                                " DirtyReadOffender called " +
+                                "offHeapLock.unlockWrite(stamp);"
                 );
             }
             /**
