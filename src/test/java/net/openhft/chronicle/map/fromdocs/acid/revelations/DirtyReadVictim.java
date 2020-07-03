@@ -9,6 +9,9 @@ public class DirtyReadVictim {
 
     public static void main(String args[]) {
         try {
+            String isoLevel = args[0];
+            long sleepMock = Long.parseLong(args[1]);
+
             /**
              *  ben.cotton@rutgers.edu   START
              */
@@ -18,6 +21,7 @@ public class DirtyReadVictim {
                     );
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
+            BondVOInterface cslMock = newNativeReference(BondVOInterface.class); //mock'd
             long stamp = 0;
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -33,6 +37,7 @@ public class DirtyReadVictim {
             );
             try {
                 chm.acquireUsing("369604101", bond);
+                chm.acquireUsing("Offender ", cslMock); //mock'd
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim calling chm.get('369604101').getCoupon()"
@@ -45,15 +50,20 @@ public class DirtyReadVictim {
                 );
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim sleeping 60 seconds"
+                                " DirtyReadVictim sleeping "+sleepMock+" seconds"
                 );
-                Thread.sleep(60_000);
+                cslMock.setEntryLockState(0);
+                chm.put("Offender ", cslMock); //mock'd
+                Thread.sleep(sleepMock * 1_000);
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim awakening"
                 );
+                //cslMock = (BondVOInterface) chm.get("Offender "); //mock'd
+                cslMock = (BondVOInterface) chm.get("Offender "); //mock'd
+
             } finally {
-                if (offHeapLock.validate(stamp)) {
+                if (offHeapLock.validate(stamp) && (cslMock.getEntryLockState() == 0)) {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
                                     " DirtyReadVictim OPTIMISTICALLY_READ coupon=" +

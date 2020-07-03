@@ -17,6 +17,7 @@ public class DirtyReadOffender  {
 
         try {
             String isoLevel = args[0];
+            long sleepMock = Long.parseLong(args[1]);
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
@@ -27,12 +28,14 @@ public class DirtyReadOffender  {
                             " DirtyReadOffender established chm "
             );
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
+            BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
+            chm.acquireUsing("Offender ", cslMock); // mock ChronicleStampLock
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender sleeping 10 seconds "
+                            " DirtyReadOffender sleeping "+sleepMock+" seconds "
             );
-            Thread.sleep(10 * 1_000);
+            Thread.sleep(sleepMock * 1_000);
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender awakening "
@@ -51,7 +54,7 @@ public class DirtyReadOffender  {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             ChronicleStampedLock offHeapLock = new ChronicleStampedLock();
-            while ((stamp = offHeapLock.writeLock()) == 0) {
+            while ((stamp = offHeapLock.tryWriteLock()) == 0) {
                 ;
             }
             System.out.println(
@@ -67,6 +70,8 @@ public class DirtyReadOffender  {
                 );
                 bond.setCoupon(newCoupon);
                 chm.put("369604101", bond);
+                cslMock.setEntryLockState(System.currentTimeMillis()); //mock'd
+                chm.put("Offender ",cslMock); //mock'd
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
                                 " DirtyReadOffender coupon=["+
