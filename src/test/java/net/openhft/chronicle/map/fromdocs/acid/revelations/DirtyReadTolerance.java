@@ -41,4 +41,20 @@ public class DirtyReadTolerance<K,V> {
                 );
         //.create();
     }
+
+    static ChronicleMap<String, ChronicleStampedLockVOInterface> offHeapLock(String operand)
+            throws IOException {
+        // ensure thread ids are globally unique.
+        AffinitySupport.setThreadId();
+        return ChronicleMapBuilder.of(String.class, ChronicleStampedLockVOInterface.class)
+                .entries(16)
+                .averageKeySize("123456789".length())
+                .createPersistedTo(
+                        new File(
+                                operand
+                                //  "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
+                        )
+                );
+        //.create();
+    }
 }

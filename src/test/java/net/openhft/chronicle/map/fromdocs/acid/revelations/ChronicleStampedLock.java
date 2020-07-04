@@ -1,12 +1,15 @@
 package net.openhft.chronicle.map.fromdocs.acid.revelations;
 
+import net.openhft.affinity.AffinitySupport;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.fromdocs.BondVOInterface;
+import net.openhft.chronicle.map.ChronicleMapBuilder;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
+
 
 /**
  * ben.cotton@rutgers.edu
@@ -15,14 +18,16 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
  */
 public class ChronicleStampedLock extends StampedLock {
 
-    ChronicleMap<String, BondVOInterface> chm;
-    BondVOInterface offHeapLock = newNativeReference(BondVOInterface.class);
-    BondVOInterface lastWriterT = newNativeReference(BondVOInterface.class);
-    {
+    ChronicleMap<String, ChronicleStampedLockVOInterface> chm;
+    ChronicleStampedLockVOInterface offHeapLock =
+            newNativeReference(ChronicleStampedLockVOInterface.class);
+    ChronicleStampedLockVOInterface lastWriterT =
+            newNativeReference(ChronicleStampedLockVOInterface.class);
+
+
+    ChronicleStampedLock(String chronicelStampedLockLocality) {
         try {
-            chm = DirtyReadTolerance.offHeap(
-                    "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
-            );
+            chm = DirtyReadTolerance.offHeapLock(chronicelStampedLockLocality);
             chm.acquireUsing("Stamp ", offHeapLock); //mock'd
             chm.acquireUsing("LastWriterTime ", lastWriterT);
             System.out.println(
@@ -122,6 +127,22 @@ public class ChronicleStampedLock extends StampedLock {
                         ") unlocked. set to Zero" +
                         ","
         );
+    }
+
+    static ChronicleMap<String, ChronicleStampedLockVOInterface> offHeapLock(String operand)
+            throws IOException {
+        // ensure thread ids are globally unique.
+        AffinitySupport.setThreadId();
+        return ChronicleMapBuilder.of(String.class, ChronicleStampedLockVOInterface.class)
+                .entries(16)
+                .averageKeySize("123456789".length())
+                .createPersistedTo(
+                        new File(
+                                operand
+                                //  "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
+                        )
+                );
+        //.create();
     }
 
 }

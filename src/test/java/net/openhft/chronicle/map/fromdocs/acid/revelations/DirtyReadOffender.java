@@ -24,7 +24,9 @@ public class DirtyReadOffender  {
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender established chm "
             );
-            StampedLock offHeapLock = new ChronicleStampedLock();
+            StampedLock offHeapLock = new ChronicleStampedLock(
+              "C:\\Users\\buddy\\dev\\shm\\OPERAND_ChronicleStampedLock"
+            );
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
