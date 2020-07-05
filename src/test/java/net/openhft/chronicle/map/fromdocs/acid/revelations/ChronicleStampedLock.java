@@ -9,8 +9,6 @@ import java.io.IOException;
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-
-
 /**
  * ben.cotton@rutgers.edu
  * <p>
@@ -28,7 +26,7 @@ public class ChronicleStampedLock extends StampedLock {
     ChronicleStampedLock(String chronicelStampedLockLocality) {
         try {
             chm = DirtyReadTolerance.offHeapLock(chronicelStampedLockLocality);
-            chm.acquireUsing("Stamp ", offHeapLock); //mock'd
+            chm.acquireUsing("Stamp ", offHeapLock);
             chm.acquireUsing("LastWriterTime ", lastWriterT);
             System.out.println(
                     " ,@t=" + System.currentTimeMillis() +
