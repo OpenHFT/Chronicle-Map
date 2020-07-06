@@ -18,14 +18,14 @@ public class DirtyReadOffender  {
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
+                            "OPERAND_CHRONICLE_MAP"
                     );
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender established chm "
             );
             StampedLock offHeapLock = new ChronicleStampedLock(
-              "C:\\Users\\buddy\\dev\\shm\\OPERAND_ChronicleStampedLock"
+              "OPERAND_ChronicleStampedLock"
             );
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);

@@ -19,9 +19,7 @@ public class DirtyReadVictim {
              */
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            "C:\\Users\\buddy\\dev\\shm\\"
-                            + "=" +
-                                    ".bOPERAND_CHRONICLE_MAP"
+                            "OPERAND_CHRONICLE_MAP"
                     );
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
@@ -33,8 +31,7 @@ public class DirtyReadVictim {
             );
             StampedLock offHeapLock =
                     new ChronicleStampedLock(
-                            "C:\\Users\\buddy\\dev\\shm\\"
-                            + "OPERAND_ChronicleStampedLock"
+                            "OPERAND_ChronicleStampedLock"
                     );
             while ((stamp = offHeapLock.tryOptimisticRead()) < 0) {
                 ;
