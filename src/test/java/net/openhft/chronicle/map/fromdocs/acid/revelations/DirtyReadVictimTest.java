@@ -37,7 +37,9 @@ public class DirtyReadVictimTest {
                     " ,,@t=" + System.currentTimeMillis() +
                             " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"
             );
-            ChronicleStampedLock offHeapLock = new ChronicleStampedLock();
+            ChronicleStampedLock offHeapLock = new ChronicleStampedLock(
+                    "C:\\Users\\buddy\\dev\\shm\\OPERAND_ChronicleStampedLock"
+            );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
                 ;
             }
