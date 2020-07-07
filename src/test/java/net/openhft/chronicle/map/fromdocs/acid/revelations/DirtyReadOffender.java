@@ -18,7 +18,8 @@ public class DirtyReadOffender  {
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            "OPERAND_CHRONICLE_MAP"
+                            args[2]
+                            +"OPERAND_CHRONICLE_MAP"
                     );
             System.out.println(
                     " @t=" + System.currentTimeMillis() +

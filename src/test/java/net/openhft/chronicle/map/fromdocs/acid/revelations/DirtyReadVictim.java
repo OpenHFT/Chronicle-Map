@@ -19,7 +19,8 @@ public class DirtyReadVictim {
              */
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            "OPERAND_CHRONICLE_MAP"
+                            args[2]
+                            + "OPERAND_CHRONICLE_MAP"
                     );
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
