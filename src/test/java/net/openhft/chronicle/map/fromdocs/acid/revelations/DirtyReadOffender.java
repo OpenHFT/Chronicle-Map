@@ -2,12 +2,13 @@ package net.openhft.chronicle.map.fromdocs.acid.revelations;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
+
 import java.util.Scanner;
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
-public class DirtyReadOffender  {
+public class DirtyReadOffender {
 
     public static void main(String args[]) {
         Scanner sc = new Scanner(System.in);
@@ -19,14 +20,15 @@ public class DirtyReadOffender  {
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             args[2]
-                            +"OPERAND_CHRONICLE_MAP"
+                                    + "OPERAND_CHRONICLE_MAP"
                     );
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender established chm "
             );
             StampedLock offHeapLock = new ChronicleStampedLock(
-              "OPERAND_ChronicleStampedLock"
+                    args[2]
+                            + "OPERAND_ChronicleStampedLock"
             );
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
@@ -34,7 +36,7 @@ public class DirtyReadOffender  {
             //chm.acquireUsing("Offender ", cslMock); // mock ChronicleStampLock
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender sleeping "+sleepT+" seconds "
+                            " DirtyReadOffender sleeping " + sleepT + " seconds "
             );
             Thread.sleep(sleepT * 1_000);
             System.out.println(
@@ -65,17 +67,17 @@ public class DirtyReadOffender  {
                 double newCoupon = 3.5 + Math.random();
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
-                                " DirtyReadOffender "+
-                                " calling chm.put('369604101',"+newCoupon+") "
+                                " DirtyReadOffender " +
+                                " calling chm.put('369604101'," + newCoupon + ") "
                 );
                 bond.setCoupon(newCoupon);
                 chm.put("369604101", bond);
                 //cslMock.setEntryLockState(System.currentTimeMillis()); //mock'd
-               // chm.put("Offender ",cslMock); //mock'd
+                // chm.put("Offender ",cslMock); //mock'd
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
-                                " DirtyReadOffender coupon=["+
-                                bond.getCoupon()+
+                                " DirtyReadOffender coupon=[" +
+                                bond.getCoupon() +
                                 "] written. "
                 );
             } finally {
@@ -83,7 +85,7 @@ public class DirtyReadOffender  {
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
                                 " DirtyReadOffender called " +
-                                "offHeapLock.unlockWrite("+stamp+");"
+                                "offHeapLock.unlockWrite(" + stamp + ");"
                 );
             }
             /**

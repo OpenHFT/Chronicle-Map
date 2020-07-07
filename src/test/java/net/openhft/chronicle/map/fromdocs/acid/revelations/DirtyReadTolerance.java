@@ -20,7 +20,8 @@ public class DirtyReadTolerance<K,V> {
 
         ChronicleMap<String, BondVOInterface> chm =
                 DirtyReadTolerance.offHeap(
-                        "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
+                        args[2]
+                        + "OPERAND_CHRONICLE_MAP"
                 );
         System.out.println(",Established chm,");
 
