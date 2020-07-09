@@ -14,12 +14,13 @@ public class DirtyReadVictim {
         try {
             String isoLevel = args[0];
             long sleepMock = Long.parseLong(args[1]);
+            long holdTime = Long.parseLong(args[2]);
             /**
              *  ben.cotton@rutgers.edu   START
              */
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            args[2]
+                            args[3]
                                     + "OPERAND_CHRONICLE_MAP"
                     );
             Double coupon = 0.00;
@@ -32,9 +33,15 @@ public class DirtyReadVictim {
             );
             StampedLock offHeapLock =
                     new ChronicleStampedLock(
-                            args[2]
+                            args[3]
                                     + "OPERAND_ChronicleStampedLock"
                     );
+            System.out.println(
+                    " ,,@t=" + System.currentTimeMillis() +
+                            " DirtyReadVictim sleeping " + sleepMock + " seconds"
+            );
+
+            Thread.sleep(sleepMock * 1_000);
             while ((stamp = offHeapLock.tryOptimisticRead()) < 0) {
                 ;
             }
@@ -60,10 +67,10 @@ public class DirtyReadVictim {
                 );
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim sleeping " + sleepMock + " seconds"
+                                " DirtyReadVictim sleeping " + holdTime + " seconds"
                 );
 
-                Thread.sleep(sleepMock * 1_000);
+                Thread.sleep(holdTime * 1_000);
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim awakening"

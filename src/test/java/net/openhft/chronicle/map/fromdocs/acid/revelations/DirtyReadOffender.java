@@ -1,7 +1,7 @@
 package net.openhft.chronicle.map.fromdocs.acid.revelations;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.fromdocs.BondVOInterface;
+import net.openhft.chronicle.map.fromdocs.BondVOInterface;;
 
 import java.util.Scanner;
 import java.util.concurrent.locks.StampedLock;
@@ -16,10 +16,11 @@ public class DirtyReadOffender {
         try {
             String isoLevel = args[0];
             long sleepT = Long.parseLong(args[1]);
+            long holdTime = Long.parseLong(args[2]);
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            args[2]
+                            args[3]
                                     + "OPERAND_CHRONICLE_MAP"
                     );
             System.out.println(
@@ -27,7 +28,7 @@ public class DirtyReadOffender {
                             " DirtyReadOffender established chm "
             );
             StampedLock offHeapLock = new ChronicleStampedLock(
-                    args[2]
+                    args[3]
                             + "OPERAND_ChronicleStampedLock"
             );
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
@@ -55,7 +56,6 @@ public class DirtyReadOffender {
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
-
             while ((stamp = offHeapLock.tryWriteLock()) == 0) {
                 ;
             }
@@ -81,6 +81,11 @@ public class DirtyReadOffender {
                                 "] written. "
                 );
             } finally {
+                System.out.println(
+                        " @t=" + System.currentTimeMillis() +
+                                " DirtyReadOffender sleeping " + holdTime + " seconds "
+                );
+                Thread.sleep(holdTime * 1_000);
                 offHeapLock.unlockWrite(stamp);
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
@@ -103,5 +108,4 @@ public class DirtyReadOffender {
             );
         }
     }
-
 }
