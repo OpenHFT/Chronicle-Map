@@ -43,7 +43,12 @@ public class DirtyReadVictim {
 
             Thread.sleep(sleepMock * 1_000);
             while ((stamp = offHeapLock.tryOptimisticRead()) < 0) {
-                ;
+                System.out.println(
+                        " ,,@t=" + System.currentTimeMillis() +
+                                " DirtyReadVictim waiting for unlockWrite()... " +
+                                ""
+                );
+                Thread.sleep(1000);
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
