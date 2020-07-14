@@ -17,6 +17,8 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.base.Preconditions;
+import net.openhft.chronicle.core.Jvm;
+
 import net.openhft.chronicle.core.OS;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,7 +26,6 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
@@ -36,6 +37,7 @@ public class ExitHookTest {
 
     private static final int KEY = 1;
     private static final int JVM_STARTUP_WAIT_TIME_MS = 5_000;
+
     private static final String PRE_SHUTDOWN_ACTION_EXECUTED = "PRE_SHUTDOWN_ACTION_EXECUTED";
     private static final String USER_SHUTDOWN_HOOK_EXECUTED = "USER_SHUTDOWN_HOOK_EXECUTED";
 
@@ -104,19 +106,8 @@ public class ExitHookTest {
 
     // http://stackoverflow.com/a/33171840/648955
     public static long getPidOfProcess(Process p) {
-        long pid = -1;
-
-        try {
-            if (p.getClass().getName().equals("java.lang.UNIXProcess")) {
-                Field f = p.getClass().getDeclaredField("pid");
-                f.setAccessible(true);
-                pid = f.getLong(p);
-                f.setAccessible(false);
-            }
-        } catch (Exception e) {
-            pid = -1;
-        }
-        return pid;
+        Number pid = Jvm.getValue(p, "pid");
+        return pid.longValue();
     }
 
     @Test
