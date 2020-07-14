@@ -1,0 +1,1 @@
+image::ChronicleStampedLock=WANTED.png[]

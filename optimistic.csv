@@ -1,0 +1,16 @@
+DirtyReadOffender,chrAig[DIRTY_READ_OPTIMISTIC]coupon=3.50,DirtyReadVictim
+,Established chrAig,
+ ,,@t=1593467845991 DirtyReadVictim sleeping 10 seconds
+ @t=1593467846072 DirtyReadOffender calling chrAig.put('369604101'/3.85) 
+ , @t=1593467846079 Tx=Thread[Thread-2.5.main] inside chrAig.put('369604101'/null) BEGIN, 
+ , @t=1593467846083 Tx=Thread[Thread-2.5.main] inside chrAig.put('369604101'/3.85) DONE, 
+ @t=1593467846083 DirtyReadOffender sleeping 1 minute. 
+ ,,@t=1593467856000 DirtyReadVictim calling chrAig.get('369604101')
+ , @t=1593467856002 Tx=Thread[Thread-3.5.main] inside chrAig.get('369604101') BEGIN, 
+ , @t=1593467856036 Tx=Thread[Thread-3.5.main] inside chrAig.get() DONE ,
+ ,,@t=1593467856036 DirtyReadVictim OPTIMISTICALLY_READ coupon=3.85 
+ ,,@t=1593467856036 DirtyReadVictim calling chrAig.rollback()
+ , @t=1593467856036 Tx=Thread[Thread-3.5.main] chrAig.rollback() BEGIN , 
+ ,@t=1593467856037 Tx=Thread[Thread-3.5.main] chrAig.rollback() COMPLETE coupon=3.50, 
+, @t=1593467856037 Tx=Thread[Thread-3.5.main] chrAig.rollback() completed notifyAll() to waiting Tx Threads, 
+ ,,@t=1593467856037 DirtyReadVictim ROLLED BACK

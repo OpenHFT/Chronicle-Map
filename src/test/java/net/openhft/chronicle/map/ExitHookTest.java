@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.base.Preconditions;
 import net.openhft.chronicle.core.Jvm;
+
 import net.openhft.chronicle.core.OS;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,7 +36,8 @@ import static org.junit.Assert.*;
 public class ExitHookTest {
 
     private static final int KEY = 1;
-    private static final int JVM_STARTUP_WAIT_TIME_MS = 2_000;
+    private static final int JVM_STARTUP_WAIT_TIME_MS = 5_000;
+
     private static final String PRE_SHUTDOWN_ACTION_EXECUTED = "PRE_SHUTDOWN_ACTION_EXECUTED";
     private static final String USER_SHUTDOWN_HOOK_EXECUTED = "USER_SHUTDOWN_HOOK_EXECUTED";
 
@@ -92,7 +94,7 @@ public class ExitHookTest {
         mapReference.set(mapBuilder.createPersistedTo(mapFile));
         try (ExternalMapQueryContext<Integer, Integer, ?> c = mapReference.get().queryContext(KEY)) {
             c.writeLock().lock();
-            Thread.sleep(8_000);
+            Thread.sleep(30_000);
         }
     }
 

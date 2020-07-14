@@ -1,0 +1,23 @@
+DirtyReadOffender,chrAig[DIRTY_READ_INTOLERANT]coupon=3.50,DirtyReadVictim
+,Established chrAig,
+ ,,@t=1588854013435 DirtyReadVictim sleeping 10 seconds
+ @t=1588854013450 DirtyReadOffender calling chrAig.put('369604101'/3.85) ,,
+ , @t=1588854013450 Tx=Thread[Thread-4.5.main] inside chrAig.put('369604101'/null) BEGIN, 
+ , @t=1588854013450 Tx=Thread[Thread-4.5.main] inside chrAig.put('369604101'/3.85) DONE, 
+ @t=1588854013450 DirtyReadOffender sleeping 1 minute. ,,
+ ,,@t=1588854023448 DirtyReadVictim calling chrAig.get('369604101')
+ , @t=1588854023448 Tx=Thread[Thread-5.5.main] inside chrAig.get('369604101') BEGIN, 
+, @t=1588854023448 Tx=Thread[Thread-5.5.main] inside chrAig.get() WAITING ,
+ @t=1588854073452 DirtyReadOffender calling chrAig.rollback() ,,
+ , @t=1588854073452 Tx=Thread[Thread-4.5.main] chrAig.rollback() BEGIN , 
+ ,@t=1588854073452 Tx=Thread[Thread-4.5.main] chrAig.rollback() COMPLETE coupon=3.50, 
+, @t=1588854073452 Tx=Thread[Thread-4.5.main] chrAig.rollback() completed notifyAll() to waiting Tx Threads, 
+ , @t=1588854073452 Tx=Thread[Thread-5.5.main] inside chrAig.get() RESUMING, 
+ , @t=1588854073452 Tx=Thread[Thread-5.5.main] inside chrAig.get() DONE ,
+ ,,@t=1588854073452 DirtyReadVictim got() coupon=3.5 
+ @t=1588854073452 DirtyReadOffender ROLLED BACK  ,,
+ ,,@t=1588854073452 DirtyReadVictim calling chrAig.commmit()
+ ,@t=1588854073452 Tx=Thread[Thread-5.5.main] chrAig.commit() BEGIN , 
+ , @t=1588854073452 Tx=Thread[Thread-5.5.main] chrAig.commit() END , 
+, @t=1588854073452 Tx=Thread[Thread-5.5.main] chrAig.commit() complete notifyAll() to waiting Tx Threads ,
+ ,,@t=1588854073452 DirtyReadVictim COMMITTED

@@ -1,0 +1,17 @@
+DirtyReadOffender,chrAig[DIRTY_READ_OPTIMISTIC]coupon=3.50,DirtyReadVictim
+,Established chm,
+ ,,@t=1593597010401 DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()
+ ,,@t=1593597010402 DirtyReadVictim CALLED offHeapLock.tryOptimisticRead()
+ ,,@t=1593597010803 DirtyReadVictim calling chm.get('369604101').getCoupon()
+ ,,@t=1593597010805 DirtyReadVictim coupon=[4.096316014939393] read.
+ ,,@t=1593597010805 DirtyReadVictim sleeping 60 seconds
+ @t=1593597010821 DirtyReadOffender sleeping 10 seconds 
+ @t=1593597020822 DirtyReadOffender awakening 
+ @t=1593597020822 DirtyReadOffender ACQUIRING offHeapLock.writeLock();
+ @t=1593597020822 DirtyReadOffender ACQUIRED offHeapLock.writeLock();
+ @t=1593597020823 DirtyReadOffender  calling chm.put('369604101',3.5085267913490994) 
+ @t=1593597020827 DirtyReadOffender coupon=[3.5085267913490994] written. 
+ @t=1593597020828 DirtyReadOffender called offHeapLock.unlockWrite(stamp);
+ ,,@t=1593597070806 DirtyReadVictim FAILED offHeapLock.validate(stamp)  must apply PESSIMISTIC_POLICY (dirty read endured) coupon=[4.096316014939393] is *DIRTY*. 
+ ,,@t=1593597070806 DirtyReadVictim got() coupon=4.096316014939393 
+ ,,@t=1593597070806 DirtyReadVictim COMMITTED
