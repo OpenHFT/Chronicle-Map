@@ -27,7 +27,7 @@ public class DirtyReadIntolerant {
             long stamp = 0;
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant ENTERING offHeapLock.tryReadLock()"
+                            " DirtyReadIntolerant ENTERING offHeapLock.readLock()"
             );
             StampedLock offHeapLock =
                     new ChronicleStampedLock(
@@ -44,7 +44,7 @@ public class DirtyReadIntolerant {
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant ENTERED offHeapLock.tryReadLock() " +
+                            " DirtyReadIntolerant ENTERED offHeapLock.readLock() " +
                             " stamp=[" +
                             stamp +
                             "]"
