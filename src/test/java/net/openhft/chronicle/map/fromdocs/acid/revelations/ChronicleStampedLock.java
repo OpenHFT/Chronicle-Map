@@ -113,7 +113,7 @@ public class ChronicleStampedLock extends StampedLock {
         do {
             System.out.println(
                     " ,@t=" + System.currentTimeMillis() +
-                            " ChronicleStampedLock tryWriterLock() ?WAITING " +
+                            " ChronicleStampedLock tryWriteLock() ?WAITING " +
                             " on offHeapLock.unlock(" +
                             offHeapLock.getEntryLockState() +
                             ") ,"
@@ -128,7 +128,7 @@ public class ChronicleStampedLock extends StampedLock {
         } while (l != 0L || readLockHolderCount.getVolatileValue() > 0);
         System.out.println(
                 " ,@t=" + System.currentTimeMillis() +
-                        " ChronicleStampedLock tryWriterLock() PROCEEDING " +
+                        " ChronicleStampedLock tryWriteLock() PROCEEDING " +
                         " ,"
         );
         long t = System.currentTimeMillis();
@@ -210,7 +210,7 @@ public class ChronicleStampedLock extends StampedLock {
         do {
             System.out.println(
                     " ,@t=" + System.currentTimeMillis() +
-                            " ChronicleStampedLock tryWriterLock() ?WAITING " +
+                            " ChronicleStampedLock writeLock() ?WAITING " +
                             " on offHeapLock.unlock(" +
                             offHeapLock.getEntryLockState() +
                             ") ,"
@@ -225,7 +225,7 @@ public class ChronicleStampedLock extends StampedLock {
         } while (l != 0L || readLockHolderCount.getVolatileValue() > 0);
         System.out.println(
                 " ,@t=" + System.currentTimeMillis() +
-                        " ChronicleStampedLock tryWriterLock() PROCEEDING " +
+                        " ChronicleStampedLock writeLock() PROCEEDING " +
                         " ,"
         );
         long t = System.currentTimeMillis();
@@ -235,7 +235,7 @@ public class ChronicleStampedLock extends StampedLock {
         chm.put("LastWriterTime ", lastWriterT);
         System.out.println(
                 " ,@t=" + t +
-                        " ChronicleStampedLock tryWriteLock() returned stamp=" +
+                        " ChronicleStampedLock writeLock() returned stamp=" +
                         offHeapLock.getEntryLockState() +
                         ","
         );
