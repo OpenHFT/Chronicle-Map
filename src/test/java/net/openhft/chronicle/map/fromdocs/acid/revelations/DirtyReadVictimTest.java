@@ -61,9 +61,9 @@ public class DirtyReadVictimTest {
                 );
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim sleeping 10 seconds"
+                                " DirtyReadVictim sleeping 2 seconds"
                 );
-                Thread.sleep(10_000);
+                Thread.sleep(2_000);
             } finally {
                 if (offHeapLock.validate(stamp)) {
                     System.out.println(
@@ -72,7 +72,10 @@ public class DirtyReadVictimTest {
                                     coupon + " "
                     );
                     // THIS Test will pass when ChronicleStampedLock is GA
-                    Assert.assertFalse(Boolean.TRUE);
+                    Assert.assertEquals(
+                            offHeapLock.chmW.get("WriterCount ").getVolatileValue(),
+                            0L
+                    );
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
@@ -81,7 +84,10 @@ public class DirtyReadVictimTest {
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
                     // THIS Test will execute pass when ChronicleStampedLock is GA
-                    Assert.assertFalse(Boolean.FALSE);
+                    Assert.assertNotEquals(
+                           stamp,
+                            offHeapLock.lastWriterT.getEntryLockState()
+                    );
                 }
             }
             /**
