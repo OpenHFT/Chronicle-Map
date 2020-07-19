@@ -27,7 +27,7 @@ public class DirtyReadIntolerant {
             long stamp = 0;
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant ENTERING offHeapLock.tryReadLock()"
+                            " DirtyReadIntolerant ENTERING offHeapLock.readLock()"
             );
             StampedLock offHeapLock =
                     new ChronicleStampedLock(
@@ -39,12 +39,12 @@ public class DirtyReadIntolerant {
                             " DirtyReadIntolerant sleeping " + sleepMock + " seconds"
             );
             Thread.sleep(sleepMock * 1_000);
-            while ((stamp = offHeapLock.tryReadLock()) < 0) {
+            while ((stamp = offHeapLock.readLock()) < 0) {
                 ;
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant ENTERED offHeapLock.tryReadLock() " +
+                            " DirtyReadIntolerant ENTERED offHeapLock.readLock() " +
                             " stamp=[" +
                             stamp +
                             "]"
