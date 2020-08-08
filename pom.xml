@@ -13,7 +13,7 @@
 
     <artifactId>chronicle-map</artifactId>
 
-    <version>2.20.2-SNAPSHOT</version>
+    <version>3.20.2-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
