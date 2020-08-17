@@ -32,7 +32,6 @@ import java.util.zip.GZIPOutputStream;
  * @author Rob Austin.
  */
 class JsonSerializer {
-
     static final String logErrorSuggestXStreem =
             "map.getAll(<file>) and map.putAll(<file>) methods require the JSON XStream serializer, " +
                     "we don't include these artifacts by default as some users don't require this functionality. " +
