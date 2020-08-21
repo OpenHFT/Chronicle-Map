@@ -4,7 +4,7 @@
  arbitrary sequences of bytes.
  - Chronicle Map optionally persists to a *single file* via the memory-mapping facility, present in
  Windows and POSIX-compatible operating systems (`mmap`). The file shouldn't necessarily materialize
- on disk. It's OK for Chronicle Map if the file resides a memory-mounted file system. The whole
+ on disk. It's OK for Chronicle Map if the file resides on a memory-mounted file system. The whole
  Chronicle Map state is contained in the file contents i. e. it is possible to move, copy or send
  the file to another machine, access it and observe exactly the same Chronicle Map state. Chronicle
  Map doesn't use the metadata of the file.
@@ -16,7 +16,7 @@
  https://en.wikipedia.org/wiki/ACID) here; see the detailed definition below in
  [Guarantees](#guarantees-1) section).
  - Chronicle Map runs only on little-endian architectures.
- - Chronicle Map is *not* distributed: the whole data store resides the memory of a single machine
+ - Chronicle Map is *not* distributed: the whole data store resides in the memory of a single machine
  (a single file, if persisted).
 
 ## Guarantees
@@ -35,7 +35,7 @@ Chronicle Map implementation. It might be an OS thread or a "greener" thread.
 
 #### CPU
 
- - CPU supports atomic 64-bit compare-and-swap operations with aligned memory, i. e. if several
+ - The CPU supports atomic 64-bit compare-and-swap operations with aligned memory, i. e. if several
  threads, possibly belonging to different processes, try to perform compare-and-swap operation on
  the same 4-byte block, at most one thread will succeed and all the rest will fail.
  - Aligned 32-bit or 64-bit writes are atomic, that means either all 4(8) bytes are written to
@@ -48,7 +48,7 @@ The two above points are true for CPUs with x86 and x86_64 architectures.
 
  - If some values X<sub>i</sub> are written at addresses A<sub>i</sub>, then 32- or 64-bit value Y
  is written at address B, there is a way to ensure some memory order. In particular, if a
- concurrent thread reads value Y from address B, after that it will read X<sub>i</sub values from
+ concurrent thread reads value Y from address B, after that it will read X<sub>i</sub> values from
  A<sub>i</sub> addresses (but not the old values, stored at those addresses).
 
  > In terms of the Java Memory model, this assumption means "writes to A<sub>i</sub> addresses

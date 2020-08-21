@@ -161,7 +161,6 @@ after the previous tier.* All tiers, either first in their segments or chained, 
    <ol>
     <li>If the keys are identical, the entry for the queried key within the segment is found, exit
     the procedure.</li>
-
     <li>If the keys are not identical (because of a full collision of parts of their hash codes for
     storing in hash lookup tables), continue the search in the current tier's hash lookup table
     (step #2), without resetting the hash lookup slot index.</li>

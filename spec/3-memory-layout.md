@@ -13,7 +13,7 @@ one big continuous block of memory. Its structure, from lower addresses to highe
  persisted to disk.
 
  3. [The global mutable state](#global-mutable-state).
- 4. <a name="segment-headers-alignment" />
+ 4. [Segment header alignment](#segment-headers-alignment")
  The alignment to the next page boundary by addresses (page size of the current memory mapping),
  if a new Chronicle Map is created, if an existing one (i. e. persisted) is loaded, the alignment
  is read from the global mutable state (specifically this field of the global mutable state is
@@ -21,7 +21,7 @@ one big continuous block of memory. Its structure, from lower addresses to highe
 
  > The purpose of this alignment is to minimize the number of pages spanned by the following
  > *segment headers area*. The segment headers area is frequently accessed and updated, so the pages
- > it spans almost always reside in TLB cache and always need to be flushed to the disk.
+ > it spans almost always reside in the TLB cache and always need to be flushed to the disk.
 
  > The alignment (more precisely, the offset to the next area, the segment headers area) is stored
  > in the global mutable state, rather then computed each time a mapped Chronicle Map store is
@@ -30,18 +30,18 @@ one big continuous block of memory. Its structure, from lower addresses to highe
 
  5. [The segment headers area](#segment-headers-area).
  6. [The main segments area](#main-segments-area).
- 7. Zero or several [extra tier bulks](#extra-tier-bulks).
+ 7. Zero or more [extra tier bulks](#extra-tier-bulks).
 
 The process of initialization of the Chronicle Map's memory is described on [Initialization Order](
 5-initialization.md) page.
 
 ## Self-bootstrapping header
 
-The concept is described in [Self Bootstrapping Data](
+The concept is described in the [Self Bootstrapping Data](
 https://github.com/OpenHFT/RFC/blob/master/Self-Bootstrapping-Data/Self-Bootstraping-Data-0.1.md)
 specification.
 
-The structure of this area is described in [Size Prefixed Blob](
+The structure of this area is described in the [Size Prefixed Blob](
 https://github.com/OpenHFT/RFC/blob/master/Size-Prefixed-Blob/Size-Prefixed-Blob-0.1.md)
 specification. The first 8 bytes contains the hash value of bytes sequence from 9th byte to the end
 of this size-prefixed blob, computed by [xxHash](https://github.com/Cyan4973/xxHash/) algorithm
@@ -63,12 +63,13 @@ The global mutable state is 33 bytes long.
  > global mutable state and segment headers (see below).
 
  2. Bytes 8..10 - the number of allocated [extra tier bulks](#extra-tier-bulks). An unsigned 24-bit
- value, stored in the little-endian order.
+ value, stored in little-endian order.
 
  See also the [extra tier bulk allocation](5-initialization.md#entra-tier-bulk-allocation)
  operation.
+ 
  3. Bytes 11..15 - the index of the first *free* segment tier. An unsigned 40-bit value, stored
- in the little-endian order. Extra segment tiers are allocated in bulks, so there is usually a chain
+ in little-endian order. Extra segment tiers are allocated in bulks, so there is usually a chain
  of allocated, but unused yet segment tiers. This field points to the head of this chain, or has
  value `0`, if there are no free segment tiers.
 
@@ -79,15 +80,18 @@ The global mutable state is 33 bytes long.
  [`actualSegments`](3_1-header-fields.md#actualsegments) &minus; 1) has tier index `actualSegments`,
  the first tier of the first extra tier bulk has tier index `actualSegments` + 1, etc. Tier indexes
  are 1-counted, because value 0 has some special meaning.
+ 
  4. Bytes 16..20 - the number of used extra segment tiers. An unsigned 40-bit value, stored in
- the little-endian order.
+ little-endian order.
+ 
  5. Bytes 21..24 - the offset of the segment headers area from the beginning of the memory of this
- Chronicle Map store. An unsigned 32-bit value, stored in the little-endian ordered. This field
+ Chronicle Map store. An unsigned 32-bit value, stored in little-endian ordered. This field
  determines the size of [the 4th area of the general Chronicle Map structure](
  #segment-headers-alignment).
+ 
  6. Bytes 25..32 - the Chronicle Map data store size, the offset to the end of the [main segments
  area](#main-segments area) or the last [extra tier bulk](#extra-tier-bulks). A non-negative 64-bit
- value, stored in the little-endian order.
+ value, stored in little-endian order.
 
 > The reference Java implementation: [`VanillaGlobalMutableState`
 > ](../src/main/java/net/openhft/chronicle/hash/VanillaGlobalMutableState.java).
@@ -97,7 +101,7 @@ The global mutable state is 33 bytes long.
 The offset to this area is stored in the 5th field of the [global mutable state
 ](#global-mutable-state).
 
-The size (in bytes) of a segment headers area is [`actualSegments`](
+The size (in bytes) of a segment header's area is [`actualSegments`](
 3_1-header-fields.md#actualsegments) * [`segmentHeaderSize`](3_1-header-fields.md#segmentheadersize
 ). Each segment header starts at offsets from the start of the segment headers area, that are
 multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segmentHeaderSize` &minus;
@@ -126,6 +130,7 @@ multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segment
  It is a 64-bit value, stored in the little-endian order. If the value of this field is 0, this
  means there is no chained segment tier in this segment yet after the first tier, in other words,
  the first tier is the only one in the chain for the current segment.
+ 
  5. Bytes 24..31 - reserved for use by extensions.
 
 > The reference Java implementation: [`BigSegmentHeader`
@@ -133,13 +138,13 @@ multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segment
 
 ## Main segments area
 
-This area contains first tiers of the Chronicle Map's segments.
+This area contains the first tiers of the Chronicle Map's segments.
 
 A main segments area starts immediately after the end of a segment headers area without extra
 offsets and alignments.
 
 The size of a main segments area is [`actualSegments`](3_1-header-fields.md#actualsegments) *
-[`tierSize`](3_1-header-fields.md#tiersize). Segment tiers in a main segments area doesn't have
+[`tierSize`](3_1-header-fields.md#tiersize). Segment tiers in a main segments area don't have
 extra gaps in memory between each other.
 
 ### Segment tier structure
@@ -147,7 +152,7 @@ extra gaps in memory between each other.
 See also [segment tiers design overview](2-design-overview.md#segment-tier) for more explanations
 about this structure.
 
-Segment tier is [`tierSize`](3_1-header-fields.md#tiersize) bytes long.
+A segment tier is [`tierSize`](3_1-header-fields.md#tiersize) bytes long.
 
 The segment tier structure:
 
@@ -163,7 +168,7 @@ A hash lookup area starts at the same address as a segment tier, containing it.
 A hash lookup consists of [`tierHashLookupCapacity`](3_1-header-fields.md#tierhashlookupcapacity)
 slots each of [`tierHashLookupSlotSize`](3_1-header-fields.md#tierhashlookupslotsize) bytes. In each
 slot a 32-bit or 64-bit (if the `tierHashLookupSlotSize` is 4 or 8, respectively) value is stored in
-little-endian order. The slot value of 0 designates an empty slot.
+little-endian order. A slot value of 0 designates an empty slot.
 
 ##### Hash lookup key
 

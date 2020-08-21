@@ -2,11 +2,13 @@
 
 The lock structure is 8 bytes (64 bits) long.
 
- 1. *Count word*:
+ *Count word*:
   1. Bits 0..29 - read lock count (little-endian)
   2. Bit 30 - update lock flag
   3. Bit 31 - write lock flag
- 2. *Wait word*: bits 32..63 - wait count (little-endian)
+
+*Wait word*: 
+  1. bits 32..63 - wait count (little-endian)
 
 ## Try acquire read lock
 
@@ -107,6 +109,7 @@ procedure and call one depending on the context.
 <a name="release-write-lock" />
 <a name="write-to-update-lock-downgrade" />
 <a name="write-to-read-lock-downgrade" />
+
 ## Release write lock, or write to update lock downgrade, or write to read lock downgrade
 
 Perform a CAS operation on the count word of the lock state, comparing 0x80000000 (i. e. a count
@@ -114,7 +117,7 @@ word with the write lock flag set) and swapping with 0 (in case of releasing wri
 0x40000000 (in case of write to update lock downgrade), or 1 (in case of write to read lock
 downgrade). The result of the CAS operation is the result of the procedure.
 
-## Try upgrade update to write lock
+## Try upgrade to write lock
 
 Perform a CAS operation on the count word of the lock state, comparing 0x40000000 (i. e. a count
 word with the update lock flag set, the write lock flag not set, the read lock count of zero) and
@@ -140,6 +143,7 @@ procedure.
 
 <a name="time-limited-write-lock-acquisition" />
 <a name="time-limited-update-to-write-lock-upgrade" />
+
 ## Time-limited write lock acquisition or update to write upgrade
 
  1. Perform the corresponding *try acquire* procedure ([write lock](#try-acquire-write-lock) or

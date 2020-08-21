@@ -17,7 +17,7 @@ existing Map, persisted to some file).
  [wait until the Chronicle Map is ready](#wait-until-chronicle-map-is-ready). Otherwise, acquire
  an exclusive file lock, and check the file size again. If the file size is non-zero now, release
  the file lock and [wait until the Chronicle Map is ready](#wait-until-chronicle-map-is-ready). If
- the file is still empty, [write self bootstrapping header](#write-self-bootstrapping-header) to the
+ the file is still empty, [write the self bootstrapping header](#write-self-bootstrapping-header) to the
  beginning of the file, then release the file lock.
 
  > The purpose of acquiring file lock is to ensure that only one concurrent process (if any)
@@ -49,7 +49,7 @@ existing Map, persisted to some file).
  out memory from the beginning of the tier to the start of the [entry space](
  3-memory-layout.md#entry-space), i. e. zero out this tier's hash lookup, segment tier counters area
  and free list.
- 6. White the segment headers offset into the 5th field of the global mutable state.
+ 6. Write the segment headers offset into the 5th field of the global mutable state.
  7. Write the offset to the end of the main segments area into the 6th field of the global mutable
  state.
  8. If the Chronicle Map is persisted, ensure all data written to the file is flushed to the disk.
