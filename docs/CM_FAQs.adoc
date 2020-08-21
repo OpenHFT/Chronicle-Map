@@ -10,7 +10,7 @@ This document provides information for some common tasks within Chronicle Map.
 
 == Can I use Chronicle Map as a  replacement of `Redis`, with concurrency in mind?
 
-===== Question
+=== Question
 
 I am investigating Chronicle Map as a potential replacement of `Redis`; with concurrency in mind.
 
@@ -22,7 +22,7 @@ While I am considering passing off each individual key task to a threadpool runn
 
 Also, is there a reason these `1000` `gets` have be done serially in one thread? Why not submit `1000 get()` tasks to a pool of say `20` threads. Wouldn't this improve throughput and reduce latency?
 
-===== Answer
+=== Answer
 
 The stateless client has been replaced with Chronicle Datagrid. The stateless client is not supported in ChronicleMap 3.x.  For  more information, please refer to Chronicle Datagrid FAQ's.
 
@@ -34,49 +34,49 @@ NOTE: Under high load, the Chronicle Map stateless client consolidates many smal
 
 == Does Chronicle Map/Chronicle Queue work by using Memory Mapped Files?
 
-===== Question
+=== Question
 Does Chronicle Map work by using Memory Mapped Files?
 
-===== Answer
+=== Answer
 Yes;  Chronicle Map uses memory mapped files see https://en.wikipedia.org/wiki/Memory-mapped_file. This works the same way on both Linux and Windows.
 
 == Is there a difference in performance between Linux and Windows systems?
 
-===== Question
+=== Question
 Is there a difference in performance between Linux and Windows systems?
 
-===== Answer
+=== Answer
 The same code is run on both Windows and Linux. However, we encourage all our clients to use Linux, as it has improved handling of memory mapped files over Windows. 
 
 == Will Chronicle Map work in *Docker* environments?
 
-===== Question
+=== Question
 Will Chronicle Map work in *Docker* environments “out-of-the-box”. For example, two java programs running on dockers?
 
-===== Answer
+=== Answer
 While Chronicle Map has not been tested with *Docker*, we are not aware of any reason why it would not if you use Chronicle Map for IPC (https://en.wikipedia.org/wiki/Inter-process_communication). In other words, if you  distribute data between two or more instances of the same map, then the same memory mapped file which holds your map data would have to be available to all the instances of Chronicle Map. We assume this would have to be in the same docker. Alternatively, you could replicate the data between your maps using Chronicle Map Enterprise.
 
 == What are the performance benefits of Disk vs RAM?
 
-===== Question
+=== Question
 
 Should we specify faster RAM or a faster disk to Chronicle improve read/write performance.
 
-===== Answer
+=== Answer
 
 Chronicle recommends lots of high-speed RAM. This is because Chronicle uses the page cache and RAM is in effect a cache to the disk. 
 
 There are two cases where having a high-speed disk will give you a real benefit:
 
-====== 1. Data rate
+==== 1. Data rate
 If the rate of data that you are writing exceeds the disk write speed. In most applications this is unlikely to occur.
 
-====== 2. Page cache miss
+==== 2. Page cache misses
 When you get a page cache miss. For Chronicle queues which write and read messages lineally across memory, we mitigate this situation with the use of the Chronicle pre-toucher. The pre-toucher ensures that the page is loaded into the page cache before being written into the queue. 
 
 For Chronicle Map, it is somewhat more complicated because Chronicle Map reads and writes your entries with random access across both the memory and disk. In this situation, if the entire map can be held within the page cache, then a read, or write, to the map will not have to access the disk. The operating system will work in the background ensuring that entries written to the page cache are propagated to the disk, but this is done via the operating system and is not on the critical path. 
 
-It follows that if you have quite a few maps, especially large maps, and your page cache is not large enough to hold all of these maps, then a read, or write, to a random entry may cause a cache miss. This in turn would cause a disk read or write. If you were going to install high-speed SSDs, Chronicle recommends that you use them to store the Chronicle maps and leave the slower cheap disks for the Chronicle queues. In addition, you should avoid using network attached storage, as this usually offers worst performance than local disks.
+It follows that if you have quite a few maps, especially large maps, and your page cache is not large enough to hold all of these maps, then a read, or write, to a random entry may cause a cache miss. This in turn would cause a disk read or write. If you were going to install high-speed SSDs, Chronicle recommends that you use them to store the Chronicle maps and leave the slower cheap disks for the Chronicle queues. In addition, you should avoid using network attached storage, as this usually offers significantly less performance than local disks.
 
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>

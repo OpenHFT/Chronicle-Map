@@ -115,7 +115,7 @@ Please contact us at mailto:sales@chronicle.software[sales@chronicle.software] i
 |Open source
 |Remote calls
 |Commercially available
-|Eventually-consistent replication (100% redundancy
+|Eventually-consistent replication (100% redundancy)
 |Commercially available
 |Synchronous replication
 |Commercially available

@@ -18,9 +18,9 @@ In addition, you will be fully supported by our technical experts.
 
 For more information on Chronicle Map (Enterprise Edition), please contact mailto:sales@chronicle.software[sales@chronicle.software].
 
-= Replication
+== Replication
 
-Chronicle Map Replication is a multi-master replicated data store. Chronicle Map supports replication over TCP/IP
+Chronicle Map Replication is a multi-master replicated data store. Chronicle Map supports replication over TCP/IP.
 
 image::http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg[TCP/IP Replication]
 
@@ -31,13 +31,13 @@ TCP/IP is a reliable protocol. This means that, unless you have a network failur
 We are careful not to swamp your network with too much TCP/IP traffic. We do this by providing a throttled version of TCP replication. This works because Chronicle Map only broadcasts the latest update of each entry.
 
 == How Chronicle Map Replication works
-Chronicle Map provides multi-master hash-map replication. This means that each remote map mirrors its changes over to another remote map. Neither map is considered to be the master store of data. Each map uses timestamps to reconcile changes.
+Chronicle Map provides multi-master hash-map replication. This means that each remote map mirrors its changes over to other remote maps. No map is considered to be the master store of data. Each map uses timestamps to reconcile changes.
 
 We refer to an instance of a remote map as a **node**. Each node can be connected to up to 128 other nodes.
 
-The data that is stored locally in each node becomes eventually consistent. So changes made to one node, for example by calling `put()`, will be replicated over to the other node.
+The data that is stored locally in each node becomes eventually consistent. So changes made to one node, for example by calling `put()`, will be replicated over to the other nodes at some unspecified time in the future.
 
-To achieve a high level of performance and throughput, the call to `put()` will not block.
+To achieve a high level of performance and throughput, a call to `put()` will not block.
 
 With `ConcurrentHashMap`, it is typical to check the return code of some methods to obtain the old value; for example, `remove()`.
 
@@ -46,12 +46,12 @@ words, the nodes are only concurrent locally. Another node, performing exactly t
 will become eventually consistent.
 
 == Reconciliation
-If two or more nodes receive a change to their maps for the same key, but with different values, say by a user of the maps, calling the `put(key,value)`, then, initially each node will update its local store, and each local store will hold a different value.
+If two or more nodes receive a change to their maps for the same key, but with different values (say by a user of the maps, calling the `put(key,value)`) then initially, each node will update its local store, and each local store will hold a different value.
 
 The aim of multi-master replication is
-to provide eventual consistency across the nodes. Using multi-master replication, whenever a node is changed it will notify the other nodes of its change; we refer to this notification as an event.
+to provide eventual consistency across the nodes. Using multi-master replication, whenever a node is changed, it will notify the other nodes of its change; we refer to this notification as an event.
 
-The event will hold a timestamp indicating the time that the change occurred. It will also hold the state transition; in this case it was a `put` with a key and value.
+The event will hold a timestamp indicating the time the change occurred. It will also hold the state transition; in this case it was a `put` with a key and value.
 
 Eventual consistency is achieved by looking at the timestamp from the remote node. If, for a given key, the remote node's timestamp is newer than the local node's timestamp, then the event from the remote node will be applied to the local node; otherwise, the event will be ignored.
 
@@ -87,7 +87,7 @@ the same identifier. The reason that all Chronicle Map instances must have the i
 the memory is laid out slightly differently when using replication, so even if a map is not actively performing TCP or UDP replication itself, if it wishes to replicate with one that is, it must have its memory laid out in the same way to be compatible.
 
 If the identifiers are not set up uniquely, then the updates will be ignored. For example,
-a Chronicle Map instance that is set up with the identifier equal to '1', will ignore all events which contain the remote identifier of '1'. In other words, Chronicle Map replication ignores updates which have originated from itself. This is to avoid the circularity of events.
+a Chronicle Map instance that is set up with the identifier equal to '1', will ignore all events which contain the remote identifier of '1'. In other words, Chronicle Map replication ignores updates which have originated from itself. This is to avoid circular conditions involving events.
 
 When setting up the identifier you can use values from `1` to `127`.
 
