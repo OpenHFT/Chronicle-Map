@@ -1705,7 +1705,7 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    private void prepareMapPublication(@NotNull final VanillaChronicleMap map) throws IOException {
+    private void prepareMapPublication(@NotNull final VanillaChronicleMap<K, V, ?> map) throws IOException {
         establishReplication(map);
         map.setResourcesName();
         map.registerCleaner();
