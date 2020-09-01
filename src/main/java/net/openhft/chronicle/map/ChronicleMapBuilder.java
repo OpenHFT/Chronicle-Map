@@ -421,8 +421,8 @@ public final class ChronicleMapBuilder<K, V> implements
                                                           @NotNull final RandomAccessFile raf,
                                                           final int headerSize,
                                                           final boolean recover,
-                                                          @NotNull final ChronicleHashCorruption.Listener corruptionListener,
-                                                          @NotNull final ChronicleHashCorruptionImpl corruption) throws IOException {
+                                                          @Nullable final ChronicleHashCorruption.Listener corruptionListener,
+                                                          @Nullable final ChronicleHashCorruptionImpl corruption) throws IOException {
         if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
             throw throwRecoveryOrReturnIOException(file,
                     "The file is shorter than the header size: " + headerSize +
@@ -1800,7 +1800,7 @@ public final class ChronicleMapBuilder<K, V> implements
             boolean headerWritten = false;
             if (!headerCorrect) {
                 if (overrideBuilderConfig) {
-                    VanillaChronicleMap<K, V, ?> mapObjectForHeaderOverwrite = newMap();
+                    final VanillaChronicleMap<K, V, ?> mapObjectForHeaderOverwrite = newMap();
                     headerBuffer = writeHeader(fileChannel, mapObjectForHeaderOverwrite);
                     headerSize = headerBuffer.remaining();
                     headerWritten = true;
