@@ -54,7 +54,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -134,7 +133,8 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  * @see ChronicleSetBuilder
  */
 public final class ChronicleMapBuilder<K, V> implements
-        ChronicleHashBuilder<K, ChronicleMap<K, V>, ChronicleMapBuilder<K, V>> {
+        ChronicleHashBuilder<K, ChronicleMap<K, V>,
+        ChronicleMapBuilder<K, V>> {
 
     private static final int UNDEFINED_ALIGNMENT_CONFIG = -1;
     private static final int NO_ALIGNMENT = 1;
@@ -148,19 +148,17 @@ public final class ChronicleMapBuilder<K, V> implements
      * Anyway, unlikely anyone ever need more than 1 billion segments.
      */
     private static final int MAX_SEGMENTS = (1 << 30);
-    private static final Logger LOG =
-            LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
 
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
-    private static final ConcurrentHashMap<File, Void> fileLockingControl =
-            new ConcurrentHashMap<>(128);
-    private static final Logger chronicleMapLogger = LoggerFactory.getLogger(ChronicleMap.class);
-    private static final ChronicleHashCorruption.Listener defaultChronicleMapCorruptionListener =
+    private static final ConcurrentHashMap<File, Void> FILE_LOCKING_CONTROL = new ConcurrentHashMap<>(128);
+    private static final Logger CHRONICLE_MAP_LOGGER = LoggerFactory.getLogger(ChronicleMap.class);
+    private static final ChronicleHashCorruption.Listener DEFAULT_CHRONICLE_MAP_CORRUPTION_LISTENER =
             corruption -> {
                 if (corruption.exception() != null) {
-                    chronicleMapLogger.error(corruption.message(), corruption.exception());
+                    CHRONICLE_MAP_LOGGER.error(corruption.message(), corruption.exception());
                 } else {
-                    chronicleMapLogger.error(corruption.message());
+                    CHRONICLE_MAP_LOGGER.error(corruption.message());
                 }
             };
     private static final int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
@@ -1553,8 +1551,7 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMap<K, V> createOrRecoverPersistedTo(@NotNull final File file, final boolean sameLibraryVersion)
             throws IOException {
-        return createOrRecoverPersistedTo(file, sameLibraryVersion,
-                defaultChronicleMapCorruptionListener);
+        return createOrRecoverPersistedTo(file, sameLibraryVersion, DEFAULT_CHRONICLE_MAP_CORRUPTION_LISTENER);
     }
 
     @Override
@@ -1571,7 +1568,7 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMap<K, V> recoverPersistedTo(@NotNull final  File file, final boolean sameBuilderConfigAndLibraryVersion) throws IOException {
         return recoverPersistedTo(file, sameBuilderConfigAndLibraryVersion,
-                defaultChronicleMapCorruptionListener);
+                DEFAULT_CHRONICLE_MAP_CORRUPTION_LISTENER);
     }
 
     @Override
@@ -1989,7 +1986,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private static void fileLockedIO(@NotNull final File file,
                                      @NotNull final FileChannel fileChannel,
                                      @NotNull final FileIOAction fileIOAction) {
-        fileLockingControl.compute(file, (k, v) -> {
+        FILE_LOCKING_CONTROL.compute(file, (k, v) -> {
             try {
                 try (FileLock ignored = fileChannel.lock()) {
                     fileIOAction.fileIOAction();
