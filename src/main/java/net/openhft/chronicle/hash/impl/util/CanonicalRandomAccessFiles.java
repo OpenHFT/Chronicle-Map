@@ -18,6 +18,7 @@ package net.openhft.chronicle.hash.impl.util;
 
 import net.openhft.chronicle.core.CleaningRandomAccessFile;
 import net.openhft.chronicle.core.Jvm;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -27,14 +28,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class CanonicalRandomAccessFiles {
 
-    private static final ConcurrentHashMap<File, RafReference> canonicalRafs =
-            new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<File, RafReference> CANONICAL_RAFS = new ConcurrentHashMap<>();
 
-    private CanonicalRandomAccessFiles() {
-    }
+    private CanonicalRandomAccessFiles() {}
 
-    public static RandomAccessFile acquire(File file) throws FileNotFoundException {
-        return canonicalRafs.compute(file, (f, ref) -> {
+    public static RandomAccessFile acquire(@NotNull final File file) throws FileNotFoundException {
+        return CANONICAL_RAFS.compute(file, (f, ref) -> {
             if (ref == null) {
                 try {
                     return new RafReference(new CleaningRandomAccessFile(f, "rw"));
@@ -48,8 +47,8 @@ public final class CanonicalRandomAccessFiles {
         }).raf;
     }
 
-    public static void release(File file) throws IOException {
-        canonicalRafs.computeIfPresent(file, (f, ref) -> {
+    public static void release(@NotNull final File file) throws IOException {
+        CANONICAL_RAFS.computeIfPresent(file, (f, ref) -> {
             if (--ref.refCount == 0) {
                 try {
                     ref.raf.close();
@@ -63,11 +62,11 @@ public final class CanonicalRandomAccessFiles {
         });
     }
 
-    private static class RafReference {
-        RandomAccessFile raf;
-        int refCount;
+    private static final class RafReference {
+        private final RandomAccessFile raf;
+        private int refCount;
 
-        RafReference(RandomAccessFile raf) {
+        RafReference(@NotNull final RandomAccessFile raf) {
             this.raf = raf;
             refCount = 1;
         }
