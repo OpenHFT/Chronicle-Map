@@ -55,9 +55,9 @@ public class MemoryLeaksTest {
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
 
-    private boolean persisted;
-    private ChronicleMapBuilder<IntValue, String> builder;
-    private boolean closeWithinContext;
+    private final boolean persisted;
+    private final ChronicleMapBuilder<IntValue, String> builder;
+    private final boolean closeWithinContext;
 
     public MemoryLeaksTest(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) {
         this.persisted = persisted;
@@ -226,7 +226,7 @@ public class MemoryLeaksTest {
         }
     }
 
-    private static class CountedStringReader extends StringSizedReader {
+    private static final class CountedStringReader extends StringSizedReader {
         private transient MemoryLeaksTest memoryLeaksTest;
         private final String creationStackTrace;
         private final Cleaner cleaner;

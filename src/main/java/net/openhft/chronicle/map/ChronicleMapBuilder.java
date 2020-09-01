@@ -43,6 +43,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -162,7 +163,8 @@ public final class ChronicleMapBuilder<K, V> implements
                     chronicleMapLogger.error(corruption.message());
                 }
             };
-    private static int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
+    private static final int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
+
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
     K averageKey;
@@ -215,56 +217,9 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean persisted;
     private String replicatedMapClassName = ReplicatedChronicleMap.class.getName();
 
-    ChronicleMapBuilder(Class<K> keyClass, Class<V> valueClass) {
+    ChronicleMapBuilder(@NotNull final Class<K> keyClass, @NotNull final Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass);
         valueBuilder = new SerializationBuilder<>(valueClass);
-    }
-
-    private static boolean isDefined(double config) {
-        return !isNaN(config);
-    }
-
-    private static long toLong(double v) {
-        long l = round(v);
-        if (l != v)
-            throw new IllegalArgumentException("Integer argument expected, given " + v);
-        return l;
-    }
-
-    private static long roundUp(double v) {
-        return round(Math.ceil(v));
-    }
-
-    private static long roundDown(double v) {
-        return (long) v;
-    }
-
-    //////////////////////////////
-    // Instance fields
-
-    /**
-     * When Chronicle Maps are created using {@link #createPersistedTo(File)} or
-     * {@link #recoverPersistedTo(File, boolean)} or {@link
-     * #createOrRecoverPersistedTo(File, boolean)} methods, file lock on the Chronicle Map's file is
-     * acquired, that shouldn't be done from concurrent threads within the same JVM process. So
-     * creation of Chronicle Maps persisted to the same File should be synchronized across JVM's
-     * threads. Simple way would be to synchronize on some static (lock) object, but would serialize
-     * all Chronicle Maps creations (persisted to any files), ConcurrentHashMap#compute() gives more
-     * scalability. ConcurrentHashMap is used effectively for lock striping only, because the
-     * entries are not even landing the map, because compute() always returns null.
-     */
-    private static void fileLockedIO(
-            File file, FileChannel fileChannel, FileIOAction fileIOAction) {
-        fileLockingControl.compute(file, (k, v) -> {
-            try {
-                try (FileLock ignored = fileChannel.lock()) {
-                    fileIOAction.fileIOAction();
-                }
-                return null;
-            } catch (IOException e) {
-                throw Jvm.rethrow(e);
-            }
-        });
     }
 
     /**
@@ -279,8 +234,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * @param <V>        value type of the maps, created by the returned builder
      * @return a new builder for the given key and value classes
      */
-    public static <K, V> ChronicleMapBuilder<K, V> of(
-            @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
+    public static <K, V> ChronicleMapBuilder<K, V> of(@NotNull final Class<K> keyClass, @NotNull final Class<V> valueClass) {
         return new ChronicleMapBuilder<>(keyClass, valueClass);
     }
 
@@ -297,12 +251,10 @@ public final class ChronicleMapBuilder<K, V> implements
      * @param <V>        value type of the maps, created by the returned builder
      * @return a new builder for the given key and value classes
      */
-    public static <K, V> ChronicleMapBuilder<K, V> simpleMapOf(
-            @NotNull Class<K> keyClass, @NotNull Class<V> valueClass) {
-        ChronicleMapBuilder<K, V> builder =
-                new ChronicleMapBuilder<>(keyClass, valueClass)
-                        .putReturnsNull(true)
-                        .removeReturnsNull(true);
+    public static <K, V> ChronicleMapBuilder<K, V> simpleMapOf(@NotNull final Class<K> keyClass, @NotNull final Class<V> valueClass) {
+        final ChronicleMapBuilder<K, V> builder = new ChronicleMapBuilder<>(keyClass, valueClass)
+                .putReturnsNull(true)
+                .removeReturnsNull(true);
         builder.name(toCamelCase(valueClass.getSimpleName()));
         if (!builder.isKeySizeKnown())
             builder.averageKeySize(128);
@@ -318,7 +270,7 @@ public final class ChronicleMapBuilder<K, V> implements
         return builder;
     }
 
-    private static String toCamelCase(String name) {
+    private static String toCamelCase(@NotNull final String name) {
         return Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
 
@@ -330,26 +282,24 @@ public final class ChronicleMapBuilder<K, V> implements
         return valueBuilder.sizeIsStaticallyKnown;
     }
 
-private static void checkSegments(long segments) {
+    private static void checkSegments(final long segments) {
         if (segments <= 0) {
-            throw new IllegalArgumentException("segments should be positive, " +
-                    segments + " given");
+            throw new IllegalArgumentException("segments should be positive, " + segments + " given");
         }
         if (segments > MAX_SEGMENTS) {
-            throw new IllegalArgumentException("Max segments is " + MAX_SEGMENTS + ", " +
-                    segments + " given");
+            throw new IllegalArgumentException("Max segments is " + MAX_SEGMENTS + ", " + segments + " given");
         }
     }
 
-    private static String pretty(int value) {
+    private static String pretty(final int value) {
         return value > 0 ? value + "" : "not configured";
     }
 
-    private static String pretty(Object obj) {
+    private static String pretty(final Object obj) {
         return obj != null ? obj + "" : "not configured";
     }
 
-    private static void checkSizeIsStaticallyKnown(SerializationBuilder builder, String role) {
+    private static void checkSizeIsStaticallyKnown(@NotNull final SerializationBuilder builder, @NotNull final String role) {
         if (builder.sizeIsStaticallyKnown) {
             throw new IllegalStateException("Size of " + builder.tClass +
                     " instances is constant and statically known, shouldn't be specified via " +
@@ -357,41 +307,38 @@ private static void checkSegments(long segments) {
         }
     }
 
-    private static void checkAverageSize(double averageSize, String role) {
-        if (averageSize <= 0 || isNaN(averageSize) ||
-                Double.isInfinite(averageSize)) {
-            throw new IllegalArgumentException("Average " + role + " size must be a positive, " +
-                    "finite number");
+    private static void checkAverageSize(final double averageSize, @NotNull final String role) {
+        if (averageSize <= 0 || isNaN(averageSize) || Double.isInfinite(averageSize)) {
+            throw new IllegalArgumentException("Average " + role + " size must be a positive, " + "finite number");
         }
     }
 
-    private static double averageSizeStoringLength(
-            SerializationBuilder builder, double averageSize) {
-        SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
+    private static double averageSizeStoringLength(@NotNull final SerializationBuilder builder, final double averageSize) {
+        final SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
         if (averageSize == round(averageSize))
             return sizeMarshaller.storingLength(round(averageSize));
-        long lower = roundDown(averageSize);
-        long upper = lower + 1;
-        int lowerStoringLength = sizeMarshaller.storingLength(lower);
-        int upperStoringLength = sizeMarshaller.storingLength(upper);
+        final long lower = roundDown(averageSize);
+        final long upper = lower + 1;
+        final int lowerStoringLength = sizeMarshaller.storingLength(lower);
+        final int upperStoringLength = sizeMarshaller.storingLength(upper);
         if (lowerStoringLength == upperStoringLength)
             return lowerStoringLength;
         return lower * (upper - averageSize) + upper * (averageSize - lower);
     }
 
-    static int greatestCommonDivisor(int a, int b) {
+    static int greatestCommonDivisor(final int a, final int b) {
         if (b == 0) return a;
         return greatestCommonDivisor(b, a % b);
     }
 
-    private static int maxDefaultChunksPerAverageEntry(boolean replicated) {
+    private static int maxDefaultChunksPerAverageEntry(final boolean replicated) {
         // When replicated, having 8 chunks (=> 8 bits in bitsets) per entry seems more wasteful
         // because when replicated we have bit sets per each remote node, not only allocation
         // bit set as when non-replicated
         return replicated ? 4 : 8;
     }
 
-    private static int estimateSegmentsForEntries(long size) {
+    private static int estimateSegmentsForEntries(final long size) {
         if (size > 200 << 20)
             return 256;
         if (size >= 1 << 20)
@@ -407,12 +354,13 @@ private static void checkSegments(long segments) {
         return 1;
     }
 
-    private static long headerChecksum(ByteBuffer headerBuffer, int headerSize) {
+    private static long headerChecksum(@NotNull final ByteBuffer headerBuffer, final int headerSize) {
         return LongHashFunction.xx_r39().hashBytes(headerBuffer, SIZE_WORD_OFFSET, headerSize + 4);
     }
 
-    private static void writeNotComplete(
-            FileChannel fileChannel, ByteBuffer headerBuffer, int headerSize) throws IOException {
+    private static void writeNotComplete(@NotNull final FileChannel fileChannel,
+                                         @NotNull final  ByteBuffer headerBuffer,
+                                         final int headerSize) throws IOException {
         //noinspection PointlessBitwiseExpression
         headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
         headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
@@ -422,24 +370,23 @@ private static void checkSegments(long segments) {
     /**
      * @return ByteBuffer, with self bootstrapping header in [position, limit) range
      */
-    private static <K, V> ByteBuffer writeHeader(
-            FileChannel fileChannel, VanillaChronicleMap<K, V, ?> map) throws IOException {
-        ByteBuffer headerBuffer = ByteBuffer.allocate(
+    private static <K, V> ByteBuffer writeHeader(@NotNull final FileChannel fileChannel, @NotNull final VanillaChronicleMap<K, V, ?> map) throws IOException {
+        final ByteBuffer headerBuffer = ByteBuffer.allocate(
                 SELF_BOOTSTRAPPING_HEADER_OFFSET + MAX_BOOTSTRAPPING_HEADER_SIZE);
         headerBuffer.order(LITTLE_ENDIAN);
 
-        Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
+        final Bytes<ByteBuffer> headerBytes = Bytes.wrapForWrite(headerBuffer);
         headerBytes.writePosition(SELF_BOOTSTRAPPING_HEADER_OFFSET);
-        Wire wire = new TextWire(headerBytes);
+        final Wire wire = new TextWire(headerBytes);
         wire.getValueOut().typedMarshallable(map);
 
-        int headerLimit = (int) headerBytes.writePosition();
-        int headerSize = headerLimit - SELF_BOOTSTRAPPING_HEADER_OFFSET;
+        final int headerLimit = (int) headerBytes.writePosition();
+        final int headerSize = headerLimit - SELF_BOOTSTRAPPING_HEADER_OFFSET;
         // First set readiness bit to READY, to compute checksum correctly
         //noinspection PointlessBitwiseExpression
         headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
 
-        long checksum = headerChecksum(headerBuffer, headerSize);
+        final long checksum = headerChecksum(headerBuffer, headerSize);
         headerBuffer.putLong(HEADER_OFFSET, checksum);
 
         // Set readiness bit to NOT_COMPLETE, because the Chronicle Map instance is not actually
@@ -455,10 +402,11 @@ private static void checkSegments(long segments) {
         return headerBuffer;
     }
 
-    private static void commitChronicleMapReady(
-            VanillaChronicleHash map, RandomAccessFile raf, ByteBuffer headerBuffer, int headerSize)
-            throws IOException {
-        FileChannel fileChannel = raf.getChannel();
+    private static void commitChronicleMapReady(@NotNull final VanillaChronicleHash map,
+                                                @NotNull final RandomAccessFile raf,
+                                                @NotNull final ByteBuffer headerBuffer,
+                                                final int headerSize) throws IOException {
+        final FileChannel fileChannel = raf.getChannel();
         // see https://higherfrequencytrading.atlassian.net/browse/HCOLL-396
         map.msync();
 
@@ -471,18 +419,19 @@ private static void checkSegments(long segments) {
     /**
      * @return ByteBuffer, in [position, limit) range the self bootstrapping header is read
      */
-    private static ByteBuffer readSelfBootstrappingHeader(
-            File file, RandomAccessFile raf, int headerSize, boolean recover,
-            ChronicleHashCorruption.Listener corruptionListener,
-            ChronicleHashCorruptionImpl corruption) throws IOException {
+    private static ByteBuffer readSelfBootstrappingHeader(@NotNull final File file,
+                                                          @NotNull final RandomAccessFile raf,
+                                                          final int headerSize,
+                                                          final boolean recover,
+                                                          @NotNull final ChronicleHashCorruption.Listener corruptionListener,
+                                                          @NotNull final ChronicleHashCorruptionImpl corruption) throws IOException {
         if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
             throw throwRecoveryOrReturnIOException(file,
                     "The file is shorter than the header size: " + headerSize +
                             ", file size: " + raf.length(), recover);
         }
-        FileChannel fileChannel = raf.getChannel();
-        ByteBuffer headerBuffer = ByteBuffer.allocate(
-                SELF_BOOTSTRAPPING_HEADER_OFFSET + headerSize);
+        final FileChannel fileChannel = raf.getChannel();
+        final ByteBuffer headerBuffer = ByteBuffer.allocate(SELF_BOOTSTRAPPING_HEADER_OFFSET + headerSize);
         headerBuffer.order(LITTLE_ENDIAN);
         readFully(fileChannel, 0, headerBuffer);
         if (headerBuffer.remaining() > 0) {
@@ -490,7 +439,7 @@ private static void checkSegments(long segments) {
                     headerBuffer.remaining() + " is remaining to read, likely the file was " +
                     "truncated", recover);
         }
-        int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
+        final int sizeWord = headerBuffer.getInt(SIZE_WORD_OFFSET);
         if (!SizePrefixedBlob.isReady(sizeWord)) {
             if (recover) {
                 report(corruptionListener, corruption, -1, () ->
@@ -507,10 +456,9 @@ private static void checkSegments(long segments) {
         return headerBuffer;
     }
 
-    private static boolean checkSumSelfBootstrappingHeader(
-            ByteBuffer headerBuffer, int headerSize) {
-        long checkSum = headerChecksum(headerBuffer, headerSize);
-        long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
+    private static boolean checkSumSelfBootstrappingHeader(@NotNull final ByteBuffer headerBuffer, final int headerSize) {
+        final long checkSum = headerChecksum(headerBuffer, headerSize);
+        final long storedChecksum = headerBuffer.getLong(HEADER_OFFSET);
         return storedChecksum == checkSum;
     }
 
@@ -518,8 +466,7 @@ private static void checkSegments(long segments) {
     public ChronicleMapBuilder<K, V> clone() {
         try {
             @SuppressWarnings("unchecked")
-            ChronicleMapBuilder<K, V> result =
-                    (ChronicleMapBuilder<K, V>) super.clone();
+            final ChronicleMapBuilder<K, V> result = (ChronicleMapBuilder<K, V>) super.clone();
             result.keyBuilder = keyBuilder.clone();
             result.valueBuilder = valueBuilder.clone();
             result.privateAPI = new ChronicleMapBuilderPrivateAPI<>(result);
@@ -543,7 +490,7 @@ private static void checkSegments(long segments) {
      * <a href="#jvm-configurations">Read more about JVM-level configurations</a>.
      */
     @Override
-    public ChronicleMapBuilder<K, V> name(String name) {
+    public ChronicleMapBuilder<K, V> name(@NotNull final String name) {
         this.name = name;
         return this;
     }
@@ -575,7 +522,7 @@ private static void checkSegments(long segments) {
      * @see #actualChunkSize(int)
      */
     @Override
-    public ChronicleMapBuilder<K, V> averageKeySize(double averageKeySize) {
+    public ChronicleMapBuilder<K, V> averageKeySize(final double averageKeySize) {
         checkSizeIsStaticallyKnown(keyBuilder, "Key");
         checkAverageSize(averageKeySize, "key");
         this.averageKeySize = averageKeySize;
@@ -596,8 +543,7 @@ private static void checkSegments(long segments) {
      * @see #actualChunkSize(int)
      */
     @Override
-    public ChronicleMapBuilder<K, V> averageKey(K averageKey) {
-        Objects.requireNonNull(averageKey);
+    public ChronicleMapBuilder<K, V> averageKey(@NotNull final K averageKey) {
         checkSizeIsStaticallyKnown(keyBuilder, "Key");
         this.averageKey = averageKey;
         sampleKey = null;
@@ -619,7 +565,7 @@ private static void checkSegments(long segments) {
      * @see #constantValueSizeBySample(Object)
      */
     @Override
-    public ChronicleMapBuilder<K, V> constantKeySizeBySample(K sampleKey) {
+    public ChronicleMapBuilder<K, V> constantKeySizeBySample(@NotNull final K sampleKey) {
         this.sampleKey = sampleKey;
         averageKey = null;
         averageKeySize = UNDEFINED_DOUBLE_CONFIG;
@@ -661,7 +607,7 @@ private static void checkSegments(long segments) {
      * @see #averageKeySize(double)
      * @see #actualChunkSize(int)
      */
-    public ChronicleMapBuilder<K, V> averageValueSize(double averageValueSize) {
+    public ChronicleMapBuilder<K, V> averageValueSize(final double averageValueSize) {
         checkSizeIsStaticallyKnown(valueBuilder, "Value");
         checkAverageSize(averageValueSize, "value");
         this.averageValueSize = averageValueSize;
@@ -700,8 +646,8 @@ private static void checkSegments(long segments) {
      * @see #averageKey(Object)
      * @see #actualChunkSize(int)
      */
-    public ChronicleMapBuilder<K, V> averageValue(V averageValue) {
-        Class<?> valueClass = averageValue.getClass();
+    public ChronicleMapBuilder<K, V> averageValue(@NotNull final V averageValue) {
+        final Class<?> valueClass = averageValue.getClass();
         if (BytesMarshallable.class.isAssignableFrom(valueClass) &&
                 valueBuilder.tClass.isInterface()) {
             if (Serializable.class.isAssignableFrom(valueClass))
@@ -709,7 +655,6 @@ private static void checkSegments(long segments) {
             else
                 throw new IllegalArgumentException("Using BytesMarshallable and an interface value type not supported");
         }
-        Objects.requireNonNull(averageValue);
         checkSizeIsStaticallyKnown(valueBuilder, "Value");
         this.averageValue = averageValue;
         sampleValue = null;
@@ -737,7 +682,7 @@ private static void checkSegments(long segments) {
      * @see #averageValue(Object)
      * @see #constantKeySizeBySample(Object)
      */
-    public ChronicleMapBuilder<K, V> constantValueSizeBySample(V sampleValue) {
+    public ChronicleMapBuilder<K, V> constantValueSizeBySample(@NotNull final V sampleValue) {
         this.sampleValue = sampleValue;
         averageValue = null;
         averageValueSize = UNDEFINED_DOUBLE_CONFIG;
@@ -750,8 +695,9 @@ private static void checkSegments(long segments) {
         return averageValueSize;
     }
 
-    private <E> double averageKeyOrValueSize(
-            double configuredSize, SerializationBuilder<E> builder, E average) {
+    private <E> double averageKeyOrValueSize(final double configuredSize,
+                                             @NotNull final SerializationBuilder<E> builder,
+                                             final E average) {
         if (isDefined(configuredSize))
             return configuredSize;
         if (builder.constantSizeMarshaller())
@@ -772,7 +718,7 @@ private static void checkSegments(long segments) {
      * @see #maxChunksPerEntry(int)
      */
     @Override
-    public ChronicleMapBuilder<K, V> actualChunkSize(int actualChunkSize) {
+    public ChronicleMapBuilder<K, V> actualChunkSize(final int actualChunkSize) {
         if (constantlySizedEntries()) {
             throw new IllegalStateException("Sizes of key type: " + keyBuilder.tClass + " and " +
                     "value type: " + valueBuilder.tClass + " are both constant, " +
@@ -792,7 +738,7 @@ private static void checkSegments(long segments) {
 
     private EntrySizeInfo entrySizeInfo() {
         double size = 0;
-        double keySize = averageKeySize();
+        final double keySize = averageKeySize();
         size += averageSizeStoringLength(keyBuilder, keySize);
         size += keySize;
         if (replicated)
@@ -805,7 +751,7 @@ private static void checkSegments(long segments) {
         size = alignAddr((long) Math.ceil(size), alignment); // so the value starts aligned
         int worstAlignment;
         if (worstAlignmentComputationRequiresValueSize(alignment)) {
-            long constantSizeBeforeAlignment = toLong(size);
+            final long constantSizeBeforeAlignment = toLong(size);
             if (constantlySizedValues()) {
                 // see tierEntrySpaceInnerOffset()
                 long totalDataSize = constantSizeBeforeAlignment + constantValueSize();
@@ -837,12 +783,12 @@ private static void checkSegments(long segments) {
         return new EntrySizeInfo(size, worstAlignment);
     }
 
-    private boolean worstAlignmentComputationRequiresValueSize(int alignment) {
+    private boolean worstAlignmentComputationRequiresValueSize(final int alignment) {
         return alignment != NO_ALIGNMENT &&
                 constantlySizedKeys() && valueBuilder.constantStoringLengthSizeMarshaller();
     }
 
-    private int worstAlignmentWithoutValueSize(int alignment) {
+    private int worstAlignmentWithoutValueSize(final int alignment) {
         return alignment - 1;
     }
 
@@ -862,12 +808,11 @@ private static void checkSegments(long segments) {
         return keyBuilder.constantSizeMarshaller() || sampleKey != null;
     }
 
-    private int worstAlignmentAssumingChunkSize(
-            long constantSizeBeforeAlignment, int chunkSize) {
-        int alignment = valueAlignment();
-        long firstAlignment = alignAddr(constantSizeBeforeAlignment, alignment) -
+    private int worstAlignmentAssumingChunkSize(final long constantSizeBeforeAlignment, final int chunkSize) {
+        final int alignment = valueAlignment();
+        final long firstAlignment = alignAddr(constantSizeBeforeAlignment, alignment) -
                 constantSizeBeforeAlignment;
-        int gcdOfAlignmentAndChunkSize = greatestCommonDivisor(alignment, chunkSize);
+        final int gcdOfAlignmentAndChunkSize = greatestCommonDivisor(alignment, chunkSize);
         if (gcdOfAlignmentAndChunkSize == alignment)
             return (int) firstAlignment;
         // assume worst by now because we cannot predict alignment in VanillaCM.entrySize() method
@@ -881,13 +826,13 @@ private static void checkSegments(long segments) {
     int worstAlignment() {
         if (worstAlignment >= 0)
             return worstAlignment;
-        int alignment = valueAlignment();
+        final int alignment = valueAlignment();
         if (!worstAlignmentComputationRequiresValueSize(alignment))
             return worstAlignment = worstAlignmentWithoutValueSize(alignment);
         return worstAlignment = entrySizeInfo().worstAlignment;
     }
 
-    void worstAlignment(int worstAlignment) {
+    void worstAlignment(final int worstAlignment) {
         assert worstAlignment >= 0;
         this.worstAlignment = worstAlignment;
     }
@@ -895,10 +840,10 @@ private static void checkSegments(long segments) {
     long chunkSize() {
         if (actualChunkSize > 0)
             return actualChunkSize;
-        double averageEntrySize = entrySizeInfo().averageEntrySize;
+        final double averageEntrySize = entrySizeInfo().averageEntrySize;
         if (constantlySizedEntries())
             return toLong(averageEntrySize);
-        int maxChunkSize = 1 << 30;
+        final int maxChunkSize = 1 << 30;
         for (long chunkSize = 4; chunkSize <= maxChunkSize; chunkSize *= 2L) {
             if (maxDefaultChunksPerAverageEntry(replicated) * chunkSize > averageEntrySize)
                 return chunkSize;
@@ -913,7 +858,7 @@ private static void checkSegments(long segments) {
     double averageChunksPerEntry() {
         if (constantlySizedEntries())
             return 1.0;
-        long chunkSize = chunkSize();
+        final long chunkSize = chunkSize();
         // assuming we always has worst internal fragmentation. This affects total segment
         // entry space which is allocated lazily on Linux (main target platform)
         // so we can afford this
@@ -921,7 +866,7 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> maxChunksPerEntry(int maxChunksPerEntry) {
+    public ChronicleMapBuilder<K, V> maxChunksPerEntry(final int maxChunksPerEntry) {
         if (maxChunksPerEntry < 1)
             throw new IllegalArgumentException("maxChunksPerEntry should be >= 1, " +
                     maxChunksPerEntry + " given");
@@ -937,7 +882,7 @@ private static void checkSegments(long segments) {
     int maxChunksPerEntry() {
         if (constantlySizedEntries())
             return 1;
-        long actualChunksPerSegmentTier = actualChunksPerSegmentTier();
+        final long actualChunksPerSegmentTier = actualChunksPerSegmentTier();
         int result = (int) Math.min(actualChunksPerSegmentTier, (long) Integer.MAX_VALUE);
         if (this.maxChunksPerEntry > 0)
             result = Math.min(this.maxChunksPerEntry, result);
@@ -969,14 +914,12 @@ private static void checkSegments(long segments) {
      * @throws IllegalStateException if values of maps, created by this builder, couldn't reference
      *                               off-heap memory
      */
-    public ChronicleMapBuilder<K, V> entryAndValueOffsetAlignment(int alignment) {
+    public ChronicleMapBuilder<K, V> entryAndValueOffsetAlignment(final int alignment) {
         if (alignment <= 0) {
-            throw new IllegalArgumentException("Alignment should be positive integer, " +
-                    alignment + " given");
+            throw new IllegalArgumentException("Alignment should be positive integer, " + alignment + " given");
         }
         if (!isPowerOf2(alignment)) {
-            throw new IllegalArgumentException("Alignment should be a power of 2, " + alignment +
-                    " given");
+            throw new IllegalArgumentException("Alignment should be a power of 2, " + alignment + " given");
         }
         if (Jvm.isArm() && alignment < 8)
             return this;
@@ -986,7 +929,9 @@ private static void checkSegments(long segments) {
         return this;
     }
 
-    public void validateAlignment(int ifSet, int actualChunkSize, int alignment) {
+    public void validateAlignment(final int ifSet,
+                                  final int actualChunkSize,
+                                  final int alignment) {
         if (ifSet > 0 && actualChunkSize % alignment != 0)
             throw new IllegalArgumentException("The chunk size (" + actualChunkSize + ") must be a multiple of the alignment (" + alignment + ")");
     }
@@ -996,7 +941,7 @@ private static void checkSegments(long segments) {
             return alignment;
         try {
             if (Values.isValueInterfaceOrImplClass(valueBuilder.tClass)) {
-                int alignment = ValueModel.acquire(valueBuilder.tClass).recommendedOffsetAlignment();
+                final int alignment = ValueModel.acquire(valueBuilder.tClass).recommendedOffsetAlignment();
                 validateAlignment(alignment, actualChunkSize, alignment);
                 return alignment;
             } else {
@@ -1008,7 +953,7 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> entries(long entries) {
+    public ChronicleMapBuilder<K, V> entries(final long entries) {
         if (entries <= 0L)
             throw new IllegalArgumentException("Entries should be positive, " + entries + " given");
         this.entries = entries;
@@ -1026,10 +971,9 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> entriesPerSegment(long entriesPerSegment) {
+    public ChronicleMapBuilder<K, V> entriesPerSegment(final long entriesPerSegment) {
         if (entriesPerSegment <= 0L)
-            throw new IllegalArgumentException("Entries per segment should be positive, " +
-                    entriesPerSegment + " given");
+            throw new IllegalArgumentException("Entries per segment should be positive, " + entriesPerSegment + " given");
         this.entriesPerSegment = entriesPerSegment;
         return this;
     }
@@ -1039,8 +983,8 @@ private static void checkSegments(long segments) {
         if (this.entriesPerSegment > 0L) {
             entriesPerSegment = this.entriesPerSegment;
         } else {
-            int actualSegments = actualSegments();
-            double averageEntriesPerSegment = entries() * 1.0 / actualSegments;
+            final int actualSegments = actualSegments();
+            final double averageEntriesPerSegment = entries() * 1.0 / actualSegments;
             if (actualSegments > 1) {
                 entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
                         averageEntriesPerSegment, nonTieredSegmentsPercentile);
@@ -1049,9 +993,9 @@ private static void checkSegments(long segments) {
                 entriesPerSegment = roundUp(averageEntriesPerSegment);
             }
         }
-        boolean actualChunksDefined = actualChunksPerSegmentTier > 0;
+        final boolean actualChunksDefined = actualChunksPerSegmentTier > 0;
         if (!actualChunksDefined) {
-            double averageChunksPerEntry = averageChunksPerEntry();
+            final double averageChunksPerEntry = averageChunksPerEntry();
             if (entriesPerSegment * averageChunksPerEntry >
                     MAX_TIER_CHUNKS)
                 throw new IllegalStateException("Max chunks per segment tier is " +
@@ -1066,7 +1010,7 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> actualChunksPerSegmentTier(long actualChunksPerSegmentTier) {
+    public ChronicleMapBuilder<K, V> actualChunksPerSegmentTier(final long actualChunksPerSegmentTier) {
         if (actualChunksPerSegmentTier <= 0 || actualChunksPerSegmentTier > MAX_TIER_CHUNKS)
             throw new IllegalArgumentException("Actual chunks per segment tier should be in [1, " +
                     MAX_TIER_CHUNKS + "], range, " + actualChunksPerSegmentTier + " given");
@@ -1101,12 +1045,12 @@ private static void checkSegments(long segments) {
         return chunksPerSegmentTier(entriesPerSegment());
     }
 
-    private long chunksPerSegmentTier(long entriesPerSegment) {
+    private long chunksPerSegmentTier(final long entriesPerSegment) {
         return roundUp(entriesPerSegment * averageChunksPerEntry());
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> minSegments(int minSegments) {
+    public ChronicleMapBuilder<K, V> minSegments(final int minSegments) {
         checkSegments(minSegments);
         this.minSegments = minSegments;
         return this;
@@ -1140,7 +1084,7 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> actualSegments(int actualSegments) {
+    public ChronicleMapBuilder<K, V> actualSegments(final int actualSegments) {
         checkSegments(actualSegments);
         this.actualSegments = actualSegments;
         return this;
@@ -1173,13 +1117,12 @@ private static void checkSegments(long segments) {
         // each segment. To compensate this at least on linux, don't accept segment sizes that with
         // the given entry sizes, lead to too small total segment sizes in native memory pages,
         // see comment in tryHashLookupSlotSize()
-        long segments = tryHashLookupSlotSize(4);
+        final long segments = tryHashLookupSlotSize(4);
         if (segments > 0)
             return (int) segments;
-        int maxHashLookupEntrySize = aligned64BitMemoryOperationsAtomic() ? 8 : 4;
-        long maxEntriesPerSegment =
-                findMaxEntriesPerSegmentToFitHashLookupSlotSize(maxHashLookupEntrySize);
-        long maxSegments = trySegments(maxEntriesPerSegment, MAX_SEGMENTS);
+        final int maxHashLookupEntrySize = aligned64BitMemoryOperationsAtomic() ? 8 : 4;
+        final long maxEntriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(maxHashLookupEntrySize);
+        final long maxSegments = trySegments(maxEntriesPerSegment, MAX_SEGMENTS);
         if (maxSegments > 0L)
             return (int) maxSegments;
         throw new IllegalStateException("Max segments is " + MAX_SEGMENTS + ", configured so much" +
@@ -1189,9 +1132,8 @@ private static void checkSegments(long segments) {
     }
 
     private long tryHashLookupSlotSize(int hashLookupSlotSize) {
-        long entriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(
-                hashLookupSlotSize);
-        long entrySpaceSize = roundUp(entriesPerSegment * entrySizeInfo().averageEntrySize);
+        final long entriesPerSegment = findMaxEntriesPerSegmentToFitHashLookupSlotSize(hashLookupSlotSize);
+        final long entrySpaceSize = roundUp(entriesPerSegment * entrySizeInfo().averageEntrySize);
         // Not to lose too much on linux because of "poor distribution" entry over-allocation.
         // This condition should likely filter cases when we target very small hash lookup
         // size + entry size is small.
@@ -1201,8 +1143,7 @@ private static void checkSegments(long segments) {
         return trySegments(entriesPerSegment, MAX_SEGMENTS);
     }
 
-    private long findMaxEntriesPerSegmentToFitHashLookupSlotSize(
-            int targetHashLookupSlotSize) {
+    private long findMaxEntriesPerSegmentToFitHashLookupSlotSize(int targetHashLookupSlotSize) {
         long entriesPerSegment = 1L << 62;
         long step = entriesPerSegment / 2L;
         while (step > 0L) {
@@ -1213,21 +1154,21 @@ private static void checkSegments(long segments) {
         return entriesPerSegment - 1L;
     }
 
-    private int hashLookupSlotBytes(long entriesPerSegment) {
-        int valueBits = valueBits(chunksPerSegmentTier(entriesPerSegment));
-        int keyBits = keyBits(entriesPerSegment, valueBits);
+    private int hashLookupSlotBytes(final long entriesPerSegment) {
+        final int valueBits = valueBits(chunksPerSegmentTier(entriesPerSegment));
+        final int keyBits = keyBits(entriesPerSegment, valueBits);
         return entrySize(keyBits, valueBits);
     }
 
-    private long trySegments(long entriesPerSegment, int maxSegments) {
+    private long trySegments(final long entriesPerSegment, final int maxSegments) {
         long segments = segmentsGivenEntriesPerSegmentFixed(entriesPerSegment);
         segments = nextPower2(Math.max(segments, minSegments()), 1L);
         return segments <= maxSegments ? segments : -segments;
     }
 
-    private long segmentsGivenEntriesPerSegmentFixed(long entriesPerSegment) {
-        double precision = 1.0 / averageChunksPerEntry();
-        long entriesPerSegmentShouldBe =
+    private long segmentsGivenEntriesPerSegmentFixed(final long entriesPerSegment) {
+        final double precision = 1.0 / averageChunksPerEntry();
+        final long entriesPerSegmentShouldBe =
                 roundDown(PoissonDistribution.meanByCumulativeProbabilityAndValue(
                         nonTieredSegmentsPercentile, entriesPerSegment, precision));
         long segments = divideRoundUp(entries(), entriesPerSegmentShouldBe);
@@ -1238,7 +1179,7 @@ private static void checkSegments(long segments) {
     }
 
     long tierHashLookupCapacity() {
-        long entriesPerSegment = entriesPerSegment();
+        final long entriesPerSegment = entriesPerSegment();
         long capacity = CompactOffHeapLinearHashTable.capacityFor(entriesPerSegment);
         if (actualSegments() > 1) {
             // if there is only 1 segment, there is no source of variance in segments filling
@@ -1252,9 +1193,9 @@ private static void checkSegments(long segments) {
     }
 
     int segmentHeaderSize() {
-        int segments = actualSegments();
+        final int segments = actualSegments();
 
-        long pageSize = OS.pageSize();
+        final long pageSize = OS.pageSize();
         if (segments * (64 * 3) < (2 * pageSize)) // i. e. <= 42 segments, if page size is 4K
             return 64 * 3; // cache line per header, plus one CL to the left, plus one to the right
 
@@ -1287,7 +1228,7 @@ private static void checkSegments(long segments) {
      * @return this builder back
      * @see #removeReturnsNull(boolean)
      */
-    public ChronicleMapBuilder<K, V> putReturnsNull(boolean putReturnsNull) {
+    public ChronicleMapBuilder<K, V> putReturnsNull(final boolean putReturnsNull) {
         this.putReturnsNull = putReturnsNull;
         return this;
     }
@@ -1318,7 +1259,7 @@ private static void checkSegments(long segments) {
      * @return this builder back
      * @see #putReturnsNull(boolean)
      */
-    public ChronicleMapBuilder<K, V> removeReturnsNull(boolean removeReturnsNull) {
+    public ChronicleMapBuilder<K, V> removeReturnsNull(final boolean removeReturnsNull) {
         this.removeReturnsNull = removeReturnsNull;
         return this;
     }
@@ -1328,7 +1269,7 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> maxBloatFactor(double maxBloatFactor) {
+    public ChronicleMapBuilder<K, V> maxBloatFactor(final double maxBloatFactor) {
         if (isNaN(maxBloatFactor) || maxBloatFactor < 1.0 || maxBloatFactor > 1_000.0) {
             throw new IllegalArgumentException("maxBloatFactor should be in [1.0, 1_000.0] " +
                     "bounds, " + maxBloatFactor + " given");
@@ -1342,14 +1283,13 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> allowSegmentTiering(boolean allowSegmentTiering) {
+    public ChronicleMapBuilder<K, V> allowSegmentTiering(final boolean allowSegmentTiering) {
         this.allowSegmentTiering = allowSegmentTiering;
         return this;
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> nonTieredSegmentsPercentile(
-            double nonTieredSegmentsPercentile) {
+    public ChronicleMapBuilder<K, V> nonTieredSegmentsPercentile(final double nonTieredSegmentsPercentile) {
         if (isNaN(nonTieredSegmentsPercentile) ||
                 0.5 <= nonTieredSegmentsPercentile || nonTieredSegmentsPercentile >= 1.0) {
             throw new IllegalArgumentException("nonTieredSegmentsPercentile should be in (0.5, " +
@@ -1362,7 +1302,7 @@ private static void checkSegments(long segments) {
     long maxExtraTiers() {
         if (!allowSegmentTiering)
             return 0;
-        int actualSegments = actualSegments();
+        final int actualSegments = actualSegments();
         // maxBloatFactor is scale, so we do (- 1.0) to compute _extra_ tiers
         return round((maxBloatFactor - 1.0) * actualSegments)
                 // but to mitigate slight misconfiguration, and uneven distribution of entries
@@ -1393,7 +1333,7 @@ private static void checkSegments(long segments) {
 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         return builderEquals(this, o);
     }
 
@@ -1402,8 +1342,8 @@ private static void checkSegments(long segments) {
         return toString().hashCode();
     }
 
-    ChronicleMapBuilder<K, V> removedEntryCleanupTimeout(
-            long removedEntryCleanupTimeout, TimeUnit unit) {
+    ChronicleMapBuilder<K, V> removedEntryCleanupTimeout(final long removedEntryCleanupTimeout,
+                                                         @NotNull final TimeUnit unit) {
         if (unit.toMillis(removedEntryCleanupTimeout) < 1) {
             throw new IllegalArgumentException("timeout should be >= 1 millisecond, " +
                     removedEntryCleanupTimeout + " " + unit + " is given");
@@ -1413,22 +1353,20 @@ private static void checkSegments(long segments) {
         return this;
     }
 
-    ChronicleMapBuilder<K, V> cleanupRemovedEntries(boolean cleanupRemovedEntries) {
+    ChronicleMapBuilder<K, V> cleanupRemovedEntries(final boolean cleanupRemovedEntries) {
         this.cleanupRemovedEntries = cleanupRemovedEntries;
         return this;
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> keyReaderAndDataAccess(
-            SizedReader<K> keyReader, @NotNull DataAccess<K> keyDataAccess) {
+    public ChronicleMapBuilder<K, V> keyReaderAndDataAccess(final SizedReader<K> keyReader, @NotNull final DataAccess<K> keyDataAccess) {
         keyBuilder.reader(keyReader);
         keyBuilder.dataAccess(keyDataAccess);
         return this;
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> keyMarshallers(
-            @NotNull SizedReader<K> keyReader, @NotNull SizedWriter<? super K> keyWriter) {
+    public ChronicleMapBuilder<K, V> keyMarshallers(@NotNull final SizedReader<K> keyReader, @NotNull final SizedWriter<? super K> keyWriter) {
         keyBuilder.reader(keyReader);
         keyBuilder.writer(keyWriter);
         return this;
@@ -1436,13 +1374,12 @@ private static void checkSegments(long segments) {
 
     @Override
     public <M extends SizedReader<K> & SizedWriter<? super K>>
-    ChronicleMapBuilder<K, V> keyMarshaller(@NotNull M sizedMarshaller) {
+    ChronicleMapBuilder<K, V> keyMarshaller(@NotNull final M sizedMarshaller) {
         return keyMarshallers(sizedMarshaller, sizedMarshaller);
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> keyMarshallers(
-            @NotNull BytesReader<K> keyReader, @NotNull BytesWriter<? super K> keyWriter) {
+    public ChronicleMapBuilder<K, V> keyMarshallers(@NotNull final BytesReader<K> keyReader, @NotNull final BytesWriter<? super K> keyWriter) {
         keyBuilder.reader(keyReader);
         keyBuilder.writer(keyWriter);
         return this;
@@ -1450,25 +1387,24 @@ private static void checkSegments(long segments) {
 
     @Override
     public <M extends BytesReader<K> & BytesWriter<? super K>>
-    ChronicleMapBuilder<K, V> keyMarshaller(@NotNull M marshaller) {
+    ChronicleMapBuilder<K, V> keyMarshaller(@NotNull final M marshaller) {
         return keyMarshallers(marshaller, marshaller);
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> keySizeMarshaller(@NotNull SizeMarshaller keySizeMarshaller) {
+    public ChronicleMapBuilder<K, V> keySizeMarshaller(@NotNull final SizeMarshaller keySizeMarshaller) {
         keyBuilder.sizeMarshaller(keySizeMarshaller);
         return this;
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> aligned64BitMemoryOperationsAtomic(
-            boolean aligned64BitMemoryOperationsAtomic) {
+    public ChronicleMapBuilder<K, V> aligned64BitMemoryOperationsAtomic(final boolean aligned64BitMemoryOperationsAtomic) {
         this.aligned64BitMemoryOperationsAtomic = aligned64BitMemoryOperationsAtomic;
         return this;
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> checksumEntries(boolean checksumEntries) {
+    public ChronicleMapBuilder<K, V> checksumEntries(final boolean checksumEntries) {
         this.checksumEntries = checksumEntries ? ChecksumEntries.YES : ChecksumEntries.NO;
         return this;
     }
@@ -1500,8 +1436,7 @@ private static void checkSegments(long segments) {
      * @see #valueMarshallers(SizedReader, SizedWriter)
      * @see ChronicleHashBuilder#keyReaderAndDataAccess(SizedReader, DataAccess)
      */
-    public ChronicleMapBuilder<K, V> valueReaderAndDataAccess(
-            SizedReader<V> valueReader, @NotNull DataAccess<V> valueDataAccess) {
+    public ChronicleMapBuilder<K, V> valueReaderAndDataAccess(@NotNull final SizedReader<V> valueReader, @NotNull final DataAccess<V> valueDataAccess) {
         valueBuilder.reader(valueReader);
         valueBuilder.dataAccess(valueDataAccess);
         return this;
@@ -1518,8 +1453,7 @@ private static void checkSegments(long segments) {
      * @see #valueSizeMarshaller(SizeMarshaller)
      * @see ChronicleHashBuilder#keyMarshallers(SizedReader, SizedWriter)
      */
-    public ChronicleMapBuilder<K, V> valueMarshallers(
-            @NotNull SizedReader<V> valueReader, @NotNull SizedWriter<? super V> valueWriter) {
+    public ChronicleMapBuilder<K, V> valueMarshallers(@NotNull final SizedReader<V> valueReader, @NotNull final SizedWriter<? super V> valueWriter) {
         valueBuilder.reader(valueReader);
         valueBuilder.writer(valueWriter);
         return this;
@@ -1529,8 +1463,7 @@ private static void checkSegments(long segments) {
      * Shortcut for {@link #valueMarshallers(SizedReader, SizedWriter)
      * valueMarshallers(sizedMarshaller, sizedMarshaller)}.
      */
-    public <M extends SizedReader<V> & SizedWriter<? super V>>
-    ChronicleMapBuilder<K, V> valueMarshaller(@NotNull M sizedMarshaller) {
+    public <M extends SizedReader<V> & SizedWriter<? super V>> ChronicleMapBuilder<K, V> valueMarshaller(@NotNull final M sizedMarshaller) {
         return valueMarshallers(sizedMarshaller, sizedMarshaller);
     }
 
@@ -1545,8 +1478,7 @@ private static void checkSegments(long segments) {
      * @see #valueSizeMarshaller(SizeMarshaller)
      * @see ChronicleHashBuilder#keyMarshallers(BytesReader, BytesWriter)
      */
-    public ChronicleMapBuilder<K, V> valueMarshallers(
-            @NotNull BytesReader<V> valueReader, @NotNull BytesWriter<? super V> valueWriter) {
+    public ChronicleMapBuilder<K, V> valueMarshallers(@NotNull final BytesReader<V> valueReader, @NotNull final BytesWriter<? super V> valueWriter) {
         valueBuilder.reader(valueReader);
         valueBuilder.writer(valueWriter);
         return this;
@@ -1556,8 +1488,7 @@ private static void checkSegments(long segments) {
      * Shortcut for {@link #valueMarshallers(BytesReader, BytesWriter)
      * valueMarshallers(marshaller, marshaller)}.
      */
-    public <M extends BytesReader<V> & BytesWriter<? super V>>
-    ChronicleMapBuilder<K, V> valueMarshaller(@NotNull M marshaller) {
+    public <M extends BytesReader<V> & BytesWriter<? super V>> ChronicleMapBuilder<K, V> valueMarshaller(@NotNull final M marshaller) {
         return valueMarshallers(marshaller, marshaller);
     }
 
@@ -1574,8 +1505,7 @@ private static void checkSegments(long segments) {
      * @return this builder back
      * @see #keySizeMarshaller(SizeMarshaller)
      */
-    public ChronicleMapBuilder<K, V> valueSizeMarshaller(
-            @NotNull SizeMarshaller valueSizeMarshaller) {
+    public ChronicleMapBuilder<K, V> valueSizeMarshaller(@NotNull final SizeMarshaller valueSizeMarshaller) {
         valueBuilder.sizeMarshaller(valueSizeMarshaller);
         return this;
     }
@@ -1589,14 +1519,12 @@ private static void checkSegments(long segments) {
      * @param defaultValueProvider the strategy to obtain a default value by the absent key
      * @return this builder back
      */
-    public ChronicleMapBuilder<K, V> defaultValueProvider(
-            @NotNull DefaultValueProvider<K, V> defaultValueProvider) {
-        Objects.requireNonNull(defaultValueProvider);
+    public ChronicleMapBuilder<K, V> defaultValueProvider(@NotNull final DefaultValueProvider<K, V> defaultValueProvider) {
         this.defaultValueProvider = defaultValueProvider;
         return this;
     }
 
-    public ChronicleMapBuilder<K, V> replication(byte identifier) {
+    public ChronicleMapBuilder<K, V> replication(final byte identifier) {
         if (identifier <= 0)
             throw new IllegalArgumentException("Identifier must be positive, " + identifier +
                     " given");
@@ -1610,7 +1538,7 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMap<K, V> createPersistedTo(File file) throws IOException {
+    public ChronicleMap<K, V> createPersistedTo(@NotNull final File file) throws IOException {
         // clone() to make this builder instance thread-safe, because createWithFile() method
         // computes some state based on configurations, but doesn't synchronize on configuration
         // changes.
@@ -1618,21 +1546,21 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMap<K, V> createOrRecoverPersistedTo(File file) throws IOException {
+    public ChronicleMap<K, V> createOrRecoverPersistedTo(@NotNull final File file) throws IOException {
         return createOrRecoverPersistedTo(file, true);
     }
 
     @Override
-    public ChronicleMap<K, V> createOrRecoverPersistedTo(File file, boolean sameLibraryVersion)
+    public ChronicleMap<K, V> createOrRecoverPersistedTo(@NotNull final File file, final boolean sameLibraryVersion)
             throws IOException {
         return createOrRecoverPersistedTo(file, sameLibraryVersion,
                 defaultChronicleMapCorruptionListener);
     }
 
     @Override
-    public ChronicleMap<K, V> createOrRecoverPersistedTo(
-            File file, boolean sameLibraryVersion,
-            ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+    public ChronicleMap<K, V> createOrRecoverPersistedTo(@NotNull final File file,
+                                                         final boolean sameLibraryVersion,
+                                                         @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
         if (file.exists()) {
             return recoverPersistedTo(file, sameLibraryVersion, corruptionListener);
         } else {
@@ -1641,28 +1569,26 @@ private static void checkSegments(long segments) {
     }
 
     @Override
-    public ChronicleMap<K, V> recoverPersistedTo(
-            File file, boolean sameBuilderConfigAndLibraryVersion) throws IOException {
+    public ChronicleMap<K, V> recoverPersistedTo(@NotNull final  File file, final boolean sameBuilderConfigAndLibraryVersion) throws IOException {
         return recoverPersistedTo(file, sameBuilderConfigAndLibraryVersion,
                 defaultChronicleMapCorruptionListener);
     }
 
     @Override
-    public ChronicleMap<K, V> recoverPersistedTo(
-            File file, boolean sameBuilderConfigAndLibraryVersion,
-            ChronicleHashCorruption.Listener corruptionListener) throws IOException {
-        return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion,
-                corruptionListener);
+    public ChronicleMap<K, V> recoverPersistedTo(@NotNull final File file,
+                                                 final boolean sameBuilderConfigAndLibraryVersion,
+                                                 @Nullable final  ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+        return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion, corruptionListener);
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> setPreShutdownAction(Runnable preShutdownAction) {
+    public ChronicleMapBuilder<K, V> setPreShutdownAction(@NotNull final Runnable preShutdownAction) {
         this.preShutdownAction = preShutdownAction;
         return this;
     }
 
     @Override
-    public ChronicleMapBuilder<K, V> skipCloseOnExitHook(boolean skipCloseOnExitHook) {
+    public ChronicleMapBuilder<K, V> skipCloseOnExitHook(final boolean skipCloseOnExitHook) {
         this.skipCloseOnExitHook = skipCloseOnExitHook;
         return this;
     }
@@ -1675,9 +1601,48 @@ private static void checkSegments(long segments) {
         return clone().createWithoutFile();
     }
 
-    private ChronicleMap<K, V> createWithFile(
-            File file, boolean recover, boolean overrideBuilderConfig,
-            ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+    /**
+     * Inject your SPI code around basic {@code ChronicleMap}'s operations with entries:
+     * removing entries, replacing entries' value and inserting new entries.
+     * <p>
+     * <p>This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
+     * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
+     * <i>internal replication operations</i>.
+     * <p>
+     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
+     *
+     * @return this builder back
+     */
+    public ChronicleMapBuilder<K, V> entryOperations(@NotNull final MapEntryOperations<K, V, ?> entryOperations) {
+        this.entryOperations = entryOperations;
+        return this;
+    }
+
+    /**
+     * Inject your SPI around logic of all {@code ChronicleMap}'s operations with individual keys:
+     * from {@link ChronicleMap#containsKey} to {@link ChronicleMap#acquireUsing} and
+     * {@link ChronicleMap#merge}.
+     * <p>
+     * <p>This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
+     * <p>
+     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
+     *
+     * @return this builder back
+     */
+    public ChronicleMapBuilder<K, V> mapMethods(@NotNull final MapMethods<K, V, ?> mapMethods) {
+        this.methods = mapMethods;
+        return this;
+    }
+
+    ChronicleMapBuilder<K, V> remoteOperations(@NotNull final MapRemoteOperations<K, V, ?> remoteOperations) {
+        this.remoteOperations = remoteOperations;
+        return this;
+    }
+
+    private ChronicleMap<K, V> createWithFile(@NotNull final File file,
+                                              final boolean recover,
+                                              final boolean overrideBuilderConfig,
+                                              @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
         if (overrideBuilderConfig && !recover)
             throw new AssertionError("recover -> overrideBuilderConfig");
         replicated = replicationIdentifier != -1;
@@ -1685,20 +1650,19 @@ private static void checkSegments(long segments) {
 
         // It's important to canonicalize the file, because CanonicalRandomAccessFiles.acquire()
         // relies on java.io.File equality, which doesn't account symlinks itself.
-        file = file.getCanonicalFile();
-        if (!file.exists()) {
+        final File canonicalFile = file.getCanonicalFile();
+        if (!canonicalFile.exists()) {
             if (recover)
-                throw new FileNotFoundException("file " + file + " should exist for recovery");
+                throw new FileNotFoundException("file " + canonicalFile + " should exist for recovery");
             //noinspection ResultOfMethodCallIgnored
-            file.createNewFile();
+            canonicalFile.createNewFile();
         }
-        RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file);
-        ChronicleHashResources resources = new PersistedChronicleHashResources(file);
+        final RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(canonicalFile);
+        final ChronicleHashResources resources = new PersistedChronicleHashResources(canonicalFile);
         try {
             VanillaChronicleMap<K, V, ?> result;
             if (raf.length() > 0) {
-                result = openWithExistingFile(file, raf, resources, recover, overrideBuilderConfig,
-                        corruptionListener);
+                result = openWithExistingFile(canonicalFile, raf, resources, recover, overrideBuilderConfig, corruptionListener);
             } else {
 
                 // Single-element arrays allow to modify variables within lambda
@@ -1708,7 +1672,7 @@ private static void checkSegments(long segments) {
                 boolean[] newFile = new boolean[1];
                 FileChannel fileChannel = raf.getChannel();
 
-                fileLockedIO(file, fileChannel, () -> {
+                fileLockedIO(canonicalFile, fileChannel, () -> {
                     if (raf.length() == 0) {
                         map[0] = newMap();
                         headerBuffer[0] = writeHeader(fileChannel, map[0]);
@@ -1720,11 +1684,9 @@ private static void checkSegments(long segments) {
 
                 if (newFile[0]) {
                     int headerSize = headerBuffer[0].remaining();
-                    result = createWithNewFile(map[0], file, raf, resources, headerBuffer[0],
-                            headerSize);
+                    result = createWithNewFile(map[0], canonicalFile, raf, resources, headerBuffer[0], headerSize);
                 } else {
-                    result = openWithExistingFile(file, raf, resources, recover,
-                            overrideBuilderConfig, corruptionListener);
+                    result = openWithExistingFile(canonicalFile, raf, resources, recover, overrideBuilderConfig, corruptionListener);
                 }
             }
             prepareMapPublication(result);
@@ -1733,7 +1695,7 @@ private static void checkSegments(long segments) {
             try {
                 try {
                     resources.setChronicleHashIdentityString(
-                            "ChronicleHash{name=" + name + ", file=" + file + "}");
+                            "ChronicleHash{name=" + name + ", file=" + canonicalFile + "}");
                 } catch (Throwable t) {
                     throwable.addSuppressed(t);
                 } finally {
@@ -1746,7 +1708,7 @@ private static void checkSegments(long segments) {
         }
     }
 
-    private void prepareMapPublication(VanillaChronicleMap map) throws IOException {
+    private void prepareMapPublication(@NotNull final VanillaChronicleMap map) throws IOException {
         establishReplication(map);
         map.setResourcesName();
         map.registerCleaner();
@@ -1758,15 +1720,16 @@ private static void checkSegments(long segments) {
     /**
      * @return size of the self bootstrapping header
      */
-    private int waitUntilReady(RandomAccessFile raf, File file, boolean recover)
-            throws IOException {
-        FileChannel fileChannel = raf.getChannel();
+    private int waitUntilReady(@NotNull final RandomAccessFile raf,
+                               @NotNull final File file,
+                               final boolean recover) throws IOException {
+        final FileChannel fileChannel = raf.getChannel();
 
-        ByteBuffer sizeWordBuffer = ByteBuffer.allocate(4);
+        final ByteBuffer sizeWordBuffer = ByteBuffer.allocate(4);
         sizeWordBuffer.order(LITTLE_ENDIAN);
 
         // 60 * 10, 100 ms wait = 1 minute total wait
-        int attempts = 60 * 10;
+        final int attempts = 60 * 10;
         int lastReadHeaderSize = -1;
         for (int attempt = 0; attempt < attempts; attempt++) {
             if (raf.length() >= SELF_BOOTSTRAPPING_HEADER_OFFSET) {
@@ -1811,30 +1774,32 @@ private static void checkSegments(long segments) {
         }
     }
 
-    private VanillaChronicleMap<K, V, ?> createWithNewFile(
-            VanillaChronicleMap<K, V, ?> map, File file, RandomAccessFile raf,
-            ChronicleHashResources resources, ByteBuffer headerBuffer, int headerSize)
-            throws IOException {
+    private VanillaChronicleMap<K, V, ?> createWithNewFile(@NotNull final VanillaChronicleMap<K, V, ?> map,
+                                                           @NotNull final File file,
+                                                           @NotNull final RandomAccessFile raf,
+                                                           @NotNull final ChronicleHashResources resources,
+                                                           @NotNull final ByteBuffer headerBuffer,
+                                                           final int headerSize) throws IOException {
         map.initBeforeMapping(file, raf, headerBuffer.limit(), false);
         map.createMappedStoreAndSegments(resources);
         commitChronicleMapReady(map, raf, headerBuffer, headerSize);
         return map;
     }
 
-    private VanillaChronicleMap<K, V, ?> openWithExistingFile(
-            File file, RandomAccessFile raf, ChronicleHashResources resources,
-            boolean recover, boolean overrideBuilderConfig,
-            ChronicleHashCorruption.Listener corruptionListener)
-            throws IOException {
-        ChronicleHashCorruptionImpl corruption = recover ? new ChronicleHashCorruptionImpl() : null;
+    private VanillaChronicleMap<K, V, ?> openWithExistingFile(@NotNull final File file,
+                                                              @NotNull final RandomAccessFile raf,
+                                                              @NotNull final ChronicleHashResources resources,
+                                                              final boolean recover,
+                                                              final boolean overrideBuilderConfig,
+                                                              @Nullable final  ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+        final ChronicleHashCorruptionImpl corruption = recover ? new ChronicleHashCorruptionImpl() : null;
         try {
             int headerSize = waitUntilReady(raf, file, recover);
-            FileChannel fileChannel = raf.getChannel();
-            ByteBuffer headerBuffer = readSelfBootstrappingHeader(
-                    file, raf, headerSize, recover, corruptionListener, corruption);
+            final FileChannel fileChannel = raf.getChannel();
+            ByteBuffer headerBuffer = readSelfBootstrappingHeader(file, raf, headerSize, recover, corruptionListener, corruption);
             if (headerSize != headerBuffer.remaining())
                 throw new AssertionError();
-            boolean headerCorrect = checkSumSelfBootstrappingHeader(headerBuffer, headerSize);
+            final boolean headerCorrect = checkSumSelfBootstrappingHeader(headerBuffer, headerSize);
             boolean headerWritten = false;
             if (!headerCorrect) {
                 if (overrideBuilderConfig) {
@@ -1848,13 +1813,13 @@ private static void checkSegments(long segments) {
                             recover);
                 }
             }
-            Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
+            final Bytes<ByteBuffer> headerBytes = Bytes.wrapForRead(headerBuffer);
             headerBytes.readPosition(headerBuffer.position());
             headerBytes.readLimit(headerBuffer.limit());
-            Wire wire = new TextWire(headerBytes);
-            VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
+            final Wire wire = new TextWire(headerBytes);
+            final VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
-            long dataStoreSize = map.globalMutableState().getDataStoreSize();
+            final long dataStoreSize = map.globalMutableState().getDataStoreSize();
             if (!recover && dataStoreSize > file.length()) {
                 throw new IOException("The file " + file + " the map is serialized from " +
                         "has unexpected length " + file.length() + ", probably corrupted. " +
@@ -1883,9 +1848,9 @@ private static void checkSegments(long segments) {
         replicated = replicationIdentifier != -1;
         persisted = false;
 
-        ChronicleHashResources resources = new InMemoryChronicleHashResources();
+        final ChronicleHashResources resources = new InMemoryChronicleHashResources();
         try {
-            VanillaChronicleMap<K, V, ?> map = newMap();
+            final VanillaChronicleMap<K, V, ?> map = newMap();
             map.createInMemoryStoreAndSegments(resources);
             prepareMapPublication(map);
             return map;
@@ -1907,8 +1872,7 @@ private static void checkSegments(long segments) {
     }
 
     @SuppressWarnings("unchecked")
-    private VanillaChronicleMap<K, V, ?> newMap()
-            throws IOException {
+    private VanillaChronicleMap<K, V, ?> newMap() throws IOException {
         preMapConstruction();
         if (replicated) {
             try {
@@ -1925,16 +1889,16 @@ private static void checkSegments(long segments) {
     }
 
     private void preMapConstruction() {
-        averageKeySize = preMapConstruction(
-                keyBuilder, averageKeySize, averageKey, sampleKey, "Key");
-        averageValueSize = preMapConstruction(
-                valueBuilder, averageValueSize, averageValue, sampleValue, "Value");
+        averageKeySize = preMapConstruction(keyBuilder, averageKeySize, averageKey, sampleKey, "Key");
+        averageValueSize = preMapConstruction(valueBuilder, averageValueSize, averageValue, sampleValue, "Value");
         stateChecks();
     }
 
-    private <E> double preMapConstruction(
-            SerializationBuilder<E> builder, double configuredAverageSize, E average, E sample,
-            String dim) {
+    private <E> double preMapConstruction(@NotNull final SerializationBuilder<E> builder,
+                                          final double configuredAverageSize,
+                                          @NotNull final E average,
+                                          @Nullable final E sample,
+                                          @NotNull final String dim) {
         if (sample != null) {
             return builder.constantSizeBySample(sample);
         } else {
@@ -1963,74 +1927,78 @@ private static void checkSegments(long segments) {
     private void establishReplication(
             VanillaChronicleMap<K, V, ?> map) {
         if (map instanceof ReplicatedChronicleMap) {
-            ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
+            final ReplicatedChronicleMap result = (ReplicatedChronicleMap) map;
             if (cleanupRemovedEntries)
                 establishCleanupThread(result);
         }
     }
 
-    private void establishCleanupThread(ReplicatedChronicleMap map) {
-        OldDeletedEntriesCleanupThread cleanupThread = new OldDeletedEntriesCleanupThread(map);
+    private void establishCleanupThread(@NotNull final ReplicatedChronicleMap map) {
+        final OldDeletedEntriesCleanupThread cleanupThread = new OldDeletedEntriesCleanupThread(map);
         map.addCloseable(cleanupThread);
         cleanupThread.start();
     }
 
-    /**
-     * Inject your SPI code around basic {@code ChronicleMap}'s operations with entries:
-     * removing entries, replacing entries' value and inserting new entries.
-     * <p>
-     * <p>This affects behaviour of ordinary map.put(), map.remove(), etc. calls, as well as removes
-     * and replacing values <i>during iterations</i>, <i>remote map calls</i> and
-     * <i>internal replication operations</i>.
-     * <p>
-     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
-     *
-     * @return this builder back
-     */
-    public ChronicleMapBuilder<K, V> entryOperations(MapEntryOperations<K, V, ?> entryOperations) {
-        Objects.requireNonNull(entryOperations);
-        this.entryOperations = entryOperations;
-        return this;
-    }
+    private enum ChecksumEntries {YES, NO, IF_PERSISTED}
 
-    /**
-     * Inject your SPI around logic of all {@code ChronicleMap}'s operations with individual keys:
-     * from {@link ChronicleMap#containsKey} to {@link ChronicleMap#acquireUsing} and
-     * {@link ChronicleMap#merge}.
-     * <p>
-     * <p>This affects behaviour of ordinary map calls, as well as <i>remote calls</i>.
-     * <p>
-     * <p>This is a <a href="#jvm-configurations">JVM-level configuration</a>.
-     *
-     * @return this builder back
-     */
-    public ChronicleMapBuilder<K, V> mapMethods(MapMethods<K, V, ?> mapMethods) {
-        Objects.requireNonNull(mapMethods);
-        this.methods = mapMethods;
-        return this;
-    }
-
-    ChronicleMapBuilder<K, V> remoteOperations(
-            MapRemoteOperations<K, V, ?> remoteOperations) {
-        Objects.requireNonNull(remoteOperations);
-        this.remoteOperations = remoteOperations;
-        return this;
-    }
-
-    enum ChecksumEntries {YES, NO, IF_PERSISTED}
-
-    interface FileIOAction {
+    @FunctionalInterface
+    private interface FileIOAction {
         void fileIOAction() throws IOException;
     }
 
-    static class EntrySizeInfo {
-        final double averageEntrySize;
-        final int worstAlignment;
+    private static final class EntrySizeInfo {
+        private final double averageEntrySize;
+        private final int worstAlignment;
 
-        EntrySizeInfo(double averageEntrySize, int worstAlignment) {
+        EntrySizeInfo(final double averageEntrySize, final int worstAlignment) {
             this.averageEntrySize = averageEntrySize;
             this.worstAlignment = worstAlignment;
         }
     }
-}
 
+    private static boolean isDefined(final double config) {
+        return !isNaN(config);
+    }
+
+    private static long toLong(final double v) {
+        long l = round(v);
+        if (l != v)
+            throw new IllegalArgumentException("Integer argument expected, given " + v);
+        return l;
+    }
+
+    private static long roundUp(final double v) {
+        return round(Math.ceil(v));
+    }
+
+    private static long roundDown(final double v) {
+        return (long) v;
+    }
+
+    /**
+     * When Chronicle Maps are created using {@link #createPersistedTo(File)} or
+     * {@link #recoverPersistedTo(File, boolean)} or {@link
+     * #createOrRecoverPersistedTo(File, boolean)} methods, file lock on the Chronicle Map's file is
+     * acquired, that shouldn't be done from concurrent threads within the same JVM process. So
+     * creation of Chronicle Maps persisted to the same File should be synchronized across JVM's
+     * threads. Simple way would be to synchronize on some static (lock) object, but would serialize
+     * all Chronicle Maps creations (persisted to any files), ConcurrentHashMap#compute() gives more
+     * scalability. ConcurrentHashMap is used effectively for lock striping only, because the
+     * entries are not even landing the map, because compute() always returns null.
+     */
+    private static void fileLockedIO(@NotNull final File file,
+                                     @NotNull final FileChannel fileChannel,
+                                     @NotNull final FileIOAction fileIOAction) {
+        fileLockingControl.compute(file, (k, v) -> {
+            try {
+                try (FileLock ignored = fileChannel.lock()) {
+                    fileIOAction.fileIOAction();
+                }
+                return null;
+            } catch (IOException e) {
+                throw Jvm.rethrow(e);
+            }
+        });
+    }
+
+}
