@@ -31,22 +31,23 @@ import static org.junit.Assert.assertEquals;
 public class ConstantSizeBySampleTest {
 
     @Test
-    public void testConstantKeys() throws IOException {
-        ChronicleMap<byte[], Long> map = ChronicleMapBuilder.of(byte[].class, Long.class)
+    public void testConstantKeys() {
+        try (ChronicleMap<byte[], Long> map = ChronicleMapBuilder.of(byte[].class, Long.class)
                 .constantKeySizeBySample(new byte[8])
                 .entries(100)
-                .create();
+                .create()) {
 
-        byte[] zero = ByteBuffer.allocate(8).putLong(0L).array();
-        map.put(zero, 0L);
-        assertEquals(0L, (long) map.get(zero));
+            byte[] zero = ByteBuffer.allocate(8).putLong(0L).array();
+            map.put(zero, 0L);
+            assertEquals(0L, (long) map.get(zero));
 
-        byte[] one = ByteBuffer.allocate(8).putLong(1L).array();
-        map.put(one, 1L);
-        assertEquals(1L, (long) map.get(one));
+            byte[] one = ByteBuffer.allocate(8).putLong(1L).array();
+            map.put(one, 1L);
+            assertEquals(1L, (long) map.get(one));
 
-        map.put(one, 0L);
-        assertEquals(0L, (long) map.get(one));
+            map.put(one, 0L);
+            assertEquals(0L, (long) map.get(one));
+        }
     }
 
     @Test
@@ -96,8 +97,11 @@ public class ConstantSizeBySampleTest {
         }
     }
 
-    static class ExternalizableData implements Externalizable {
+    static final class ExternalizableData implements Externalizable {
         byte[] data = new byte[512 * 1024];
+
+        public ExternalizableData() {
+        }
 
         @Override
         public boolean equals(Object obj) {
@@ -117,7 +121,7 @@ public class ConstantSizeBySampleTest {
         }
     }
 
-    static class SerializableData implements Serializable {
+    static final class SerializableData implements Serializable {
         byte[] data = new byte[512 * 1024];
 
         @Override
@@ -128,7 +132,7 @@ public class ConstantSizeBySampleTest {
         }
     }
 
-    private static class ExternalizableDataDataAccess
+    private static final class ExternalizableDataDataAccess
             extends ExternalizableDataAccess<ExternalizableData> implements Serializable {
         public ExternalizableDataDataAccess() {
             super(ExternalizableData.class);
@@ -145,7 +149,7 @@ public class ConstantSizeBySampleTest {
         }
     }
 
-    private static class ExternalizableDataReader extends ExternalizableReader<ExternalizableData> {
+    private static final class ExternalizableDataReader extends ExternalizableReader<ExternalizableData> {
         public ExternalizableDataReader() {
             super(ExternalizableData.class);
         }

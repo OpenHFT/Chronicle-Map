@@ -20,14 +20,15 @@ public class MissSizedMapsTest {
 
     @Test(timeout = 60000)
     public void testSmallEntries() throws IOException, URISyntaxException {
-        ChronicleMap<String, String> actual = ChronicleMapBuilder.of(String.class, String.class)
+
+        try (ChronicleMap<String, String> actual = ChronicleMapBuilder.of(String.class, String.class)
                 .averageKey("D-6.0149935894066442E18").averageValue("226|16533|4|1|1|testHarness").entries(150 << 10)
-                .createPersistedTo(File.createTempFile("chronicle", "cmap"));
-        check(actual);
+                .createPersistedTo(File.createTempFile("chronicle", "cmap"))) {
+            check(actual);
+        }
     }
 
-    private void check(final ChronicleMap<String, String> actual) throws
-            IOException, URISyntaxException {
+    private void check(final ChronicleMap<String, String> actual) throws IOException, URISyntaxException {
         URI uri = MissSizedMapsTest.class.getResource("/input.txt").toURI();
 
         List<String> strings = Files.readAllLines(Paths.get(uri));
@@ -59,5 +60,4 @@ public class MissSizedMapsTest {
             }
         }
     }
-
 }
