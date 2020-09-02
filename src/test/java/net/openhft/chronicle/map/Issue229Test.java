@@ -16,8 +16,10 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,6 +42,7 @@ public class Issue229Test {
 
     @Test(expected = ChronicleHashRecoveryFailedException.class)
     public void assureExclusiveAccess() throws IOException {
+        Assume.assumeFalse(OS.isWindows());
 
         try (ChronicleMap<Long, Long> readMap = ChronicleMap
                 .of(Long.class, Long.class)

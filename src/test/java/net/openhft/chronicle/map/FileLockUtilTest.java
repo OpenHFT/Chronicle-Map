@@ -26,7 +26,7 @@ public class FileLockUtilTest {
     @Before
     public void setUp() throws IOException {
         // Do not run these test on Windows
-        Assume.assumeFalse(OS.isWindows());
+        doNotRunOnWindows();
 
         canonicalFile = new File("file.lock").getCanonicalFile();
         canonicalFile.delete();
@@ -37,12 +37,14 @@ public class FileLockUtilTest {
 
     @After
     public void cleanup() throws IOException {
+        doNotRunOnWindows();
         fileChannel.close();
         CanonicalRandomAccessFiles.release(canonicalFile);
     }
 
     @Test
     public void testShared() {
+        doNotRunOnWindows();
         FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
         FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
         FileLockUtil.releaseFileLock(canonicalFile);
@@ -51,6 +53,7 @@ public class FileLockUtilTest {
 
     @Test
     public void testExclusiveNormalCase() {
+        doNotRunOnWindows();
         FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
         FileLockUtil.releaseFileLock(canonicalFile);
         FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
@@ -59,6 +62,7 @@ public class FileLockUtilTest {
 
     @Test
     public void testTryExclusiveButWasShared() {
+        doNotRunOnWindows();
         FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
         try {
             FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
@@ -70,6 +74,7 @@ public class FileLockUtilTest {
 
     @Test
     public void testTrySharedButWasExclusive() {
+        doNotRunOnWindows();
         FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
         try {
             FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
@@ -81,6 +86,7 @@ public class FileLockUtilTest {
 
     @Test
     public void testComplicated() {
+        doNotRunOnWindows();
         FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
         FileLockUtil.releaseFileLock(canonicalFile);
         FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
@@ -93,7 +99,7 @@ public class FileLockUtilTest {
 
     @Test
     public void testRunExclusively() {
-        FileLockUtil.dump();
+        doNotRunOnWindows();
         final AtomicInteger cnt = new AtomicInteger();
         FileLockUtil.runExclusively(canonicalFile, fileChannel, cnt::incrementAndGet);
         assertEquals(1, cnt.get());
@@ -101,6 +107,7 @@ public class FileLockUtilTest {
 
     @Test
     public void testRunExclusivelyButUsed() {
+        doNotRunOnWindows();
         FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
         try {
             FileLockUtil.runExclusively(canonicalFile, fileChannel, () -> {});
@@ -108,6 +115,10 @@ public class FileLockUtilTest {
         } catch (ChronicleFileLockException e) {
             FileLockUtil.releaseFileLock(canonicalFile);
         }
+    }
+
+    private void doNotRunOnWindows() {
+        Assume.assumeFalse(OS.isWindows());
     }
 
 }
