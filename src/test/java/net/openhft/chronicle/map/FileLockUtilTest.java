@@ -25,9 +25,6 @@ public class FileLockUtilTest {
 
     @Before
     public void setUp() throws IOException {
-        // Do not run these test on Windows
-        doNotRunOnWindows();
-
         canonicalFile = new File("file.lock").getCanonicalFile();
         canonicalFile.delete();
         canonicalFile.createNewFile();
@@ -37,7 +34,6 @@ public class FileLockUtilTest {
 
     @After
     public void cleanup() throws IOException {
-        doNotRunOnWindows();
         fileChannel.close();
         CanonicalRandomAccessFiles.release(canonicalFile);
     }
