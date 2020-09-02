@@ -1,5 +1,7 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleFileLockException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,71 +11,90 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class FileLockUtil {
 
+    /**
+     * Java file locks are maintained on a per JVM basis. So we need to manage them.
+     */
     private static final ConcurrentHashMap<File, FileLockReference> FILE_LOCKS = new ConcurrentHashMap<>();
+    private static final boolean USE_LOCKING = !OS.isWindows();
+    private static final AtomicBoolean LOCK_WARNING_PRINTED = new AtomicBoolean();
 
     private FileLockUtil() { }
 
     public static void acquireSharedFileLock(@NotNull final File canonicalFile, @NotNull final FileChannel channel) {
-        FILE_LOCKS.compute(canonicalFile, (f, flr) ->
-                {
-                    try {
-                        if (flr == null)
-                            return new FileLockReference(channel.lock(0, Long.MAX_VALUE, true));
-                        else {
-                            if (!flr.fileLock.isShared()) {
-                                throw newUnableToAcquireSharedFileLockException(canonicalFile, null);
+        if (USE_LOCKING)
+            FILE_LOCKS.compute(canonicalFile, (f, flr) ->
+                    {
+                        try {
+                            if (flr == null)
+                                return new FileLockReference(channel.lock(0, Long.MAX_VALUE, true));
+                            else {
+                                if (!flr.fileLock.isShared()) {
+                                    throw newUnableToAcquireSharedFileLockException(canonicalFile, null);
+                                }
+                                flr.reserve();
+                                return flr; // keep the old one
                             }
-                            flr.reserve();
-                            return flr; // keep the old one
+                        } catch (IOException e) {
+                            throw newUnableToAcquireSharedFileLockException(canonicalFile, e);
                         }
-                    } catch (IOException e) {
-                        throw newUnableToAcquireSharedFileLockException(canonicalFile, e);
                     }
-                }
-        );
+            );
+        else
+            printWarningTheFirstTime();
+
     }
 
     public static void acquireExclusiveFileLock(@NotNull final File canonicalFile, @NotNull final FileChannel channel) {
-        FILE_LOCKS.compute(canonicalFile, (f, flr) ->
-                {
-                    if (flr == null) {
-                        try {
-                            final FileLock fileLock = channel.lock(0, Long.MAX_VALUE, false);
-                            return new FileLockReference(fileLock);
-                        } catch (IOException e) {
-                            throw newUnableToAcquireExclusiveFileLockException(canonicalFile, e);
+        if (USE_LOCKING)
+            FILE_LOCKS.compute(canonicalFile, (f, flr) ->
+                    {
+                        if (flr == null) {
+                            try {
+                                final FileLock fileLock = channel.lock(0, Long.MAX_VALUE, false);
+                                return new FileLockReference(fileLock);
+                            } catch (IOException e) {
+                                throw newUnableToAcquireExclusiveFileLockException(canonicalFile, e);
+                            }
+                        } else {
+                            throw newUnableToAcquireExclusiveFileLockException(canonicalFile, null);
                         }
-                    } else {
-                        throw newUnableToAcquireExclusiveFileLockException(canonicalFile, null);
-                    }
 
-                }
-        );
+                    }
+            );
+        else
+            printWarningTheFirstTime();
     }
 
     public static void releaseFileLock(@NotNull final File canonicalFile) {
-        FILE_LOCKS.compute(canonicalFile, (f, flr) ->
-                {
-                    if (flr == null)
-                        throw new ChronicleFileLockException("Trying to release lock on file " + canonicalFile + " that did not exist");
-                    else {
-                        final int cnt = flr.release();
-                        if (cnt == 0)
-                            return null; // Remove the old one
-                        else
-                            return flr;
+        if (USE_LOCKING)
+            FILE_LOCKS.compute(canonicalFile, (f, flr) ->
+                    {
+                        if (flr == null)
+                            throw new ChronicleFileLockException("Trying to release lock on file " + canonicalFile + " that did not exist");
+                        else {
+                            final int cnt = flr.release();
+                            if (cnt == 0)
+                                return null; // Remove the old one
+                            else
+                                return flr;
+                        }
                     }
-                }
 
-        );
+            );
+        else
+            printWarningTheFirstTime();
     }
 
     public static void runExclusively(@NotNull final File canonicalFile,
                                       @NotNull final FileChannel fileChannel,
                                       @NotNull final Runnable fileIOAction) {
+
+        // This method runs regardless of the USE_LOCKING flag since it is only used
+        // for initial map creation. This works on all platforms
 
         // Atomically acquire a FileLockReference
         final FileLockReference fileLockRef = FILE_LOCKS.compute(canonicalFile, (f, flr) ->
@@ -153,6 +174,13 @@ public final class FileLockUtil {
     private static ChronicleFileLockException newUnableToAcquireExclusiveFileLockException(@NotNull final File canonicalFile, @Nullable final Exception e) {
         return new ChronicleFileLockException("Unable to acquire an exclusive file lock for " + canonicalFile + ". " +
                 "Make sure no other process is using the map.", e);
+    }
+
+    private static void printWarningTheFirstTime() {
+        if (LOCK_WARNING_PRINTED.compareAndSet(false, true)) {
+            Jvm.warn().on(FileLockUtil.class, "File locking is not supported on this platform (" + System.getProperty("os.name") + "). " +
+                    "Make sure you are not running ChronicleMapBuilder::*recover* methods when other processes or threads have the mapped file open!");
+        }
     }
 
 }

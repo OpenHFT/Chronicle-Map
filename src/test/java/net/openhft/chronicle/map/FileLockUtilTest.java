@@ -1,8 +1,10 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleFileLockException;
 import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -23,6 +25,9 @@ public class FileLockUtilTest {
 
     @Before
     public void setUp() throws IOException {
+        // Do not run these test on Windows
+        Assume.assumeFalse(OS.isWindows());
+
         canonicalFile = new File("file.lock").getCanonicalFile();
         canonicalFile.delete();
         canonicalFile.createNewFile();
