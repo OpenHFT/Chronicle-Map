@@ -51,6 +51,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +66,7 @@ import static net.openhft.chronicle.core.OS.pageAlign;
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
+
 
 public abstract class VanillaChronicleHash<K,
                                            C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
@@ -152,6 +154,12 @@ public abstract class VanillaChronicleHash<K,
     private transient ChronicleHashResources resources;
     private transient Cleaner cleaner;
     private transient VanillaGlobalMutableState globalMutableState;
+
+    /**
+     * The fileLock is used to prevent recover actions
+     * from accessing the mapped file concurrently.
+     */
+    @Nullable private transient FileLock fileLock;
 
     public VanillaChronicleHash(@NotNull final ChronicleMapBuilder<K, ?> builder) {
         // Version
@@ -401,7 +409,6 @@ public abstract class VanillaChronicleHash<K,
         identity = new Identity();
     }
 
-    // 999
     public final void initBeforeMapping(@NotNull final File file,
                                         @NotNull final RandomAccessFile raf,
                                         final long headerEnd,
@@ -412,9 +419,8 @@ public abstract class VanillaChronicleHash<K,
         if (!createdOrInMemory) {
             // This block is for reading segmentHeadersOffset before main mapping
             // After the mapping globalMutableState value's bytes are reassigned
-            ByteBuffer globalMutableStateBuffer =
-                    ByteBuffer.allocate((int) globalMutableState.maxSize());
-            FileChannel fileChannel = raf.getChannel();
+            final ByteBuffer globalMutableStateBuffer = ByteBuffer.allocate((int) globalMutableState.maxSize());
+            final FileChannel fileChannel = raf.getChannel();
             while (globalMutableStateBuffer.remaining() > 0) {
                 if (fileChannel.read(globalMutableStateBuffer,
                         this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET +
@@ -424,9 +430,9 @@ public abstract class VanillaChronicleHash<K,
             }
             globalMutableStateBuffer.flip();
             //noinspection unchecked
-            globalMutableState.bytesStore(BytesStore.wrap(globalMutableStateBuffer), 0,
-                    globalMutableState.maxSize());
+            globalMutableState.bytesStore(BytesStore.wrap(globalMutableStateBuffer), 0, globalMutableState.maxSize());
         }
+
     }
 
     public final void createInMemoryStoreAndSegments(@NotNull final ChronicleHashResources resources) {
@@ -1109,4 +1115,53 @@ public abstract class VanillaChronicleHash<K,
             return VanillaChronicleHash.this;
         }
     }
+
+    /*
+    protected void acquireSharedFileLock() {
+        assertFileLockEmpty();
+        System.out.println("SHARED "+file());
+
+        try {
+            fileLock = raf.getChannel().tryLock(0, Long.MAX_VALUE, true);
+            System.out.println("fileLock.isShared = " + fileLock.isShared());
+        } catch (Exception e) {
+            throw new ChronicleFileLockException("Unable to acquire a shared file lock for " + file() + ". " +
+                    "Make sure another process is not recovering the map.", e);
+        }
+    }
+
+    protected void acquireExclusiveFileLock() {
+        assertFileLockEmpty();
+        System.out.println("EXCLUSIVE "+file());
+        try {
+            fileLock = raf.getChannel().tryLock(0, Long.MAX_VALUE, false);
+            System.out.println("fileLock.isShared = " + fileLock.isShared());
+        } catch (Exception e) {
+            throw new ChronicleFileLockException("Unable to acquire an exclusive file lock for " + file() + ". " +
+                    "Make sure no other process is using the map.", e);
+        }
+    }
+
+    protected void releaseFileLock() {
+        System.out.println("RELEASE "+file());
+        try {
+            requireFileLockPresent().release();
+        } catch (IOException e) {
+            throw new ChronicleFileLockException("Unable to release the file lock for " + file(), e);
+        }
+    }
+
+    private void assertFileLockEmpty() {
+        if (fileLock != null)
+            throw new ChronicleFileLockException("A file lock instance already exists for the file " + file());
+    }
+
+    private FileLock requireFileLockPresent() {
+        if (fileLock == null)
+            throw new ChronicleFileLockException("No file lock instance exists for the file " + file());
+        return fileLock;
+    }
+
+     */
+
 }

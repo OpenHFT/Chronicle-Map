@@ -62,6 +62,8 @@ public final class CanonicalRandomAccessFiles {
         });
     }
 
+    // This class is not thread-safe but instances
+    // are protected by means of the CANONICAL_RAFS map
     private static final class RafReference {
         private final RandomAccessFile raf;
         private int refCount;

@@ -1773,13 +1773,15 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private VanillaChronicleMap<K, V, ?> createWithNewFile(@NotNull final VanillaChronicleMap<K, V, ?> map,
-                                                           @NotNull final File file,
+                                                           @NotNull final File canonicalFile,
                                                            @NotNull final RandomAccessFile raf,
                                                            @NotNull final ChronicleHashResources resources,
                                                            @NotNull final ByteBuffer headerBuffer,
                                                            final int headerSize) throws IOException {
-        map.initBeforeMapping(file, raf, headerBuffer.limit(), false);
+        map.initBeforeMapping(canonicalFile, raf, headerBuffer.limit(), false);
         map.createMappedStoreAndSegments(resources);
+        FileLockUtil.acquireSharedFileLock(canonicalFile, raf.getChannel());
+        map.addCloseable(() -> FileLockUtil.releaseFileLock(canonicalFile));
         commitChronicleMapReady(map, raf, headerBuffer, headerSize);
         return map;
     }
@@ -1817,6 +1819,7 @@ public final class ChronicleMapBuilder<K, V> implements
             final Wire wire = new TextWire(headerBytes);
             final VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
+
             final long dataStoreSize = map.globalMutableState().getDataStoreSize();
             if (!recover && dataStoreSize > file.length()) {
                 throw new IOException("The file " + file + " the map is serialized from " +
@@ -1826,12 +1829,22 @@ public final class ChronicleMapBuilder<K, V> implements
             map.initTransientsFromBuilder(this);
             if (!recover) {
                 map.createMappedStoreAndSegments(resources);
+                FileLockUtil.acquireSharedFileLock(file, raf.getChannel());
             } else {
                 if (!headerWritten)
                     writeNotComplete(fileChannel, headerBuffer, headerSize);
-                map.recover(resources, corruptionListener, corruption);
+                try {
+                    FileLockUtil.acquireExclusiveFileLock(file, raf.getChannel());
+                    map.recover(resources, corruptionListener, corruption);
+                } finally {
+                    FileLockUtil.releaseFileLock(file);
+                }
+                // We are ready with exclusive access.
+                // Demote the lock from exclusive to shared
+                FileLockUtil.acquireSharedFileLock(file, fileChannel);
                 commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
+            map.addCloseable(() -> FileLockUtil.releaseFileLock(file));
             return map;
         } catch (Throwable t) {
             if (recover && !(t instanceof IOException) &&
@@ -1894,7 +1907,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private <E> double preMapConstruction(@NotNull final SerializationBuilder<E> builder,
                                           final double configuredAverageSize,
-                                          @NotNull final E average,
+                                          @Nullable final E average,
                                           @Nullable final E sample,
                                           @NotNull final String dim) {
         if (sample != null) {
