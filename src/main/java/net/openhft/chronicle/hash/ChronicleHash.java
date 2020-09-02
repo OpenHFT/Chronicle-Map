@@ -23,6 +23,7 @@ import net.openhft.chronicle.map.MapMethods;
 import net.openhft.chronicle.map.MapQueryContext;
 import net.openhft.chronicle.set.ChronicleSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -43,6 +44,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * @return the file this {@link ChronicleMap} or {@link ChronicleSet} is mapped to, or {@code null} if it is not mapped to any file
      * @see ChronicleHashBuilder#createPersistedTo(File)
      */
+    @Nullable
     File file();
 
     /**
@@ -50,6 +52,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      *
      * @return the name of this this {@link ChronicleMap} or {@link ChronicleSet}
      */
+    @Nullable
     String name();
 
     /**
@@ -67,6 +70,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      *
      * @return a {@code String}, useful for identifying this {@code ChronicleHash} in debugging, logging, and error reporting
      */
+    @NotNull
     String toIdentityString();
 
     /**
