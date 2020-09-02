@@ -56,6 +56,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.lang.Double.isNaN;
 import static java.lang.Math.round;
@@ -1662,26 +1664,25 @@ public final class ChronicleMapBuilder<K, V> implements
                 result = openWithExistingFile(canonicalFile, raf, resources, recover, overrideBuilderConfig, corruptionListener);
             } else {
 
-                // Single-element arrays allow to modify variables within lambda
-                @SuppressWarnings("unchecked")
-                VanillaChronicleMap<K, V, ?>[] map = new VanillaChronicleMap[1];
-                ByteBuffer[] headerBuffer = new ByteBuffer[1];
-                boolean[] newFile = new boolean[1];
-                FileChannel fileChannel = raf.getChannel();
+                // Atomic* allows lambda modification
+                final AtomicReference<VanillaChronicleMap<K, V, ?>> map = new AtomicReference<>();
+                final AtomicReference<ByteBuffer> headerBuffer = new AtomicReference<>();
+                final AtomicBoolean newFile = new AtomicBoolean();
+                final FileChannel fileChannel = raf.getChannel();
 
                 fileLockedIO(canonicalFile, fileChannel, () -> {
                     if (raf.length() == 0) {
-                        map[0] = newMap();
-                        headerBuffer[0] = writeHeader(fileChannel, map[0]);
-                        newFile[0] = true;
+                        map.set(newMap());
+                        headerBuffer.set(writeHeader(fileChannel, map.get()));
+                        newFile.set(true);
                     } else {
-                        newFile[0] = false;
+                        newFile.set(false);
                     }
                 });
 
-                if (newFile[0]) {
-                    int headerSize = headerBuffer[0].remaining();
-                    result = createWithNewFile(map[0], canonicalFile, raf, resources, headerBuffer[0], headerSize);
+                if (newFile.get()) {
+                    final int headerSize = headerBuffer.get().remaining();
+                    result = createWithNewFile(map.get(), canonicalFile, raf, resources, headerBuffer.get(), headerSize);
                 } else {
                     result = openWithExistingFile(canonicalFile, raf, resources, recover, overrideBuilderConfig, corruptionListener);
                 }
