@@ -550,6 +550,15 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * a newer version of the Chronicle Map library.</b> In this case, {@link
      * #createOrRecoverPersistedTo(File, boolean) createOrRecoverPersistedTo(file, false)} should
      * be used.
+     * <p>
+     * <em>WARNING:</em> Make sure this instance is the only one that accesses the
+     * provided {@code file} during recovery across all JVMs/threads/processes or else
+     * the behavior is unspecified including the possibility that the Map file gets
+     * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
+     *
+     * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
+     * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
+     * the user is responsible for ensuring absolute exclusivity.
      *
      * @param file the persistence file for existing of future hash container
      * @return a {@code ChronicleHash} instance, mapped to the given instance
@@ -576,6 +585,15 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>The difference between this method and {@link #createOrRecoverPersistedTo(File, boolean,
      * ChronicleHashCorruption.Listener)} is that this method just logs the encountered corruptions,
      * instead of passing them to the specified corruption listener.
+     * <p>
+     * <em>WARNING:</em> Make sure this instance is the only one that accesses the
+     * provided {@code file} during recovery across all JVMs/threads/processes or else
+     * the behavior is unspecified including the possibility that the Map file gets
+     * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
+     *
+     * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
+     * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
+     * the user is responsible for ensuring absolute exclusivity.
      *
      * @param file               the persistence file for existing of future hash container
      * @param sameLibraryVersion if this builder is configured with the same configurations, as the
@@ -607,6 +625,15 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>If this procedure encounters corruptions, it fixes them (<i>recovers</i> from them) and
      * notifies the provided corruption listener with the details about the corruption. See the
      * documentation for {@link ChronicleHashCorruption} for more information.
+     * <p>
+     * <em>WARNING:</em> Make sure this instance is the only one that accesses the
+     * provided {@code file} during recovery across all JVMs/threads/processes or else
+     * the behavior is unspecified including the possibility that the Map file gets
+     * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
+     *
+     * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
+     * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
+     * the user is responsible for ensuring absolute exclusivity.
      *
      * @param file               the persistence file for existing of future hash container
      * @param sameLibraryVersion if this builder is configured with the same configurations, as the
@@ -669,6 +696,16 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * throw {@link ChronicleHashRecoveryFailedException}, or even worse, to corrupt the file
      * further. Fortunately, the header should never be corrupted on an "ordinary" process
      * crash/termination or power loss, only on direct file corruption.
+     * <p>
+     * <em>WARNING:</em> Make sure this instance is the only one that accesses the
+     * provided {@code file} during recovery across all JVMs/threads/processes or else
+     * the behavior is unspecified including the possibility that the Map file gets
+     * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
+     *
+     * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
+     * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
+     * the user is responsible for ensuring absolute exclusivity.
+     * </p>
      *
      * @param file                               a hash container was mapped to the given file
      * @param sameBuilderConfigAndLibraryVersion if this builder is configured with the same
@@ -721,7 +758,16 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * the {@code recoverPersistedTo()} call, as well as the behaviour of the concurrent thread or
      * process, accessing the same Chronicle Map, are unspecified: exception or error could be
      * thrown, the Chronicle Map persisted to the given file could be further corrupted.
+     * <p>
+     * <em>WARNING:</em> Make sure this instance is the only one that accesses the
+     * provided {@code file} during recovery across all JVMs/threads/processes or else
+     * the behavior is unspecified including the possibility that the Map file gets
+     * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
      *
+     * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
+     * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
+     * the user is responsible for ensuring absolute exclusivity.
+     * </p>
      * @param file                               a hash container was mapped to the given file
      * @param sameBuilderConfigAndLibraryVersion if this builder is configured with the same
      *                                           configurations, as the builder, which created the file (the persisted Chronicle Hash
