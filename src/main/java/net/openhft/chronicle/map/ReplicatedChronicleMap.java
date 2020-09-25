@@ -194,7 +194,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     @Override
-    void initTransientsFromBuilder(ChronicleMapBuilder<K, V> builder) {
+    void initTransientsFromBuilder(@NotNull ChronicleMapBuilder<K, V> builder) {
         super.initTransientsFromBuilder(builder);
         this.localIdentifier = builder.replicationIdentifier;
         //noinspection unchecked

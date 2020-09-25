@@ -86,10 +86,11 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
  return m.putIfAbsent(e, DUMMY_VALUE) == null;
     }
 
+    @NotNull
     public Iterator<E> iterator() {
         throwExceptionIfClosed();
 
- return s.iterator();
+        return s.iterator();
     }
 
     public Object[] toArray() {
@@ -106,11 +107,12 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
         return s.toString();
     }
 
+    @NotNull
     @Override
     public String toIdentityString() {
         throwExceptionIfClosed();
 
- return "ChronicleSet{" +
+        return "ChronicleSet{" +
                 "name=" + name() +
                 ", file=" + file() +
                 ", identityHashCode=" + System.identityHashCode(this) +
@@ -129,22 +131,22 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
  return o == this || s.equals(o);
     }
 
-    public boolean containsAll(Collection<?> c) {
+    public boolean containsAll(@NotNull Collection<?> c) {
         throwExceptionIfClosed();
 
- return s.containsAll(c);
+        return s.containsAll(c);
     }
 
-    public boolean removeAll(Collection<?> c) {
+    public boolean removeAll(@NotNull Collection<?> c) {
         throwExceptionIfClosed();
 
- return s.removeAll(c);
+        return s.removeAll(c);
     }
 
-    public boolean retainAll(Collection<?> c) {
+    public boolean retainAll(@NotNull Collection<?> c) {
         throwExceptionIfClosed();
 
- return s.retainAll(c);
+        return s.retainAll(c);
     }
     // addAll is the only inherited implementation
 

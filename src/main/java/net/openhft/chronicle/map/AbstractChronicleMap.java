@@ -90,6 +90,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
     default Collection<V> values() {
         // todo cache view object
         return new AbstractCollection<V>() {
+            @NotNull
             @Override
             public Iterator<V> iterator() {
                 return new Iterator<V>() {
@@ -144,6 +145,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
     default Set<K> keySet() {
         // todo cache view object
         return new AbstractSet<K>() {
+            @NotNull
             @Override
             public Iterator<K> iterator() {
                 return new ChronicleMapIterator.OfKeys<>(AbstractChronicleMap.this);

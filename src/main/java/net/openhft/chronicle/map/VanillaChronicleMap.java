@@ -22,14 +22,12 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.hash.Beta;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.chronicle.hash.impl.util.Throwables;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -347,6 +345,7 @@ public class VanillaChronicleMap<K, V, R>
         return name;
     }
 
+    @NotNull
     @Override
     public String toIdentityString() {
         throwExceptionIfClosed();

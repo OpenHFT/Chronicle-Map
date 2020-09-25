@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.map;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.nio.channels.SelectionKey;
 import java.util.AbstractSet;
 import java.util.Iterator;
@@ -103,6 +105,7 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
         return false;
     }
 
+    @NotNull
     @Override
     public Iterator<SelectionKey> iterator() {
         throw new UnsupportedOperationException();

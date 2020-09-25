@@ -61,6 +61,7 @@ public final class LongMarshaller
         out.writeLong(toWrite);
     }
 
+    @NotNull
     @Override
     public LongMarshaller readResolve() {
         return INSTANCE;

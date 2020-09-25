@@ -145,6 +145,7 @@ public class Issue58 {
             return new UUID(bytes.readLong(), bytes.readLong());
         }
 
+        @NotNull
         @Override
         public UuidMarshaller readResolve() {
             return INSTANCE;

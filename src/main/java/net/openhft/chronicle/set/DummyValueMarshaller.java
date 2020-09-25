@@ -52,6 +52,7 @@ final class DummyValueMarshaller implements DataAccess<DummyValue>, SizedReader<
         return DummyValue.DUMMY_VALUE;
     }
 
+    @NotNull
     @Override
     public DummyValueMarshaller readResolve() {
         return INSTANCE;

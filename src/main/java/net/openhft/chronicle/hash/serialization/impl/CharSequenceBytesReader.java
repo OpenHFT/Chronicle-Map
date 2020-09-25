@@ -60,6 +60,7 @@ public final class CharSequenceBytesReader implements BytesReader<CharSequence>,
         return INSTANCE;
     }
 
+    @NotNull
     @Override
     public CharSequenceBytesReader readResolve() {
         return INSTANCE;

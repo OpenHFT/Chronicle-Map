@@ -101,6 +101,7 @@ public class PointListSerializationTest {
             return using;
         }
 
+        @NotNull
         @Override
         public AMarshaller readResolve() {
             return INSTANCE;

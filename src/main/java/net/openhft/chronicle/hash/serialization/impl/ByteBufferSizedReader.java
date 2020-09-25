@@ -48,6 +48,7 @@ public final class ByteBufferSizedReader
         return using;
     }
 
+    @NotNull
     @Override
     public ByteBufferSizedReader readResolve() {
         return INSTANCE;

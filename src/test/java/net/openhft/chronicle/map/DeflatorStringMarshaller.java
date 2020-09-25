@@ -118,6 +118,7 @@ public final class DeflatorStringMarshaller implements BytesReader<CharSequence>
         }
     }
 
+    @NotNull
     @Override
     public DeflatorStringMarshaller readResolve() {
         return INSTANCE;

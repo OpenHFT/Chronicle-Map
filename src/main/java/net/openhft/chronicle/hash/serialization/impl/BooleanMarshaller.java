@@ -59,6 +59,7 @@ public final class BooleanMarshaller
         out.writeByte((byte) (toWrite ? 'Y' : 0));
     }
 
+    @NotNull
     @Override
     public BooleanMarshaller readResolve() {
         return INSTANCE;

@@ -73,6 +73,7 @@ public class CharSequenceSizedReader implements SizedReader<CharSequence>,
         // no fields to write
     }
 
+    @NotNull
     @Override
     public CharSequenceSizedReader readResolve() {
         return INSTANCE;

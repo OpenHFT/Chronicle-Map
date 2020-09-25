@@ -99,6 +99,7 @@ public final class PointListSizedMarshaller
         // no fields to read
     }
 
+    @NotNull
     @Override
     public PointListSizedMarshaller readResolve() {
         return INSTANCE;

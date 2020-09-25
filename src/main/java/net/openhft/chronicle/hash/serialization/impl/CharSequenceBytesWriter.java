@@ -44,6 +44,7 @@ public final class CharSequenceBytesWriter
         out.writeUtf8(toWrite);
     }
 
+    @NotNull
     @Override
     public CharSequenceBytesWriter readResolve() {
         return INSTANCE;

@@ -61,6 +61,7 @@ public final class DoubleMarshaller
         out.writeDouble(toWrite);
     }
 
+    @NotNull
     @Override
     public DoubleMarshaller readResolve() {
         return INSTANCE;

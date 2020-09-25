@@ -76,6 +76,7 @@ public class Issue43Test {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 
+        @NotNull
         @Override
         public ArrayMarshaller readResolve() {
             return INSTANCE;

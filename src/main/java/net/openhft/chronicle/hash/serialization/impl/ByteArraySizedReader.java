@@ -44,6 +44,7 @@ public final class ByteArraySizedReader
         return using;
     }
 
+    @NotNull
     @Override
     public ByteArraySizedReader readResolve() {
         return INSTANCE;

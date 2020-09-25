@@ -45,6 +45,7 @@ public final class StringBuilderSizedReader
         return using;
     }
 
+    @NotNull
     @Override
     public StringBuilderSizedReader readResolve() {
         return INSTANCE;

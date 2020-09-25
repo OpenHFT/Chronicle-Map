@@ -46,6 +46,7 @@ public final class CharSequenceSizedWriter
         BytesUtil.appendUtf8(out, toWrite);
     }
 
+    @NotNull
     @Override
     public CharSequenceSizedWriter readResolve() {
         return INSTANCE;

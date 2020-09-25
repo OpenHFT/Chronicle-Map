@@ -81,6 +81,7 @@ public final class CharSequenceArrayBytesMarshaller
         // no fields to read
     }
 
+    @NotNull
     @Override
     public CharSequenceArrayBytesMarshaller readResolve() {
         return INSTANCE;

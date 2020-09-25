@@ -18,6 +18,7 @@ package net.openhft.chronicle.map.jsr166;
 
 import junit.framework.AssertionFailedError;
 import net.openhft.chronicle.core.Jvm;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -891,7 +892,7 @@ public class JSR166TestCase {
      * For use as ThreadFactory in constructors
      */
     public static class SimpleThreadFactory implements ThreadFactory {
-        public Thread newThread(Runnable r) {
+        public Thread newThread(@NotNull Runnable r) {
             return new Thread(r);
         }
     }

@@ -46,22 +46,22 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public V putIfAbsent(K key, V value) {
+    public V putIfAbsent(@NotNull K key, V value) {
         return map1.putIfAbsent(key, value);
     }
 
     @Override
-    public boolean remove(Object key, Object value) {
+    public boolean remove(@NotNull Object key, Object value) {
         return map1.remove(key, value);
     }
 
     @Override
-    public boolean replace(K key, V oldValue, V newValue) {
+    public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
         return map1.replace(key, oldValue, newValue);
     }
 
     @Override
-    public V replace(final K key, final V value) {
+    public V replace(@NotNull final K key, @NotNull final V value) {
         return check(new Call<K, V>() {
                          @Override
                          public Object method(ConcurrentMap<K, V> map) {
@@ -164,7 +164,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     }
 
     @Override
-    public void putAll(Map<? extends K, ? extends V> m) {
+    public void putAll(@NotNull Map<? extends K, ? extends V> m) {
         map1.putAll(m);
     }
 
@@ -320,6 +320,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
         throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
     public String toIdentityString() {
         throw new UnsupportedOperationException();

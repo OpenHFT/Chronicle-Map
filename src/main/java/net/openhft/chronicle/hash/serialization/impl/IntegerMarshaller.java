@@ -61,6 +61,7 @@ public final class IntegerMarshaller
         out.writeInt(toWrite);
     }
 
+    @NotNull
     @Override
     public IntegerMarshaller readResolve() {
         return INSTANCE;

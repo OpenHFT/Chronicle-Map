@@ -56,6 +56,7 @@ public interface HashSplitting extends Marshallable {
             return hash;
         }
 
+        @NotNull
         @Override
         public ForSingleSegment readResolve() {
             return INSTANCE;
