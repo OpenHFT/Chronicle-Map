@@ -25,7 +25,7 @@ public class DirtyReadIntolerant_ReaderReader_Test {
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            OS.TARGET + "/shm-OPERAND_CHRONICLE_MAP"
+                            OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
@@ -38,7 +38,7 @@ public class DirtyReadIntolerant_ReaderReader_Test {
             );
             ChronicleStampedLock offHeapLock =
                     new ChronicleStampedLock(
-                            OS.TARGET + "/shm-"
+                            OS.getTarget() + "/shm-"
                                     + "OPERAND_ChronicleStampedLock"
                     );
             System.out.println(

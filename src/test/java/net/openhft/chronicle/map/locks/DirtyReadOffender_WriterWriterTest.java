@@ -30,7 +30,7 @@ public class DirtyReadOffender_WriterWriterTest {
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            OS.TARGET + "/shm-" +
+                            OS.getTarget() + "/shm-" +
                                     "OPERAND_CHRONICLE_MAP"
                     );
             System.out.println(
@@ -39,7 +39,7 @@ public class DirtyReadOffender_WriterWriterTest {
                             " DirtyReadOffender established chm "
             );
             ChronicleStampedLock offHeapLock = new ChronicleStampedLock(
-                    OS.TARGET + "/shm-"
+                    OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
             Assert.assertNotEquals(offHeapLock, null);

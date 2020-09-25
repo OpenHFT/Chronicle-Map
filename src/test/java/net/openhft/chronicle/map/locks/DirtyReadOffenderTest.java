@@ -17,7 +17,7 @@ class DirtyReadOffenderTest implements Runnable {
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            OS.TARGET + "/shm-"
+                            OS.getTarget() + "/shm-"
                                     + "OPERAND_CHRONICLE_MAP"
                     );
             System.out.println(
@@ -25,7 +25,7 @@ class DirtyReadOffenderTest implements Runnable {
                             " DirtyReadOffender established chm "
             );
             StampedLock offHeapLock = new ChronicleStampedLock(
-                    OS.TARGET + "/shm-"
+                    OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
