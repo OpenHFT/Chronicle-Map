@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.io.AbstractReferenceCounted;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.Data;
@@ -417,7 +418,9 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     ChainingInterface newQueryContext() {
-        return new CompiledMapQueryContext<>(this);
+        CompiledMapQueryContext<Object, Object, Object> context = new CompiledMapQueryContext<>(this);
+        AbstractReferenceCounted.unmonitor(context.segmentBytes);
+        return context;
     }
 
     public QueryContextInterface<K, V, R> mapContext() {
