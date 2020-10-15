@@ -18,8 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BytesMarshallableReaderWriter<V extends BytesMarshallable>
-        extends InstanceCreatingMarshaller<V>
-        implements SizedReader<V>, SizedWriter<V> {
+        extends CachingCreatingMarshaller<V> {
     public BytesMarshallableReaderWriter(Class<V> vClass) {
         super(vClass);
     }
@@ -39,17 +38,7 @@ public class BytesMarshallableReaderWriter<V extends BytesMarshallable>
     }
 
     @Override
-    public long size(@NotNull V toWrite) {
-        Bytes<?> bytes = Wires.acquireBytes();
-        toWrite.writeMarshallable(bytes);
-        return bytes.readRemaining();
-    }
-
-    @Override
-    public void write(Bytes out, long size, @NotNull V toWrite) {
-        VanillaBytes vanillaBytes = VANILLA_BYTES_TL.get();
-        vanillaBytes.bytesStore(out, out.readPosition(), out.readRemaining());
-        vanillaBytes.writeLimit(out.writePosition() + size);
-        toWrite.writeMarshallable(vanillaBytes);
+    protected void writeToWire(Wire wire, @NotNull V toWrite) {
+        toWrite.writeMarshallable(wire.bytes());
     }
 }

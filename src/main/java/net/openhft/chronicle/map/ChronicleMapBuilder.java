@@ -35,6 +35,7 @@ import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWriter;
 import net.openhft.chronicle.hash.serialization.impl.MarshallableReaderWriter;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
+import net.openhft.chronicle.hash.serialization.impl.TypedMarshallableReaderWriter;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.values.ValueModel;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -136,7 +138,7 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  */
 public final class ChronicleMapBuilder<K, V> implements
         ChronicleHashBuilder<K, ChronicleMap<K, V>,
-        ChronicleMapBuilder<K, V>> {
+                ChronicleMapBuilder<K, V>> {
 
     private static final int UNDEFINED_ALIGNMENT_CONFIG = -1;
     private static final int NO_ALIGNMENT = 1;
@@ -265,21 +267,16 @@ public final class ChronicleMapBuilder<K, V> implements
         } else if (Marshallable.class.isAssignableFrom(valueClass)) {
             //noinspection unchecked
             builder.averageValueSize(1024)
-                    .valueMarshaller(new MarshallableReaderWriter<>((Class) valueClass));
+                    .valueMarshaller(
+                            valueClass.isMemberClass() && Modifier.isFinal(valueClass.getModifiers())
+                                    ? new MarshallableReaderWriter<>((Class) valueClass)
+                                    : new TypedMarshallableReaderWriter<>((Class) valueClass));
         }
         return builder;
     }
 
     private static String toCamelCase(@NotNull final String name) {
         return Character.toLowerCase(name.charAt(0)) + name.substring(1);
-    }
-
-    private boolean isKeySizeKnown() {
-        return keyBuilder.sizeIsStaticallyKnown;
-    }
-
-    private boolean isValueSizeKnown() {
-        return valueBuilder.sizeIsStaticallyKnown;
     }
 
     private static void checkSegments(final long segments) {
@@ -359,7 +356,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private static void writeNotComplete(@NotNull final FileChannel fileChannel,
-                                         @NotNull final  ByteBuffer headerBuffer,
+                                         @NotNull final ByteBuffer headerBuffer,
                                          final int headerSize) throws IOException {
         //noinspection PointlessBitwiseExpression
         headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
@@ -462,11 +459,63 @@ public final class ChronicleMapBuilder<K, V> implements
         return storedChecksum == checkSum;
     }
 
+    private static boolean isDefined(final double config) {
+        return !isNaN(config);
+    }
+
+    private static long toLong(final double v) {
+        long l = round(v);
+        if (l != v)
+            throw new IllegalArgumentException("Integer argument expected, given " + v);
+        return l;
+    }
+
+    private static long roundUp(final double v) {
+        return round(Math.ceil(v));
+    }
+
+    private static long roundDown(final double v) {
+        return (long) v;
+    }
+
+    /**
+     * When Chronicle Maps are created using {@link #createPersistedTo(File)} or
+     * {@link #recoverPersistedTo(File, boolean)} or {@link
+     * #createOrRecoverPersistedTo(File, boolean)} methods, file lock on the Chronicle Map's file is
+     * acquired, that shouldn't be done from concurrent threads within the same JVM process. So
+     * creation of Chronicle Maps persisted to the same File should be synchronized across JVM's
+     * threads. Simple way would be to synchronize on some static (lock) object, but would serialize
+     * all Chronicle Maps creations (persisted to any files), ConcurrentHashMap#compute() gives more
+     * scalability. ConcurrentHashMap is used effectively for lock striping only, because the
+     * entries are not even landing the map, because compute() always returns null.
+     */
+    private static void fileLockedIO(@NotNull final File file,
+                                     @NotNull final FileChannel fileChannel,
+                                     @NotNull final FileIOAction fileIOAction) {
+        FILE_LOCKING_CONTROL.compute(file, (k, v) -> {
+            try {
+                try (FileLock ignored = fileChannel.lock()) {
+                    fileIOAction.fileIOAction();
+                }
+                return null;
+            } catch (IOException e) {
+                throw Jvm.rethrow(e);
+            }
+        });
+    }
+
+    private boolean isKeySizeKnown() {
+        return keyBuilder.sizeIsStaticallyKnown;
+    }
+
+    private boolean isValueSizeKnown() {
+        return valueBuilder.sizeIsStaticallyKnown;
+    }
+
     @Override
     public ChronicleMapBuilder<K, V> clone() {
         try {
-            @SuppressWarnings("unchecked")
-            final ChronicleMapBuilder<K, V> result = (ChronicleMapBuilder<K, V>) super.clone();
+            @SuppressWarnings("unchecked") final ChronicleMapBuilder<K, V> result = (ChronicleMapBuilder<K, V>) super.clone();
             result.keyBuilder = keyBuilder.clone();
             result.valueBuilder = valueBuilder.clone();
             result.privateAPI = new ChronicleMapBuilderPrivateAPI<>(result);
@@ -649,7 +698,7 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMapBuilder<K, V> averageValue(@NotNull final V averageValue) {
         final Class<?> valueClass = averageValue.getClass();
         if (BytesMarshallable.class.isAssignableFrom(valueClass) &&
-                valueBuilder.tClass.isInterface()) {
+                (valueBuilder.tClass.isInterface() && valueBuilder.tClass != Marshallable.class)) {
             if (Serializable.class.isAssignableFrom(valueClass))
                 LOG.warn("BytesMarshallable " + valueClass + " will be serialized as Serializable as the value class is an interface");
             else
@@ -1568,7 +1617,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     @Override
-    public ChronicleMap<K, V> recoverPersistedTo(@NotNull final  File file, final boolean sameBuilderConfigAndLibraryVersion) throws IOException {
+    public ChronicleMap<K, V> recoverPersistedTo(@NotNull final File file, final boolean sameBuilderConfigAndLibraryVersion) throws IOException {
         return recoverPersistedTo(file, sameBuilderConfigAndLibraryVersion,
                 DEFAULT_CHRONICLE_MAP_CORRUPTION_LISTENER);
     }
@@ -1576,7 +1625,7 @@ public final class ChronicleMapBuilder<K, V> implements
     @Override
     public ChronicleMap<K, V> recoverPersistedTo(@NotNull final File file,
                                                  final boolean sameBuilderConfigAndLibraryVersion,
-                                                 @Nullable final  ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+                                                 @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
         return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion, corruptionListener);
     }
 
@@ -1791,7 +1840,7 @@ public final class ChronicleMapBuilder<K, V> implements
                                                               @NotNull final ChronicleHashResources resources,
                                                               final boolean recover,
                                                               final boolean overrideBuilderConfig,
-                                                              @Nullable final  ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+                                                              @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
         final ChronicleHashCorruptionImpl corruption = recover ? new ChronicleHashCorruptionImpl() : null;
         try {
             int headerSize = waitUntilReady(raf, file, recover);
@@ -1965,51 +2014,6 @@ public final class ChronicleMapBuilder<K, V> implements
             this.averageEntrySize = averageEntrySize;
             this.worstAlignment = worstAlignment;
         }
-    }
-
-    private static boolean isDefined(final double config) {
-        return !isNaN(config);
-    }
-
-    private static long toLong(final double v) {
-        long l = round(v);
-        if (l != v)
-            throw new IllegalArgumentException("Integer argument expected, given " + v);
-        return l;
-    }
-
-    private static long roundUp(final double v) {
-        return round(Math.ceil(v));
-    }
-
-    private static long roundDown(final double v) {
-        return (long) v;
-    }
-
-    /**
-     * When Chronicle Maps are created using {@link #createPersistedTo(File)} or
-     * {@link #recoverPersistedTo(File, boolean)} or {@link
-     * #createOrRecoverPersistedTo(File, boolean)} methods, file lock on the Chronicle Map's file is
-     * acquired, that shouldn't be done from concurrent threads within the same JVM process. So
-     * creation of Chronicle Maps persisted to the same File should be synchronized across JVM's
-     * threads. Simple way would be to synchronize on some static (lock) object, but would serialize
-     * all Chronicle Maps creations (persisted to any files), ConcurrentHashMap#compute() gives more
-     * scalability. ConcurrentHashMap is used effectively for lock striping only, because the
-     * entries are not even landing the map, because compute() always returns null.
-     */
-    private static void fileLockedIO(@NotNull final File file,
-                                     @NotNull final FileChannel fileChannel,
-                                     @NotNull final FileIOAction fileIOAction) {
-        FILE_LOCKING_CONTROL.compute(file, (k, v) -> {
-            try {
-                try (FileLock ignored = fileChannel.lock()) {
-                    fileIOAction.fileIOAction();
-                }
-                return null;
-            } catch (IOException e) {
-                throw Jvm.rethrow(e);
-            }
-        });
     }
 
 }

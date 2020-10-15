@@ -420,7 +420,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.get(null);
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -432,7 +432,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.containsKey(null);
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -444,7 +444,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.put(null, "whatever");
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -457,7 +457,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.put(notPresent, null);
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -470,7 +470,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.putIfAbsent(null, "whatever");
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -483,7 +483,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.replace(null, "whatever");
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -496,7 +496,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.replace(null, "A", "whatever");
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -508,7 +508,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.putIfAbsent(notPresent, null);
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -520,7 +520,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.replace(notPresent, null);
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -528,12 +528,11 @@ public class ChronicleMapTest extends JSR166TestCase {
      * replace(x, null, y) throws NPE
      */
     @Test(timeout = 5000)
-    public void testReplaceValue2_NullPointerException
-    () throws IOException {
+    public void testReplaceValue2_NullPointerException() throws IOException {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.replace(notPresent, null, "A");
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -545,7 +544,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newShmIntString(8076)) {
             c.replace(notPresent, "A", null);
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -558,7 +557,7 @@ public class ChronicleMapTest extends JSR166TestCase {
             c.put("sadsdf", "asdads");
             c.remove(null);
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -572,7 +571,7 @@ public class ChronicleMapTest extends JSR166TestCase {
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
             shouldThrow();
-        } catch (NullPointerException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -585,6 +584,37 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap c = newStrStrMap(8076)) {
             c.put("sadsdf", "asdads");
             assertFalse(c.remove("sadsdf", null));
+        }
+    }
+
+    @Test
+    public void testPercentageComplete() {
+
+        try (ChronicleMap<Integer, Integer> map = ChronicleMap
+                .of(Integer.class, Integer.class)
+                .entries(1600)
+                .actualSegments(3)
+                .maxBloatFactor(2)
+                .create()) {
+
+            long remainingAutoResizes = 0;
+            short percentageFreeSpace = 0;
+            try {
+                for (int i = 0; ; i++) {
+
+                    map.put(i, 0);
+                    remainingAutoResizes = map.remainingAutoResizes();
+                    percentageFreeSpace = map.percentageFreeSpace();
+
+                }
+            } catch (IllegalStateException e) {
+                if (e.getMessage().contains("Attempt to allocate")) {
+                    Assert.assertEquals(0, (int) remainingAutoResizes);
+                    Assert.assertTrue(percentageFreeSpace < 6);
+                    return;
+                }
+                Assert.fail();
+            }
         }
     }
 
@@ -669,37 +699,6 @@ public class ChronicleMapTest extends JSR166TestCase {
             n++;
             return r;
         }
-    }
-
-    @Test
-    public void testPercentageComplete() {
-
-        try (ChronicleMap<Integer, Integer> map = ChronicleMap
-                .of(Integer.class, Integer.class)
-                .entries(1600)
-                .actualSegments(3)
-                .maxBloatFactor(2)
-                .create()) {
-
-            long remainingAutoResizes = 0;
-            short percentageFreeSpace = 0;
-            try {
-                for (int i = 0; ; i++) {
-
-                    map.put(i, 0);
-                    remainingAutoResizes = map.remainingAutoResizes();
-                    percentageFreeSpace = map.percentageFreeSpace();
-
-                }
-            } catch (IllegalStateException e) {
-                if (e.getMessage().contains("Attempt to allocate")) {
-                    Assert.assertEquals(0, (int) remainingAutoResizes);
-                    Assert.assertTrue(percentageFreeSpace < 6);
-                    return;
-                }
-                Assert.fail();
-            }
- }
     }
 
 }

@@ -1,6 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.wire.BytesInBinaryMarshallable;
+import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import org.junit.Test;
 
@@ -90,6 +91,26 @@ public class SerializableTest {
         Bar2 value = new Bar2(expected);
         map.put(1, value);
         String actual = map.get(1).x;
+
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void test2d() {
+        ChronicleMap<Integer, Marshallable> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Marshallable.class)
+                .name("bar")
+                .averageValueSize(1024)
+                .entries(10)
+                .create();
+
+        String expected = IntStream.range(0, 4096)
+                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
+                .collect(Collectors.joining(""));
+
+        Bar2 value = new Bar2(expected);
+        map.put(1, value);
+        Bar2 bar2 = (Bar2) map.get(1);
+        String actual = bar2.x;
 
         assertEquals(expected, actual);
     }
