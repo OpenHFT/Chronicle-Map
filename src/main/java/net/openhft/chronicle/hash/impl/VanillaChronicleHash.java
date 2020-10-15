@@ -681,7 +681,7 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     public final void close() {
-        if (resources.releaseManually()) {
+        if (resources != null && resources.releaseManually()) {
             cleanupOnClose();
         }
     }
