@@ -22,7 +22,7 @@ import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.bytes.VanillaBytes;
-import net.openhft.chronicle.core.io.ReferenceCounted;
+import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.*;
@@ -43,7 +43,6 @@ import java.util.Objects;
 import static net.openhft.chronicle.algo.MemoryUnit.BITS;
 import static net.openhft.chronicle.algo.MemoryUnit.LONGS;
 import static net.openhft.chronicle.algo.bitset.BitSetFrame.NOT_FOUND;
-import static net.openhft.chronicle.core.io.AbstractReferenceCounted.unmonitor;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.TIER_COUNTERS_AREA_SIZE;
 
@@ -116,7 +115,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     @NotNull
     private static VanillaBytes unmonitoredVanillaBytes(PointerBytesStore segmentBS) {
         VanillaBytes bytes = new VanillaBytes(segmentBS);
-        unmonitor(bytes);
+        IOTools.unmonitor(bytes);
         return bytes;
     }
 
