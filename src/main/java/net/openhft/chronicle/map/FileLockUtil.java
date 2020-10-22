@@ -19,7 +19,7 @@ public final class FileLockUtil {
      * Java file locks are maintained on a per JVM basis. So we need to manage them.
      */
     private static final ConcurrentHashMap<File, FileLockReference> FILE_LOCKS = new ConcurrentHashMap<>();
-    private static final boolean USE_LOCKING = !OS.isWindows();
+    private static final boolean USE_LOCKING = !OS.isWindows() && !Boolean.getBoolean("chronicle.map.disable.locking");
     private static final AtomicBoolean LOCK_WARNING_PRINTED = new AtomicBoolean();
 
     private FileLockUtil() { }
@@ -178,7 +178,7 @@ public final class FileLockUtil {
 
     private static void printWarningTheFirstTime() {
         if (LOCK_WARNING_PRINTED.compareAndSet(false, true)) {
-            Jvm.warn().on(FileLockUtil.class, "File locking is not supported on this platform (" + System.getProperty("os.name") + "). " +
+            Jvm.warn().on(FileLockUtil.class, "File locking is disabled or not supported on this platform (" + System.getProperty("os.name") + "). " +
                     "Make sure you are not running ChronicleMapBuilder::*recover* methods when other processes or threads have the mapped file open!");
         }
     }
