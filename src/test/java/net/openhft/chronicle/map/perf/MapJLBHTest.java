@@ -72,7 +72,7 @@ public class MapJLBHTest implements JLBHTask {
             write = ChronicleMapBuilder.of(Long.class, IFacade.class).constantValueSizeBySample(datum).entries(1_100_000).createOrRecoverPersistedTo(mapFile);
             read = ChronicleMapBuilder.of(Long.class, IFacade.class).constantValueSizeBySample(datum).entries(1_100_000).createOrRecoverPersistedTo(mapFile);
         } catch (IOException ex) {
-            Jvm.rethrow(ex);
+            throw Jvm.rethrow(ex);
         }
     }
 
