@@ -1,6 +1,5 @@
 package net.openhft.chronicle.map.fromdocs.acid.genesis;
 
-
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 

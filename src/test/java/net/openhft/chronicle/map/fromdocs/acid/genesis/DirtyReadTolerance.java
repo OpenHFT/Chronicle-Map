@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.locks.StampedLock;
 
-
 public class DirtyReadTolerance<K,V> {
 
     public static void main(String args[]) throws Exception {

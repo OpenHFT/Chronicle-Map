@@ -17,8 +17,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     private String priorCusip;
     private Double  aCoupon;
 
-
-    public synchronized void put(String cusip, BondVOInterface bond) throws Exception {
+public synchronized void put(String cusip, BondVOInterface bond) throws Exception {
 
         System.out.println(
                 " , @t="+System.currentTimeMillis()+
@@ -39,8 +38,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         );
     }
 
-
-    //here is where the drama happens
+//here is where the drama happens
     public synchronized BondVOInterface get(String cusip) throws Exception {
         System.out.println(
                         " , @t="+System.currentTimeMillis()+
@@ -175,8 +173,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     // intense.  In the real world, even in Captital Markets 'dirty read' intolerance
     // is likely the only isolation level Chronicle would accommodate.
 
-
-    @Override
+@Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
 
     }
@@ -186,8 +183,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         return false;
     }
 
-
-    @Override
+@Override
     public void rollback(Savepoint savepoint) throws SQLException {
 
     }
@@ -197,9 +193,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
 
     }
 
-
-
-    @Override
+@Override
     public Statement createStatement() throws SQLException {
         return null;
     }
@@ -219,8 +213,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         return null;
     }
 
-
-    @Override
+@Override
     public boolean isClosed() throws SQLException {
         return false;
     }
@@ -250,8 +243,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         return null;
     }
 
-
-    @Override
+@Override
     public SQLWarning getWarnings() throws SQLException {
         return null;
     }
@@ -306,8 +298,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         return null;
     }
 
-
-    @Override
+@Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
 
     }
@@ -431,6 +422,5 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return false;
     }
-
 
 }

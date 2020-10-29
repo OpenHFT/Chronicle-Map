@@ -1,6 +1,5 @@
 package net.openhft.chronicle.map.fromdocs.acid;
 
-
 public interface ChronicleAcidIsolation extends java.sql.Connection{
 
     int LOWEST_LATENCY = ChronicleAcidIsolation.TRANSACTION_NONE;

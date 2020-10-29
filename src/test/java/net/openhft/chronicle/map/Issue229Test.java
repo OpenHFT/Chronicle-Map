@@ -49,8 +49,7 @@ public class Issue229Test {
                 .entries(10)
                 .createPersistedTo(mapFile)) {
 
-
-            // It shall not be possible to recover since the
+// It shall not be possible to recover since the
             // file is open by the readMap
             try (ChronicleMap<Long, Long> recoverMap = ChronicleMap
                     .of(Long.class, Long.class)

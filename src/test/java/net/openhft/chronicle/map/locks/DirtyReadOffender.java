@@ -9,7 +9,6 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 
 //import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 
-
 public class DirtyReadOffender {
 
     public static void main(String[] args) {

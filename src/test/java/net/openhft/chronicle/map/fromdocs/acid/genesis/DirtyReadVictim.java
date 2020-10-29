@@ -1,6 +1,5 @@
 package net.openhft.chronicle.map.fromdocs.acid.genesis;
 
-
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.chronicle.map.fromdocs.acid.ChronicleAcidIsolation;
@@ -27,8 +26,7 @@ public class DirtyReadVictim implements Runnable {
         Scanner sc = new Scanner(System.in);
         try {
 
-
-            /**
+/**
              *  ben.cotton@rutgers.edu   START
              */
             Double coupon = 0.00;
@@ -99,8 +97,7 @@ public class DirtyReadVictim implements Runnable {
         }
     }
 
-
-    public ChronicleMap getCraig() {
+public ChronicleMap getCraig() {
         return this.chm;
     }
 

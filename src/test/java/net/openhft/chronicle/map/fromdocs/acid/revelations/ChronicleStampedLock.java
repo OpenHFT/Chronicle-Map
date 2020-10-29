@@ -41,8 +41,7 @@ public class ChronicleStampedLock extends StampedLock {
             LongValue.class
     ); //WriterSet cardinality
 
-
-    ChronicleStampedLock(String chronicelStampedLockLocality) { // path of Operand set i.e. /dev/shm/
+ChronicleStampedLock(String chronicelStampedLockLocality) { // path of Operand set i.e. /dev/shm/
         try {
             chm = offHeapLock(chronicelStampedLockLocality);
             chmR = offHeapLockReaderCount(chronicelStampedLockLocality + "=ReaderCount");
@@ -120,8 +119,7 @@ public class ChronicleStampedLock extends StampedLock {
         lastWriterT = chm.get("LastWriterTime ");
         writeLockHolderCount = chmW.get("WriterCount ");
 
-
-        l = offHeapLock.getEntryLockState();
+l = offHeapLock.getEntryLockState();
 
         if (l != 0L)
             return 0L;
