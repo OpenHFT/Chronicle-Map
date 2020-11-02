@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.junit.Ignore;
@@ -36,7 +37,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class EntryCountMapTest {
-    static final String TMP = OS.getTarget();
     static final int ecmTests = Integer.getInteger("ecm.tests", 5);
     double score = 0;
     int scoreCount = 0;

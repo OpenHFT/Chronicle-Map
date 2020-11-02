@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.Values;
 

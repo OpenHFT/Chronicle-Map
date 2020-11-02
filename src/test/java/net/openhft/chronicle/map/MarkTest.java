@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.algo.MemoryUnit;
+import net.openhft.chronicle.core.OS;
 import org.junit.Ignore;
 import org.junit.Test;
 

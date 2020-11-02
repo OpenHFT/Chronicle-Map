@@ -17,6 +17,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.junit.Test;
 

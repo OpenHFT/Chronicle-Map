@@ -23,6 +23,7 @@ import net.openhft.chronicle.algo.locks.TryAcquireOperations;
 import net.openhft.chronicle.algo.locks.VanillaReadWriteWithWaitsLockingStrategy;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Array;

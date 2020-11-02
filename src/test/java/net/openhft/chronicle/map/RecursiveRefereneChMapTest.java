@@ -16,6 +16,8 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.util.Time;
 import org.junit.Test;
 
 import java.io.*;
