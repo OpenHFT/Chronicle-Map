@@ -43,7 +43,7 @@ public class AutoResizeTest {
             Assert.assertNotEquals(0.0, map.remainingAutoResizes());
             System.out.println(actual);
         }
- }
+    }
 
     @Test
     public void testAutoResizeNotZeroUponRestart2() throws IOException {
@@ -58,6 +58,6 @@ public class AutoResizeTest {
             Assert.assertNotEquals(0.0, actual);
             System.out.println(actual);
         }
- }
+    }
 
 }

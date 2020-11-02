@@ -40,6 +40,7 @@ public final class TimeProvider {
 
     private static final AtomicLong lastTimeHolder = new AtomicLong();
     private static LongSupplier millisecondSupplier = System::currentTimeMillis;
+
     private TimeProvider() {
     }
 

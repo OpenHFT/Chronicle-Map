@@ -25,6 +25,7 @@ public class TypedMarshallableReaderWriter<V extends Marshallable>
         BinaryWire wire = Wires.binaryWireForRead(in, in.readPosition(), size);
         return (V) wire.getValueIn().object(using, tClass());
     }
+
     protected void writeToWire(Wire wire, @NotNull V toWrite) {
         wire.getValueOut().object(toWrite);
     }

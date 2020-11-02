@@ -27,8 +27,8 @@ public class DirtyReadVictim implements Runnable {
         try {
 
 /**
-             *  ben.cotton@rutgers.edu   START
-             */
+ *  ben.cotton@rutgers.edu   START
+ */
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;
@@ -54,13 +54,13 @@ public class DirtyReadVictim implements Runnable {
                 coupon = bond.getCoupon();
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim coupon=[" +coupon+"] read."
+                                " DirtyReadVictim coupon=[" + coupon + "] read."
                 );
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim sleeping 60 seconds"
                 );
-                Thread.sleep( 60_000);
+                Thread.sleep(60_000);
             } finally {
                 if (this.offHeapLock.validate(stamp)) {
                     System.out.println(
@@ -97,7 +97,7 @@ public class DirtyReadVictim implements Runnable {
         }
     }
 
-public ChronicleMap getCraig() {
+    public ChronicleMap getCraig() {
         return this.chm;
     }
 

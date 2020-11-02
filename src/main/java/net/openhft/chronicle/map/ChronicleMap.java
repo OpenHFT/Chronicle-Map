@@ -218,7 +218,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * @return the amount of free space in the map as a percentage. When the free space gets low ( around 5% ) the map will automatically expand. The
      * number of times it can automatically expand is based on the {@code net.openhft.chronicle.map.ChronicleMapBuilder#maxBloatFactor}. If the map
      * expands you will see an increase in the available free space. NOTE: It is not possible to expand the chronicle map manually.
-     *
+     * <p>
      * see also {@see net.openhft.chronicle.map.ChronicleMap#remainingAutoResizes} as these operations are related.
      */
     default short percentageFreeSpace() {
@@ -230,7 +230,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * can be stored into the map), the map will expand automatically. However, there is an upper limit to the number of times the map can expand.
      * This limit is set via the {@code net.openhft.chronicle.map.ChronicleMapBuilder#maxBloatFactor} if the {@code remainingAutoResizes} drops to zero,
      * then the map is no longer able to expand, if subsequently, the free space ( see  {@link net.openhft.chronicle.map.ChronicleMap#percentageFreeSpace})
-     *  in the map becomes low ( around 5% ), the map will not be able to take more entries and will fail with an {@code
+     * in the map becomes low ( around 5% ), the map will not be able to take more entries and will fail with an {@code
      * java.lang.IllegalStateException} for production systems it is recommended you periodically monitor the remainingAutoResizes and
      * {@link net.openhft.chronicle.map.ChronicleMap#percentageFreeSpace}.
      */

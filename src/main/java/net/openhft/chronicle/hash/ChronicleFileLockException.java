@@ -18,7 +18,6 @@ package net.openhft.chronicle.hash;
 
 /**
  * This exception is thrown, when a Chronicle Hash cannot acquire a required file lock.
- *
  */
 public final class ChronicleFileLockException extends RuntimeException {
     private static final long serialVersionUID = -2034623786298623984L;

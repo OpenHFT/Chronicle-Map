@@ -555,7 +555,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * provided {@code file} during recovery across all JVMs/threads/processes or else
      * the behavior is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
-     *
+     * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
      * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
      * the user is responsible for ensuring absolute exclusivity.
@@ -590,7 +590,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * provided {@code file} during recovery across all JVMs/threads/processes or else
      * the behavior is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
-     *
+     * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
      * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
      * the user is responsible for ensuring absolute exclusivity.
@@ -630,7 +630,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * provided {@code file} during recovery across all JVMs/threads/processes or else
      * the behavior is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
-     *
+     * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
      * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
      * the user is responsible for ensuring absolute exclusivity.
@@ -701,7 +701,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * provided {@code file} during recovery across all JVMs/threads/processes or else
      * the behavior is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
-     *
+     * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
      * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
      * the user is responsible for ensuring absolute exclusivity.
@@ -763,11 +763,12 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * provided {@code file} during recovery across all JVMs/threads/processes or else
      * the behavior is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
-     *
+     * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
      * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
      * the user is responsible for ensuring absolute exclusivity.
      * </p>
+     *
      * @param file                               a hash container was mapped to the given file
      * @param sameBuilderConfigAndLibraryVersion if this builder is configured with the same
      *                                           configurations, as the builder, which created the file (the persisted Chronicle Hash

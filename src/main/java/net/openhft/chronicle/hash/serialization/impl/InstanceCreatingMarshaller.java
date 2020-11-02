@@ -59,7 +59,7 @@ public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
     }
 
     protected Type tType() {
-        return  tClass;
+        return tClass;
     }
 
     /**

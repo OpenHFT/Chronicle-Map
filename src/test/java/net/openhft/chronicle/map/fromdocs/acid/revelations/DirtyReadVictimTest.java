@@ -85,7 +85,7 @@ public class DirtyReadVictimTest {
                     );
                     // THIS Test will execute pass when ChronicleStampedLock is GA
                     Assert.assertNotEquals(
-                           stamp,
+                            stamp,
                             offHeapLock.lastWriterT.getEntryLockState()
                     );
                 }

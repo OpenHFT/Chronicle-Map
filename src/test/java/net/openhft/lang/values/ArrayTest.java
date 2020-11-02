@@ -33,7 +33,7 @@ import static org.junit.Assert.assertEquals;
 public class ArrayTest {
 
     @Test
-    public void test0() throws IOException, JSONException{
+    public void test0() throws IOException, JSONException {
         ClassAliasPool.CLASS_ALIASES.addAlias(MovingAverageArray.class);
 
         File file = new File(OS.getTarget() + "/pf-PosistionsAndClose-" + Time.uniqueId());

@@ -87,7 +87,7 @@ public class Issue63Test {
 
     @Test
     public void issue63test() throws IOException {
-        Path path = Paths.get(OS.getTarget() + "/test-vectors1-"+Time.uniqueId()+".dat");
+        Path path = Paths.get(OS.getTarget() + "/test-vectors1-" + Time.uniqueId() + ".dat");
         if (Files.exists(path)) Files.delete(path);
         File mapFile = path.toFile();
         mapFile.deleteOnExit();

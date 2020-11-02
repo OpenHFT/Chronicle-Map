@@ -62,28 +62,28 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     public boolean shouldTestEntry() {
         throwExceptionIfClosed();
 
- return entriesToTest == ALL || !e.entryDeleted();
+        return entriesToTest == ALL || !e.entryDeleted();
     }
 
     @Override
     public Object entryForIteration() {
         throwExceptionIfClosed();
 
- return !e.entryDeleted() ? entryDelegating : absentEntryDelegating;
+        return !e.entryDeleted() ? entryDelegating : absentEntryDelegating;
     }
 
     @Override
     public long tierEntriesForIteration() {
         throwExceptionIfClosed();
 
- return entriesToTest == ALL ? s.tierEntries() : s.tierEntries() - s.tierDeleted();
+        return entriesToTest == ALL ? s.tierEntries() : s.tierEntries() - s.tierDeleted();
     }
 
     @Override
     public void doReplaceValue(Data<V> newValue) {
         throwExceptionIfClosed();
 
- checkOnEachPublicOperation.checkOnEachPublicOperation();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             entry.innerDefaultReplaceValue(newValue);
             e.updatedReplicationStateOnPresentEntry();
@@ -97,7 +97,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     public boolean forEachSegmentEntryWhile(Predicate<? super MapEntry<K, V>> predicate) {
         throwExceptionIfClosed();
 
- checkOnEachPublicOperation.checkOnEachPublicOperation();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
         initEntriesToTest(PRESENT);
         s.innerUpdateLock.lock();
         return innerForEachSegmentEntryWhile(predicate);
@@ -108,7 +108,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
             Predicate<? super ReplicableEntry> predicate) {
         throwExceptionIfClosed();
 
- checkOnEachPublicOperation.checkOnEachPublicOperation();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
         initEntriesToTest(ALL);
         s.innerUpdateLock.lock();
         return innerForEachSegmentEntryWhile(predicate);
@@ -118,7 +118,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     public void forEachSegmentReplicableEntry(Consumer<? super ReplicableEntry> action) {
         throwExceptionIfClosed();
 
- forEachSegmentReplicableEntryWhile(e -> {
+        forEachSegmentReplicableEntryWhile(e -> {
             action.accept(e);
             return true;
         });
@@ -128,7 +128,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     public void doRemove() {
         throwExceptionIfClosed();
 
- checkOnEachPublicOperation.checkOnEachPublicOperation();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
         try {
             if (e.valueSize > dummyValue.size())
                 e.innerDefaultReplaceValue(dummyValue);
@@ -146,7 +146,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     public void doRemoveCompletely() {
         throwExceptionIfClosed();
 
- boolean wasDeleted = e.entryDeleted();
+        boolean wasDeleted = e.entryDeleted();
         super.doRemove();
         ru.dropChange();
         if (wasDeleted)
@@ -156,7 +156,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     public void doInsert(Data<V> value) {
         throwExceptionIfClosed();
 
- checkOnEachPublicOperation.checkOnEachPublicOperation();
+        checkOnEachPublicOperation.checkOnEachPublicOperation();
         if (e.entryDeleted()) {
             try {
                 s.tierDeleted(s.tierDeleted() - 1);
@@ -177,7 +177,7 @@ public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentI
     public void doInsert() {
         throwExceptionIfClosed();
 
- if (mh.set() == null)
+        if (mh.set() == null)
             throw new IllegalStateException(mh.h().toIdentityString() +
                     ": Called SetAbsentEntry.doInsert() from Map context");
         doInsert((Data<V>) DummyValueData.INSTANCE);

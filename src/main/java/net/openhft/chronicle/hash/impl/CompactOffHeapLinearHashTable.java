@@ -52,6 +52,7 @@ public abstract class CompactOffHeapLinearHashTable {
         this.keyMask = mask(keyBits);
         this.valueMask = mask(valueBits);
     }
+
     /**
      * Must not store {@code h} in a field, to avoid memory leaks.
      *

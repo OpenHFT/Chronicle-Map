@@ -191,7 +191,7 @@ public interface Replica extends Closeable {
          * @param chronicleId is the channel id used to identify the canonical map or queue
          * @param keys        list of keys corresponding to given ReplicableEntry (added to during the call)
          */
-        void writeExternalEntry(ReplicableEntry entry, Bytes payload, @NotNull Bytes destination, int chronicleId, ArrayList<String> keys );
+        void writeExternalEntry(ReplicableEntry entry, Bytes payload, @NotNull Bytes destination, int chronicleId, ArrayList<String> keys);
 
         /**
          * The map implements this method to restore its contents. This method must read the values

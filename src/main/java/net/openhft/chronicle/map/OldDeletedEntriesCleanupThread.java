@@ -71,6 +71,7 @@ class OldDeletedEntriesCleanupThread extends Thread
     private long prevSegment0ScanStart = -1;
     private long removedCompletely;
     private long startTime = System.currentTimeMillis();
+
     OldDeletedEntriesCleanupThread(ReplicatedChronicleMap<?, ?, ?> map) {
         super("Cleanup Thread for " + map.toIdentityString());
         setDaemon(true);
@@ -116,7 +117,7 @@ class OldDeletedEntriesCleanupThread extends Thread
     public void run() {
         throwExceptionIfClosed();
 
- if (System.currentTimeMillis() - startTime < 1_000)
+        if (System.currentTimeMillis() - startTime < 1_000)
             return;
 
         while (!shutdown) {
@@ -179,7 +180,7 @@ class OldDeletedEntriesCleanupThread extends Thread
     public boolean test(ReplicableEntry e) {
         throwExceptionIfClosed();
 
- if (shutdown)
+        if (shutdown)
             return false;
         if (e instanceof MapAbsentEntry) {
             long deleteTimeout = systemTimeIntervalBetween(

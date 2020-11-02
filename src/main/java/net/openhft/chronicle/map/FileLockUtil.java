@@ -22,7 +22,8 @@ public final class FileLockUtil {
     private static final boolean USE_LOCKING = !OS.isWindows() && !Boolean.getBoolean("chronicle.map.disable.locking");
     private static final AtomicBoolean LOCK_WARNING_PRINTED = new AtomicBoolean();
 
-    private FileLockUtil() { }
+    private FileLockUtil() {
+    }
 
     public static void acquireSharedFileLock(@NotNull final File canonicalFile, @NotNull final FileChannel channel) {
         if (USE_LOCKING)
@@ -121,6 +122,27 @@ public final class FileLockUtil {
         }
     }
 
+    static void dump() {
+        System.out.println(FILE_LOCKS);
+    }
+
+    private static ChronicleFileLockException newUnableToAcquireSharedFileLockException(@NotNull final File canonicalFile, @Nullable final Exception e) {
+        return new ChronicleFileLockException("Unable to acquire a shared file lock for " + canonicalFile + ". " +
+                "Make sure another process is not recovering the map.", e);
+    }
+
+    private static ChronicleFileLockException newUnableToAcquireExclusiveFileLockException(@NotNull final File canonicalFile, @Nullable final Exception e) {
+        return new ChronicleFileLockException("Unable to acquire an exclusive file lock for " + canonicalFile + ". " +
+                "Make sure no other process is using the map.", e);
+    }
+
+    private static void printWarningTheFirstTime() {
+        if (LOCK_WARNING_PRINTED.compareAndSet(false, true)) {
+            Jvm.warn().on(FileLockUtil.class, "File locking is disabled or not supported on this platform (" + System.getProperty("os.name") + "). " +
+                    "Make sure you are not running ChronicleMapBuilder::*recover* methods when other processes or threads have the mapped file open!");
+        }
+    }
+
     // This class is not thread-safe but instances
     // are protected by means of the FILE_LOCKS map
     private static final class FileLockReference {
@@ -159,27 +181,6 @@ public final class FileLockUtil {
                     "fileLock=" + fileLock +
                     ", refCount=" + refCount +
                     '}';
-        }
-    }
-
-    static void dump() {
-        System.out.println(FILE_LOCKS);
-    }
-
-    private static ChronicleFileLockException newUnableToAcquireSharedFileLockException(@NotNull final File canonicalFile, @Nullable final Exception e) {
-        return new ChronicleFileLockException("Unable to acquire a shared file lock for " + canonicalFile + ". " +
-                "Make sure another process is not recovering the map.", e);
-    }
-
-    private static ChronicleFileLockException newUnableToAcquireExclusiveFileLockException(@NotNull final File canonicalFile, @Nullable final Exception e) {
-        return new ChronicleFileLockException("Unable to acquire an exclusive file lock for " + canonicalFile + ". " +
-                "Make sure no other process is using the map.", e);
-    }
-
-    private static void printWarningTheFirstTime() {
-        if (LOCK_WARNING_PRINTED.compareAndSet(false, true)) {
-            Jvm.warn().on(FileLockUtil.class, "File locking is disabled or not supported on this platform (" + System.getProperty("os.name") + "). " +
-                    "Make sure you are not running ChronicleMapBuilder::*recover* methods when other processes or threads have the mapped file open!");
         }
     }
 

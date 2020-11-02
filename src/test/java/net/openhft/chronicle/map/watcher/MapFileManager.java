@@ -28,6 +28,7 @@ public class MapFileManager extends JMXFileManager implements MapFileManagerMBea
     private String name;
     private long dataStoreSize;
     private int segments;
+    private long lastUpdate = 0;
 
     public MapFileManager(String basePath, String relativePath) {
         super(basePath, relativePath);
@@ -38,19 +39,17 @@ public class MapFileManager extends JMXFileManager implements MapFileManagerMBea
         return "maps";
     }
 
-    private long lastUpdate = 0;
-
     public String getHeader() {
         update();
         return header;
     }
 
     public String getKeyClass() {
-        return ""+keyClass;
+        return "" + keyClass;
     }
 
     public String getValueClass() {
-        return ""+valueClass;
+        return "" + valueClass;
     }
 
     public long getSize() {
@@ -104,7 +103,7 @@ public class MapFileManager extends JMXFileManager implements MapFileManagerMBea
                 map.createMappedStoreAndSegments(
                         new PersistedChronicleHashResources(file));
 
-keyClass = map.keyType();
+                keyClass = map.keyType();
                 valueClass = map.valueType();
                 size = map.longSize();
                 name = map.name();

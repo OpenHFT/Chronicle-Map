@@ -14,11 +14,11 @@ import org.jetbrains.annotations.Nullable;
 
 public class BytesMarshallableReaderWriter<V extends BytesMarshallable>
         extends CachingCreatingMarshaller<V> {
+    private static final ThreadLocal<VanillaBytes> VANILLA_BYTES_TL = ThreadLocal.withInitial(() -> new VanillaBytes<>(BytesStore.empty()));
+
     public BytesMarshallableReaderWriter(Class<V> vClass) {
         super(vClass);
     }
-
-    private static final ThreadLocal<VanillaBytes> VANILLA_BYTES_TL = ThreadLocal.withInitial(() -> new VanillaBytes<>(BytesStore.empty()));
 
     @NotNull
     @Override

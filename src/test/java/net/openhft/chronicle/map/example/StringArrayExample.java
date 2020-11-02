@@ -14,19 +14,6 @@ public class StringArrayExample {
 
     private final CharSequenceArray charSequenceArray = Values.newHeapInstance(CharSequenceArray.class);
 
-    public interface CharSequenceArray {
-        @Array(length = 8)
-        void setCharSequenceWrapperAt(int index, CharSequenceWrapper value);
-
-        CharSequenceWrapper getCharSequenceWrapperAt(int index);
-    }
-
-    public interface CharSequenceWrapper {
-        void setCharSequence(@MaxUtf8Length(6) CharSequence charSequence);
-
-        CharSequence getCharSequence();
-    }
-
     @Test
     public void examplePutAndGet() {
         ChronicleMap<Integer, CharSequenceArray> map = ChronicleMapBuilder
@@ -52,11 +39,24 @@ public class StringArrayExample {
             // to string all the values
             System.out.println(map.getUsing(1, charSequenceArray).toString());
         }
- }
+    }
 
     private CharSequenceArray setToHello(final Integer integer, final CharSequenceArray charSequenceArray) {
         charSequenceArray.getCharSequenceWrapperAt(1).setCharSequence("hello");
         return charSequenceArray;
+    }
+
+    public interface CharSequenceArray {
+        @Array(length = 8)
+        void setCharSequenceWrapperAt(int index, CharSequenceWrapper value);
+
+        CharSequenceWrapper getCharSequenceWrapperAt(int index);
+    }
+
+    public interface CharSequenceWrapper {
+        CharSequence getCharSequence();
+
+        void setCharSequence(@MaxUtf8Length(6) CharSequence charSequence);
     }
 
 }

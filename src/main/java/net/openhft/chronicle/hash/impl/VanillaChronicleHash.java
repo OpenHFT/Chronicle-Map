@@ -68,8 +68,8 @@ import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 public abstract class VanillaChronicleHash<K,
-                                           C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
-                                           ECQ extends ExternalHashQueryContext<K>>
+        C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
+        ECQ extends ExternalHashQueryContext<K>>
         implements ChronicleHash<K, C, SC, ECQ>, Marshallable {
 
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
@@ -158,7 +158,8 @@ public abstract class VanillaChronicleHash<K,
      * The fileLock is used to prevent recover actions
      * from accessing the mapped file concurrently.
      */
-    @Nullable private transient FileLock fileLock;
+    @Nullable
+    private transient FileLock fileLock;
 
     public VanillaChronicleHash(@NotNull final ChronicleMapBuilder<K, ?> builder) {
         // Version
@@ -633,7 +634,7 @@ public abstract class VanillaChronicleHash<K,
     public String persistedDataVersion() {
         throwExceptionIfClosed();
 
-         return dataFileVersion;
+        return dataFileVersion;
     }
 
     private long segmentHeadersOffset() {
@@ -701,7 +702,7 @@ public abstract class VanillaChronicleHash<K,
     public boolean isOpen() {
         throwExceptionIfClosed();
 
- return !resources.closed();
+        return !resources.closed();
     }
 
     public final void checkKey(final Object key) {
@@ -918,7 +919,7 @@ public abstract class VanillaChronicleHash<K,
     public long tierIndexToBaseAddr(final long tierIndex) {
         throwExceptionIfClosed();
 
- // tiers are 1-counted, to allow tierIndex = 0 to be un-initialized in off-heap memory,
+        // tiers are 1-counted, to allow tierIndex = 0 to be un-initialized in off-heap memory,
         // convert into 0-based form
         final long tierIndexMinusOne = tierIndex - 1;
         if (tierIndexMinusOne < actualSegments)

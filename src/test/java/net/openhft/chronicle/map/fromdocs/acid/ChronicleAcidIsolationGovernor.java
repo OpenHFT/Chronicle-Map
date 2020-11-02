@@ -15,14 +15,14 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     private ChronicleMap<String, Integer> transactionIsolationMap;
     private ChronicleMap<String, BondVOInterface> compositeChronicleMap; //hacked in, not generic
     private String priorCusip;
-    private Double  aCoupon;
+    private Double aCoupon;
 
-public synchronized void put(String cusip, BondVOInterface bond) throws Exception {
+    public synchronized void put(String cusip, BondVOInterface bond) throws Exception {
 
         System.out.println(
-                " , @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " inside chrAig.put('"+cusip+"'/"+aCoupon+") BEGIN"+
+                " , @t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " inside chrAig.put('" + cusip + "'/" + aCoupon + ") BEGIN" +
                         ", "
         );
         ChronicleMap<String, BondVOInterface> cMap = this.getCompositeChronicleMap();
@@ -31,39 +31,39 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
         bond.setCoupon(aCoupon);
         cMap.put(cusip, bond);
         System.out.println(
-                " , @t="+System.currentTimeMillis()+
-                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " inside chrAig.put('"+cusip+"'/"+aCoupon+") DONE"+
+                " , @t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " inside chrAig.put('" + cusip + "'/" + aCoupon + ") DONE" +
                         ", "
         );
     }
 
-//here is where the drama happens
+    //here is where the drama happens
     public synchronized BondVOInterface get(String cusip) throws Exception {
         System.out.println(
-                        " , @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " inside chrAig.get('"+cusip+"') BEGIN"+
+                " , @t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " inside chrAig.get('" + cusip + "') BEGIN" +
                         ", "
         );
         BondVOInterface b = null;
         String tx = Thread.currentThread().toString();
-        ChronicleMap<String,Integer> txMap = this.getTransactionIsolationMap();
+        ChronicleMap<String, Integer> txMap = this.getTransactionIsolationMap();
         if (txMap.size() > 1) { //other ACID transactions are active
             if (txMap.get(tx) <= ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC) {
                 b = this.compositeChronicleMap.get(cusip);
             } else if (txMap.get(tx) >= ChronicleAcidIsolation.DIRTY_READ_INTOLERANT) {
                 System.out.println(
-                                ", @t="+System.currentTimeMillis()+
-                                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                                " inside chrAig.get() WAITING"+
+                        ", @t=" + System.currentTimeMillis() +
+                                " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                                " inside chrAig.get() WAITING" +
                                 " ,"
                 );
                 this.wait();
                 System.out.println(
-                                " , @t="+System.currentTimeMillis()+
-                                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                                " inside chrAig.get() RESUMING"+
+                        " , @t=" + System.currentTimeMillis() +
+                                " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                                " inside chrAig.get() RESUMING" +
                                 ", "
                 );
                 b = this.compositeChronicleMap.get(cusip);
@@ -72,9 +72,9 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
             b = this.compositeChronicleMap.get(cusip);
         }
         System.out.println(
-                        " , @t="+System.currentTimeMillis()+
-                        " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                        " inside chrAig.get() DONE"+
+                " , @t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " inside chrAig.get() DONE" +
                         " ,"
         );
         return b;
@@ -100,6 +100,13 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
     }
 
     @Override
+    public synchronized int getTransactionIsolation() throws SQLException {
+
+        int iL = this.getTransactionIsolationMap().get(Thread.currentThread());
+        return (iL);
+    }
+
+    @Override
     public synchronized void setTransactionIsolation(int level) throws SQLException {
 
         this.getTransactionIsolationMap().put(
@@ -109,33 +116,26 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
     }
 
     @Override
-    public synchronized int getTransactionIsolation() throws SQLException {
-
-        int iL = this.getTransactionIsolationMap().get(Thread.currentThread());
-        return(iL);
-    }
-
-    @Override
     public synchronized void commit() throws SQLException {
         System.out.println(
-                " ,@t="+System.currentTimeMillis()+
-                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                " chrAig.commit() BEGIN "+
-                ", "
+                " ,@t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " chrAig.commit() BEGIN " +
+                        ", "
         );
         this.getTransactionIsolationMap().remove(Thread.currentThread().toString());
         System.out.println(
-                " , @t="+System.currentTimeMillis()+
-                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                " chrAig.commit() END "+
-                ", "
+                " , @t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " chrAig.commit() END " +
+                        ", "
         );
         this.notifyAll();
         System.out.println(
-                ", @t="+System.currentTimeMillis()+
-                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                " chrAig.commit() complete notifyAll() to waiting Tx Threads "+
-                ","
+                ", @t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " chrAig.commit() complete notifyAll() to waiting Tx Threads " +
+                        ","
         );
 
     }
@@ -148,24 +148,24 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
             this.getCompositeChronicleMap().put("369604101", priorBond);
         }
         System.out.println(
-                " , @t="+System.currentTimeMillis()+
-                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                " chrAig.rollback() BEGIN "+
-                ", "
+                " , @t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " chrAig.rollback() BEGIN " +
+                        ", "
         );
         this.getTransactionIsolationMap().remove(Thread.currentThread().toString());
         System.out.println(
-                " ,@t="+System.currentTimeMillis()+
-                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                " chrAig.rollback() COMPLETE coupon=3.50"+
-                ", "
+                " ,@t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " chrAig.rollback() COMPLETE coupon=3.50" +
+                        ", "
         );
         this.notifyAll();
         System.out.println(
-                ", @t="+System.currentTimeMillis()+
-                " Tx="+Thread.currentThread().toString().replaceAll(",",".")+
-                " chrAig.rollback() completed notifyAll() to waiting Tx Threads"+
-                ", "
+                ", @t=" + System.currentTimeMillis() +
+                        " Tx=" + Thread.currentThread().toString().replaceAll(",", ".") +
+                        " chrAig.rollback() completed notifyAll() to waiting Tx Threads" +
+                        ", "
         );
     }
     // rest of these java.sql.Connection methods remain unimplemented ...
@@ -173,17 +173,17 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
     // intense.  In the real world, even in Captital Markets 'dirty read' intolerance
     // is likely the only isolation level Chronicle would accommodate.
 
-@Override
-    public void setAutoCommit(boolean autoCommit) throws SQLException {
-
-    }
-
     @Override
     public boolean getAutoCommit() throws SQLException {
         return false;
     }
 
-@Override
+    @Override
+    public void setAutoCommit(boolean autoCommit) throws SQLException {
+
+    }
+
+    @Override
     public void rollback(Savepoint savepoint) throws SQLException {
 
     }
@@ -193,7 +193,7 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
 
     }
 
-@Override
+    @Override
     public Statement createStatement() throws SQLException {
         return null;
     }
@@ -213,7 +213,7 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
         return null;
     }
 
-@Override
+    @Override
     public boolean isClosed() throws SQLException {
         return false;
     }
@@ -224,17 +224,12 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) throws SQLException {
-
-    }
-
-    @Override
     public boolean isReadOnly() throws SQLException {
         return false;
     }
 
     @Override
-    public void setCatalog(String catalog) throws SQLException {
+    public void setReadOnly(boolean readOnly) throws SQLException {
 
     }
 
@@ -243,7 +238,12 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
         return null;
     }
 
-@Override
+    @Override
+    public void setCatalog(String catalog) throws SQLException {
+
+    }
+
+    @Override
     public SQLWarning getWarnings() throws SQLException {
         return null;
     }
@@ -279,13 +279,13 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
     }
 
     @Override
-    public void setHoldability(int holdability) throws SQLException {
-
+    public int getHoldability() throws SQLException {
+        return 0;
     }
 
     @Override
-    public int getHoldability() throws SQLException {
-        return 0;
+    public void setHoldability(int holdability) throws SQLException {
+
     }
 
     @Override
@@ -298,7 +298,7 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
         return null;
     }
 
-@Override
+    @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
 
     }
@@ -364,11 +364,6 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
     }
 
     @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException {
-
-    }
-
-    @Override
     public String getClientInfo(String name) throws SQLException {
         return null;
     }
@@ -376,6 +371,11 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
     @Override
     public Properties getClientInfo() throws SQLException {
         return null;
+    }
+
+    @Override
+    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+
     }
 
     @Override
@@ -389,13 +389,13 @@ public synchronized void put(String cusip, BondVOInterface bond) throws Exceptio
     }
 
     @Override
-    public void setSchema(String schema) throws SQLException {
-
+    public String getSchema() throws SQLException {
+        return null;
     }
 
     @Override
-    public String getSchema() throws SQLException {
-        return null;
+    public void setSchema(String schema) throws SQLException {
+
     }
 
     @Override

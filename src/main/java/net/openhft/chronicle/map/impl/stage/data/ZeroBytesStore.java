@@ -39,7 +39,7 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
         throw new UnsupportedOperationException("Cannot get the address of nothing");
     }
 
-@Override
+    @Override
     public int peekUnsignedByte(long offset) {
         return 0;
     }
@@ -157,7 +157,7 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
         return true;
     }
 
-@Override
+    @Override
     public void reserve(ReferenceOwner id) throws IllegalStateException {
     }
 

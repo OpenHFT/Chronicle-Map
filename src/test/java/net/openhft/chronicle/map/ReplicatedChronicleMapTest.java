@@ -468,7 +468,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.get(null);
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -481,7 +481,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.containsKey(null);
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -494,7 +494,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.put(null, "whatever");
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -507,7 +507,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.put(JSR166TestCase.notPresent, null);
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -520,7 +520,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.putIfAbsent(null, "whatever");
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -568,7 +568,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.replace(null, "whatever");
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -581,7 +581,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.replace(null, "A", "whatever");
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -620,7 +620,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.putIfAbsent(JSR166TestCase.notPresent, null);
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -633,7 +633,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.replace(JSR166TestCase.notPresent, null);
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -646,7 +646,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.replace(JSR166TestCase.notPresent, null, "A");
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -659,7 +659,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             ChronicleMap c = newShmIntString();
             c.replace(JSR166TestCase.notPresent, "A", null);
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -673,7 +673,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             c.put("sadsdf", "asdads");
             c.remove(null);
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 
@@ -687,7 +687,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
             shouldThrow();
-        } catch (NullPointerException|IllegalArgumentException success) {
+        } catch (NullPointerException | IllegalArgumentException success) {
         }
     }
 

@@ -41,7 +41,7 @@ public class ChronicleStampedLock extends StampedLock {
             LongValue.class
     ); //WriterSet cardinality
 
-ChronicleStampedLock(String chronicelStampedLockLocality) { // path of Operand set i.e. /dev/shm/
+    ChronicleStampedLock(String chronicelStampedLockLocality) { // path of Operand set i.e. /dev/shm/
         try {
             chm = offHeapLock(chronicelStampedLockLocality);
             chmR = offHeapLockReaderCount(chronicelStampedLockLocality + "=ReaderCount");
@@ -58,6 +58,32 @@ ChronicleStampedLock(String chronicelStampedLockLocality) { // path of Operand s
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    static ChronicleMap<String, ChronicleStampedLockVOInterface> offHeapLock(String operand)
+            throws IOException {
+
+        return ChronicleMapBuilder.of(String.class, ChronicleStampedLockVOInterface.class)
+                .entries(16)
+                .averageKeySize("123456789".length())
+                .createPersistedTo(
+                        new File(
+                                operand
+                        )
+                );
+    }
+
+    static ChronicleMap<String, LongValue> offHeapLockReaderCount(String operand)
+            throws IOException {
+
+        return ChronicleMapBuilder.of(String.class, LongValue.class)
+                .entries(16)
+                .averageKeySize("123456789".length())
+                .createPersistedTo(
+                        new File(
+                                operand
+                        )
+                );
     }
 
     @Override
@@ -119,7 +145,7 @@ ChronicleStampedLock(String chronicelStampedLockLocality) { // path of Operand s
         lastWriterT = chm.get("LastWriterTime ");
         writeLockHolderCount = chmW.get("WriterCount ");
 
-l = offHeapLock.getEntryLockState();
+        l = offHeapLock.getEntryLockState();
 
         if (l != 0L)
             return 0L;
@@ -150,7 +176,7 @@ l = offHeapLock.getEntryLockState();
         System.out.println(
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock trywriteLock() ++ writeSeekers=[" +
-                        +writeLockHolderCount.getVolatileValue()+"] " +
+                        +writeLockHolderCount.getVolatileValue() + "] " +
                         "..,"
         );
         System.out.println(
@@ -261,7 +287,7 @@ l = offHeapLock.getEntryLockState();
         System.out.println(
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock writeLock() ++ writeSeekers=[" +
-                        +writeLockHolderCount.getVolatileValue()+"] " +
+                        +writeLockHolderCount.getVolatileValue() + "] " +
                         "..,"
         );
 
@@ -398,7 +424,7 @@ l = offHeapLock.getEntryLockState();
         System.out.println(
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock unlockWrite(" + stamp + ") -- writeSeekers=[" +
-                        +writeLockHolderCount.getVolatileValue()+"] " +
+                        +writeLockHolderCount.getVolatileValue() + "] " +
                         "..,"
         );
 
@@ -411,6 +437,14 @@ l = offHeapLock.getEntryLockState();
         );
     }
 
+//    @Override
+//    public boolean isWriteLocked() {
+//        if (this.getReadLockCount() < 0)
+//            return (Boolean.TRUE);
+//        else
+//            return (Boolean.FALSE);
+//    }
+
     @Override
     public int getReadLockCount() {
         return ((int) chmR.get("ReaderCount ").getVolatileValue());
@@ -422,39 +456,5 @@ l = offHeapLock.getEntryLockState();
             return (Boolean.TRUE);
         else
             return (Boolean.FALSE);
-    }
-
-//    @Override
-//    public boolean isWriteLocked() {
-//        if (this.getReadLockCount() < 0)
-//            return (Boolean.TRUE);
-//        else
-//            return (Boolean.FALSE);
-//    }
-
-    static ChronicleMap<String, ChronicleStampedLockVOInterface> offHeapLock(String operand)
-            throws IOException {
-
-        return ChronicleMapBuilder.of(String.class, ChronicleStampedLockVOInterface.class)
-                .entries(16)
-                .averageKeySize("123456789".length())
-                .createPersistedTo(
-                        new File(
-                                operand
-                        )
-                );
-    }
-
-    static ChronicleMap<String, LongValue> offHeapLockReaderCount(String operand)
-            throws IOException {
-
-        return ChronicleMapBuilder.of(String.class, LongValue.class)
-                .entries(16)
-                .averageKeySize("123456789".length())
-                .createPersistedTo(
-                        new File(
-                                operand
-                        )
-                );
     }
 }

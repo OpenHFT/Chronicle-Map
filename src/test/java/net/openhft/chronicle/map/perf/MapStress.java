@@ -24,6 +24,12 @@ public class MapStress {
     public MapStress() throws IOException {
     }
 
+    public static void main(String[] args) throws Exception {
+//        if (file.exists())
+//            file.delete();
+        new MapStress().stress();
+    }
+
     public void stress() throws ExecutionException, InterruptedException {
         Security[] secs = new Security[5];
         secs[0] = new Security();
@@ -91,7 +97,7 @@ public class MapStress {
         secs[4].securityUltimateUnderlyingTicker = "RTYU";
         secs[4].securityUnderlyingTicker = "RTYU";
 
-Future<?>[] futures = new Future[N_WRITE_THREADS + N_READ_THREADS];
+        Future<?>[] futures = new Future[N_WRITE_THREADS + N_READ_THREADS];
         for (int i = 0; i < N_WRITE_THREADS; i++) {
             String id = i + " -> ";
             futures[i] = executor.submit(() -> {
@@ -102,7 +108,7 @@ Future<?>[] futures = new Future[N_WRITE_THREADS + N_READ_THREADS];
                     final Random random = ThreadLocalRandom.current();
                     IntStream.range(0, 10).forEach(x -> {
                         final int keyIdx = random.nextInt(N_WRITE_THREADS * 100);
-                        Security sec = secs[x%5];
+                        Security sec = secs[x % 5];
                         sec.calculationTimeMillis = time;
                         map.put("valuekdljashjgffkljakljsdffhh" + keyIdx, sec);
                     });
@@ -135,12 +141,6 @@ Future<?>[] futures = new Future[N_WRITE_THREADS + N_READ_THREADS];
             f.get();
         }
         executor.shutdown();
-    }
-
-    public static void main(String[] args) throws Exception {
-//        if (file.exists())
-//            file.delete();
-        new MapStress().stress();
     }
 
     public static class Security implements Serializable {

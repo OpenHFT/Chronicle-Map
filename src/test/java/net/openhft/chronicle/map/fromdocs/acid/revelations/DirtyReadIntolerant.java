@@ -75,11 +75,11 @@ public class DirtyReadIntolerant {
 
             } finally {
                 offHeapLock.unlockRead(stamp);
-                    System.out.println(
-                            " ,,@t=" + System.currentTimeMillis() +
-                                    " DirtyReadIntolerant offHeapLock.unlockRead(" +
-                                    stamp + ") completed."
-                    );
+                System.out.println(
+                        " ,,@t=" + System.currentTimeMillis() +
+                                " DirtyReadIntolerant offHeapLock.unlockRead(" +
+                                stamp + ") completed."
+                );
 
             }
             /**

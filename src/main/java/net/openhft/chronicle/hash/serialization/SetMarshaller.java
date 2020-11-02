@@ -68,6 +68,7 @@ public final class SetMarshaller<T>
      * Cache field
      */
     private transient Deque<T> orderedElements;
+
     /**
      * Constructs a {@code SetMarshaller} with the given set elements' serializers.
      * <p>

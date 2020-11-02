@@ -333,7 +333,7 @@ public class VanillaChronicleMap<K, V, R>
     public boolean equals(final Object obj) {
         throwExceptionIfClosed();
 
-         return mapEquals(obj);
+        return mapEquals(obj);
     }
 
     @Override
@@ -773,7 +773,7 @@ public class VanillaChronicleMap<K, V, R>
     public boolean remove(@NotNull final Object key, final Object value) {
         throwExceptionIfClosed();
 
-         if (value == null)
+        if (value == null)
             return false; // ConcurrentHashMap compatibility
         final V v = checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {

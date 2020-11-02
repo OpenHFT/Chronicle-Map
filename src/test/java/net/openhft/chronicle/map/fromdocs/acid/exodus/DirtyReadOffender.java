@@ -53,15 +53,15 @@ public class DirtyReadOffender implements Runnable {
                 double newCoupon = 3.5 + Math.random();
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
-                                " DirtyReadOffender "+
-                                " calling chm.put('369604101',"+newCoupon+") "
+                                " DirtyReadOffender " +
+                                " calling chm.put('369604101'," + newCoupon + ") "
                 );
                 bond.setCoupon(newCoupon);
                 chm.put("369604101", bond);
                 System.out.println(
                         " @t=" + System.currentTimeMillis() +
-                                " DirtyReadOffender coupon=["+
-                                bond.getCoupon()+
+                                " DirtyReadOffender coupon=[" +
+                                bond.getCoupon() +
                                 "] written. "
                 );
             } finally {

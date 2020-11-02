@@ -8,7 +8,7 @@ import org.junit.*;
 
 public class ChronicleStampedLockTest {
 
-@Test
+    @Test
     public void tryOptimisticRead() {
         Assert.assertEquals(Boolean.TRUE, Boolean.TRUE);
     }

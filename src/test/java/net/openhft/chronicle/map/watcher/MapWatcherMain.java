@@ -24,7 +24,7 @@ public class MapWatcherMain {
 
         System.setProperty("hawtio.authenticationEnabled", "false");
         Main main = new Main();
-        main.setWar(Jvm.userHome() +"/OpenHFT/hawtio-default-2.7.1.war");
+        main.setWar(Jvm.userHome() + "/OpenHFT/hawtio-default-2.7.1.war");
         main.run();
     }
 }

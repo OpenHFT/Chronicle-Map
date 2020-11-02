@@ -195,7 +195,7 @@ public class BasicReplicationTest {
             try {
                 buffer.clear();
                 keys.clear();
-                sourceMap.writeExternalEntry(entry, null, buffer, chronicleId,keys);
+                sourceMap.writeExternalEntry(entry, null, buffer, chronicleId, keys);
 
                 buffer.readPosition(0);
                 buffer.readLimit(buffer.writePosition());

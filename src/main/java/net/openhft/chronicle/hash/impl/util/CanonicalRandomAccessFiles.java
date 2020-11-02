@@ -30,7 +30,8 @@ public final class CanonicalRandomAccessFiles {
 
     private static final ConcurrentHashMap<File, RafReference> CANONICAL_RAFS = new ConcurrentHashMap<>();
 
-    private CanonicalRandomAccessFiles() {}
+    private CanonicalRandomAccessFiles() {
+    }
 
     public static RandomAccessFile acquire(@NotNull final File file) throws FileNotFoundException {
         return CANONICAL_RAFS.compute(file, (f, ref) -> {

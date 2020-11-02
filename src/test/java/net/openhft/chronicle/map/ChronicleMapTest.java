@@ -1882,6 +1882,7 @@ public class ChronicleMapTest {
     static class BMClass implements BytesMarshallable, BMSUper {
 
     }
+
     private static final class IncrementRunnable implements Runnable {
 
         private final ChronicleMap<CharSequence, LongValue> map;

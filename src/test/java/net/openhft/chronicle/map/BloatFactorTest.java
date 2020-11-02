@@ -39,9 +39,9 @@ public class BloatFactorTest {
                 .createOrRecoverPersistedTo(cmap)) {
 
             double maxBloatFactor = Jvm.getValue(map, "maxBloatFactor");
-            Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor,0.0);
+            Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
 
         }
- }
+    }
 
 }

@@ -2557,6 +2557,7 @@ public class CHMUseCasesTest {
             }
         }
     }
+
     @Test
     public void testBytesMarshallable3() throws IOException {
         BytesMarshallableReaderWriter<IData.Data> bmwr = new BytesMarshallableReaderWriter<>(IData.Data.class);

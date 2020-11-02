@@ -101,7 +101,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     static final byte ENTRY_HUNK = 1;
     static final byte BOOTSTRAP_TIME_HUNK = 2;
     private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
-    
+
     public transient boolean cleanupRemovedEntries;
     public transient long cleanupTimeout;
     public transient TimeUnit cleanupTimeoutUnit;
