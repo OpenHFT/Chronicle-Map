@@ -30,10 +30,10 @@ public class Issue62ChronicleServer {
             //"This is just a long string, which causes sink to fail for some reason.";
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     final static File MAP_FILE_B =
-            Paths.get(System.getProperty("java.io.tmpdir"), "map.b").toFile();
+            Paths.get(OS.getTarget(), Time.uniqueId()+"map.b").toFile();
     private final static Logger LOGGER = LoggerFactory.getLogger(Issue62ChronicleServer.class);
     private final static File MAP_FILE_A =
-            Paths.get(System.getProperty("java.io.tmpdir"), "map.a").toFile();
+            Paths.get(OS.getTarget(), Time.uniqueId()+"map.a").toFile();
 
     static void prepare(File file) {
         if (file.exists())

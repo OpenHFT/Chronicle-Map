@@ -52,7 +52,7 @@ public class LotsOfEntriesMain {
     private static void workEntries(final boolean add)
             throws IOException, ExecutionException, InterruptedException {
         final long entries = 100_000_000;
-        File file = new File("/tmp/lotsOfEntries.dat");
+        File file = new File(OS.getTarget(), "lotsOfEntries.dat");
         final ChronicleMap<CharSequence, MyFloats> map = ChronicleMapBuilder
                 .of(CharSequence.class, MyFloats.class)
                 .entries(entries)

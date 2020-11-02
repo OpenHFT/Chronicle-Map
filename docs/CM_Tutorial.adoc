@@ -53,24 +53,26 @@ ChronicleMap<CharSequence, PostalCodeRange> cityPostalCodes = ChronicleMap
 
 == Persisted Chronicle Map
 
-You can amend this code to create a persisted Chronicle Map by replacing `.create()` calls with `.createPersistedTo(cityPostalCodesFile)`. Use a persisted Chronicle Map if you want it to, either:
+You can amend this code to create a persisted Chronicle Map by replacing `.create()` calls with `.createPersistedTo(cityPostalCodesFile)`.
+Use a persisted Chronicle Map if you want it to, either:
 
- - outlive the process it was created within; for example, to support hot application redeployment.
- - be accessible from multiple concurrent processes on the same server.
- - persist the data to disk.
+- outlive the process it was created within; for example, to support hot application redeployment.
+- be accessible from multiple concurrent processes on the same server.
+- persist the data to disk.
 
-The `cityPostalCodesFile` has to represent the same location on your server for all the Java
-processes that wish to access this Chronicle Map instance. For example, `System.getProperty("java.io.tmpdir") + "/cityPostalCodes.dat"`.
+The `cityPostalCodesFile` has to represent the same location on your server for all the Java processes that wish to access this Chronicle Map instance.
+For example, `OS.getTarget() + "/cityPostalCodes.dat"`.
 
 The name and location of the file is entirely up to you.
 
-NOTE: When you create a `ChronicleMap` instance with `.createPersistedTo(file)`, and the specified
-file already exists in the system, you open a view to the existing Chronicle Map data store from
-this JVM process, rather than creating a new Chronicle Map data store. That means that the data store may already contain some entries. No special action with the data is performed during such an operation. If you want to clean up corrupted entries, and ensure that the data store is in correct state, see the <<Recovery>> section.
+NOTE: When you create a `ChronicleMap` instance with `.createPersistedTo(file)`, and the specified file already exists in the system, you open a view to the existing Chronicle Map data store from this JVM process, rather than creating a new Chronicle Map data store.
+That means that the data store may already contain some entries.
+No special action with the data is performed during such an operation.
+If you want to clean up corrupted entries, and ensure that the data store is in correct state, see the <<Recovery>> section.
 
 == ChronicleMap instance vs Chronicle Map data store
 
-In this tutorial, the term `ChronicleMap` instance (or simply `ChronicleMap`)  is used to refer to an on-heap object providing access to a Chronicle Map data store (or Chronicle Map key-value store, or Chronicle Map store, or simply Chronicle Map, with space between two words in contrast to `ChronicleMap`), which could be purely in-memory, or persisted to disk.
+In this tutorial, the term `ChronicleMap` instance (or simply `ChronicleMap`) is used to refer to an on-heap object providing access to a Chronicle Map data store (or Chronicle Map key-value store, or Chronicle Map store, or simply Chronicle Map, with space between two words in contrast to `ChronicleMap`), which could be purely in-memory, or persisted to disk.
 
 Currently the Java implementation doesn't allow creation of multiple accessor ChronicleMap` objects for a single *in-memory Chronicle Map store*; there is always a one-to-one relationship.
 

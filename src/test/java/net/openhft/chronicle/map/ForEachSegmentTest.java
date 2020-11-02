@@ -19,7 +19,7 @@ public class ForEachSegmentTest {
         ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.simpleMapOf(Integer.class, MyDto.class)
                 .entries(256)
                 .actualSegments(1);
-        File tmp = new File(OS.TMP, "stressTest-" + System.nanoTime());
+        File tmp = new File(OS.TMP, "stressTest-" + Time.uniqueId());
         tmp.deleteOnExit();
         try (ChronicleMap<Integer, MyDto> map = builder.createOrRecoverPersistedTo(tmp)) {
             map.put(1, new MyDto());
@@ -38,7 +38,7 @@ public class ForEachSegmentTest {
         ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.simpleMapOf(Integer.class, MyDto.class)
                 .entries(256)
                 .actualSegments(1);
-        File tmp = new File(OS.TMP, "stressTest-" + System.nanoTime());
+        File tmp = new File(OS.TMP, "stressTest-" + Time.uniqueId());
         Thread t = null;
         try (ChronicleMap<Integer, MyDto> map = builder.createOrRecoverPersistedTo(tmp)) {
             try {

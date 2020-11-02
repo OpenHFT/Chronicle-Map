@@ -288,7 +288,7 @@ Map to either
 
 The `cityPostalCodesFile` has to represent the same location on your server among all Java
 processes, wishing to access this Chronicle Map instance, e. g.
-`System.getProperty("java.io.tmpdir") + "/cityPostalCodes.dat"`.
+`OS.getTarget() + "/cityPostalCodes.dat"`.
 
 The name and location of the file is entirely up to you.
 

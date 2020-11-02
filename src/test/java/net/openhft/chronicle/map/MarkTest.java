@@ -63,7 +63,7 @@ public class MarkTest {
     @Test(timeout = 25000)
     public void persistedTest() {
         int rnd = new Random().nextInt();
-        final File db = Paths.get(System.getProperty("java.io.tmpdir"), "mark" + rnd).toFile();
+        final File db = Paths.get(OS.getTarget(), "mark" + rnd).toFile();
         if (db.exists())
             db.delete();
         try {

@@ -38,9 +38,9 @@ public class ChronicleMapSanityCheckTest {
     @Test
     public void testSanity1() throws IOException, InterruptedException {
 
-        String tmp = System.getProperty("java.io.tmpdir");
+        String tmp = OS.getTarget();
 
-        String pathname = tmp + "/testSanity1-" + UUID.randomUUID().toString() + ".dat";
+        String pathname = tmp + "/testSanity1-" + Time.uniqueId() + ".dat";
 
         File file = new File(pathname);
 

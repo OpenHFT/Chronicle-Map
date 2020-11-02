@@ -87,7 +87,7 @@ public class Issue63Test {
 
     @Test
     public void issue63test() throws IOException {
-        Path path = Paths.get(System.getProperty("java.io.tmpdir") + "/test-vectors1.dat");
+        Path path = Paths.get(OS.getTarget() + "/test-vectors1-"+Time.uniqueId()+".dat");
         if (Files.exists(path)) Files.delete(path);
         File mapFile = path.toFile();
         mapFile.deleteOnExit();
@@ -185,7 +185,7 @@ public class Issue63Test {
 
     void testChronicleMap() throws IOException {
         int num = 1_000_000;
-        testChronicleMap(System.getProperty("java.io.tmpdir"), num, num);
+        testChronicleMap(OS.getTarget(), num, num);
         ThreadLocalRandom random = ThreadLocalRandom.current();
         for (int i = 0; i < num; i++) {
             String id = UUID.randomUUID().toString().substring(0, 32);
@@ -313,7 +313,7 @@ public class Issue63Test {
             averageKnownItems.add("average sized known item");
         }
         Path knownItemsPath = Paths.get(
-                System.getProperty("java.io.tmpdir") + "/test-vectors2.dat");
+                OS.getTarget() + "/test-vectors2.dat");
         Files.deleteIfExists(knownItemsPath);
         ChronicleMap<CharSequence, List<CharSequence>> knownItems;
         ChronicleMapBuilder<CharSequence, List<CharSequence>> knownItemsBuilder = ChronicleMap

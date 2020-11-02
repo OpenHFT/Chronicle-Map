@@ -87,7 +87,7 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 public class ProcessInstanceLimiter implements Runnable {
     private static final long DEFAULT_TIME_UPDATE_INTERVAL_MS = 100L;
     private static final String DEFAULT_SHARED_MAP_NAME = "ProcessInstanceLimiter_DEFAULT_SHARED_MAP_";
-    private static final String DEFAULT_SHARED_MAP_DIRECTORY = System.getProperty("java.io.tmpdir");
+    private static final String DEFAULT_SHARED_MAP_DIRECTORY = OS.getTarget();
     private static final String DEFAULT_PROCESS_NAME = "_DEFAULT_";
 
     static {

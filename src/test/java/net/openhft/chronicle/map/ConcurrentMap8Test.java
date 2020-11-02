@@ -46,7 +46,7 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(8, builder.minSegments());
         //// end of test
 
-        String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") + "CHMTest" + System.nanoTime();
+        String chmPath = OS.getTarget() + System.getProperty("file.separator") + "CHMTest" + Time.uniqueId();
         try {
             return builder.create(new File(chmPath));
         } catch (IOException e) {
@@ -64,8 +64,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(8, builder.minSegments());
         //// end of test
 
-        String chmPath = System.getProperty("java.io.tmpdir") + System.getProperty("file.separator") +
-                "CHMTest" + System.nanoTime();
+        String chmPath = OS.getTarget() + System.getProperty("file.separator") +
+                "CHMTest" + Time.uniqueId();
         try {
             return builder.create(new File(chmPath));
         } catch (IOException e) {

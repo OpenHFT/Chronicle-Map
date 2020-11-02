@@ -24,11 +24,11 @@ import java.util.Map;
 import static org.junit.Assert.assertSame;
 
 public class RecursiveRefereneChMapTest {
-    public static final String TMP = System.getProperty("java.io.tmpdir");
+    public static final String TMP = OS.getTarget();
 
     @Test
     public void testRecursive() throws IOException {
-        File file = new File(TMP + "/test." + System.nanoTime() + ".tmp");
+        File file = new File(TMP + "/test." + Time.uniqueId() + ".tmp");
         file.deleteOnExit();
         Map<String, StupidCycle> map = ChronicleMapBuilder.of(String.class, StupidCycle.class)
                 .averageKey("Test").averageValue(new StupidCycle())

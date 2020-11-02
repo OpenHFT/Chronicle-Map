@@ -107,8 +107,8 @@ public class ChronicleMapTest {
     }
 
     static File getPersistenceFile() {
-        String TMP = System.getProperty("java.io.tmpdir");
-        File file = new File(TMP + "/chm-test" + System.nanoTime() + count++);
+        String TMP = OS.getTarget();
+        File file = new File(TMP + "/chm-test" + Time.uniqueId() + count++);
         file.deleteOnExit();
         return file;
     }

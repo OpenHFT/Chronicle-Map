@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 public class OpenJDKAndHashMapExamplesTest {
     private static final SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
 
-    private static final String TMP = System.getProperty("java.io.tmpdir");
+    private static final String TMP = OS.getTarget();
 
     public static long parseYYYYMMDD(String s) {
         try {
@@ -50,7 +50,7 @@ public class OpenJDKAndHashMapExamplesTest {
     @Test
     public void bondExample() throws IOException, InterruptedException {
 
-        File file = new File(TMP + "/chm-myBondPortfolioCHM-" + System.nanoTime());
+        File file = new File(TMP + "/chm-myBondPortfolioCHM-" + Time.uniqueId());
         file.deleteOnExit();
 
         ChronicleMap<String, BondVOInterface> chm = ChronicleMapBuilder

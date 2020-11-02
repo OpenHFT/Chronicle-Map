@@ -36,7 +36,7 @@ public class ArrayTest {
     public void test0() throws IOException, JSONException{
         ClassAliasPool.CLASS_ALIASES.addAlias(MovingAverageArray.class);
 
-        File file = new File(OS.getTarget() + "/pf-PosistionsAndClose-" + System.nanoTime());
+        File file = new File(OS.getTarget() + "/pf-PosistionsAndClose-" + Time.uniqueId());
 
         ChronicleMap<Long, MovingAverageArray> mapWrite = ChronicleMap
                 .of(Long.class, MovingAverageArray.class)

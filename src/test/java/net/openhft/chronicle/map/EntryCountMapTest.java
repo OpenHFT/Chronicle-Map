@@ -36,7 +36,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class EntryCountMapTest {
-    static final String TMP = System.getProperty("java.io.tmpdir");
+    static final String TMP = OS.getTarget();
     static final int ecmTests = Integer.getInteger("ecm.tests", 5);
     double score = 0;
     int scoreCount = 0;

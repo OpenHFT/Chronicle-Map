@@ -27,7 +27,7 @@ import static org.junit.Assert.fail;
 
 public class AcquireGetUsingMain {
     public static void main(String[] args) throws IOException {
-        File file = new File(System.getProperty("java.io.tmpdir") + "/test1");
+        File file = new File(OS.getTarget() + "/test1");
         ChronicleMap<String, Data> theSharedMap =
                 ChronicleMapBuilder.of(String.class, Data.class)
                         .createPersistedTo(file);

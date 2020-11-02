@@ -29,7 +29,7 @@ import static org.junit.Assert.assertEquals;
 public class ExternalizableTest {
     @Test
     public void externalizable() throws IOException {
-        String path = OS.getTarget() + "/test-" + System.nanoTime() + ".map";
+        String path = OS.getTarget() + "/test-" + Time.uniqueId() + ".map";
         new File(path).deleteOnExit();
         try (ChronicleMap<Long, SomeClass> storage = ChronicleMapBuilder
                 .of(Long.class, SomeClass.class)
