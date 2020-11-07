@@ -129,16 +129,19 @@
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.ops4j.pax.url</groupId>
             <artifactId>pax-url-aether</artifactId>
+            <optional>true</optional>
         </dependency>
 
         <!-- test dependencies -->
