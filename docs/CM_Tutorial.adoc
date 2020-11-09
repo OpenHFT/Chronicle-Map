@@ -43,7 +43,7 @@ ChronicleMap<CharSequence, PostalCodeRange> cityPostalCodes =
 
 // Or shorter form, without builder variable extraction:
 
-ChronicleMap<CharSequence, PostalCodeRange> cityPostalCodes = ChronicleMap
+ChronicleMap<CharSequence, PostalCodeRange> cityPostalCodes = ChronicleMapBuilder
     .of(CharSequence.class, PostalCodeRange.class)
     .name("city-postal-codes-map")
     .averageKey("Amsterdam")
