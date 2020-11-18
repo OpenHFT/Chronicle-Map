@@ -36,6 +36,7 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.impl.*;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
+import net.openhft.chronicle.map.internal.AnalyticsHolder;
 import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -45,6 +46,8 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -109,6 +112,13 @@ public class VanillaChronicleMap<K, V, R>
 
         initTransientsFromBuilder(builder);
         initTransients();
+
+        final Map<String, String> additionalEventParameters = new HashMap<>();
+        additionalEventParameters.put("key_type", keyClass.getTypeName());
+        additionalEventParameters.put("value_type", valueClass.getTypeName());
+        additionalEventParameters.put("entries", Long.toString(builder.entries()));
+
+        AnalyticsHolder.instance().sendEvent("started", additionalEventParameters);
     }
 
     public static long alignAddr(final long addr, final long alignment) {

@@ -36,6 +36,7 @@ import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWrit
 import net.openhft.chronicle.hash.serialization.impl.MarshallableReaderWriter;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.hash.serialization.impl.TypedMarshallableReaderWriter;
+import net.openhft.chronicle.map.internal.AnalyticsHolder;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.values.ValueModel;
@@ -1626,6 +1627,7 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMap<K, V> recoverPersistedTo(@NotNull final File file,
                                                  final boolean sameBuilderConfigAndLibraryVersion,
                                                  @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+        AnalyticsHolder.instance().sendEvent("recover");
         return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion, corruptionListener);
     }
 
