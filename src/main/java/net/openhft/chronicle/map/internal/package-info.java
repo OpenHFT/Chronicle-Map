@@ -13,4 +13,4 @@
  * The classes in this package and any sub-package are subject to
  * changes at any time for any reason.
  */
-package net.openhft.chronicle.internal;
+package net.openhft.chronicle.map.internal;
