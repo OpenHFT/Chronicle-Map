@@ -11,10 +11,20 @@ public final class AnalyticsMain {
 
     public static void main(String[] args) {
         System.out.println("Creating two maps and sending analytics...");
-        System.out.println("Currently, there is a limit of one message per h per JVM instance so only one analytics message will be sent upstream.");
+        System.out.println("Currently, there is a limit of four messages per h per JVM instance so only some analytics messages might be sent upstream.");
 
-        try (ChronicleMap<CharSequence, CharSequence> m1 = createMap(CharSequence.class, CharSequence.class, MAP_NAME1)) {
-            try (ChronicleMap<Long, CharSequence> m2 = createMap(Long.class, CharSequence.class, MAP_NAME2)) {
+        try (ChronicleMap<CharSequence, CharSequence> m1 = ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
+                .name(MAP_NAME1)
+                .averageKeySize(32)
+                .averageValueSize(32)
+                .entries(1_000)
+                .create()) {
+            try (ChronicleMap<Long, CharSequence> m2 = ChronicleMapBuilder.of(Long.class, CharSequence.class)
+                    .name(MAP_NAME2)
+                    .averageValueSize(32)
+                    .entries(100)
+                    .create()) {
+
                 m1.put("A", "1");
                 m2.put(2L, "Two");
             }
