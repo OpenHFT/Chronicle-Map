@@ -34,7 +34,7 @@ import net.openhft.chronicle.values.Values;
 import java.io.File;
 import java.io.IOException;
 
-public class MapJLBHTest implements JLBHTask {
+public class NonPersistedMapJLBHTest implements JLBHTask {
     private static final int WARM_UP_ITERATIONS = 40_000;
     private ChronicleMap<Long, IFacade> read;
     private ChronicleMap<Long, IFacade> write;
@@ -54,7 +54,7 @@ public class MapJLBHTest implements JLBHTask {
                 .runs(3)
                 .recordOSJitter(false)
                 .accountForCoordinatedOmmission(false)
-                .jlbhTask(new MapJLBHTest());
+                .jlbhTask(new NonPersistedMapJLBHTest());
         new JLBH(options).start();
     }
 
@@ -70,12 +70,7 @@ public class MapJLBHTest implements JLBHTask {
         long capacity = byteable.maxSize();
         byteable.bytesStore(NativeBytesStore.nativeStore(capacity), 0, capacity);
 
-        try {
-            write = ChronicleMapBuilder.of(Long.class, IFacade.class).constantValueSizeBySample(datum).entries(1_100_000).createPersistedTo(mapFile);
-            read = ChronicleMapBuilder.of(Long.class, IFacade.class).constantValueSizeBySample(datum).entries(1_100_000).createPersistedTo(mapFile);
-        } catch (IOException ex) {
-            throw Jvm.rethrow(ex);
-        }
+        write = read = ChronicleMapBuilder.of(Long.class, IFacade.class).constantValueSizeBySample(datum).entries(1_100_000).create();
     }
 
     @Override
