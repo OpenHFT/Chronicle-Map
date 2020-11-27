@@ -7,6 +7,7 @@ image::docs\images\Map_line.png[width=20%]
 [#image-maven]
 [caption="", link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
 image::https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[]
+image:https://javadoc.io/badge2/net.openhft/chronicle-map/javadoc.svg[link="https://www.javadoc.io/doc/net.openhft/chronicle-map/latest/index.html"]
 
 == Overview
 
