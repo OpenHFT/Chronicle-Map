@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.analytics.AnalyticsFacade;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
@@ -113,7 +114,7 @@ public class VanillaChronicleMap<K, V, R>
         initTransientsFromBuilder(builder);
         initTransients();
 
-        final Map<String, String> additionalEventParameters = new HashMap<>();
+        final Map<String, String> additionalEventParameters = AnalyticsFacade.standardAdditionalProperties();
         additionalEventParameters.put("key_type", keyClass.getTypeName());
         additionalEventParameters.put("value_type", valueClass.getTypeName());
         additionalEventParameters.put("entries", Long.toString(builder.entries()));
