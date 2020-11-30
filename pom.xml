@@ -276,6 +276,9 @@
                         <goals>
                             <goal>enforcer</goal>
                         </goals>
+                        <configuration>
+                            <referenceVersion>3.20.2</referenceVersion>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
