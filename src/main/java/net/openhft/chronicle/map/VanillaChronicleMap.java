@@ -117,7 +117,11 @@ public class VanillaChronicleMap<K, V, R>
         final Map<String, String> additionalEventParameters = AnalyticsFacade.standardAdditionalProperties();
         additionalEventParameters.put("key_type", keyClass.getTypeName());
         additionalEventParameters.put("value_type", valueClass.getTypeName());
-        additionalEventParameters.put("entries", Long.toString(builder.entries()));
+        try {
+            additionalEventParameters.put("entries", Long.toString(builder.entries()));
+        } catch (RuntimeException ignored) {
+            // The ChronicleMapBuilder::entries may throw an Exception. If so, just ignore this parameter
+        }
 
         AnalyticsHolder.instance().sendEvent("started", additionalEventParameters);
     }
