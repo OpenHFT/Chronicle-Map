@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map.internal;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 
@@ -29,6 +30,7 @@ public final class AnalyticsMain {
                 m2.put(2L, "Two");
             }
         }
+        Jvm.pause(2_000);
         System.out.println("Completed successfully");
         System.exit(0);
     }
