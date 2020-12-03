@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * Chronicle Map library.
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
-@Deprecated
+@Deprecated(/* to be removed in x.22 */)
 public final class IntegerDataAccess extends AbstractData<Integer>
         implements DataAccess<Integer>, Data<Integer> {
 

@@ -29,7 +29,7 @@ import net.openhft.chronicle.values.Copyable;
  * {@link net.openhft.chronicle.values.Values#nativeClassFor(Class)
  * Values.nativeClassFor(ReplicatedGlobalMutableState.class)}
  */
-@Deprecated
+@Deprecated(/* to be removed in x.22 */)
 public class ReplicatedGlobalMutableState$$Native implements ReplicatedGlobalMutableState, Copyable<ReplicatedGlobalMutableState>, BytesMarshallable, Byteable {
     private BytesStore bs;
 
