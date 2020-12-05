@@ -29,7 +29,7 @@ import net.openhft.chronicle.values.Copyable;
  * {@link net.openhft.chronicle.values.Values#nativeClassFor(Class)
  * Values.nativeClassFor(VanillaGlobalMutableState.class)}
  */
-@Deprecated
+@Deprecated(/* to be removed in x.22 */)
 public class VanillaGlobalMutableState$$Native implements VanillaGlobalMutableState, Copyable<VanillaGlobalMutableState>, BytesMarshallable, Byteable {
     private BytesStore bs;
 

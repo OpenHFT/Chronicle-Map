@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * this class as the key or value writer should be able to read and access the map with the present
  * version of the library.
  */
-@Deprecated
+@Deprecated(/* to be removed in x.22 */)
 @SuppressWarnings("deprecation")
 public final class CharSequenceSizedWriter
         implements SizedWriter<CharSequence>, EnumMarshallable<CharSequenceSizedWriter> {

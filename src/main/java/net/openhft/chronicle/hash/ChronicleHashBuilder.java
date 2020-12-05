@@ -823,6 +823,6 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     /**
      * @deprecated don't use private API in the client code
      */
-    @Deprecated
+    @Deprecated(/* to be removed in x.22 */)
     Object privateAPI();
 }

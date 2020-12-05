@@ -20,7 +20,7 @@ package net.openhft.chronicle.hash.serialization.impl;
  * @deprecated this class exists for compatibility with old versions of Chronicle Map, which used
  * wrong version of xxHash.
  */
-@Deprecated
+@Deprecated(/* to be removed in x.22 */)
 public final class WrongXxHash {
 
     // xxHash constants

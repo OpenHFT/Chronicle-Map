@@ -530,7 +530,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * @deprecated don't use private API in the client code
      */
     @Override
-    @Deprecated
+    @Deprecated(/* to be removed in x.22 */)
     public Object privateAPI() {
         return privateAPI;
     }

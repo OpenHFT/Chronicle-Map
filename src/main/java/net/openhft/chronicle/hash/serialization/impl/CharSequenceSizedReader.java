@@ -35,7 +35,7 @@ public class CharSequenceSizedReader implements SizedReader<CharSequence>,
      * @deprecated use {@link #INSTANCE} as {@code CharSequenceSizedReader} is immutable and
      * stateless
      */
-    @Deprecated
+    @Deprecated(/* to be removed in x.22 */)
     public CharSequenceSizedReader() {
     }
 
