@@ -36,6 +36,7 @@ import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWrit
 import net.openhft.chronicle.hash.serialization.impl.MarshallableReaderWriter;
 import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.hash.serialization.impl.TypedMarshallableReaderWriter;
+import net.openhft.chronicle.map.internal.AnalyticsHolder;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
 import net.openhft.chronicle.values.ValueModel;
@@ -1012,7 +1013,7 @@ public final class ChronicleMapBuilder<K, V> implements
     long entries() {
         if (entries < 0) {
             throw new IllegalStateException("If in-memory Chronicle Map is created or persisted\n" +
-                    "to a file for the first time (i. e. not accessing existing file),\n" +
+                    "to a file for the first time (i. e. not accessing an existing file),\n" +
                     "ChronicleMapBuilder.entries() must be configured.\n" +
                     "See Chronicle Map 3 tutorial and javadocs for more information");
         }
@@ -1626,6 +1627,7 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMap<K, V> recoverPersistedTo(@NotNull final File file,
                                                  final boolean sameBuilderConfigAndLibraryVersion,
                                                  @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+        AnalyticsHolder.instance().sendEvent("recover");
         return clone().createWithFile(file, true, sameBuilderConfigAndLibraryVersion, corruptionListener);
     }
 
