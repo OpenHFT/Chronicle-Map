@@ -32,7 +32,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static net.openhft.chronicle.core.util.ObjectUtils.requireNonNull;
 import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
 
 /**
@@ -221,7 +220,7 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     public boolean forEachEntryWhile(Predicate<? super SetEntry<E>> predicate) {
         throwExceptionIfClosed();
 
-        requireNonNull(predicate);
+        Objects.requireNonNull(predicate);
         return m.forEachEntryWhile(e -> predicate.test(((SetEntry<E>) e)));
     }
 
@@ -229,7 +228,7 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     public void forEachEntry(Consumer<? super SetEntry<E>> action) {
         throwExceptionIfClosed();
 
-        requireNonNull(action);
+        Objects.requireNonNull(action);
         m.forEachEntry(e -> action.accept(((SetEntry<E>) e)));
     }
 

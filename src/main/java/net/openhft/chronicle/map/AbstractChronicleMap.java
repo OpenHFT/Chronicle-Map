@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import static java.util.Collections.emptyList;
-import static net.openhft.chronicle.core.util.ObjectUtils.requireNonNull;
+import static net.openhft.chronicle.hash.impl.util.Objects.requireNonNull;
 
 interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
 

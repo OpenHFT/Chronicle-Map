@@ -16,8 +16,6 @@
 
 package net.openhft.chronicle.hash.impl.util;
 
-import static net.openhft.chronicle.core.util.ObjectUtils.requireNonNull;
-
 /**
  * Inspired by Guava's Throwables
  */
@@ -39,8 +37,8 @@ public final class Throwables {
 
     public static <T extends Throwable> T propagateNotWrapping(
             Throwable t, Class<T> notWrappingThrowableType) throws T {
-        requireNonNull(t);
-        requireNonNull(notWrappingThrowableType);
+        Objects.requireNonNull(t);
+        Objects.requireNonNull(notWrappingThrowableType);
         if (t instanceof Error)
             throw (Error) t;
         if (t instanceof RuntimeException)

@@ -38,10 +38,10 @@ public final class WrongXxHash {
         // unsigned here.
         hash ^= input * P1;
         hash = Long.rotateLeft(hash, 23) * P2 + P3;
-        return finish(hash);
+        return finalize(hash);
     }
 
-    private static long finish(long hash) {
+    private static long finalize(long hash) {
         hash ^= hash >>> 33;
         hash *= P2;
         hash ^= hash >>> 29;

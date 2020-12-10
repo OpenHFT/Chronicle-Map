@@ -71,6 +71,7 @@ import static net.openhft.chronicle.hash.impl.SizePrefixedBlob.*;
 import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.throwRecoveryOrReturnIOException;
 import static net.openhft.chronicle.hash.impl.util.FileIOUtils.readFully;
 import static net.openhft.chronicle.hash.impl.util.FileIOUtils.writeFully;
+import static net.openhft.chronicle.hash.impl.util.Objects.builderEquals;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 import static net.openhft.chronicle.map.DefaultSpi.mapEntryOperations;
@@ -138,7 +139,7 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  */
 public final class ChronicleMapBuilder<K, V> implements
         ChronicleHashBuilder<K, ChronicleMap<K, V>,
-        ChronicleMapBuilder<K, V>> {
+                ChronicleMapBuilder<K, V>> {
 
     private static final int UNDEFINED_ALIGNMENT_CONFIG = -1;
     private static final int NO_ALIGNMENT = 1;
@@ -1383,9 +1384,7 @@ public final class ChronicleMapBuilder<K, V> implements
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(final Object o) {
-        return this == o ||
-                o != null && this.getClass() == o.getClass() &&
-                        this.toString().equals(o.toString());
+        return builderEquals(this, o);
     }
 
     @Override
@@ -1705,8 +1704,8 @@ public final class ChronicleMapBuilder<K, V> implements
         if (!canonicalFile.exists()) {
             if (recover)
                 throw new FileNotFoundException("file " + canonicalFile + " should exist for recovery");
-            if (!canonicalFile.createNewFile())
-                throw new IOException("Unable to create file " + canonicalFile + " which presumably already exists");
+            //noinspection ResultOfMethodCallIgnored
+            canonicalFile.createNewFile();
         }
         final RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(canonicalFile);
         final ChronicleHashResources resources = new PersistedChronicleHashResources(canonicalFile);
