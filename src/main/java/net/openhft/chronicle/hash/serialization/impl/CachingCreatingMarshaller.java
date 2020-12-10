@@ -36,7 +36,7 @@ public abstract class CachingCreatingMarshaller<V>
             if (wire.bytes().readRemaining() == size) {
                 out.write(wire.bytes());
                 wire.bytes().clear();
-                LAST_TL.set(null);
+                LAST_TL.remove();
                 return;
             }
         }
