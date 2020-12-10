@@ -18,7 +18,6 @@ package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.core.util.ReadResolvable;
-import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.chronicle.hash.serialization.BytesReader;
 import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.wire.WireIn;
@@ -27,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+
+import static net.openhft.chronicle.core.util.ObjectUtils.requireNonNull;
 
 public final class CharSequenceArrayBytesMarshaller
         implements BytesWriter<CharSequence[]>, BytesReader<CharSequence[]>,
@@ -45,7 +46,7 @@ public final class CharSequenceArrayBytesMarshaller
         out.writeInt(toWrite.length);
         for (CharSequence cs : toWrite) {
             // Assume elements non-null for simplicity
-            Objects.requireNonNull(cs);
+            requireNonNull(cs);
             out.writeUtf8(cs);
         }
     }

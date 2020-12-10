@@ -19,11 +19,12 @@ package net.openhft.chronicle.map.impl.stage.map;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.chronicle.map.MapContext;
 import net.openhft.chronicle.map.impl.stage.data.bytes.WrappedValueBytesData;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
+
+import static net.openhft.chronicle.core.util.ObjectUtils.requireNonNull;
 
 @Staged
 public abstract class WrappedValueBytesDataAccess<K, V, R> implements MapContext<K, V, R> {
@@ -35,7 +36,7 @@ public abstract class WrappedValueBytesDataAccess<K, V, R> implements MapContext
 
     @Override
     public Data<V> wrapValueBytesAsData(BytesStore bytesStore, long offset, long size) {
-        Objects.requireNonNull(bytesStore);
+        requireNonNull(bytesStore);
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         WrappedValueBytesData<V> wrapped = this.wrappedValueBytesData;
         wrapped = wrapped.getUnusedWrappedValueBytesData();

@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl.util;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -33,15 +32,10 @@ public final class Objects {
     }
 
     public static boolean equal(@Nullable Object a, @Nullable Object b) {
-        return a != null ? a.equals(b) : b == null;
+        return java.util.Objects.equals(a, b);
     }
 
-    public static boolean builderEquals(@NotNull Object builder, @Nullable Object o) {
-        return builder == o ||
-                o != null && builder.getClass() == o.getClass() &&
-                        builder.toString().equals(o.toString());
-    }
-
+    /* Used by generated code */
     public static void requireNonNull(Object obj) {
         if (obj == null)
             throw new NullPointerException();
