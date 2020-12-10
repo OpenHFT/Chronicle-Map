@@ -449,7 +449,7 @@ public abstract class VanillaChronicleHash<K,
     private void initOffsetsAndBulks() {
         segmentHeadersOffset = segmentHeadersOffset();
 
-        long segmentHeadersSize = actualSegments * segmentHeaderSize;
+        final long segmentHeadersSize = (long) actualSegments * (long) segmentHeaderSize;
         segmentsOffset = segmentHeadersOffset + segmentHeadersSize;
 
         if (createdOrInMemory) {

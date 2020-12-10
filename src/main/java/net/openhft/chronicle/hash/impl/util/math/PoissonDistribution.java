@@ -66,12 +66,12 @@ public class PoissonDistribution {
             double k = Math.sqrt((1.0 - p) / p);
             double tmp = mu - k * sigma;
             if (tmp > lower) {
-                lower = ((int) Math.ceil(tmp)) - 1;
+                lower = ((int) Math.ceil(tmp)) - 1L;
             }
             k = 1.0 / k;
             tmp = mu + k * sigma;
             if (tmp < upper) {
-                upper = ((int) Math.ceil(tmp)) - 1;
+                upper = ((int) Math.ceil(tmp)) - 1L;
             }
         }
 

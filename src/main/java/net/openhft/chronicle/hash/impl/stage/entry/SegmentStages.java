@@ -570,7 +570,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     public abstract boolean segmentTierInit();
 
     public void initSegmentTier() {
-        tierIndex = segmentIndex + 1; // tiers are 1-counted
+        tierIndex = segmentIndex + 1L; // tiers are 1-counted
         tierBaseAddr = hh.h().segmentBaseAddr(segmentIndex);
         // assign the field of stage on which init() checks last, because flushed in segmentIndex()
         // initialization

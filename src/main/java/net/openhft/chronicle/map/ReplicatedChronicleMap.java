@@ -910,7 +910,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                                 TierCountersArea.segmentIndex(tierCountersAreaAddr));
                         final int tier = TierCountersArea.tier(tierCountersAreaAddr);
                         final long tierIndex = actualSegments +
-                                (bulkIndex << log2TiersInBulk) + tierIndexOffsetWithinBulk + 1;
+                                ((long) bulkIndex << log2TiersInBulk) + tierIndexOffsetWithinBulk + 1;
                         context.initSegmentTier(tier, tierIndex, tierBaseAddr);
                     }
 
