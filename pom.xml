@@ -269,7 +269,7 @@
             <plugin>
                 <groupId>net.openhft</groupId>
                 <artifactId>binary-compatibility-enforcer-plugin</artifactId>
-                <version>1.0.2</version>
+                <version>1.0.4</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
