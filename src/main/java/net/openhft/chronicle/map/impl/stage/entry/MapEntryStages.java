@@ -165,10 +165,10 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
             // bytes.writeLong(state);
 //            boolean newValueSizeIsPowerOf2 = ((newValueSize - 1L) & newValueSize) != 0;
 //            if (!newValueSizeIsPowerOf2 || newValueSize > 8L) {
-//                // if the new value size is 1, 2, 4, or 8, it is written not atomically only if
-//                // the user provided own marshaller and writes value byte-by-byte, that is very
-//                // unlikely. in this case the user should update acquire write lock before write
-//                // updates himself
+//                 if the new value size is 1, 2, 4, or 8, it is written not atomically only if
+//                 the user provided own marshaller and writes value byte-by-byte, that is very
+//                 unlikely. in this case the user should update acquire write lock before write
+//                 updates himself
 //                upgradeToWriteLock();
 //            }
         }

@@ -86,7 +86,7 @@ public class LargeEntriesTest {
 //        String value = generateValue(entrySize);
 //        DirectBytes bytes = DirectStore.allocate(entrySize / 6).bytes();
 //        for (int i = 0; i < 5; i++) {
-//            // warmup to compression.
+//             warmup to compression.
 //            bytes.clear();
 //            SnappyStringMarshaller.INSTANCE.write(bytes, value);
 //            bytes.flip();
