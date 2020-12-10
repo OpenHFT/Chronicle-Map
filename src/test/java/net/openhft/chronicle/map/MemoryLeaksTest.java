@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assume.assumeFalse;
 
 @RunWith(Parameterized.class)
 public class MemoryLeaksTest {
@@ -100,9 +101,8 @@ public class MemoryLeaksTest {
     }
 
     @Test(timeout = 10_000)
-    public void testChronicleMapCollectedAndDirectMemoryReleased()
-            throws IOException, InterruptedException {
-        assertFalse(OS.isMacOSX());
+    public void testChronicleMapCollectedAndDirectMemoryReleased() throws IOException {
+        assumeFalse(OS.isMacOSX());
         // This test is flaky in Linux and Mac OS apparently because some native memory from
         // running previous/concurrent tests is released during this test, that infers with
         // the (*) check below. The aim of this test is to check that native memory is not
