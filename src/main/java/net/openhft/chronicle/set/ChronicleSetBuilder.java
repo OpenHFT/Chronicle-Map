@@ -55,7 +55,7 @@ public final class ChronicleSetBuilder<K>
             };
 
     private ChronicleMapBuilder<K, DummyValue> chronicleMapBuilder;
-    private ChronicleSetBuilderPrivateAPI<K> privateAPI;
+    private final ChronicleSetBuilderPrivateAPI<K> privateAPI;
 
     ChronicleSetBuilder(Class<K> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
