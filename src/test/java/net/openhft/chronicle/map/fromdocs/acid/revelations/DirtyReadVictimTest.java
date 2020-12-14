@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map.fromdocs.acid.revelations;
 
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import org.junit.After;
@@ -23,12 +24,13 @@ public class DirtyReadVictimTest {
     @Test
     public void main() {
         try {
-            /**
+            /*
              *  ben.cotton@rutgers.edu   START
              */
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
-                            "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
+                            OS.getTarget() + "/OPERAND_CHRONICLE_MAP"
+/*                            "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"*/
                     );
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
@@ -38,7 +40,8 @@ public class DirtyReadVictimTest {
                             " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"
             );
             ChronicleStampedLock offHeapLock = new ChronicleStampedLock(
-                    "C:\\Users\\buddy\\dev\\shm\\OPERAND_ChronicleStampedLock"
+                    OS.getTarget() + "/OPERAND_ChronicleStampedLock"
+                    /*"C:\\Users\\buddy\\dev\\shm\\OPERAND_ChronicleStampedLock"*/
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
                 ;
@@ -90,7 +93,7 @@ public class DirtyReadVictimTest {
                     );
                 }
             }
-            /**
+            /*
              *  ben.cotton@rutgers.edu   END
              */
             System.out.println(
