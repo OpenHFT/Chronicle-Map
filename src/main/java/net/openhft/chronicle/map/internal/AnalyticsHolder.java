@@ -5,10 +5,6 @@ import net.openhft.chronicle.core.pom.PomProperties;
 
 public enum AnalyticsHolder {;
 
-    static {
-        System.setProperty("chronicle.analytics.enable","true");
-    }
-
     // Todo: VERSION is "unknown" for some reason
     private static final String VERSION = PomProperties.version("net.openhft", "chronicle-map");
 
