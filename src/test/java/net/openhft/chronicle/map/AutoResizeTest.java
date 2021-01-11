@@ -1,7 +1,9 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.Jvm;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -9,8 +11,14 @@ import java.io.IOException;
 
 public class AutoResizeTest {
 
-    static {
+    @BeforeClass
+    public static void setup() {
         Jvm.setExceptionHandlers(null, null, null);
+    }
+
+    @AfterClass
+    public static void reset() {
+        Jvm.resetExceptionHandlers();
     }
 
     /**
@@ -31,7 +39,6 @@ public class AutoResizeTest {
 
             int actual = map.remainingAutoResizes();
             Assert.assertNotEquals(0.0, actual);
-            System.out.println(actual);
         }
 
         // if the file already exists  it will reuse the existing settings, set above
@@ -40,13 +47,12 @@ public class AutoResizeTest {
                 .of(String.class, String.class)
                 .createOrRecoverPersistedTo(cmap)) {
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0.0, map.remainingAutoResizes());
-            System.out.println(actual);
+            Assert.assertNotEquals(0.0, actual);
         }
     }
 
     @Test
-    public void testAutoResizeNotZeroUponRestart2() throws IOException {
+    public void testAutoResizeNotZeroUponRestart2() {
 
         try (ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
@@ -56,7 +62,6 @@ public class AutoResizeTest {
 
             int actual = map.remainingAutoResizes();
             Assert.assertNotEquals(0.0, actual);
-            System.out.println(actual);
         }
     }
 
