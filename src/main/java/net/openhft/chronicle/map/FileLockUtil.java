@@ -19,7 +19,7 @@ public final class FileLockUtil {
      * Java file locks are maintained on a per JVM basis. So we need to manage them.
      */
     private static final ConcurrentHashMap<File, FileLockReference> FILE_LOCKS = new ConcurrentHashMap<>();
-    private static final boolean USE_LOCKING = !OS.isWindows() && !Boolean.getBoolean("chronicle.map.disable.locking");
+    private static final boolean USE_LOCKING = !OS.isWindows() && !Jvm.getBoolean("chronicle.map.disable.locking");
     private static final AtomicBoolean LOCK_WARNING_PRINTED = new AtomicBoolean();
 
     private FileLockUtil() {
