@@ -237,5 +237,23 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     default int remainingAutoResizes() {
         throw new UnsupportedOperationException("todo");
     }
+
+
+    /**
+     * The maximum number of times, the chronicle map is allowed to grow in size beyond
+     * the configured number of entries.
+     * <p>
+     * <p>The default maximum bloat factor factor is {@code 1.0} - i. e. "no bloat is expected".
+     * <p>
+     * <p>It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
+     * almost certainly, you either should configure {@code ChronicleHash}es completely differently,
+     * or this data store doesn't fit to your case.
+     *
+     * @return maxBloatFactor the maximum number ot times, the chronicle map is alowed to be resized
+     */
+    default double maxBloatFactor() {
+        throw new UnsupportedOperationException("todo");
+    }
+
 }
 

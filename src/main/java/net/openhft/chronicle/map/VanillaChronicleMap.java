@@ -281,6 +281,11 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
+    public double maxBloatFactor() {
+        return maxBloatFactor;
+    }
+
+    @Override
     public short percentageFreeSpace() {
         throwExceptionIfClosed();
 
