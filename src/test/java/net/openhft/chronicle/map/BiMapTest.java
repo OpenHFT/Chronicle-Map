@@ -16,8 +16,10 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Map;
@@ -27,6 +29,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.BiFunction;
 
+import static net.openhft.chronicle.core.Jvm.*;
 import static net.openhft.chronicle.hash.Data.bytesEquivalent;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.FAIL;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.SUCCESS;
@@ -40,6 +43,11 @@ public class BiMapTest {
         for (Entry<K, V> e : m1.entrySet()) {
             assertEquals(e.getKey(), m2.get(e.getValue()));
         }
+    }
+
+    @Before
+    public void before() {
+        init();
     }
 
     @Test
