@@ -681,6 +681,12 @@ public abstract class VanillaChronicleHash<K,
     }
 
     @Override
+    public void throwExceptionIfClosed() throws IllegalStateException {
+        if (isClosed())
+            super.throwExceptionIfClosed();
+    }
+
+    @Override
     protected void performClose() {
         if (resources != null && resources.releaseManually()) {
             cleanupOnClose();
