@@ -25,13 +25,14 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
+import static net.openhft.chronicle.map.ChronicleMap.of;
 
 public class MapCloseTest {
 
     @Test
     public void closeInContextTest() {
         ChronicleMap<Integer, Integer> map =
-                ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+                of(Integer.class, Integer.class).entries(1).create();
         ExternalMapQueryContext<Integer, Integer, ?> cxt = map.queryContext(1);
         map.close();
     }
@@ -39,7 +40,7 @@ public class MapCloseTest {
     @Test(expected = ChronicleHashClosedException.class)
     public void testGetAfterCloseThrowsChronicleHashClosedException() throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
-                ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+                of(Integer.class, Integer.class).entries(1).create();
         Thread t = new Thread(() -> map.close());
         t.start();
         t.join();
@@ -50,7 +51,7 @@ public class MapCloseTest {
     public void testIterationAfterCloseThrowsChronicleHashClosedException()
             throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
-                ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+                of(Integer.class, Integer.class).entries(1).create();
         Thread t = new Thread(() -> map.close());
         t.start();
         t.join();
@@ -62,7 +63,7 @@ public class MapCloseTest {
     public void testSizeAfterCloseThrowsChronicleHashClosedException()
             throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
-                ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+                of(Integer.class, Integer.class).entries(1).create();
         Thread t = new Thread(() -> map.close());
         t.start();
         t.join();
@@ -73,7 +74,7 @@ public class MapCloseTest {
     public void closeWithContextInAnotherThreadTest() throws InterruptedException {
         LOCK_TIMEOUT_SECONDS = 2;
         ChronicleMap<Integer, Integer> map =
-                ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+                of(Integer.class, Integer.class).entries(1).create();
         Object lock = new Object();
         CountDownLatch latch = new CountDownLatch(1);
         synchronized (lock) {
@@ -93,11 +94,19 @@ public class MapCloseTest {
         LOCK_TIMEOUT_SECONDS = 60;
     }
 
+    @Test(expected = ChronicleHashClosedException.class)
+    public void testRemainingAutoResizesAfterClose() {
+        ChronicleMap<Integer, Integer> map = of(Integer.class, Integer.class).entries(1).create();
+        map.close();
+        map.remainingAutoResizes();
+    }
+
+
     @Test
     public void vanillaChronicleHashAllContextsExpungeTest() throws InterruptedException {
         VanillaChronicleMap<Integer, Integer, Void> map =
                 (VanillaChronicleMap<Integer, Integer, Void>)
-                        ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
+                        of(Integer.class, Integer.class).entries(1).create();
         Semaphore semaphore = new Semaphore(0);
         CountDownLatch latch = new CountDownLatch(2);
         class MapAccessThread extends Thread {
