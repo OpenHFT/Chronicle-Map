@@ -16,10 +16,12 @@
 
 package net.openhft.chronicle.hash;
 
+import net.openhft.chronicle.core.io.ClosedIllegalStateException;
+
 /**
  * Thrown when a {@link ChronicleHash} is accessed after {@link ChronicleHash#close()}.
  */
-public final class ChronicleHashClosedException extends IllegalStateException {
+public final class ChronicleHashClosedException extends ClosedIllegalStateException {
     private static final long serialVersionUID = 0L;
 
     public ChronicleHashClosedException(ChronicleHash hash) {
@@ -28,5 +30,9 @@ public final class ChronicleHashClosedException extends IllegalStateException {
 
     public ChronicleHashClosedException(String chronicleHashIdentityString) {
         super("Access to " + chronicleHashIdentityString + " after close()");
+    }
+
+    public ChronicleHashClosedException(String s, Throwable t) {
+        super(s, t);
     }
 }

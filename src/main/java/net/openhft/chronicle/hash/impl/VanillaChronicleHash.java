@@ -20,8 +20,10 @@ import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.AbstractCloseable;
 import net.openhft.chronicle.core.io.ReferenceOwner;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
@@ -69,7 +71,7 @@ import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
-        ECQ extends ExternalHashQueryContext<K>>
+        ECQ extends ExternalHashQueryContext<K>> extends AbstractCloseable
         implements ChronicleHash<K, C, SC, ECQ>, Marshallable {
 
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
@@ -680,7 +682,13 @@ public abstract class VanillaChronicleHash<K,
     }
 
     @Override
-    public final void close() {
+    protected boolean threadSafetyCheck(boolean isUsed) {
+        // disabled for chronicle map
+        return true;
+    }
+
+    @Override
+    protected void performClose() {
         if (resources != null && resources.releaseManually()) {
             cleanupOnClose();
         }
@@ -698,11 +706,14 @@ public abstract class VanillaChronicleHash<K,
         keyDataAccess = null;
     }
 
+    /**
+     * @return !isClosed()
+     * @Deprecated use !isClosed() instead
+     */
+    @Deprecated(/*remove in x.23*/)
     @Override
     public boolean isOpen() {
-        throwExceptionIfClosed();
-
-        return !resources.closed();
+        return !isClosed();
     }
 
     public final void checkKey(final Object key) {
@@ -713,6 +724,12 @@ public abstract class VanillaChronicleHash<K,
             throw new ClassCastException(toIdentityString() + ": Key must be a " +
                     keyClass.getName() + " but was a " + key.getClass());
         }
+    }
+
+    @Override
+    public void throwExceptionIfClosed() throws IllegalStateException {
+        if (this.isClosed())
+            throw new ChronicleHashClosedException(this.getClass().getName() + " closed", Jvm.getValue(this, "closedHere"));
     }
 
     public final long segmentHeaderAddress(final int segmentIndex) {
