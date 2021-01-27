@@ -705,11 +705,14 @@ public abstract class VanillaChronicleHash<K,
         keyDataAccess = null;
     }
 
+    /**
+     * @return !isClosed()
+     * @deprecated use !isClosed() instead
+     */
+    @Deprecated(/*remove in x.23*/)
     @Override
     public boolean isOpen() {
-        throwExceptionIfClosed();
-
-        return !resources.closed();
+        return !isClosed();
     }
 
     public final void checkKey(final Object key) {
