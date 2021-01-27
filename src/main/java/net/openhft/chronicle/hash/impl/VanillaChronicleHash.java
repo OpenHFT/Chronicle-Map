@@ -681,9 +681,9 @@ public abstract class VanillaChronicleHash<K,
     }
 
     @Override
-    public void throwExceptionIfClosed() throws IllegalStateException {
-        if (isClosed())
-            super.throwExceptionIfClosed();
+    protected boolean threadSafetyCheck(boolean isUsed) {
+        // disabled for chronicle map
+        return true;
     }
 
     @Override
