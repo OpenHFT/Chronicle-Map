@@ -22,6 +22,7 @@ import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.AbstractCloseable;
 import net.openhft.chronicle.core.io.ReferenceOwner;
 import net.openhft.chronicle.hash.*;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
@@ -69,7 +70,7 @@ import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
-        ECQ extends ExternalHashQueryContext<K>>
+        ECQ extends ExternalHashQueryContext<K>> extends AbstractCloseable
         implements ChronicleHash<K, C, SC, ECQ>, Marshallable {
 
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
@@ -680,7 +681,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     @Override
-    public final void close() {
+    protected void performClose() {
         if (resources != null && resources.releaseManually()) {
             cleanupOnClose();
         }
