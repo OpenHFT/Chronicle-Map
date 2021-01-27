@@ -45,11 +45,6 @@ public class BiMapTest {
         }
     }
 
-    @Before
-    public void before() {
-        init();
-    }
-
     @Test
     public void biMapTest() throws InterruptedException, ExecutionException {
         BiMapEntryOperations<Integer, CharSequence> biMapOps1 = new BiMapEntryOperations<>();
