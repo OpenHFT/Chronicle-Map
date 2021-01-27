@@ -20,6 +20,7 @@ import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.AbstractCloseable;
@@ -707,7 +708,7 @@ public abstract class VanillaChronicleHash<K,
 
     /**
      * @return !isClosed()
-     * @deprecated use !isClosed() instead
+     * @Deprecated use !isClosed() instead
      */
     @Deprecated(/*remove in x.23*/)
     @Override
@@ -723,6 +724,12 @@ public abstract class VanillaChronicleHash<K,
             throw new ClassCastException(toIdentityString() + ": Key must be a " +
                     keyClass.getName() + " but was a " + key.getClass());
         }
+    }
+
+    @Override
+    public void throwExceptionIfClosed() throws IllegalStateException {
+        if (this.isClosed())
+            throw new ChronicleHashClosedException(this.getClass().getName() + " closed", Jvm.getValue(this, "closedHere"));
     }
 
     public final long segmentHeaderAddress(final int segmentIndex) {

@@ -28,7 +28,7 @@ import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECO
 
 public class MapCloseTest {
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void closeInContextTest() {
         ChronicleMap<Integer, Integer> map =
                 ChronicleMap.of(Integer.class, Integer.class).entries(1).create();
@@ -69,7 +69,7 @@ public class MapCloseTest {
         map.size();
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void closeWithContextInAnotherThreadTest() throws InterruptedException {
         LOCK_TIMEOUT_SECONDS = 2;
         ChronicleMap<Integer, Integer> map =
