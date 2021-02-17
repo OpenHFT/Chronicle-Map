@@ -167,6 +167,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 }
             };
     private static final int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
+    private static final boolean MAP_CREATION_DEBUG = Jvm.getBoolean("chronicle.map.creation.debug");
 
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
@@ -1829,6 +1830,11 @@ public final class ChronicleMapBuilder<K, V> implements
                                                            @NotNull final ChronicleHashResources resources,
                                                            @NotNull final ByteBuffer headerBuffer,
                                                            final int headerSize) throws IOException {
+        if (MAP_CREATION_DEBUG) {
+            Jvm.warn().on(getClass(), "<map creation debug> File [canonizedMapDataFile=" + canonicalFile.getAbsolutePath() +
+                    "] is missing or empty, creating Map from scratch");
+        }
+
         map.initBeforeMapping(canonicalFile, raf, headerBuffer.limit(), false);
         map.createMappedStoreAndSegments(resources);
         FileLockUtil.acquireSharedFileLock(canonicalFile, raf.getChannel());
@@ -1851,6 +1857,12 @@ public final class ChronicleMapBuilder<K, V> implements
             if (headerSize != headerBuffer.remaining())
                 throw new AssertionError();
             final boolean headerCorrect = checkSumSelfBootstrappingHeader(headerBuffer, headerSize);
+
+            if (MAP_CREATION_DEBUG) {
+                Jvm.warn().on(getClass(), "<map creation debug> Using existing file [canonizedMapDataFile=" + file.getAbsolutePath() +
+                        ", size=" + raf.length() + ", headerCorrect=" + headerCorrect + "] for map creation");
+            }
+
             boolean headerWritten = false;
             if (!headerCorrect) {
                 if (overrideBuilderConfig) {
@@ -1868,6 +1880,12 @@ public final class ChronicleMapBuilder<K, V> implements
             headerBytes.readPosition(headerBuffer.position());
             headerBytes.readLimit(headerBuffer.limit());
             final Wire wire = new TextWire(headerBytes);
+
+            if (MAP_CREATION_DEBUG) {
+                Jvm.warn().on(getClass(), "<map creation debug> Read header from file [canonizedMapDataFile=" +
+                        file.getAbsolutePath() + "]: " + wire.toString());
+            }
+
             final VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
 
@@ -1896,6 +1914,11 @@ public final class ChronicleMapBuilder<K, V> implements
                 commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
             map.addCloseable(() -> FileLockUtil.releaseFileLock(file));
+            if (MAP_CREATION_DEBUG) {
+                Jvm.warn().on(getClass(), "<map creation debug> Created map [name=" + map.name() +
+                        ", size=" + map.longSize() + "] from file [canonizedMapDataFile=" +
+                        file.getAbsolutePath() + "]");
+            }
             return map;
         } catch (Throwable t) {
             if (recover && !(t instanceof IOException) &&
