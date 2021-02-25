@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.values.*;
 
+@Deprecated(/* Kept only for reading old store formats, ReplicatedGlobalMutableStateV2 is used for new ones. */)
 interface ReplicatedGlobalMutableState extends VanillaGlobalMutableState {
 
     static void main(String[] args) {

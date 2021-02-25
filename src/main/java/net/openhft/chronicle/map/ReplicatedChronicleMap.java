@@ -112,6 +112,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private long segmentModIterBitSetsForIdentifierOuterSize;
     private long tierBulkModIterBitSetsForIdentifierOuterSize;
     private AtomicLong changeCount;
+    private String globalMutableStateClass;
 
     /**
      * Default value is 0, that corresponds to "unset" identifier value (valid ids are positive)
@@ -150,6 +151,13 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         tierBulkModIterBitSetsForIdentifierOuterSize =
                 wireIn.read(() -> "tierBulkModIterBitSetsForIdentifierOuterSize").int64();
 
+        globalMutableStateClass = wireIn.read(() -> "globalMutableStateClass").text();
+        if (globalMutableStateClass == null) {
+            globalMutableStateClass = ReplicatedGlobalMutableState.class.getName();
+            // Missing "globalMutableStateClass" means we are reading from old data store file
+            // Using legacy global mutable state class
+        }
+
         changeCount = new AtomicLong(0);
     }
 
@@ -163,11 +171,25 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 .int64(segmentModIterBitSetsForIdentifierOuterSize);
         wireOut.write(() -> "tierBulkModIterBitSetsForIdentifierOuterSize")
                 .int64(tierBulkModIterBitSetsForIdentifierOuterSize);
+        wireOut.write(() -> "globalMutableStateClass").text(globalMutableStateClass);
     }
 
     @Override
     protected VanillaGlobalMutableState createGlobalMutableState() {
-        return Values.newNativeReference(ReplicatedGlobalMutableState.class);
+        if (createdOrInMemory) {
+            final Class<ReplicatedGlobalMutableStateV2> defaultClass = ReplicatedGlobalMutableStateV2.class;
+
+            globalMutableStateClass = defaultClass.getName();
+            // Must be set before writeHeader() call - classname should be persisted as a part of the header
+
+            return Values.newNativeReference(defaultClass);
+        }
+
+        try {
+            return (VanillaGlobalMutableState) Values.newNativeReference(Class.forName(globalMutableStateClass));
+        } catch (ClassNotFoundException e) {
+            throw new IllegalStateException("Failed to resolve global mutable state class: " + globalMutableStateClass, e);
+        }
     }
 
     @Override
