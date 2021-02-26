@@ -20,6 +20,7 @@ package net.openhft.chronicle.map.perf;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Jvm;
+import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.core.jlbh.JLBH;
 import net.openhft.chronicle.core.jlbh.JLBHOptions;
@@ -34,24 +35,39 @@ import net.openhft.chronicle.values.Values;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * model name      : Intel(R) Core(TM) i7-10710U CPU @ 1.10GHz
+ * -------------------------------- SUMMARY (end to end) -----------------------------------------------------------
+ * Percentile   run1         run2         run3         run4         run5      % Variation
+ * 50:             0.66         0.63         0.64         0.64         0.64         0.83
+ * 90:             0.81         0.77         0.78         0.79         0.78         1.02
+ * 99:             1.36         1.18         1.19         1.21         1.19         1.78
+ * 99.7:           1.76         1.34         1.36         1.48         1.36         6.69
+ * 99.9:           2.86         2.00         1.84         2.78         2.33        25.45
+ * 99.97:         20.80        20.80        18.88        20.80        20.80         6.35
+ * 99.99:         23.10        23.10        22.85        23.23        23.10         1.11
+ * worst:       4276.22      2035.71      2465.79      2121.73      2068.48        12.35
+ * -------------------------------------------------------------------------------------------------------------------
+ */
 public class MapJLBHTest implements JLBHTask {
     private static final int WARM_UP_ITERATIONS = 40_000;
-    private ChronicleMap<Long, IFacade> read;
-    private ChronicleMap<Long, IFacade> write;
+    private static final int KEYS = Integer.getInteger("keys", 100_000);
+    private ChronicleMap<Long, IFacade0> read;
+    private ChronicleMap<Long, IFacade0> write;
     private NanoSampler readSampler;
     private NanoSampler writeSampler;
     private NanoSampler e2eSampler;
-    private File mapFile = new File("perfmap/map.cm3");
+    private File mapFile = new File(OS.TMP + "/perfmap/map.cm3");
     private long counter = -WARM_UP_ITERATIONS;
-    private IFacade datum = Values.newNativeReference(IFacade.class);
+    private IFacade0 datum = Values.newNativeReference(IFacade0.class);
 
     public static void main(String[] args) {
         //Create the JLBH options you require for the benchmark
         JLBHOptions options = new JLBHOptions()
                 .warmUpIterations(WARM_UP_ITERATIONS)
-                .iterations(500_000)
-                .throughput(40_000)
-                .runs(3)
+                .iterations(10_000_000)
+                .throughput(110_000)
+                .runs(5)
                 .recordOSJitter(false)
                 .accountForCoordinatedOmmission(false)
                 .jlbhTask(new MapJLBHTest());
@@ -60,7 +76,7 @@ public class MapJLBHTest implements JLBHTask {
 
     @Override
     public void init(JLBH jlbh) {
-        IOTools.deleteDirWithFiles("perfmap", 10);
+        IOTools.deleteDirWithFiles(mapFile.getParent(), 2);
         mapFile.getParentFile().mkdirs();
         readSampler = jlbh.addProbe("Read");
         writeSampler = jlbh.addProbe("Write");
@@ -71,8 +87,14 @@ public class MapJLBHTest implements JLBHTask {
         byteable.bytesStore(NativeBytesStore.nativeStore(capacity), 0, capacity);
 
         try {
-            write = ChronicleMapBuilder.of(Long.class, IFacade.class).constantValueSizeBySample(datum).entries(1_100_000).createPersistedTo(mapFile);
-            read = ChronicleMapBuilder.of(Long.class, IFacade.class).constantValueSizeBySample(datum).entries(1_100_000).createPersistedTo(mapFile);
+            write = ChronicleMapBuilder.of(Long.class, IFacade0.class)
+                    .constantValueSizeBySample(datum)
+                    .entries(KEYS * 2L)
+                    .createPersistedTo(mapFile);
+            read = ChronicleMapBuilder.of(Long.class, IFacade0.class)
+                    .constantValueSizeBySample(datum)
+                    .entries(KEYS * 2L)
+                    .createPersistedTo(mapFile);
         } catch (IOException ex) {
             throw Jvm.rethrow(ex);
         }
@@ -80,7 +102,7 @@ public class MapJLBHTest implements JLBHTask {
 
     @Override
     public void run(long startTimeNS) {
-        long runNo = counter++;
+        long runNo = counter++ % KEYS;
         datum.setValue10(startTimeNS);
         long startWrite = System.nanoTime();
         write.put(runNo, datum);
@@ -88,7 +110,7 @@ public class MapJLBHTest implements JLBHTask {
         long writeTime = endWrite - startWrite;
         writeSampler.sampleNanos(writeTime);
 
-        IFacade dataRead = read.getUsing(runNo - 1, datum);
+        IFacade0 dataRead = read.getUsing(runNo - 1, datum);
         long nanos = System.nanoTime();
         if (dataRead != null) {
             readSampler.sampleNanos(nanos - endWrite);
@@ -227,6 +249,9 @@ public class MapJLBHTest implements JLBHTask {
         double getValue28();
 
         void setValue28(double value);
+    }
+
+    interface IFacadeDaughter extends IFacadeBase {
 
         double getValue29();
 
@@ -243,9 +268,7 @@ public class MapJLBHTest implements JLBHTask {
         double getValue32();
 
         void setValue32(double value);
-    }
 
-    interface IFacadeDaughter extends IFacadeBase {
         long getValue33();
 
         void setValue33(long value);
@@ -513,267 +536,13 @@ public class MapJLBHTest implements JLBHTask {
         int getValue99();
 
         void setValue99(int value);
+    }
 
-        int getValue100();
+    interface IFacade0 extends IFacadeBase {
+        @Array(length = 3)
+        void setSonAt(int idx, IFacadeSon son);
 
-        void setValue100(int value);
-
-        int getValue101();
-
-        void setValue101(int value);
-
-        int getValue102();
-
-        void setValue102(int value);
-
-        int getValue103();
-
-        void setValue103(int value);
-
-        int getValue104();
-
-        void setValue104(int value);
-
-        double getValue105();
-
-        void setValue105(double value);
-
-        double getValue106();
-
-        void setValue106(double value);
-
-        long getValue107();
-
-        void setValue107(long value);
-
-        long getValue108();
-
-        void setValue108(long value);
-
-        long getValue109();
-
-        void setValue109(long value);
-
-        byte getValue110();
-
-        void setValue110(byte value);
-
-        byte getValue111();
-
-        void setValue111(byte value);
-
-        byte getValue112();
-
-        void setValue112(byte value);
-
-        byte getValue113();
-
-        void setValue113(byte value);
-
-        byte getValue114();
-
-        void setValue114(byte value);
-
-        byte getValue115();
-
-        void setValue115(byte value);
-
-        byte getValue116();
-
-        void setValue116(byte value);
-
-        byte getValue117();
-
-        void setValue117(byte value);
-
-        byte getValue118();
-
-        void setValue118(byte value);
-
-        byte getValue119();
-
-        void setValue119(byte value);
-
-        byte getValue120();
-
-        void setValue120(byte value);
-
-        byte getValue121();
-
-        void setValue121(byte value);
-
-        byte getValue122();
-
-        void setValue122(byte value);
-
-        byte getValue123();
-
-        void setValue123(byte value);
-
-        byte getValue124();
-
-        void setValue124(byte value);
-
-        byte getValue125();
-
-        void setValue125(byte value);
-
-        int getValue126();
-
-        void setValue126(int value);
-
-        int getValue127();
-
-        void setValue127(int value);
-
-        int getValue128();
-
-        void setValue128(int value);
-
-        int getValue129();
-
-        void setValue129(int value);
-
-        int getValue130();
-
-        void setValue130(int value);
-
-        int getValue131();
-
-        void setValue131(int value);
-
-        int getValue132();
-
-        void setValue132(int value);
-
-        int getValue133();
-
-        void setValue133(int value);
-
-        int getValue134();
-
-        void setValue134(int value);
-
-        int getValue135();
-
-        void setValue135(int value);
-
-        int getValue136();
-
-        void setValue136(int value);
-
-        int getValue137();
-
-        void setValue137(int value);
-
-        int getValue138();
-
-        void setValue138(int value);
-
-        int getValue139();
-
-        void setValue139(int value);
-
-        int getValue140();
-
-        void setValue140(int value);
-
-        int getValue141();
-
-        void setValue141(int value);
-
-        double getValue142();
-
-        void setValue142(double value);
-
-        double getValue143();
-
-        void setValue143(double value);
-
-        byte getValue144();
-
-        void setValue144(byte value);
-
-        String getValue145();
-
-        void setValue145(@MaxUtf8Length(3) String value);
-
-        short getValue146();
-
-        void setValue146(short value);
-
-        byte getValue147();
-
-        void setValue147(byte value);
-
-        byte getValue148();
-
-        void setValue148(byte value);
-
-        int getValue149();
-
-        void setValue149(int value);
-
-        short getValue150();
-
-        void setValue150(short value);
-
-        boolean getValue151();
-
-        void setValue151(boolean value);
-
-        boolean getValue152();
-
-        void setValue152(boolean value);
-
-        short getValue153();
-
-        void setValue153(short value);
-
-        short getValue154();
-
-        void setValue154(short value);
-
-        long getValue155();
-
-        void setValue155(long value);
-
-        long getValue156();
-
-        void setValue156(long value);
-
-        long getValue157();
-
-        void setValue157(long value);
-
-        long getValue158();
-
-        void setValue158(long value);
-
-        long getValue159();
-
-        void setValue159(long value);
-
-        long getValue160();
-
-        void setValue160(long value);
-
-        long getValue161();
-
-        void setValue161(long value);
-
-        short getValue162();
-
-        void setValue162(short value);
-
-        short getValue163();
-
-        void setValue163(short value);
-
-        short getValue164();
-
-        void setValue164(short value);
-
+        IFacadeSon getSonAt(int idx);
     }
 
     interface IFacade extends IFacadeBase {
