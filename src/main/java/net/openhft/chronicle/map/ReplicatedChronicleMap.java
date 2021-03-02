@@ -1058,7 +1058,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             final DirtyEntriesHandler syncHandler = new DirtyEntriesHandler(segment -> true, fromTimeStamp);
 
             try {
-                for (int i = 0; i < actualSegments; i++)
+                for (int i = 0; i < actualSegments + 1; i++) // Call [actualSegments + 1] times to trigger context close
                     syncHandler.action();
             }
             catch (InvalidEventHandlerException e) {
