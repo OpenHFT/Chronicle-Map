@@ -992,8 +992,12 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
             @Override
             public boolean action() throws InvalidEventHandlerException {
-                if (segmentIndex >= actualSegments)
-                    workCompleted();
+                if (segmentIndex >= actualSegments) {
+                    if (iterationContext != null)
+                        iterationContext.close();
+
+                    throw new InvalidEventHandlerException("background work is done, removing the handler");
+                }
 
                 if (!segmentPredicate.test(segmentIndex)) {
                     segmentIndex++;
@@ -1033,7 +1037,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                         }
                     });
                 } catch (ChronicleHashClosedException e) {
-                    workCompleted();
+                    if (iterationContext != null)
+                        iterationContext.close();
+
+                    throw new InvalidEventHandlerException(e);
                 }
 
                 segmentIndex++;
@@ -1041,14 +1048,24 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                 return true;
             }
 
-            private void workCompleted() throws InvalidEventHandlerException {
-                if (iterationContext != null)
-                    iterationContext.close();
-
-                throw new InvalidEventHandlerException("removes the handler");
-            }
         }
 
+        @Override
+        @Deprecated(/* to be removed in x.22 */)
+        public void dirtyEntries(long fromTimeStamp) {
+            throwExceptionIfClosed();
+
+            final DirtyEntriesHandler syncHandler = new DirtyEntriesHandler(segment -> true, fromTimeStamp);
+
+            try {
+                for (int i = 0; i < actualSegments; i++)
+                    syncHandler.action();
+            }
+            catch (InvalidEventHandlerException e) {
+                if (e.getCause() instanceof ChronicleHashClosedException)
+                    throw (ChronicleHashClosedException)e.getCause();
+            }
+        }
 
         @Override
         public void dirtyEntries(long fromTimeStamp, @NotNull EventLoop eventLoop) {
