@@ -19,6 +19,11 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.algo.bitset.BitSetFrame;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.threads.EventHandler;
+import net.openhft.chronicle.core.threads.EventLoop;
+import net.openhft.chronicle.core.threads.HandlerPriority;
+import net.openhft.chronicle.core.threads.InvalidEventHandlerException;
+import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.hash.impl.TierCountersArea;
@@ -27,6 +32,7 @@ import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapIterationContext;
 import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
+import net.openhft.chronicle.threads.EventGroup;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
@@ -42,6 +48,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
+import java.util.function.IntPredicate;
 import java.util.stream.Stream;
 
 import static net.openhft.chronicle.algo.MemoryUnit.*;
@@ -961,20 +968,52 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             tierModIterFrame.clear(nativeAccess(), null, tierBitSetAddr, entryPos);
         }
 
-        @Override
-        public void dirtyEntries(final long fromTimeStamp) {
-            throwExceptionIfClosed();
+        /**
+         * Handler that performs background invalidation of possibly outdated entries on node restart.
+         * Outgoing replication is not blocked by this process - invalidated entries will be eventually picked
+         * by the modification iterator.
+         */
+        class DirtyEntriesHandler implements EventHandler {
+            private final IntPredicate segmentPredicate;
+            private final long fromTimeStamp;
+            private int segmentIndex;
+            private CompiledReplicatedMapIterationContext<K, V, R> iterationContext;
 
-            try (CompiledReplicatedMapIterationContext<K, V, R> c = iterationContext()) {
-                // iterate over all the segments and mark bit in the modification iterator
-                // that correspond to entries with an older timestamp
+            @Override
+            public @NotNull
+            HandlerPriority priority() {
+                return HandlerPriority.CONCURRENT;
+            }
+
+            public DirtyEntriesHandler(IntPredicate segmentPredicate, long fromTimeStamp) {
+                this.segmentPredicate = segmentPredicate;
+                this.fromTimeStamp = fromTimeStamp;
+            }
+
+            @Override
+            public boolean action() throws InvalidEventHandlerException {
+                if (segmentIndex >= actualSegments)
+                    workCompleted();
+
+                if (!segmentPredicate.test(segmentIndex)) {
+                    segmentIndex++;
+
+                    return true;
+                }
+
                 final boolean debugEnabled = LOG.isDebugEnabled();
-                for (int segmentIndex = 0; segmentIndex < actualSegments; segmentIndex++) {
-                    c.initSegmentIndex(segmentIndex);
-                    c.forEachSegmentReplicableEntry(e -> {
+
+                try {
+                    throwExceptionIfClosed();
+
+                    if (iterationContext == null)
+                        iterationContext = iterationContext();
+
+                    iterationContext.initSegmentIndex(segmentIndex);
+                    iterationContext.forEachSegmentReplicableEntry(e -> {
                         if (debugEnabled) {
                             LOG.debug("Bootstrap entry: id {}, key {}, value {}", localIdentifier,
-                                    c.key(), c.value());
+                                    iterationContext.key(), iterationContext.value());
                         }
                         // Bizarrely the next line line cause NPE in JDT compiler
                         //assert re.originTimestamp() > 0L;
@@ -990,10 +1029,35 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                         // reconnecting vs. different Map start-up
                         if (e.originIdentifier() != localIdentifier ||
                                 e.originTimestamp() >= fromTimeStamp) {
-                            raiseChange0(c.tierIndex(), c.pos());
+                            raiseChange0(iterationContext.tierIndex(), iterationContext.pos());
                         }
                     });
+                } catch (ChronicleHashClosedException e) {
+                    workCompleted();
                 }
+
+                segmentIndex++;
+
+                return true;
+            }
+
+            private void workCompleted() throws InvalidEventHandlerException {
+                if (iterationContext != null)
+                    iterationContext.close();
+
+                throw new InvalidEventHandlerException("removes the handler");
+            }
+        }
+
+
+        @Override
+        public void dirtyEntries(long fromTimeStamp, @NotNull EventLoop eventLoop) {
+            throwExceptionIfClosed();
+
+            for (int i = 0; i < EventGroup.CONC_THREADS; i++) {
+                final int finalI = i;
+                eventLoop.addHandler(new DirtyEntriesHandler(
+                        segment -> segment % EventGroup.CONC_THREADS == finalI, fromTimeStamp));
             }
         }
 

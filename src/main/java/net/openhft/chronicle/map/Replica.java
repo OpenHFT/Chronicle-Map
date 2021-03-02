@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import org.jetbrains.annotations.NotNull;
@@ -137,8 +138,9 @@ public interface Replica extends Closeable {
          * entries to a new remote node as it connects.
          *
          * @param fromTimeStamp the timestamp from which all entries should be dirty
+         * @param eventLoop event loop in which dirtying to be executed
          */
-        void dirtyEntries(long fromTimeStamp);
+        void dirtyEntries(long fromTimeStamp, @NotNull EventLoop eventLoop);
 
         /**
          * the {@code modificationNotifier} is called when ever there is a change applied to the
