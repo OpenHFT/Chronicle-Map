@@ -278,4 +278,14 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public long write8bit(long position, BytesStore bs) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long write8bit(long position, String s, int start, int length) {
+        throw new UnsupportedOperationException();
+    }
+
 }
