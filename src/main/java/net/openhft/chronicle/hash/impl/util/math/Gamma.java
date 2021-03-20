@@ -580,6 +580,5 @@ class Gamma {
         assert x <= 1.5;
         return -Math.log1p(invGamma1pm1(x));
     }
-
 }
 

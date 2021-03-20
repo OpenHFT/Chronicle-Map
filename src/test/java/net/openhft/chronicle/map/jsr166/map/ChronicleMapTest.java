@@ -700,6 +700,5 @@ public class ChronicleMapTest extends JSR166TestCase {
             return r;
         }
     }
-
 }
 

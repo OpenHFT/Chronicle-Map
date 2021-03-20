@@ -133,5 +133,4 @@ abstract class ContinuedFraction {
 
         return hN;
     }
-
 }

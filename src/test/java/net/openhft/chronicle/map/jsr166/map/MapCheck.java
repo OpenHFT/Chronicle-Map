@@ -744,5 +744,4 @@ public class MapCheck {
             number += n;
         }
     }
-
 }

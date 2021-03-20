@@ -2040,5 +2040,4 @@ public final class ChronicleMapBuilder<K, V> implements
             this.worstAlignment = worstAlignment;
         }
     }
-
 }

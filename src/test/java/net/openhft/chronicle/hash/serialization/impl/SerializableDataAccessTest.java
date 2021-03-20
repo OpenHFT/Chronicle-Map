@@ -24,5 +24,4 @@ public class SerializableDataAccessTest {
         SerializableTest.Foo foo = sda.getUsing(null);
         assertEquals(expected, foo.x);
     }
-
 }

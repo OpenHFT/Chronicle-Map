@@ -422,5 +422,4 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return false;
     }
-
 }

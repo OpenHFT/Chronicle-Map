@@ -45,5 +45,4 @@ public class Issue125Test {
         shaToNodeBuilder.createPersistedTo(cacheRoot);
 
     }
-
 }

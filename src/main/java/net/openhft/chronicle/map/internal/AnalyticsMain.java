@@ -43,5 +43,4 @@ public final class AnalyticsMain {
                 .entries(1_000)
                 .create();
     }
-
 }

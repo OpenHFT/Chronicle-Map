@@ -61,7 +61,6 @@ enum ToString implements SerializableFunction<Object, String> {
     public String apply(Object o) {
         return String.valueOf(o);
     }
-
 }
 
 interface IData extends BytesMarshallable {

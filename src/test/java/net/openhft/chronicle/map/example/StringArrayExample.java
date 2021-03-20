@@ -58,5 +58,4 @@ public class StringArrayExample {
 
         void setCharSequence(@MaxUtf8Length(6) CharSequence charSequence);
     }
-
 }

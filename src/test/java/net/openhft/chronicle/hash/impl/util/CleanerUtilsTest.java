@@ -35,5 +35,4 @@ public class CleanerUtilsTest {
 
         assertTrue(latch.await(1, TimeUnit.SECONDS));
     }
-
 }

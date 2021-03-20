@@ -229,5 +229,4 @@ class LoopHelpers {
             return endTime - startTime;
         }
     }
-
 }

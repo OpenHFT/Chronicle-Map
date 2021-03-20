@@ -238,7 +238,6 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
         throw new UnsupportedOperationException("todo");
     }
 
-
     /**
      * The maximum number of times, the chronicle map is allowed to grow in size beyond
      * the configured number of entries.
@@ -254,6 +253,5 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     default double maxBloatFactor() {
         throw new UnsupportedOperationException("todo");
     }
-
 }
 

@@ -94,5 +94,4 @@ public class AcquireGetUsingMain {
 
         void setMaxNumberOfProcessesAllowed(int num);
     }
-
 }

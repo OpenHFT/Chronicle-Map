@@ -29,5 +29,4 @@ public class PingPongAddRight {
 
         playPingPong(chm, -1, false, "PingPongAddRIGHT");
     }
-
 }

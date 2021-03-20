@@ -64,5 +64,4 @@ public class AutoResizeTest {
             Assert.assertNotEquals(0.0, actual);
         }
     }
-
 }

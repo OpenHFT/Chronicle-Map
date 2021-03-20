@@ -151,6 +151,5 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         reader.moveUp();
         return null;
     }
-
 }
 

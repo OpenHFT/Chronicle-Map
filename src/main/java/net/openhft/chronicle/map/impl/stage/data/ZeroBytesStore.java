@@ -287,5 +287,4 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     public long write8bit(long position, String s, int start, int length) {
         throw new UnsupportedOperationException();
     }
-
 }

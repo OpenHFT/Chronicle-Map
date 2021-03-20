@@ -101,7 +101,6 @@ public class MapCloseTest {
         map.remainingAutoResizes();
     }
 
-
     @Test
     public void vanillaChronicleHashAllContextsExpungeTest() throws InterruptedException {
         VanillaChronicleMap<Integer, Integer, Void> map =

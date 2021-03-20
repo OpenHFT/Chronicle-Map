@@ -67,5 +67,4 @@ public class Issue62ChronicleServer {
         Jvm.pause(15000);
 
     }
-
 }
