@@ -68,8 +68,7 @@ public class MapJLBHTest implements JLBHTask {
                 .iterations(10_000_000)
                 .throughput(110_000)
                 .runs(5)
-                .recordOSJitter(false)
-                .accountForCoordinatedOmmission(false)
+                .recordOSJitter(false).accountForCoordinatedOmission(false)
                 .jlbhTask(new MapJLBHTest());
         new JLBH(options).start();
     }

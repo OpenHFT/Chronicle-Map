@@ -19,7 +19,6 @@ package net.openhft.chronicle.map.perf;
 
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.NativeBytesStore;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.core.jlbh.JLBH;
 import net.openhft.chronicle.core.jlbh.JLBHOptions;
@@ -32,7 +31,6 @@ import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
 
 import java.io.File;
-import java.io.IOException;
 
 public class NonPersistedMapJLBHTest implements JLBHTask {
     private static final int WARM_UP_ITERATIONS = 40_000;
@@ -52,8 +50,7 @@ public class NonPersistedMapJLBHTest implements JLBHTask {
                 .iterations(500_000)
                 .throughput(40_000)
                 .runs(3)
-                .recordOSJitter(false)
-                .accountForCoordinatedOmmission(false)
+                .recordOSJitter(false).accountForCoordinatedOmission(false)
                 .jlbhTask(new NonPersistedMapJLBHTest());
         new JLBH(options).start();
     }
