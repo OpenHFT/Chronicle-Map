@@ -23,8 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.ref.WeakReference;
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
+import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
@@ -95,7 +94,7 @@ class OldDeletedEntriesCleanupThread extends Thread
 
     // Implementing Fisher–Yates shuffle
     private static void shuffle(int[] a) {
-        Random rnd = ThreadLocalRandom.current();
+        SecureRandom rnd = new SecureRandom();
         for (int i = a.length - 1; i > 0; i--) {
             int index = rnd.nextInt(i + 1);
             int e = a[index];
