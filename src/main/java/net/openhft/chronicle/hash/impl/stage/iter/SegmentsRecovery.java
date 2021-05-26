@@ -78,8 +78,7 @@ public abstract class SegmentsRecovery implements IterationContext {
                     );
                     TierCountersArea.segmentIndex(tierCountersAreaAddr, segmentIndex);
                 }
-                s.nextTierIndex(0);
-
+                TierCountersArea.nextTierIndex(tierCountersAreaAddr, 0);
                 s.initSegmentIndex(segmentIndex);
                 s.goToLastTier();
                 s.nextTierIndex(tierIndex);
