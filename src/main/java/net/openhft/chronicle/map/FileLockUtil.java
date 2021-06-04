@@ -90,36 +90,34 @@ public final class FileLockUtil {
             printWarningTheFirstTime();
     }
 
+    /**
+     * Executes a closure under exclusive file lock.
+     * If USE_LOCKING is false, provides synchronization only within local JVM.
+     *
+     * @param fileIOAction Closure to run, can throw {@link IOException}s.
+     */
     public static void runExclusively(@NotNull final File canonicalFile,
                                       @NotNull final FileChannel fileChannel,
-                                      @NotNull final Runnable fileIOAction) {
-
-        // This method runs regardless of the USE_LOCKING flag since it is only used
-        // for initial map creation. This works on all platforms
-
-        // Atomically acquire a FileLockReference
-        final FileLockReference fileLockRef = FILE_LOCKS.compute(canonicalFile, (f, flr) ->
-                {
+                                      @NotNull final FileIOAction fileIOAction) {
+        FILE_LOCKS.compute(canonicalFile, (f, flr) -> {
                     if (flr != null)
                         throw new ChronicleFileLockException("A file lock instance already exists for the file " + canonicalFile);
+
                     try {
-                        return new FileLockReference(fileChannel.lock());
-                    } catch (IOException e) {
-                        throw new ChronicleFileLockException(e);
+                        if (USE_LOCKING) {
+                            try (FileLock ignored = fileChannel.lock()) {
+                                fileIOAction.fileIOAction();
+                            }
+                        } else {
+                            fileIOAction.fileIOAction();
+                        }
+
+                        return null;
+                    } catch (Exception e) {
+                        throw Jvm.rethrow(e);
                     }
                 }
         );
-
-        try {
-            fileIOAction.run();
-        } finally {
-            try {
-                fileLockRef.release();
-            } catch (Exception ignore) {
-            } finally {
-                FILE_LOCKS.remove(canonicalFile);
-            }
-        }
     }
 
     static void dump() {
@@ -182,5 +180,10 @@ public final class FileLockUtil {
                     ", refCount=" + refCount +
                     '}';
         }
+    }
+
+    @FunctionalInterface
+    interface FileIOAction {
+        void fileIOAction() throws IOException;
     }
 }

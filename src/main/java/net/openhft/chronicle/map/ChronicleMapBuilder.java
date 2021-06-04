@@ -1695,9 +1695,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 final AtomicBoolean newFile = new AtomicBoolean();
                 final FileChannel fileChannel = raf.getChannel();
 
-                FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
-
-                try {
+                FileLockUtil.runExclusively(canonicalFile, fileChannel, () -> {
                     if (raf.length() == 0) {
                         map.set(newMap());
                         headerBuffer.set(writeHeader(fileChannel, map.get()));
@@ -1705,10 +1703,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     } else {
                         newFile.set(false);
                     }
-                }
-                finally {
-                    FileLockUtil.releaseFileLock(canonicalFile);
-                }
+                });
 
                 if (newFile.get()) {
                     final int headerSize = headerBuffer.get().remaining();
