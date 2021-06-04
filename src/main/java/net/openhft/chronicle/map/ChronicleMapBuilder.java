@@ -54,7 +54,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -478,32 +477,6 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private static long roundDown(final double v) {
         return (long) v;
-    }
-
-    /**
-     * When Chronicle Maps are created using {@link #createPersistedTo(File)} or
-     * {@link #recoverPersistedTo(File, boolean)} or {@link
-     * #createOrRecoverPersistedTo(File, boolean)} methods, file lock on the Chronicle Map's file is
-     * acquired, that shouldn't be done from concurrent threads within the same JVM process. So
-     * creation of Chronicle Maps persisted to the same File should be synchronized across JVM's
-     * threads. Simple way would be to synchronize on some static (lock) object, but would serialize
-     * all Chronicle Maps creations (persisted to any files), ConcurrentHashMap#compute() gives more
-     * scalability. ConcurrentHashMap is used effectively for lock striping only, because the
-     * entries are not even landing the map, because compute() always returns null.
-     */
-    private static void fileLockedIO(@NotNull final File file,
-                                     @NotNull final FileChannel fileChannel,
-                                     @NotNull final FileIOAction fileIOAction) {
-        FILE_LOCKING_CONTROL.compute(file, (k, v) -> {
-            try {
-                try (FileLock ignored = fileChannel.lock()) {
-                    fileIOAction.fileIOAction();
-                }
-                return null;
-            } catch (IOException e) {
-                throw Jvm.rethrow(e);
-            }
-        });
     }
 
     private boolean isKeySizeKnown() {
@@ -1722,7 +1695,9 @@ public final class ChronicleMapBuilder<K, V> implements
                 final AtomicBoolean newFile = new AtomicBoolean();
                 final FileChannel fileChannel = raf.getChannel();
 
-                fileLockedIO(canonicalFile, fileChannel, () -> {
+                FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
+
+                try {
                     if (raf.length() == 0) {
                         map.set(newMap());
                         headerBuffer.set(writeHeader(fileChannel, map.get()));
@@ -1730,7 +1705,10 @@ public final class ChronicleMapBuilder<K, V> implements
                     } else {
                         newFile.set(false);
                     }
-                });
+                }
+                finally {
+                    FileLockUtil.releaseFileLock(canonicalFile);
+                }
 
                 if (newFile.get()) {
                     final int headerSize = headerBuffer.get().remaining();
@@ -2025,11 +2003,6 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     private enum ChecksumEntries {YES, NO, IF_PERSISTED}
-
-    @FunctionalInterface
-    private interface FileIOAction {
-        void fileIOAction() throws IOException;
-    }
 
     private static final class EntrySizeInfo {
         private final double averageEntrySize;
