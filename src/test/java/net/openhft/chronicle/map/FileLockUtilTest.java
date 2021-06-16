@@ -13,8 +13,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class FileLockUtilTest {
 
@@ -42,8 +41,8 @@ public class FileLockUtilTest {
         if (!OS.isWindows()) {
             FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
             FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
-            FileLockUtil.releaseFileLock(canonicalFile);
-            FileLockUtil.releaseFileLock(canonicalFile);
+            FileLockUtil.releaseSharedFileLock(canonicalFile);
+            FileLockUtil.releaseSharedFileLock(canonicalFile);
         }
     }
 
@@ -51,9 +50,9 @@ public class FileLockUtilTest {
     public void testExclusiveNormalCase() {
         if (!OS.isWindows()) {
             FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
-            FileLockUtil.releaseFileLock(canonicalFile);
+            FileLockUtil.releaseExclusiveFileLock(canonicalFile);
             FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
-            FileLockUtil.releaseFileLock(canonicalFile);
+            FileLockUtil.releaseExclusiveFileLock(canonicalFile);
         }
     }
 
@@ -66,7 +65,7 @@ public class FileLockUtilTest {
                 fail();
             } catch (ChronicleFileLockException ignore) {
             }
-            FileLockUtil.releaseFileLock(canonicalFile);
+            FileLockUtil.releaseSharedFileLock(canonicalFile);
         }
     }
 
@@ -79,7 +78,7 @@ public class FileLockUtilTest {
                 fail();
             } catch (ChronicleFileLockException ignore) {
             }
-            FileLockUtil.releaseFileLock(canonicalFile);
+            FileLockUtil.releaseExclusiveFileLock(canonicalFile);
         }
     }
 
@@ -87,13 +86,13 @@ public class FileLockUtilTest {
     public void testComplicated() {
         if (!OS.isWindows()) {
             FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
-            FileLockUtil.releaseFileLock(canonicalFile);
+            FileLockUtil.releaseExclusiveFileLock(canonicalFile);
             FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
             FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
-            FileLockUtil.releaseFileLock(canonicalFile);
-            FileLockUtil.releaseFileLock(canonicalFile);
+            FileLockUtil.releaseSharedFileLock(canonicalFile);
+            FileLockUtil.releaseSharedFileLock(canonicalFile);
             FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
-            FileLockUtil.releaseFileLock(canonicalFile);
+            FileLockUtil.releaseExclusiveFileLock(canonicalFile);
         }
     }
 
@@ -115,8 +114,27 @@ public class FileLockUtilTest {
                 });
                 fail();
             } catch (ChronicleFileLockException e) {
-                FileLockUtil.releaseFileLock(canonicalFile);
+                FileLockUtil.releaseSharedFileLock(canonicalFile);
             }
+        }
+    }
+
+    @Test
+    public void testTryRunExclusively() {
+        if (!OS.isWindows()) {
+            FileLockUtil.acquireSharedFileLock(canonicalFile, fileChannel);
+
+            boolean lockedAndRun = FileLockUtil.tryRunExclusively(canonicalFile, fileChannel, () -> {
+            });
+
+            assertFalse(lockedAndRun);
+
+            FileLockUtil.releaseSharedFileLock(canonicalFile);
+
+            lockedAndRun = FileLockUtil.tryRunExclusively(canonicalFile, fileChannel, () -> {
+            });
+
+            assertTrue(lockedAndRun);
         }
     }
 }

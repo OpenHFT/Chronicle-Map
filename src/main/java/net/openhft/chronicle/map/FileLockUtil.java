@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,15 +19,18 @@ public final class FileLockUtil {
     /**
      * Java file locks are maintained on a per JVM basis. So we need to manage them.
      */
+    private static final String DISABLE_LOCKING = "chronicle.map.disable.locking";
     private static final ConcurrentHashMap<File, FileLockReference> FILE_LOCKS = new ConcurrentHashMap<>();
-    private static final boolean USE_LOCKING = !OS.isWindows() && !Jvm.getBoolean("chronicle.map.disable.locking");
+    private static final boolean USE_EXCLUSIVE_LOCKING = !OS.isWindows() && !Jvm.getBoolean(DISABLE_LOCKING);
+    private static final boolean USE_SHARED_LOCKING = !OS.isWindows() && !Jvm.getBoolean(DISABLE_LOCKING) &&
+            !"shared".equalsIgnoreCase(System.getProperty(DISABLE_LOCKING));
     private static final AtomicBoolean LOCK_WARNING_PRINTED = new AtomicBoolean();
 
     private FileLockUtil() {
     }
 
     public static void acquireSharedFileLock(@NotNull final File canonicalFile, @NotNull final FileChannel channel) {
-        if (USE_LOCKING)
+        if (USE_SHARED_LOCKING)
             FILE_LOCKS.compute(canonicalFile, (f, flr) ->
                     {
                         try {
@@ -50,7 +54,7 @@ public final class FileLockUtil {
     }
 
     public static void acquireExclusiveFileLock(@NotNull final File canonicalFile, @NotNull final FileChannel channel) {
-        if (USE_LOCKING)
+        if (USE_EXCLUSIVE_LOCKING)
             FILE_LOCKS.compute(canonicalFile, (f, flr) ->
                     {
                         if (flr == null) {
@@ -70,24 +74,88 @@ public final class FileLockUtil {
             printWarningTheFirstTime();
     }
 
-    public static void releaseFileLock(@NotNull final File canonicalFile) {
-        if (USE_LOCKING)
-            FILE_LOCKS.compute(canonicalFile, (f, flr) ->
-                    {
-                        if (flr == null)
-                            throw new ChronicleFileLockException("Trying to release lock on file " + canonicalFile + " that did not exist");
-                        else {
-                            final int cnt = flr.release();
-                            if (cnt == 0)
-                                return null; // Remove the old one
-                            else
-                                return flr;
-                        }
-                    }
-
-            );
+    public static void releaseSharedFileLock(@NotNull final File canonicalFile) {
+        if (USE_SHARED_LOCKING)
+            releaseFileLock0(canonicalFile);
         else
             printWarningTheFirstTime();
+    }
+
+    public static void releaseExclusiveFileLock(@NotNull final File canonicalFile) {
+        if (USE_EXCLUSIVE_LOCKING)
+            releaseFileLock0(canonicalFile);
+        else
+            printWarningTheFirstTime();
+    }
+
+    /**
+     * @deprecated Use {@link #releaseExclusiveFileLock(File)} or {@link #releaseSharedFileLock(File)} instead.
+     */
+    @Deprecated
+    public static void releaseFileLock(@NotNull final File canonicalFile) {
+        releaseExclusiveFileLock(canonicalFile);
+    }
+
+    private static void releaseFileLock0(@NotNull File canonicalFile) {
+        FILE_LOCKS.compute(canonicalFile, (f, flr) ->
+                {
+                    if (flr == null)
+                        throw new ChronicleFileLockException("Trying to release lock on file " + canonicalFile + " that did not exist");
+                    else {
+                        final int cnt = flr.release();
+                        if (cnt == 0)
+                            return null; // Remove the old one
+                        else
+                            return flr;
+                    }
+                }
+
+        );
+    }
+
+    /**
+     * Tries to execute a closure under exclusive file lock.
+     * If USE_LOCKING is false, provides synchronization only within local JVM.
+     *
+     * @param fileIOAction Closure to run, can throw {@link IOException}s.
+     * @return <code>true</code> if the lock was successfully acquired and IO action was executed, <code>false</code> otherwise.
+     */
+    public static boolean tryRunExclusively(@NotNull final File canonicalFile,
+                                      @NotNull final FileChannel fileChannel,
+                                      @NotNull final FileIOAction fileIOAction) {
+        AtomicBoolean locked = new AtomicBoolean(false);
+
+        FILE_LOCKS.compute(canonicalFile, (f, flr) -> {
+                    if (flr != null)
+                        return flr;
+
+                    try {
+                        if (USE_EXCLUSIVE_LOCKING) {
+                            try (FileLock ignored = fileChannel.tryLock()) {
+                                if (ignored == null)
+                                    return null;
+
+                                fileIOAction.fileIOAction();
+
+                                locked.set(true);
+                            }
+                            catch (OverlappingFileLockException ignored) {
+                                // File lock is being held by this JVM, unsuccessful attempt.
+                            }
+                        } else {
+                            fileIOAction.fileIOAction();
+
+                            locked.set(true);
+                        }
+
+                        return null;
+                    } catch (Exception e) {
+                        throw Jvm.rethrow(e);
+                    }
+                }
+        );
+
+        return locked.get();
     }
 
     /**
@@ -104,7 +172,7 @@ public final class FileLockUtil {
                         throw new ChronicleFileLockException("A file lock instance already exists for the file " + canonicalFile);
 
                     try {
-                        if (USE_LOCKING) {
+                        if (USE_EXCLUSIVE_LOCKING) {
                             try (FileLock ignored = fileChannel.lock()) {
                                 fileIOAction.fileIOAction();
                             }

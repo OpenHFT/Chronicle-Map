@@ -39,6 +39,8 @@ import net.openhft.chronicle.hash.serialization.impl.TypedMarshallableReaderWrit
 import net.openhft.chronicle.map.internal.AnalyticsHolder;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import net.openhft.chronicle.set.ChronicleSetBuilder;
+import net.openhft.chronicle.threads.Pauser;
+import net.openhft.chronicle.threads.TimingPauser;
 import net.openhft.chronicle.values.ValueModel;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.Marshallable;
@@ -58,6 +60,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -1688,22 +1691,37 @@ public final class ChronicleMapBuilder<K, V> implements
             if (raf.length() > 0) {
                 result = openWithExistingFile(canonicalFile, raf, resources, recover, overrideBuilderConfig, corruptionListener);
             } else {
-
                 // Atomic* allows lambda modification
                 final AtomicReference<VanillaChronicleMap<K, V, ?>> map = new AtomicReference<>();
                 final AtomicReference<ByteBuffer> headerBuffer = new AtomicReference<>();
-                final AtomicBoolean newFile = new AtomicBoolean();
+                final AtomicBoolean newFile = new AtomicBoolean(false);
                 final FileChannel fileChannel = raf.getChannel();
 
-                FileLockUtil.runExclusively(canonicalFile, fileChannel, () -> {
-                    if (raf.length() == 0) {
-                        map.set(newMap());
-                        headerBuffer.set(writeHeader(fileChannel, map.get()));
-                        newFile.set(true);
-                    } else {
-                        newFile.set(false);
+                TimingPauser pauser = Pauser.balanced();
+
+                while (raf.length() == 0) {
+                    final boolean locked = FileLockUtil.tryRunExclusively(canonicalFile, fileChannel, () -> {
+                        // Double-checked locking
+                        if (raf.length() == 0) {
+                            map.set(newMap());
+                            headerBuffer.set(writeHeader(fileChannel, map.get()));
+                            newFile.set(true);
+                        }
+                    });
+
+                    if (locked)
+                        break;
+                    else {
+                        try {
+                            pauser.pause(10, TimeUnit.SECONDS);
+                        }
+                        catch (TimeoutException e) {
+                            LOG.warn("Failed to write header: can't acquire exclusive file lock on empty file [" + canonicalFile + "] for 10 seconds", e);
+
+                            Jvm.rethrow(e);
+                        }
                     }
-                });
+                }
 
                 if (newFile.get()) {
                     final int headerSize = headerBuffer.get().remaining();
@@ -1811,7 +1829,7 @@ public final class ChronicleMapBuilder<K, V> implements
         map.initBeforeMapping(canonicalFile, raf, headerBuffer.limit(), false);
         map.createMappedStoreAndSegments(resources);
         FileLockUtil.acquireSharedFileLock(canonicalFile, raf.getChannel());
-        map.addCloseable(() -> FileLockUtil.releaseFileLock(canonicalFile));
+        map.addCloseable(() -> FileLockUtil.releaseSharedFileLock(canonicalFile));
         commitChronicleMapReady(map, raf, headerBuffer, headerSize);
         return map;
     }
@@ -1879,14 +1897,14 @@ public final class ChronicleMapBuilder<K, V> implements
                     FileLockUtil.acquireExclusiveFileLock(file, raf.getChannel());
                     map.recover(resources, corruptionListener, corruption);
                 } finally {
-                    FileLockUtil.releaseFileLock(file);
+                    FileLockUtil.releaseExclusiveFileLock(file);
                 }
                 // We are ready with exclusive access.
                 // Demote the lock from exclusive to shared
                 FileLockUtil.acquireSharedFileLock(file, fileChannel);
                 commitChronicleMapReady(map, raf, headerBuffer, headerSize);
             }
-            map.addCloseable(() -> FileLockUtil.releaseFileLock(file));
+            map.addCloseable(() -> FileLockUtil.releaseSharedFileLock(file));
             if (MAP_CREATION_DEBUG) {
                 Jvm.warn().on(getClass(), "<map creation debug> Created map [name=" + map.name() +
                         ", size=" + map.longSize() + "] from file [canonizedMapDataFile=" +
