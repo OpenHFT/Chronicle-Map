@@ -48,12 +48,10 @@ public class FileLockUtilTest {
 
     @Test
     public void testExclusiveNormalCase() {
-        if (!OS.isWindows()) {
-            FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
-            FileLockUtil.releaseExclusiveFileLock(canonicalFile);
-            FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
-            FileLockUtil.releaseExclusiveFileLock(canonicalFile);
-        }
+        FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
+        FileLockUtil.releaseExclusiveFileLock(canonicalFile);
+        FileLockUtil.acquireExclusiveFileLock(canonicalFile, fileChannel);
+        FileLockUtil.releaseExclusiveFileLock(canonicalFile);
     }
 
     @Test
@@ -98,11 +96,9 @@ public class FileLockUtilTest {
 
     @Test
     public void testRunExclusively() {
-        if (!OS.isWindows()) {
-            final AtomicInteger cnt = new AtomicInteger();
-            FileLockUtil.runExclusively(canonicalFile, fileChannel, cnt::incrementAndGet);
-            assertEquals(1, cnt.get());
-        }
+        final AtomicInteger cnt = new AtomicInteger();
+        FileLockUtil.runExclusively(canonicalFile, fileChannel, cnt::incrementAndGet);
+        assertEquals(1, cnt.get());
     }
 
     @Test

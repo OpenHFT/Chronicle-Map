@@ -21,7 +21,7 @@ public final class FileLockUtil {
      */
     private static final String DISABLE_LOCKING = "chronicle.map.disable.locking";
     private static final ConcurrentHashMap<File, FileLockReference> FILE_LOCKS = new ConcurrentHashMap<>();
-    private static final boolean USE_EXCLUSIVE_LOCKING = !OS.isWindows() && !Jvm.getBoolean(DISABLE_LOCKING);
+    private static final boolean USE_EXCLUSIVE_LOCKING = !Jvm.getBoolean(DISABLE_LOCKING);
     private static final boolean USE_SHARED_LOCKING = !OS.isWindows() && !Jvm.getBoolean(DISABLE_LOCKING) &&
             !"shared".equalsIgnoreCase(System.getProperty(DISABLE_LOCKING));
     private static final AtomicBoolean LOCK_WARNING_PRINTED = new AtomicBoolean();
