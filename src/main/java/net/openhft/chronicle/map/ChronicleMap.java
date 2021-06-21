@@ -142,14 +142,44 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of what
      * to do if the key is absent in the map. By default, value bytes are just zeroed out, no
      * default value, either provided for key or constant, is put for the absent key.
+     * <p>
+     * <p>Unless value type is a Byteable or a value-type (e.g. {@link net.openhft.chronicle.core.values.LongValue}),
+     * it's strictly advised to set {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
+     * defaultValueProvider} explicitly. The value may be deserialized from a non-initialized memory region,
+     * potentially causing marshalling errors.
      *
      * @param key        the key whose associated value is to be returned
-     * @param usingValue the object to read value data in, if present. Can not be null
+     * @param usingValue the object to read value data in, if present. Can be null
      * @return value to which the given key is mapping after this call, either found or created
      * @see #getUsing(Object, Object)
      */
     V acquireUsing(@NotNull K key, V usingValue);
 
+    /**
+     * Acquires an update lock and a value for a key.
+     * <p>
+     * Lock is released when returned {@link net.openhft.chronicle.core.io.Closeable} object is closed.
+     * This method is effectively equivalent to {@link #acquireUsing(Object, Object)} except for the
+     * update lock management policy: {@link #acquireUsing(Object, Object)} releases the lock right away.
+     * <p>
+     * <p>If the specified key is absent in the map, {@linkplain
+     * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) default value provider} is
+     * called. Then this object is put to this map for the specified key.
+     * <p>
+     * <p>Unless value is a Byteable or a value-type (e.g. {@link net.openhft.chronicle.core.values.LongValue}),
+     * it's strictly advised to set {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
+     * defaultValueProvider} explicitly. The value may be deserialized from a non-initialized memory region,
+     * potentially causing marshalling errors.
+     * <p>
+     * <p>Also, if value is not a Byteable or a value-type, changes on {@code usingValue} are
+     * not propagated to the map memory right away. Updated {@code usingValue} is written to the map
+     * when the control object is closed, before releasing the update lock.
+     *
+     * @param key the key whose associated value is to be returned
+     * @param usingValue the object to read value data in, if present. Can be null
+     * @see #acquireUsing(Object, Object)
+     * @return Lock control object that releases the update lock on close.
+     */
     @NotNull
     net.openhft.chronicle.core.io.Closeable acquireContext(@NotNull K key, @NotNull V usingValue);
 
