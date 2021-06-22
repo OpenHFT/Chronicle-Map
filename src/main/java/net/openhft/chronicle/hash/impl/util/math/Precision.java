@@ -49,7 +49,7 @@ class Precision {
     }
 
     /**
-     * Returns true if both arguments are equal or within the range of allowed
+     * Returns <code>true</code> if both arguments are equal or within the range of allowed
      * error (inclusive).
      * <p>
      * Two float numbers are considered equal if there are {@code (maxUlps - 1)}

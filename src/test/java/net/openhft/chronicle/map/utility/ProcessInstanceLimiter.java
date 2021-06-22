@@ -421,7 +421,7 @@ public class ProcessInstanceLimiter implements Runnable {
 
     /**
      * Assumes that the data object is non-null and already locked
-     * If true is returned, the update has been applied, otherwise
+     * If <code>true</code> is returned, the update has been applied, otherwise
      * this slot is conflicted
      */
     private boolean updateTheSharedMap(String processType, int index, Data data) {
