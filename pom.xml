@@ -24,7 +24,7 @@
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
                 <type>pom</type>
-                <version>3.19.5</version>
+                <version>3.19.9</version>
                 <scope>import</scope>
             </dependency>
 
@@ -57,7 +57,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>zero-allocation-hashing</artifactId>
-                <version>0.12</version>
+                <version>0.15</version>
             </dependency>
 
             <dependency>
