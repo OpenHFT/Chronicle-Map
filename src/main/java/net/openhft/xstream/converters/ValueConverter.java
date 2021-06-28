@@ -37,7 +37,6 @@ import java.lang.reflect.Method;
  */
 public class ValueConverter implements Converter {
 
-
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext context) {
 
