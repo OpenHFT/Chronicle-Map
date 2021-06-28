@@ -323,7 +323,6 @@ public class ProcessInstanceLimiter implements Runnable {
      * slot, it will callback thisProcessOfTypeHasStartedAtSlot(), otherwise one
      * of the other callback interface methods will be called.
      *
-     * @param processType
      */
     public void startingProcessOfType(String processType) {
         Data data = this.timedata.get(processType);

@@ -25,8 +25,6 @@ import java.lang.reflect.Method;
 
 public class CleanerUtils {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CleanerUtils.class);
-
     private static final Method CREATE_METHOD;
     private static final Method CLEAN_METHOD;
 
@@ -38,7 +36,7 @@ public class CleanerUtils {
             CLEAN_METHOD = cleanerClass.getDeclaredMethod("clean");
             Jvm.setAccessible(CLEAN_METHOD);
         } catch (ClassNotFoundException | NoSuchMethodException e) {
-            LOGGER.error("Unable to initialise CleanerUtils", e);
+            Jvm.error().on(CleanerUtils.class, "Unable to initialise CleanerUtils", e);
             throw new RuntimeException(e);
         }
     }
@@ -48,7 +46,7 @@ public class CleanerUtils {
             Object cleanerInstance = CREATE_METHOD.invoke(null, ob, thunk);
             return () -> doClean(cleanerInstance);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            LOGGER.error("Unable to create cleaner", e);
+            Jvm.error().on(CleanerUtils.class, "Unable to create cleaner", e);
             throw new RuntimeException(e);
         }
     }
@@ -57,7 +55,7 @@ public class CleanerUtils {
         try {
             CLEAN_METHOD.invoke(cleanerInstance);
         } catch (IllegalAccessException | InvocationTargetException e) {
-            LOGGER.warn("Failed to clean buffer", e);
+            Jvm.warn().on(CleanerUtils.class, "Failed to clean buffer", e);
         }
     }
 }

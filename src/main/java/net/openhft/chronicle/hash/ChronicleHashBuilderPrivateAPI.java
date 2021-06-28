@@ -59,7 +59,6 @@ public interface ChronicleHashBuilderPrivateAPI<K, RO> {
      * <p>Default value is {@code true} -- old removed entries are erased with 1 second timeout.
      *
      * @param cleanupRemovedEntries if stale removed entries should be purged from Chronicle Hash
-     * @return this builder back
      * @see #removedEntryCleanupTimeout(long, TimeUnit)
      * @see ReplicableEntry#doRemoveCompletely()
      */
@@ -81,7 +80,6 @@ public interface ChronicleHashBuilderPrivateAPI<K, RO> {
      * @param removedEntryCleanupTimeout timeout, after which stale removed entries could be erased
      *                                   from Chronicle Hash data store completely
      * @param unit                       time unit, in which the timeout is given
-     * @return this builder back
      * @throws IllegalArgumentException is the specified timeout is less than 1 millisecond
      * @see #cleanupRemovedEntries(boolean)
      * @see ReplicableEntry#doRemoveCompletely()

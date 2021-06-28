@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.xstream.converters.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,6 @@ final class JsonSerializer {
                     " <artifactId>jettison</artifactId>\n" +
                     " <version>1.3.6</version>\n" +
                     "</dependency>\n";
-    private static final Logger LOG = LoggerFactory.getLogger(JsonSerializer.class);
 
     static synchronized <K, V> void getAll(final File toFile,
                                            final Map<K, V> map,
@@ -57,7 +57,7 @@ final class JsonSerializer {
         final XStream xstream = xStream(map, jsonConverters);
 
         try (OutputStream outputStream = createOutputStream(toFile)) {
-                xstream.toXML(map, outputStream);
+            xstream.toXML(map, outputStream);
         }
     }
 
@@ -101,9 +101,10 @@ final class JsonSerializer {
                 if (c instanceof Converter) {
                     xstream.registerConverter((Converter) c);
                 } else {
-                    LOG.warn("Skipping Converter of type class=" + c.getClass().getName() + " as " +
-                            " expecting an object of type com.thoughtworks.xstream.converters" +
-                            ".Converter");
+                    Jvm.warn().on(JsonSerializer.class,
+                            "Skipping Converter of type class=" + c.getClass().getName() + " as " +
+                                    " expecting an object of type com.thoughtworks.xstream.converters" +
+                                    ".Converter");
                 }
             }
 

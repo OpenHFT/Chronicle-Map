@@ -36,8 +36,6 @@ public class BuildVersionTest {
     /**
      * check that the map records the version
      *
-     * @throws IOException
-     * @throws InterruptedException
      */
     @Test
     public void testVersion() throws IOException, InterruptedException {

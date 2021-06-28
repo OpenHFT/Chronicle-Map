@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.Throwables;
@@ -32,7 +33,6 @@ import java.util.List;
  * ChronicleHashResources is Runnable to be passed as "hunk" to {@link sun.misc.Cleaner}.
  */
 public abstract class ChronicleHashResources implements Runnable {
-    private static final Logger LOG = LoggerFactory.getLogger(ChronicleHashResources.class);
 
     private static final int OPEN = 0;
     private static final int PARTIALLY_CLOSED = 1;
@@ -123,22 +123,21 @@ public abstract class ChronicleHashResources implements Runnable {
             if (state == COMPLETELY_CLOSED)
                 return;
             try {
-                LOG.error("{} is not closed manually, cleaned up from Cleaner",
-                        chronicleHashIdentityString);
+                Jvm.error().on(getClass(), chronicleHashIdentityString+" is not closed manually, cleaned up from Cleaner"                        );
             } catch (Throwable t) {
                 thrown = t;
             } finally {
                 synchronized (this) {
                     if (state == COMPLETELY_CLOSED) {
-                        LOG.error("Somebody closed {} while it is processed by Cleaner, " +
-                                "this should be impossible", chronicleHashIdentityString);
+                        Jvm.error().on(getClass(), "Somebody closed "+chronicleHashIdentityString+" while it is processed by Cleaner, " +
+                                "this should be impossible");
                     } else {
                         thrown = Throwables.returnOrSuppress(thrown, releaseEverything(true));
                     }
                 }
                 if (thrown != null) {
                     try {
-                        LOG.error("Error on releasing resources of " + chronicleHashIdentityString,
+                        Jvm.error().on(getClass(), "Error on releasing resources of " + chronicleHashIdentityString,
                                 thrown);
                     } catch (Throwable t) {
                         // This may occur if we are in shutdown hooks, and the log service has

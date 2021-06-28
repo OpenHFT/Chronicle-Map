@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.set;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
@@ -44,15 +45,8 @@ import java.io.IOException;
 public final class ChronicleSetBuilder<K>
         implements ChronicleHashBuilder<K, ChronicleSet<K>, ChronicleSetBuilder<K>> {
 
-    private static final Logger chronicleSetLogger = LoggerFactory.getLogger(ChronicleSet.class);
     private static final ChronicleHashCorruption.Listener defaultChronicleSetCorruptionListener =
-            corruption -> {
-                if (corruption.exception() != null) {
-                    chronicleSetLogger.error(corruption.message(), corruption.exception());
-                } else {
-                    chronicleSetLogger.error(corruption.message());
-                }
-            };
+            corruption -> Jvm.error().on(ChronicleSetBuilder.class, corruption.message(), corruption.exception());
 
     private ChronicleMapBuilder<K, DummyValue> chronicleMapBuilder;
     private final ChronicleSetBuilderPrivateAPI<K> privateAPI;

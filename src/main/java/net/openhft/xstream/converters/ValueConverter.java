@@ -21,6 +21,7 @@ import com.thoughtworks.xstream.converters.MarshallingContext;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.values.ArrayFieldModel;
 import net.openhft.chronicle.values.FieldModel;
 import net.openhft.chronicle.values.ValueModel;
@@ -36,7 +37,6 @@ import java.lang.reflect.Method;
  */
 public class ValueConverter implements Converter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ValueConverter.class);
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext context) {
@@ -77,7 +77,7 @@ public class ValueConverter implements Converter {
                 writer.endNode();
 
             } catch (Exception e) {
-                LOG.error("class=" + fieldModel.name(), e);
+                Jvm.error().on(getClass(), "class=" + fieldModel.name(), e);
             }
         });
 

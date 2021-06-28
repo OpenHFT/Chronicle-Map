@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.algo.bitset.BitSetFrame;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.threads.EventHandler;
 import net.openhft.chronicle.core.threads.EventLoop;
 import net.openhft.chronicle.core.threads.HandlerPriority;
@@ -107,7 +108,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     public static final int ADDITIONAL_ENTRY_BYTES = 10;
     static final byte ENTRY_HUNK = 1;
     static final byte BOOTSTRAP_TIME_HUNK = 2;
-    private static final Logger LOG = LoggerFactory.getLogger(ReplicatedChronicleMap.class);
 
     public transient boolean cleanupRemovedEntries;
     public transient long cleanupTimeout;
@@ -608,12 +608,12 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         key.writeTo(destination, destination.writePosition());
         destination.writeSkip(key.size());
 
-        final boolean traceEnabled = LOG.isTraceEnabled();
+        final boolean traceEnabled = Jvm.isDebugEnabled(getClass());
         String message = null;
         if (traceEnabled) {
             if (isDeleted) {
-                LOG.trace("WRITING ENTRY TO DEST -  into local-id={}, remove(key={})",
-                        identifier(), key);
+                Jvm.debug().on(getClass(),
+                        "WRITING ENTRY TO DEST -  into local-id=identifier(), remove(key=" + key + ")");
             } else {
                 message = String.format(
                         "WRITING ENTRY TO DEST  -  into local-id=%d, put(key=%s,",
@@ -630,7 +630,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         destination.writeSkip(value.size());
 
         if (traceEnabled) {
-            LOG.debug(message + "value=" + value + ")");
+            Jvm.debug().on(getClass(), message + "value=" + value + ")");
         }
     }
 
@@ -1005,7 +1005,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                     return true;
                 }
 
-                final boolean debugEnabled = LOG.isDebugEnabled();
+                final boolean debugEnabled = Jvm.isDebugEnabled(getClass());
 
                 try {
                     throwExceptionIfClosed();
@@ -1016,16 +1016,19 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                     iterationContext.initSegmentIndex(segmentIndex);
                     iterationContext.forEachSegmentReplicableEntry(e -> {
                         if (debugEnabled) {
-                            LOG.debug("Bootstrap entry: id {}, key {}, value {}", localIdentifier,
-                                    iterationContext.key(), iterationContext.value());
+                            Jvm.debug().on(getClass(), "Bootstrap entry: " +
+                                    "id " + localIdentifier + ", " +
+                                    "key " + iterationContext.key() + ", " +
+                                    "value " + iterationContext.value());
                         }
                         // Bizarrely the next line line cause NPE in JDT compiler
                         //assert re.originTimestamp() > 0L;
                         if (debugEnabled) {
-                            LOG.debug("Bootstrap decision: bs ts: {}, entry ts: {}, " +
-                                            "entry id: {}, local id: {}",
-                                    fromTimeStamp, e.originTimestamp(),
-                                    e.originIdentifier(), localIdentifier);
+                            Jvm.debug().on(getClass(), "Bootstrap decision: " +
+                                    "bs ts: " + fromTimeStamp + ", " +
+                                    "entry ts: " + e.originTimestamp() + ", " +
+                                    "entry id: " + e.originIdentifier() + ", " +
+                                    "local id: " + localIdentifier);
                         }
                         // TODO currently, all entries, originating not from the current node,
                         // are bootstrapped. This could be optimized, but requires to generate
@@ -1060,10 +1063,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             try {
                 for (int i = 0; i < actualSegments + 1; i++) // Call [actualSegments + 1] times to trigger context close
                     syncHandler.action();
-            }
-            catch (InvalidEventHandlerException e) {
+            } catch (InvalidEventHandlerException e) {
                 if (e.getCause() instanceof ChronicleHashClosedException)
-                    throw (ChronicleHashClosedException)e.getCause();
+                    throw (ChronicleHashClosedException) e.getCause();
             }
         }
 

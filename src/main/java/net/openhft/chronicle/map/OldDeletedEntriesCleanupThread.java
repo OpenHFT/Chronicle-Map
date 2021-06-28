@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
@@ -33,7 +34,6 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.systemTimeInte
 
 class OldDeletedEntriesCleanupThread extends Thread
         implements MapClosable, Predicate<ReplicableEntry> {
-    private static final Logger LOG = LoggerFactory.getLogger(OldDeletedEntriesCleanupThread.class);
 
     /**
      * Don't store a strong ref to a map in order to avoid it's leaking, if the user forgets to close() map, from where this thread is shut down
@@ -134,7 +134,7 @@ class OldDeletedEntriesCleanupThread extends Thread
                 long currentTime = currentTime();
                 long mapScanTime = systemTimeIntervalBetween(
                         prevSegment0ScanStart, currentTime, cleanupTimeoutUnit);
-                LOG.debug("Old deleted entries scan time: {} {}", mapScanTime, cleanupTimeoutUnit);
+                Jvm.debug().on(getClass(), "Old deleted entries scan time: " + mapScanTime + " " + cleanupTimeoutUnit);
                 if (mapScanTime < cleanupTimeout) {
                     long timeToSleep = cleanupTimeoutUnit.toMillis(cleanupTimeout - mapScanTime);
                     if (timeToSleep > 0) {
@@ -162,8 +162,9 @@ class OldDeletedEntriesCleanupThread extends Thread
             removedCompletely = 0;
             if (((ReplicatedHashSegmentContext<?, ?>) context)
                     .forEachSegmentReplicableEntryWhile(this)) {
-                LOG.debug("Removed {} old deleted entries in the segment {}",
-                        removedCompletely, segmentIndex);
+                Jvm.debug().on(getClass(),
+                        "Removed " + removedCompletely + " old deleted entries " +
+                                "in the segment " + segmentIndex);
                 nextSegmentIndex = nextSegmentIndex(segmentIndex);
                 map.globalMutableState().setCurrentCleanupSegmentIndex(nextSegmentIndex);
                 return nextSegmentIndex;

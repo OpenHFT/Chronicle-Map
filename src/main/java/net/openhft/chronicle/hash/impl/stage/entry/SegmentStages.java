@@ -22,6 +22,7 @@ import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.PointerBytesStore;
 import net.openhft.chronicle.bytes.VanillaBytes;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.SegmentLock;
@@ -96,8 +97,6 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     public long tierBaseAddr;
     @Stage("Segment")
     public long entrySpaceOffset = 0;
-    @StageRef
-    LogHolder log;
     @StageRef
     Chaining chaining;
     // chain
@@ -607,7 +606,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         long nextTierIndex = nextTierIndex();
         if (nextTierIndex == 0) {
-            log.LOG.debug("Allocate tier for segment # {}, tier {}", segmentIndex, tier + 1);
+            Jvm.debug().on(getClass(), "Allocate tier for segment #  " + segmentIndex + " tier " +( tier + 1));
             nextTierIndex = h.allocateTier();
             nextTierIndex(nextTierIndex);
             long prevTierIndex = tierIndex;

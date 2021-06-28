@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map.ipc;
 
+import net.openhft.chronicle.core.Jvm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,12 +28,8 @@ public class StateMachineProcessor implements Runnable {
     private final StateMachineState from;
     private final StateMachineState transition;
     private final StateMachineState to;
-    private final Logger logger;
 
     /**
-     * @param smd
-     * @param from
-     * @param to
      */
     public StateMachineProcessor(final StateMachineData smd, StateMachineState from, StateMachineState transition, StateMachineState to) {
         this.smd = smd;
@@ -40,14 +37,9 @@ public class StateMachineProcessor implements Runnable {
         this.transition = transition;
         this.to = to;
 
-        this.logger = LoggerFactory.getLogger(from + " => " + transition + " => " + to);
     }
 
     /**
-     * @param smd
-     * @param from
-     * @param transition
-     * @param to
      */
     public static void runProcessor(final StateMachineData smd, StateMachineState from, StateMachineState transition, StateMachineState to) {
         new StateMachineProcessor(smd, from, transition, to).run();
@@ -60,7 +52,7 @@ public class StateMachineProcessor implements Runnable {
                 doProcess();
             }
 
-            logger.info("Wait for {}", from);
+            Jvm.debug().on(getClass(), "Wait for " + from);
             smd.waitForState(from, transition);
 
             doProcess();
@@ -70,11 +62,10 @@ public class StateMachineProcessor implements Runnable {
     private void doProcess() {
         smd.incStateData();
 
-        logger.info("Status {}, Next {}, Data {}",
-                from,
-                to,
-                smd.getStateData()
-        );
+        Jvm.debug().on(getClass(),
+                "Status " + from + ", " +
+                        "Next " + to + ", " +
+                        "Data " + smd.getStateData());
 
         smd.setState(transition, to);
     }

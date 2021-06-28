@@ -233,7 +233,7 @@ public class TierRecovery {
         if (s.tierEntries() != entries) {
             report(corruptionListener, corruption, s.segmentIndex, () ->
                     format("Wrong number of entries counter for tier with index {}, " +
-                            "stored: {}, should be: {}", s.tierIndex, s.tierEntries(), entries)
+                            "stored: {}, should be: " + s.tierIndex, s.tierEntries(), entries)
             );
             s.tierEntries(entries);
         }
@@ -277,7 +277,7 @@ public class TierRecovery {
         }
         if (e.keyEnd() > s.segmentBytes.capacity()) {
             report(corruptionListener, corruption, segmentIndex, () ->
-                    format("Wrong key size: {}", e.keySize)
+                    format("Wrong key size: " + e.keySize)
             );
             return -1;
         }
@@ -309,7 +309,7 @@ public class TierRecovery {
             long entryAndChecksumEnd = e.entryEnd() + e.checksumStrategy.extraEntryBytes();
             if (entryAndChecksumEnd > s.segmentBytes.capacity()) {
                 report(corruptionListener, corruption, segmentIndex, () ->
-                        format("Wrong value size: {}, key: {}", e.valueSize, e.key())
+                        format("Wrong value size: {}, key: " + e.valueSize, e.key())
                 );
                 return -1;
             }

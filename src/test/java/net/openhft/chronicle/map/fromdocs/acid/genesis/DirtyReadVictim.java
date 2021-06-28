@@ -36,8 +36,7 @@ public class DirtyReadVictim implements Runnable {
                     " ,,@t=" + System.currentTimeMillis() +
                             " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"
             );
-            while ((stamp = this.offHeapLock.tryOptimisticRead()) == 0) {
-                ;
+            while ((stamp = this.offHeapLock.tryOptimisticRead()) == 0) {;
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

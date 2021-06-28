@@ -43,8 +43,6 @@ import net.openhft.sg.Staged;
         OwnerThreadHolder.class,
         ReplicatedChronicleMapHolderImpl.class,
 
-        LogHolder.class,
-
         ReplicatedMapSegmentIteration.class,
 
         KeyBytesInterop.class,

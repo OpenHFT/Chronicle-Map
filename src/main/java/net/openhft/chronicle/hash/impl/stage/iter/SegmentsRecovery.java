@@ -96,7 +96,7 @@ public abstract class SegmentsRecovery implements IterationContext {
             long finalActualExtraTiersInUse = actualExtraTiersInUse;
             report(corruptionListener, corruption, -1, () ->
                     format("wrong number of actual tiers in use in global mutable state, stored: {}, " +
-                            "should be: {}", storedExtraTiersInUse, finalActualExtraTiersInUse)
+                            "should be: " + storedExtraTiersInUse, finalActualExtraTiersInUse)
             );
             globalMutableState.setExtraTiersInUse(actualExtraTiersInUse);
         }
@@ -119,7 +119,7 @@ public abstract class SegmentsRecovery implements IterationContext {
         if (storedFirstFreeTierIndex != firstFreeTierIndex) {
             report(corruptionListener, corruption, -1, () ->
                     format("wrong first free tier index in global mutable state, stored: {}, " +
-                            "should be: {}", storedFirstFreeTierIndex, firstFreeTierIndex)
+                            "should be: " + storedFirstFreeTierIndex, firstFreeTierIndex)
             );
             globalMutableState.setFirstFreeTierIndex(firstFreeTierIndex);
         }

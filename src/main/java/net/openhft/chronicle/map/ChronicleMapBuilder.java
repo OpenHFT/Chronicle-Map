@@ -155,18 +155,12 @@ public final class ChronicleMapBuilder<K, V> implements
      * Anyway, unlikely anyone ever need more than 1 billion segments.
      */
     private static final int MAX_SEGMENTS = (1 << 30);
-    private static final Logger LOG = LoggerFactory.getLogger(ChronicleMapBuilder.class.getName());
 
     private static final double UNDEFINED_DOUBLE_CONFIG = Double.NaN;
     private static final ConcurrentHashMap<File, Void> FILE_LOCKING_CONTROL = new ConcurrentHashMap<>(128);
-    private static final Logger CHRONICLE_MAP_LOGGER = LoggerFactory.getLogger(ChronicleMap.class);
     private static final ChronicleHashCorruption.Listener DEFAULT_CHRONICLE_MAP_CORRUPTION_LISTENER =
             corruption -> {
-                if (corruption.exception() != null) {
-                    CHRONICLE_MAP_LOGGER.error(corruption.message(), corruption.exception());
-                } else {
-                    CHRONICLE_MAP_LOGGER.error(corruption.message());
-                }
+                Jvm.error().on(ChronicleMapBuilder.class, corruption.message(), corruption.exception());
             };
     private static final int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
     private static final boolean MAP_CREATION_DEBUG = Jvm.getBoolean("chronicle.map.creation.debug");
@@ -678,7 +672,7 @@ public final class ChronicleMapBuilder<K, V> implements
         if (BytesMarshallable.class.isAssignableFrom(valueClass) &&
                 (valueBuilder.tClass.isInterface() && valueBuilder.tClass != Marshallable.class)) {
             if (Serializable.class.isAssignableFrom(valueClass))
-                LOG.warn("BytesMarshallable " + valueClass + " will be serialized as Serializable as the value class is an interface");
+                Jvm.warn().on(getClass(), "BytesMarshallable " + valueClass + " will be serialized as Serializable as the value class is an interface");
             else
                 throw new IllegalArgumentException("Using BytesMarshallable and an interface value type not supported");
         }
@@ -1714,9 +1708,8 @@ public final class ChronicleMapBuilder<K, V> implements
                     else {
                         try {
                             pauser.pause(10, TimeUnit.SECONDS);
-                        }
-                        catch (TimeoutException e) {
-                            LOG.warn("Failed to write header: can't acquire exclusive file lock on empty file [" + canonicalFile + "] for 10 seconds", e);
+                        } catch (TimeoutException e) {
+                            Jvm.warn().on(getClass(), "Failed to write header: can't acquire exclusive file lock on empty file [" + canonicalFile + "] for 10 seconds", e);
 
                             Jvm.rethrow(e);
                         }
@@ -1874,7 +1867,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
             if (MAP_CREATION_DEBUG) {
                 Jvm.warn().on(getClass(), "<map creation debug> Read header from file [canonizedMapDataFile=" +
-                        file.getAbsolutePath() + "]: " + wire.toString());
+                        file.getAbsolutePath() + "]: " + wire);
             }
 
             final VanillaChronicleMap<K, V, ?> map = wire.getValueIn().typedMarshallable();

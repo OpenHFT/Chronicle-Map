@@ -31,7 +31,6 @@ public class DirtyReadVictimIPCTest {
      * <p>
      * this belief is STRICTLY conjecture.
      *
-     * @throws IOException
      */
 
     @Test
@@ -85,8 +84,7 @@ public class DirtyReadVictimIPCTest {
                     OS.getTarget() + "/shm-" +
                             "OPERAND_ChronicleStampedLock"
             );
-            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-                ;
+            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {;
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -180,8 +178,7 @@ public class DirtyReadVictimIPCTest {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-                ;
+            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {;
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

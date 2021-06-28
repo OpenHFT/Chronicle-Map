@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map.locks;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
@@ -25,9 +26,6 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
  */
 public class ChronicleStampedLock extends StampedLock {
 
-    private static final Logger lg = Logger.getLogger(
-            "net.openhft.chronicle.map.fromdocs.acid.revelations.ChonicleStampedLock"
-    );
     ChronicleMap<String, ChronicleStampedLockVOInterface> chm;  //custody of StampedLock semantics
     ChronicleMap<String, LongValue> chmR;   //Chronicle AtomicLong re: Reader set custody
     ChronicleMap<String, LongValue> chmW;   //Chronicle AtomicLong re: Reader set custody
@@ -55,7 +53,7 @@ public class ChronicleStampedLock extends StampedLock {
             chm.acquireUsing("LastWriterTime ", lastWriterT); //needed for validate
             chmR.acquireUsing("ReaderCount ", readLockHolderCount);
             chmW.acquireUsing("WriterCount ", readLockHolderCount);
-            lg.log(Level.FINE,
+            Jvm.debug().on(getClass(),
                     " ,@t=" + System.currentTimeMillis() +
                             " ChronicleStampedLock constructed" +
                             ","
@@ -104,7 +102,7 @@ public class ChronicleStampedLock extends StampedLock {
         (offHeapLock = chm.get("Stamp ")).setEntryLockState(0L);
         long t = System.currentTimeMillis();
         chm.put("Stamp ", offHeapLock);
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(),
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock saw stamp=[" + 0L + "]" +
                         " tryOptmisticRead() returning stamp=" +
@@ -119,7 +117,7 @@ public class ChronicleStampedLock extends StampedLock {
         offHeapLock = chm.get("Stamp ");
         lastWriterT = chm.get("LastWriterTime ");
         boolean ret = false;
-        /**
+        /*
          *  If *any* Writer interacted with the offHeapLock,
          *  since event=tryOptimisticRead(),
          *  then FAIL the validate() invoke.
@@ -134,14 +132,14 @@ public class ChronicleStampedLock extends StampedLock {
         } else {
             ret = Boolean.TRUE;
         }
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock validate(" +
                         stamp + ") returned =[" +
                         ret + "] " +
                         ","
         );
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock LastWriterT=[" +
                         lastWriterT.getEntryLockState() + "] " +
@@ -186,7 +184,7 @@ public class ChronicleStampedLock extends StampedLock {
             return 0L;
 
         do {
-            lg.log(Level.FINE,
+            Jvm.debug().on(getClass(), 
                     " ,@t=" + System.currentTimeMillis() +
                             " ChronicleStampedLock tryWriteLock() ?WAITING " +
                             " on offHeapLock.unlock(" +
@@ -218,13 +216,13 @@ public class ChronicleStampedLock extends StampedLock {
 
         writeLockHolderCount.addAtomicValue(+1);
         chmW.put("WriterCount ", writeLockHolderCount);
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock trywriteLock() ++ writeSeekers=[" +
                         +writeLockHolderCount.getVolatileValue() + "] " +
                         "..,"
         );
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock tryWriteLock() PROCEEDING " +
                         " ,"
@@ -234,7 +232,7 @@ public class ChronicleStampedLock extends StampedLock {
         lastWriterT.setEntryLockState(t);
         chm.put("Stamp ", offHeapLock);
         chm.put("LastWriterTime ", lastWriterT);
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + t +
                         " ChronicleStampedLock tryWriteLock() returned stamp=" +
                         offHeapLock.getEntryLockState() +
@@ -254,7 +252,7 @@ public class ChronicleStampedLock extends StampedLock {
         if (l < 0L)
             return (0);
         do {
-            lg.log(Level.FINE,
+            Jvm.debug().on(getClass(), 
                     " ,@t=" + System.currentTimeMillis() +
                             " ChronicleStampedLock tryReadLock() ?WAITING " +
                             " on offHeapLock.unlock(" +
@@ -274,7 +272,7 @@ public class ChronicleStampedLock extends StampedLock {
             }
         } while (l < 0L);
 
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock tryReadLock() PROCEEDING " +
                         //" readerCount=[" + readerCount.getReaderCount() + "]" +
@@ -292,7 +290,7 @@ public class ChronicleStampedLock extends StampedLock {
         ); // assign the Lock to most-recent Reader
 
         chm.put("Stamp ", offHeapLock); // make it IPC visible
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock tryReadLock() returned stamp=" +
                         offHeapLock.getEntryLockState() +
@@ -312,7 +310,7 @@ public class ChronicleStampedLock extends StampedLock {
         writeLockHolderCount = chmW.get("WriterCount ");
 
         do {
-            lg.log(Level.FINE,
+            Jvm.debug().on(getClass(), 
                     " ,@t=" + System.currentTimeMillis() +
                             " ChronicleStampedLock writeLock() ?WAITING " +
                             " on offHeapLock.unlock(" +
@@ -343,14 +341,14 @@ public class ChronicleStampedLock extends StampedLock {
 
         writeLockHolderCount.addAtomicValue(+1);
         chmW.put("WriterCount ", writeLockHolderCount);
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock writeLock() ++ writeSeekers=[" +
                         +writeLockHolderCount.getVolatileValue() + "] " +
                         "..,"
         );
 
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock writeLock() PROCEEDING " +
                         " ,"
@@ -360,7 +358,7 @@ public class ChronicleStampedLock extends StampedLock {
         lastWriterT.setEntryLockState(t);
         chm.put("Stamp ", offHeapLock);
         chm.put("LastWriterTime ", lastWriterT);
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + t +
                         " ChronicleStampedLock writeLock() returned stamp=" +
                         offHeapLock.getEntryLockState() +
@@ -377,7 +375,7 @@ public class ChronicleStampedLock extends StampedLock {
         readLockHolderCount = chmR.get("ReaderCount ");
 
         do {
-            lg.log(Level.FINE,
+            Jvm.debug().on(getClass(), 
                     " ,@t=" + System.currentTimeMillis() +
                             " ChronicleStampedLock readLock() ?WAITING " +
                             " on offHeapLock.unlock(" +
@@ -397,7 +395,7 @@ public class ChronicleStampedLock extends StampedLock {
             }
         } while (l < 0L);
 
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock readLock() PROCEEDING " +
                         //" readerCount=[" + Count.getReaderCount() + "]" +
@@ -416,7 +414,7 @@ public class ChronicleStampedLock extends StampedLock {
 
         chm.put("Stamp ", offHeapLock); // make it IPC visible
 
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock readLock() returned stamp=" +
                         offHeapLock.getEntryLockState() +
@@ -443,7 +441,7 @@ public class ChronicleStampedLock extends StampedLock {
         offHeapLock = chm.get("Stamp ");
         readLockHolderCount = chmR.get("ReaderCount ");
 
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock unlockRead(" + stamp + ") unlocking.." +
                         "ReaderCount=[" +
@@ -453,7 +451,7 @@ public class ChronicleStampedLock extends StampedLock {
         );
         readLockHolderCount.addAtomicValue(-1); // DECREMENT  the cardinality of the Reader set
         chmR.put("ReaderCount ", readLockHolderCount); // make it IPC visible
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock unlockRead(" + stamp + ") unlocking.." +
                         "ReaderCount=[" +
@@ -464,7 +462,7 @@ public class ChronicleStampedLock extends StampedLock {
         offHeapLock.setEntryLockState(
                 (readLockHolderCount = chmR.get("ReaderCount ")).getVolatileValue()
         );
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         "offHeapLock=[" + offHeapLock.getEntryLockState() + "]" +
                         ","
@@ -475,7 +473,7 @@ public class ChronicleStampedLock extends StampedLock {
 
     @Override
     public void unlockWrite(long stamp) {
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock unlockWrite(" + stamp + ") unlocking..,"
         );
@@ -486,14 +484,14 @@ public class ChronicleStampedLock extends StampedLock {
         writeLockHolderCount = chmW.get("WriterCount ");
         writeLockHolderCount.addAtomicValue(-1);
         chmW.put("WriterCount ", writeLockHolderCount);
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock unlockWrite(" + stamp + ") -- writeSeekers=[" +
                         +writeLockHolderCount.getVolatileValue() + "] " +
                         "..,"
         );
 
-        lg.log(Level.FINE,
+        Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
                         " ChronicleStampedLock unlockWrite(" +
                         (offHeapLock = chm.get("Stamp ")).getEntryLockState() +

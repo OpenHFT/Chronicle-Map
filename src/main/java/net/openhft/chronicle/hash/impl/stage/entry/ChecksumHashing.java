@@ -16,8 +16,7 @@
 
 package net.openhft.chronicle.hash.impl.stage.entry;
 
-public enum ChecksumHashing {
-    ;
+public enum ChecksumHashing {;
 
     /**
      * A smart procedure copied from CityHash/FarmHash, see the full implementation in

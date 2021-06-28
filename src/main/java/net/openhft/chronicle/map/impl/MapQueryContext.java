@@ -43,8 +43,6 @@ import net.openhft.sg.Staged;
         CompilationAnchor.class,
         OwnerThreadHolder.class,
 
-        LogHolder.class,
-
         VanillaChronicleMapHolderImpl.class,
 
         KeyBytesInterop.class,

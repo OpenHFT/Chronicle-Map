@@ -28,8 +28,6 @@ import static net.openhft.chronicle.map.Issue62ChronicleServer.prepare;
 
 public class Issue62ChronicleClient {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(Issue62ChronicleClient.class);
-
     public static void main(String[] args) throws Exception {
         prepare(MAP_FILE_B);
 
@@ -45,11 +43,11 @@ public class Issue62ChronicleClient {
         try (ChronicleMap<String, Long> map =
                      cityPostalCodesMapBuilder.createPersistedTo(MAP_FILE_B)) {
 
-            LOGGER.info("Starting");
+            System.out.println( "Starting");
             Jvm.pause(3000);
 
             for (Entry<String, Long> entry : map.entrySet()) {
-                LOGGER.info("{} : {}", entry.getKey(), entry.getValue());
+                System.out.println(entry);
             }
         }
     }

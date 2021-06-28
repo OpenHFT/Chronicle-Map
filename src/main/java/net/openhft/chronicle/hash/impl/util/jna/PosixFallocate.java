@@ -11,9 +11,6 @@ import java.lang.reflect.Field;
 
 public final class PosixFallocate {
 
-    private static final Logger LOG =
-            LoggerFactory.getLogger(PosixFallocate.class.getName());
-
     static {
         Native.register(Platform.C_LIBRARY_NAME);
     }
@@ -26,7 +23,7 @@ public final class PosixFallocate {
         if (fd != -1) {
             int ret = posix_fallocate(getNativeFileDescriptor(descriptor), offset, length);
             if (ret != 0) {
-                LOG.warn("posix_fallocate() returned {}", ret);
+                Jvm.warn().on(PosixFallocate.class, "posix_fallocate() returned " + ret);
             }
         }
     }
@@ -39,7 +36,7 @@ public final class PosixFallocate {
             Jvm.setAccessible(field);
             return (int) field.get(descriptor);
         } catch (final Exception e) {
-            LOG.warn("unsupported FileDescriptor implementation: e={}", e.getLocalizedMessage());
+            Jvm.warn().on(PosixFallocate.class, "unsupported FileDescriptor implementation: e=" + e.getLocalizedMessage());
             return -1;
         }
     }

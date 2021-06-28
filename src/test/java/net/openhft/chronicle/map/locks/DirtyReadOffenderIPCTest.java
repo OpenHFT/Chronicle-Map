@@ -63,8 +63,7 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                     "..... @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
-            while ((stamp = offHeapLock.writeLock()) == 0) {
-                ;
+            while ((stamp = offHeapLock.writeLock()) == 0) {;
             }
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +

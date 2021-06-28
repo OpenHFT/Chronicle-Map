@@ -35,7 +35,6 @@ public enum StateMachineState {
     /**
      * c-tor
      *
-     * @param state
      */
     StateMachineState(int state) {
         this.state = state;
@@ -52,7 +51,6 @@ public enum StateMachineState {
     }
 
     /**
-     * @return
      */
     public int value() {
         return this.state;

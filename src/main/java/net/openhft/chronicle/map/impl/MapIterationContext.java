@@ -39,8 +39,6 @@ import net.openhft.sg.Staged;
         OwnerThreadHolder.class,
         VanillaChronicleMapHolderImpl.class,
 
-        LogHolder.class,
-
         MapSegmentIteration.class,
 
         KeyBytesInterop.class,

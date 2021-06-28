@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import net.openhft.chronicle.core.Jvm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,6 @@ import java.util.TreeMap;
 import java.util.WeakHashMap;
 
 final class ChronicleHashCloseOnExitHook {
-    private static final Logger LOG = LoggerFactory.getLogger(ChronicleHashCloseOnExitHook.class);
 
     private static WeakHashMap<VanillaChronicleHash.Identity, Long> maps = new WeakHashMap<>();
     private static long order = 0;
@@ -66,7 +66,8 @@ final class ChronicleHashCloseOnExitHook {
                             preShutdownAction.run();
                         } catch (Throwable throwable) {
                             try {
-                                LOG.error("Error running pre-shutdown action for " + h.toIdentityString() +
+                                Jvm.error().on(ChronicleHashCloseOnExitHook.class,
+                                        "Error running pre-shutdown action for " + h.toIdentityString() +
                                         " :", throwable);
                             } catch (Throwable t2) {
                                 throwable.addSuppressed(t2);
@@ -77,7 +78,8 @@ final class ChronicleHashCloseOnExitHook {
                     h.close();
                 } catch (Throwable throwable) {
                     try {
-                        LOG.error("Error while closing " + h.toIdentityString() +
+                        Jvm.error().on(ChronicleHashCloseOnExitHook.class,
+                                "Error while closing " + h.toIdentityString() +
                                 " during shutdown hook:", throwable);
                     } catch (Throwable t2) {
                         // This may occur if the log service has already been shut down. Try to fall
@@ -89,7 +91,8 @@ final class ChronicleHashCloseOnExitHook {
             });
         } catch (Throwable throwable) {
             try {
-                LOG.error("Error while closing maps during shutdown hook:", throwable);
+                Jvm.error().on(ChronicleHashCloseOnExitHook.class,
+                        "Error while closing maps during shutdown hook:", throwable);
             } catch (Throwable t2) {
                 throwable.addSuppressed(t2);
                 throwable.printStackTrace();

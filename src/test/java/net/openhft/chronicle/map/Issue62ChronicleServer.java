@@ -33,7 +33,6 @@ public class Issue62ChronicleServer {
             "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     final static File MAP_FILE_B =
             Paths.get(OS.getTarget(), Time.uniqueId() + "map.b").toFile();
-    private final static Logger LOGGER = LoggerFactory.getLogger(Issue62ChronicleServer.class);
     private final static File MAP_FILE_A =
             Paths.get(OS.getTarget(), Time.uniqueId() + "map.a").toFile();
 
@@ -63,7 +62,7 @@ public class Issue62ChronicleServer {
             cityPostalCodes.put(STR + i, (long) i);
         }
 
-        LOGGER.info("Map created");
+        System.out.println("Map created");
         Jvm.pause(15000);
 
     }

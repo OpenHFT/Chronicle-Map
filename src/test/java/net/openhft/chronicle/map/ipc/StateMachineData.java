@@ -39,8 +39,6 @@ public class StateMachineData implements Byteable {
     // *************************************************************************
 
     /**
-     * @param states
-     * @return
      */
     public boolean stateIn(StateMachineState... states) {
         StateMachineState currentState = getState();
@@ -54,8 +52,6 @@ public class StateMachineData implements Byteable {
     }
 
     /**
-     * @param from
-     * @param to
      */
     public boolean setState(StateMachineState from, StateMachineState to) {
         if (this.bs == null) throw new NullPointerException("Byteable is not set to off heap");
@@ -64,7 +60,6 @@ public class StateMachineData implements Byteable {
     }
 
     /**
-     * @return
      */
     public StateMachineState getState() {
         if (this.bs == null) throw new NullPointerException("Byteable is not set to off heap");
@@ -74,7 +69,6 @@ public class StateMachineData implements Byteable {
     }
 
     /**
-     * @param state
      */
     public void setState(StateMachineState state) {
         if (this.bs == null) throw new NullPointerException("Byteable is not set to off heap");
@@ -86,8 +80,6 @@ public class StateMachineData implements Byteable {
      * Wait for a state and make a transition.
      * It spins initially (1000 iterations), then uses a Thread.yield() .
      *
-     * @param from
-     * @param to
      */
     public void waitForState(StateMachineState from, StateMachineState to) {
         if (this.bs == null) throw new NullPointerException("Byteable is not set to off heap");
@@ -105,7 +97,6 @@ public class StateMachineData implements Byteable {
     // *************************************************************************
 
     /**
-     * @return
      */
     public int getStateData() {
         if (this.bs != null) {
@@ -116,7 +107,6 @@ public class StateMachineData implements Byteable {
     }
 
     /**
-     * @param data
      */
     public void setStateData(int data) {
         if (this.bs != null) {
@@ -125,7 +115,6 @@ public class StateMachineData implements Byteable {
     }
 
     /**
-     * @return
      */
     public int incStateData() {
         if (this.bs != null) {
@@ -136,7 +125,6 @@ public class StateMachineData implements Byteable {
     }
 
     /**
-     * @return
      */
     public boolean done() {
         if (this.bs != null) {
