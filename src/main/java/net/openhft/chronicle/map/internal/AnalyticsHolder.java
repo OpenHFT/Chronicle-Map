@@ -3,7 +3,8 @@ package net.openhft.chronicle.map.internal;
 import net.openhft.chronicle.core.analytics.AnalyticsFacade;
 import net.openhft.chronicle.core.pom.PomProperties;
 
-public enum AnalyticsHolder {;
+public enum AnalyticsHolder {
+    ; // none
 
     // Todo: VERSION is "unknown" for some reason
     private static final String VERSION = PomProperties.version("net.openhft", "chronicle-map");

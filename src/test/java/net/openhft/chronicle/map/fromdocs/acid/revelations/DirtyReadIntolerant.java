@@ -39,7 +39,8 @@ public class DirtyReadIntolerant {
                             " DirtyReadIntolerant sleeping " + sleepMock + " seconds"
             );
             Thread.sleep(sleepMock * 1_000);
-            while ((stamp = offHeapLock.readLock()) < 0) {;
+            while ((stamp = offHeapLock.readLock()) < 0) {
+    ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

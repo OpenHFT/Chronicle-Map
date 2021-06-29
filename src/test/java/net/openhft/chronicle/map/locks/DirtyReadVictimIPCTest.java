@@ -84,7 +84,8 @@ public class DirtyReadVictimIPCTest {
                     OS.getTarget() + "/shm-" +
                             "OPERAND_ChronicleStampedLock"
             );
-            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {;
+            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
+    ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -178,7 +179,8 @@ public class DirtyReadVictimIPCTest {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {;
+            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
+    ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

@@ -43,7 +43,8 @@ public class DirtyReadVictimTest {
                     OS.getTarget() + "/OPERAND_ChronicleStampedLock"
                     /*"C:\\Users\\buddy\\dev\\shm\\OPERAND_ChronicleStampedLock"*/
             );
-            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {;
+            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
+    ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

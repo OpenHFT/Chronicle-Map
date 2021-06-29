@@ -25,7 +25,8 @@ import net.openhft.chronicle.core.OS;
  * are stateful - so need to keep an instance in thread local that seems to be overall more pain
  * than gain.
  */
-public enum TierCountersArea {;
+public enum TierCountersArea {
+    ; // none
 
     public static final long NEXT_TIER_INDEX_OFFSET = 0L;
     public static final long PREV_TIER_INDEX_OFFSET = NEXT_TIER_INDEX_OFFSET + 8L;
