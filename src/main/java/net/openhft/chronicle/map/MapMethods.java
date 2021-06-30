@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Data;
 
+import java.util.Objects;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -188,8 +189,13 @@ public interface MapMethods<K, V, R> {
                                  ReturnValue<V> returnValue) {
         if (tryReturnCurrentValueIfPresent(q, returnValue))
             return;
+
         // Key is absent
-        q.insert(q.absentEntry(), q.wrapValueAsData(mappingFunction.apply(q.queriedKey().get())));
+        final V applyResult = mappingFunction.apply(q.queriedKey().get());
+        if (applyResult == null)
+            return; // `null` is computed as a new value, no changes in the map are needed.
+
+        q.insert(q.absentEntry(), q.wrapValueAsData(applyResult));
         returnValue.returnValue(q.entry().value());
     }
 
@@ -415,6 +421,7 @@ public interface MapMethods<K, V, R> {
     default void merge(MapQueryContext<K, V, R> q, Data<V> value,
                        BiFunction<? super V, ? super V, ? extends V> remappingFunction,
                        ReturnValue<V> returnValue) {
+        Objects.requireNonNull(remappingFunction);
         q.updateLock().lock();
         Data<V> newValueData;
         MapEntry<K, V> entry = q.entry();

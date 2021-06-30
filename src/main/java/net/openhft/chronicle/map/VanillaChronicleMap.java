@@ -49,10 +49,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -821,6 +818,21 @@ public class VanillaChronicleMap<K, V, R>
             return methods.replace(
                     q, q.inputValueDataAccess().getData(oldValue), q.wrapValueAsData(newValue));
         }
+    }
+
+    @Override
+    public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
+        throwExceptionIfClosed();
+
+        Objects.requireNonNull(function);
+
+        forEachEntry(entry -> {
+            final V newValue = function.apply(entry.key().get(), entry.value().get());
+
+            // This is quite more simple than default ConcurrentMap#replaceAll implementation.
+            // Update lock for the entry is already acquired by #forEachEntry, so we are sure that the replace is atomic.
+            entry.context().replaceValue(entry, entry.context().wrapValueAsData(newValue));
+        });
     }
 
     @Override

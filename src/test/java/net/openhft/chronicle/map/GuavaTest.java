@@ -44,22 +44,6 @@ public class GuavaTest extends TestCase {
         configureSuite(chmSuite);
         TestSuite chmTests = chmSuite.named("Guava tests of Chronicle Map").createTestSuite();
 
-        // TODO: remove after https://github.com/OpenHFT/Chronicle-Map/issues/303 is fixed.
-        {
-            Vector<TestSuite> collectionSizeSuites = Jvm.getValue(chmTests, "fTests");
-            assert collectionSizeSuites != null;
-
-            for (TestSuite sizeSuite : collectionSizeSuites) {
-                Vector<TestSuite> testers = Jvm.getValue(sizeSuite, "fTests");
-
-                assert testers != null;
-                testers.removeIf(tester ->
-                        tester.getName().contains("MapComputeIfAbsentTester") ||
-                                tester.getName().contains("MapMergeTester") ||
-                                tester.getName().contains("MapReplaceAllTester"));
-            }
-        }
-
         MapTestSuiteBuilder<String, String> backed = using(new BackedUpMapGenerator());
         configureSuite(backed);
         TestSuite backedTests = backed
