@@ -905,7 +905,10 @@ public abstract class VanillaChronicleHash<K,
             address = OS.pageAlign(address) - OS.pageSize();
             length += oldAddress - address;
         }
-        if (OS.isWindows()) {
+        if (OS.isMacOSX()) {
+            // see issue https://github.com/OpenHFT/Chronicle-Map/issues/304
+            // todo get msync to work on mac
+        } else if (OS.isWindows()) {
             WindowsMsync.msync(raf, address, length);
         } else {
             PosixMsync.msync(address, length);
