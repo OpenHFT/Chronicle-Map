@@ -43,7 +43,7 @@ public final class FileLockUtil {
                                 flr.reserve();
                                 return flr; // keep the old one
                             }
-                        } catch (IOException e) {
+                        } catch (IOException | IllegalStateException e) {
                             throw newUnableToAcquireSharedFileLockException(canonicalFile, e);
                         }
                     }
