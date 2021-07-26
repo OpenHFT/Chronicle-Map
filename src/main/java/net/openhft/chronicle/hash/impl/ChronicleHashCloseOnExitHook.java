@@ -17,8 +17,7 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.Jvm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.openhft.chronicle.core.shutdown.PriorityHook;
 
 import java.util.TreeMap;
 import java.util.WeakHashMap;
@@ -29,7 +28,7 @@ final class ChronicleHashCloseOnExitHook {
     private static long order = 0;
 
     static {
-        Runtime.getRuntime().addShutdownHook(new Thread(ChronicleHashCloseOnExitHook::closeAll));
+        PriorityHook.add(80, ChronicleHashCloseOnExitHook::closeAll);
     }
 
     private ChronicleHashCloseOnExitHook() {
