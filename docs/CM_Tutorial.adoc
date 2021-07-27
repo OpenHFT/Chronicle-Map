@@ -104,13 +104,13 @@ concurrently within a Java process, you should not create a separate `ChronicleM
 If a process, accessing a persisted Chronicle Map, terminated abnormally, for example:
 
   - crashed
-  - `SIGKILL`ed
+  - `SIGKILL` ed
   - terminated because the host operating system crashed
   - terminated because the host machine lost power
 
 then the Chronicle Map may remain in an inaccessible and/or corrupted state.
 
-When the Chronicle Map is opened the next time from another process, it should be done using `.recoverPersistedTo()` method in `ChronicleMapBuilder`.
+The next time a process opens the Chronicle Map, it should be done using `.recoverPersistedTo()` method in `ChronicleMapBuilder`.
 
 Unlike `createPersistedTo()`, this method scans all the memory of the Chronicle Map store for
 inconsistencies and, if any are found, it cleans them up.
@@ -151,7 +151,7 @@ If `sameBuilderConfigAndLibraryVersion` is `false`, `recoverPersistedTo()` relie
 configurations written to the Chronicle Map's header, assuming it is not corrupted. If it is
 corrupted, `ChronicleHashRecoveryFailedException` is thrown.
 
-However, the subject header memory is never updated on ordinary operations with Chronicle Map, so it
+NOTE: The subject header memory is never updated on ordinary operations with Chronicle Map, so it
 couldn't be corrupted if an accessing process crashed, or the operating system crashed, or even the
 machine lost power. Only hardware, memory, or disk corruption, or a bug in the file system, could lead
 to Chronicle Map header memory corruption.
@@ -175,6 +175,10 @@ If the Chronicle Map is configured to store entry checksums along with entries, 
 
 Otherwise, it assumes the entry is corrupted and deletes it from the Chronicle Map. If checksums are to be stored, the recovery procedure cannot guarantee
 correctness of the entry data. See [Entry checksums](#entry-checksums) section for more information.
+
+=== Recovery for replicated maps (enterprise only)
+
+Replicated maps can be configured to run recovery on startup (prior to replication) by setting the `recoverOnCreate` flag in `software.chronicle.enterprise.map.config.ReplicatedMapCfg`.
 
 == Key and Value Types
 
