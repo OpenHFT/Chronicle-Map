@@ -48,8 +48,6 @@ import net.openhft.chronicle.wire.TextWire;
 import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
@@ -1833,6 +1831,12 @@ public final class ChronicleMapBuilder<K, V> implements
                                                               final boolean recover,
                                                               final boolean overrideBuilderConfig,
                                                               @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
+
+        if (recover) {
+            Jvm.warn().on(ChronicleMapBuilder.class, "Recovery operation needs exclusive access to the ChronicleMap or else the result is unspecified including the risk of loosing and/or corrupting partial or all data.");
+            Jvm.warn().on(ChronicleMapBuilder.class, "Do not use recovery as a standard way of opening a ChronicleMap.");
+        }
+
         final ChronicleHashCorruptionImpl corruption = recover ? new ChronicleHashCorruptionImpl() : null;
         try {
             int headerSize = waitUntilReady(raf, file, recover);

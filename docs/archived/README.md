@@ -414,7 +414,7 @@ ChronicleMap<Integer, PostalCodeRange> cityPostalCodes = ChronicleMap
 
 If the Chronicle Map is configured to store entry checksums along with entries, recovery procedure
 checks for each entry that the checksums is correct, otherwise it assumes the entry is corrupted and
-deletes it from the Chronicle Map. If checksums are to stored, recovery procedure cannot guarantee
+deletes it from the Chronicle Map. If checksums are not stored, recovery procedure cannot guarantee
 correctness of entry data. See [Entry checksums](#entry-checksums) section for more information.
 
 #### Key and Value Types
