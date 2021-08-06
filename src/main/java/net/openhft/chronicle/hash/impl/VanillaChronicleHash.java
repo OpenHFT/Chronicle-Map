@@ -245,8 +245,6 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public Runnable getPreShutdownAction() {
-        throwExceptionIfClosed();
-
         return preShutdownAction;
     }
 
