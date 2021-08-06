@@ -100,4 +100,9 @@ public interface ChronicleHashBuilderPrivateAPI<K, RO> {
      * Whether to skip closing a {@link ChronicleHash} using the default shutdown hook.
      */
     boolean skipCloseOnExitHook();
+
+    /**
+     * @return should the file be left as sparse if that is supported.
+     */
+    boolean sparseFile();
 }

@@ -214,10 +214,12 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean replicated;
     private boolean persisted;
     private String replicatedMapClassName = ReplicatedChronicleMap.class.getName();
+    private boolean sparseFile = Jvm.getBoolean("chronicle.map.sparseFile");
 
     ChronicleMapBuilder(@NotNull final Class<K> keyClass, @NotNull final Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass);
         valueBuilder = new SerializationBuilder<>(valueClass);
+        System.out.println("sparseFile = " + sparseFile);
     }
 
     /**
@@ -324,10 +326,12 @@ public final class ChronicleMapBuilder<K, V> implements
         return greatestCommonDivisor(b, a % b);
     }
 
-    private static int maxDefaultChunksPerAverageEntry(final boolean replicated) {
+    private static int maxDefaultChunksPerAverageEntry(final boolean replicated, boolean sparseFile) {
         // When replicated, having 8 chunks (=> 8 bits in bitsets) per entry seems more wasteful
         // because when replicated we have bit sets per each remote node, not only allocation
         // bit set as when non-replicated
+        if (sparseFile)
+            return replicated ? 2 : 4;
         return replicated ? 4 : 8;
     }
 
@@ -785,7 +789,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     worstAlignment = worstAlignmentAssumingChunkSize(
                             constantSizeBeforeAlignment, chunkSize);
                     if (size + worstAlignment + valueSize >=
-                            maxDefaultChunksPerAverageEntry(replicated) * chunkSize) {
+                            maxDefaultChunksPerAverageEntry(replicated, sparseFile) * chunkSize) {
                         break determineAlignment;
                     }
                     chunkSize = 4;
@@ -864,7 +868,7 @@ public final class ChronicleMapBuilder<K, V> implements
             return toLong(averageEntrySize);
         final int maxChunkSize = 1 << 30;
         for (long chunkSize = 4; chunkSize <= maxChunkSize; chunkSize *= 2L) {
-            if (maxDefaultChunksPerAverageEntry(replicated) * chunkSize > averageEntrySize)
+            if (maxDefaultChunksPerAverageEntry(replicated, sparseFile) * chunkSize > averageEntrySize)
                 return chunkSize;
         }
         return maxChunkSize;
@@ -1003,7 +1007,7 @@ public final class ChronicleMapBuilder<K, V> implements
             entriesPerSegment = this.entriesPerSegment;
         } else {
             final int actualSegments = actualSegments();
-            final double averageEntriesPerSegment = entries() * 1.0 / actualSegments;
+            final double averageEntriesPerSegment = entries() * (sparseFile ? 2.0 : 1.0) / actualSegments;
             if (actualSegments > 1) {
                 entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
                         averageEntriesPerSegment, nonTieredSegmentsPercentile);
@@ -1345,6 +1349,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 ", entries=" + entries() +
                 ", putReturnsNull=" + putReturnsNull() +
                 ", removeReturnsNull=" + removeReturnsNull() +
+                ", sparseFile=" + sparseFile() +
                 ", keyBuilder=" + keyBuilder +
                 ", valueBuilder=" + valueBuilder +
                 '}';
@@ -1554,6 +1559,21 @@ public final class ChronicleMapBuilder<K, V> implements
     public ChronicleMapBuilder<K, V> replicatedMapClassName(final String replicatedMapClassName) {
         this.replicatedMapClassName = replicatedMapClassName;
         return this;
+    }
+
+    /**
+     * Enable the use of sparse files if supported. This will double the extents however could reduce disk space used.
+     *
+     * @param sparseFile true, if allowed
+     * @return this builder
+     */
+    public ChronicleMapBuilder<K, V> sparseFile(final boolean sparseFile) {
+        this.sparseFile = sparseFile;
+        return this;
+    }
+
+    public boolean sparseFile() {
+        return sparseFile;
     }
 
     @Override
@@ -1964,6 +1984,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private void preMapConstruction() {
         averageKeySize = preMapConstruction(keyBuilder, averageKeySize, averageKey, sampleKey, "Key");
         averageValueSize = preMapConstruction(valueBuilder, averageValueSize, averageValue, sampleValue, "Value");
+        if (sparseFile)
+            averageValueSize *= 2;
         stateChecks();
     }
 

@@ -125,4 +125,9 @@ class ChronicleMapBuilderPrivateAPI<K, V>
     public boolean skipCloseOnExitHook() {
         return b.skipCloseOnExitHook;
     }
+
+    @Override
+    public boolean sparseFile() {
+        return b.sparseFile();
+    }
 }

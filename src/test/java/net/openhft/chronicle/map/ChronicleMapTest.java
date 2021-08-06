@@ -147,7 +147,6 @@ public class ChronicleMapTest {
         }
 
         return map;
-
     }
 
     @Test
