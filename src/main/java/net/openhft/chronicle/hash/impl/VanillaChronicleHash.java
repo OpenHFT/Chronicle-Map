@@ -162,6 +162,7 @@ public abstract class VanillaChronicleHash<K,
      */
     @Nullable
     private transient FileLock fileLock;
+    private transient boolean sparseFile;
 
     public VanillaChronicleHash(@NotNull final ChronicleMapBuilder<K, ?> builder) {
         // Version
@@ -184,6 +185,7 @@ public abstract class VanillaChronicleHash<K,
         chunkSize = privateAPI.chunkSize();
         maxChunksPerEntry = privateAPI.maxChunksPerEntry();
         actualChunksPerSegmentTier = privateAPI.actualChunksPerSegmentTier();
+        sparseFile = privateAPI.sparseFile();
 
         // Precomputed offsets and sizes for fast Context init
         segmentHeaderSize = privateAPI.segmentHeaderSize();
@@ -1052,8 +1054,8 @@ public abstract class VanillaChronicleHash<K,
             // This kind of fragmented file may hang the program and cause dmesg reports
             // "XFS: ... possible memory allocation deadlock size ... in kmem_alloc (mode:0x250)".
             // We can fix this by trying calling posix_fallocate to preallocate the space.
-            if (OS.isLinux()) {
-                PosixFallocate.fallocate(raf.getFD(), 0, minFileSize);
+            if (OS.isLinux() && !sparseFile) {
+                PosixFallocate.fallocate(raf.getFD(), mappingOffsetInFile, minFileSize);
             }
         }
         final long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
@@ -1130,8 +1132,6 @@ public abstract class VanillaChronicleHash<K,
      */
     public final class Identity {
         public VanillaChronicleHash hash() {
-            throwExceptionIfClosed();
-
             return VanillaChronicleHash.this;
         }
     }
