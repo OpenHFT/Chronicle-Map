@@ -263,7 +263,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
         throw new UnsupportedOperationException("todo");
     }
 
-    public class SegmentStats extends SelfDescribingMarshallable {
+    class SegmentStats extends SelfDescribingMarshallable {
         long usedBytes;
         long sizeInBytes;
         int tiers;
