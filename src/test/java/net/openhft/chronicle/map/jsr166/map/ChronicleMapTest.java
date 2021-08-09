@@ -611,8 +611,8 @@ public class ChronicleMapTest extends JSR166TestCase {
             ChronicleMap.SegmentStats[] segmentStats = map.segmentStats();
             assertEquals(3, segmentStats.length);
             for (ChronicleMap.SegmentStats ss : segmentStats) {
-                assertEquals(43428, ss.usedBytes(), 200);
-                assertEquals(43776, ss.sizeInBytes());
+                assertEquals(50880, ss.usedBytes(), 600);
+                assertEquals(52224, ss.sizeInBytes());
                 assertEquals(3, ss.tiers());
             }
         }
