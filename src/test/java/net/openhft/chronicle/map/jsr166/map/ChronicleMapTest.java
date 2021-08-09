@@ -597,23 +597,23 @@ public class ChronicleMapTest extends JSR166TestCase {
                 .maxBloatFactor(2)
                 .create()) {
 
-            long remainingAutoResizes = 0;
-            short percentageFreeSpace = 0;
             try {
                 for (int i = 0; ; i++) {
-
                     map.put(i, 0);
-                    remainingAutoResizes = map.remainingAutoResizes();
-                    percentageFreeSpace = map.percentageFreeSpace();
-
                 }
             } catch (IllegalStateException e) {
-                if (e.getMessage().contains("Attempt to allocate")) {
-                    Assert.assertEquals(0, (int) remainingAutoResizes);
-                    Assert.assertTrue(percentageFreeSpace < 6);
-                    return;
-                }
-                Assert.fail();
+                assertTrue(e.getMessage().contains("Attempt to allocate"));
+            }
+            long remainingAutoResizes = map.remainingAutoResizes();
+            short percentageFreeSpace = map.percentageFreeSpace();
+            Assert.assertEquals(0, (int) remainingAutoResizes);
+            Assert.assertTrue(percentageFreeSpace < 6);
+            ChronicleMap.SegmentStats[] segmentStats = map.segmentStats();
+            assertEquals(3, segmentStats.length);
+            for (ChronicleMap.SegmentStats ss : segmentStats) {
+                assertEquals(43428, ss.usedBytes(), 200);
+                assertEquals(43776, ss.sizeInBytes());
+                assertEquals(3, ss.tiers());
             }
         }
     }

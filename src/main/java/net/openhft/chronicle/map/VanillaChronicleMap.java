@@ -18,7 +18,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.algo.bitset.ReusableBitSet;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
-import net.openhft.chronicle.analytics.Analytics;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.PointerBytesStore;
@@ -49,7 +48,9 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -61,8 +62,6 @@ import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDiviso
 public class VanillaChronicleMap<K, V, R>
         extends VanillaChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>, ExternalMapQueryContext<K, V, ?>>
         implements AbstractChronicleMap<K, V> {
-
-    private double maxBloatFactor;
 
     public SizeMarshaller valueSizeMarshaller;
     public SizedReader<V> valueReader;
@@ -89,6 +88,7 @@ public class VanillaChronicleMap<K, V, R>
     transient boolean removeReturnsNull;
     transient Set<Entry<K, V>> entrySet;
     transient ThreadLocal<ContextHolder> cxt;
+    private double maxBloatFactor;
     /////////////////////////////////////////////////
     private transient String name;
     /**
@@ -312,6 +312,39 @@ public class VanillaChronicleMap<K, V, R>
         }
 
         return (short) (100 - (int) (100 * totalUsed / totalSize));
+    }
+
+    @Override
+    public SegmentStats[] segmentStats() {
+        throwExceptionIfClosed();
+
+        SegmentStats[] ret = new SegmentStats[segments()];
+        try (IterationContext<K, V, ?> c = iterationContext()) {
+            for (int segmentIndex = 0; segmentIndex < segments(); segmentIndex++) {
+                c.initSegmentIndex(segmentIndex);
+
+                if (!(c instanceof CompiledMapIterationContext))
+                    continue;
+                final CompiledMapIterationContext c1 = (CompiledMapIterationContext) c;
+
+                c1.goToFirstTier();
+                final ReusableBitSet freeList = c1.freeList();
+                SegmentStats ss = ret[segmentIndex] = new SegmentStats();
+                ss.usedBytes = freeList.cardinality() * chunkSize;
+                ss.sizeInBytes = freeList.logicalSize() * chunkSize;
+                ss.tiers = 1;
+
+                while (c1.hasNextTier()) {
+                    c1.nextTier();
+                    final ReusableBitSet freeList0 = c1.freeList();
+                    ss.usedBytes += freeList0.cardinality() * chunkSize;
+                    ss.sizeInBytes += freeList0.logicalSize() * chunkSize;
+                    ss.tiers++;
+                }
+            }
+        }
+
+        return ret;
     }
 
     @NotNull

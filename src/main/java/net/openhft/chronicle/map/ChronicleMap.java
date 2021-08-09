@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.serialization.SizedReader;
 import net.openhft.chronicle.hash.serialization.SizedWriter;
+import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -253,6 +254,31 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      */
     default short percentageFreeSpace() {
         throw new UnsupportedOperationException("todo");
+    }
+
+    /**
+     * @return an array of how full each segment is
+     */
+    default SegmentStats[] segmentStats() {
+        throw new UnsupportedOperationException("todo");
+    }
+
+    public class SegmentStats extends SelfDescribingMarshallable {
+        long usedBytes;
+        long sizeInBytes;
+        int tiers;
+
+        public int tiers() {
+            return tiers;
+        }
+
+        public long usedBytes() {
+            return usedBytes;
+        }
+
+        public long sizeInBytes() {
+            return sizeInBytes;
+        }
     }
 
     /**
