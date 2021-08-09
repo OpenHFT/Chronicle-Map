@@ -219,7 +219,6 @@ public final class ChronicleMapBuilder<K, V> implements
     ChronicleMapBuilder(@NotNull final Class<K> keyClass, @NotNull final Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass);
         valueBuilder = new SerializationBuilder<>(valueClass);
-        System.out.println("sparseFile = " + sparseFile);
     }
 
     /**
