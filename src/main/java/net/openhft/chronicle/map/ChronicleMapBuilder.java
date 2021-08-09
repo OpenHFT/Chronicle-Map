@@ -325,28 +325,34 @@ public final class ChronicleMapBuilder<K, V> implements
         return greatestCommonDivisor(b, a % b);
     }
 
-    private static int maxDefaultChunksPerAverageEntry(final boolean replicated, boolean sparseFile) {
-        // When replicated, having 8 chunks (=> 8 bits in bitsets) per entry seems more wasteful
+    private static int maxDefaultChunksPerAverageEntry(final boolean replicated, int avgEntrySize) {
+        // When replicated, having 16 chunks (=> 8 bits in bitsets) per entry seems more wasteful
         // because when replicated we have bit sets per each remote node, not only allocation
         // bit set as when non-replicated
-        if (sparseFile)
-            return replicated ? 2 : 4;
+        if (avgEntrySize >= 64 * 64)
+            return replicated ? 32 : 64;
+        if (avgEntrySize >= 32 * 32)
+            return replicated ? 16 : 32;
+        if (avgEntrySize >= 16 * 16)
+            return replicated ? 8 : 16;
         return replicated ? 4 : 8;
     }
 
     private static int estimateSegmentsForEntries(final long size) {
-        if (size > 200 << 20)
+        if (size >= 256 << 20)
             return 256;
-        if (size >= 1 << 20)
+        if (size >= 32 << 20)
             return 128;
-        if (size >= 128 << 10)
+        if (size >= 4 << 20)
             return 64;
-        if (size >= 16 << 10)
+        if (size >= 512 << 10)
             return 32;
-        if (size >= 4 << 10)
+        if (size >= 64 << 10)
             return 16;
-        if (size >= 1 << 10)
+        if (size >= 8 << 10)
             return 8;
+        if (size >= 1 << 10)
+            return 4;
         return 1;
     }
 
@@ -788,7 +794,7 @@ public final class ChronicleMapBuilder<K, V> implements
                     worstAlignment = worstAlignmentAssumingChunkSize(
                             constantSizeBeforeAlignment, chunkSize);
                     if (size + worstAlignment + valueSize >=
-                            maxDefaultChunksPerAverageEntry(replicated, sparseFile) * chunkSize) {
+                            maxDefaultChunksPerAverageEntry(replicated, (int) size) * chunkSize) {
                         break determineAlignment;
                     }
                     chunkSize = 4;
@@ -866,8 +872,8 @@ public final class ChronicleMapBuilder<K, V> implements
         if (constantlySizedEntries())
             return toLong(averageEntrySize);
         final int maxChunkSize = 1 << 30;
-        for (long chunkSize = 4; chunkSize <= maxChunkSize; chunkSize *= 2L) {
-            if (maxDefaultChunksPerAverageEntry(replicated, sparseFile) * chunkSize > averageEntrySize)
+        for (int chunkSize = 4; chunkSize <= maxChunkSize; chunkSize *= 2L) {
+            if ((long) maxDefaultChunksPerAverageEntry(replicated, (int) averageEntrySize) * chunkSize > averageEntrySize)
                 return chunkSize;
         }
         return maxChunkSize;
@@ -1006,13 +1012,17 @@ public final class ChronicleMapBuilder<K, V> implements
             entriesPerSegment = this.entriesPerSegment;
         } else {
             final int actualSegments = actualSegments();
-            final double averageEntriesPerSegment = entries() * (sparseFile ? 2.0 : 1.0) / actualSegments;
+            final double averageEntriesPerSegment = entries() * 1.0 / actualSegments;
             if (actualSegments > 1) {
                 entriesPerSegment = PoissonDistribution.inverseCumulativeProbability(
                         averageEntriesPerSegment, nonTieredSegmentsPercentile);
             } else {
                 // if there is only 1 segment, there is no source of variance in segments filling
                 entriesPerSegment = roundUp(averageEntriesPerSegment);
+            }
+            if (sparseFile && maxBloatFactor > 1.0) {
+                final double averageEntriesPerSegment2 = entries() * maxBloatFactor / actualSegments;
+                entriesPerSegment = Math.max(roundUp(averageEntriesPerSegment2), entriesPerSegment);
             }
         }
         final boolean actualChunksDefined = actualChunksPerSegmentTier > 0;
@@ -1983,8 +1993,10 @@ public final class ChronicleMapBuilder<K, V> implements
     private void preMapConstruction() {
         averageKeySize = preMapConstruction(keyBuilder, averageKeySize, averageKey, sampleKey, "Key");
         averageValueSize = preMapConstruction(valueBuilder, averageValueSize, averageValue, sampleValue, "Value");
-        if (sparseFile)
+        if (sparseFile) {
+            averageKeySize *= 2;
             averageValueSize *= 2;
+        }
         stateChecks();
     }
 

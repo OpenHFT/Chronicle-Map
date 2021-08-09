@@ -246,7 +246,9 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     Type valueType();
 
     /**
-     * @return the amount of free space in the map as a percentage. When the free space gets low ( around 5% ) the map will automatically expand. The
+     * WARNING: This is an expensive operation which can take milli-seconds.
+     *
+     * @return the amount of free space in the map as a percentage. When the free space gets low ( around 5-25% ) the map will automatically expand. The
      * number of times it can automatically expand is based on the {@code net.openhft.chronicle.map.ChronicleMapBuilder#maxBloatFactor}. If the map
      * expands you will see an increase in the available free space. NOTE: It is not possible to expand the chronicle map manually.
      * <p>
@@ -257,6 +259,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     }
 
     /**
+     * WARNING: This is a detailed however expensive operation which can take milliseconds
      * @return an array of how full each segment is
      */
     default SegmentStats[] segmentStats() {
