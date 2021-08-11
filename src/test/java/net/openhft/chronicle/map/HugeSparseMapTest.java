@@ -18,9 +18,10 @@ public class HugeSparseMapTest {
             file.deleteOnExit();
             ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                     .of(CharSequence.class, CharSequence.class)
-                    .averageKeySize(64)
+                    .averageKeySize(8)
                     // .entries(10_000_000_000L).averageValueSize(640) // 16 TB
-                    .entries(3_000_000_000L).averageValueSize(200) // 2 TB
+//                    .entries(3_000_000_000L).averageValueSize(200) // 2 TB
+                    .entries(3_000_000_000L).averageValueSize(16) // 216 GB
                     .sparseFile(sparseFile); // ~16 TB.
             ChronicleMap<CharSequence, CharSequence> map = builder.createPersistedTo(file);
             return map;
@@ -36,6 +37,7 @@ public class HugeSparseMapTest {
         try (ChronicleMap<CharSequence, CharSequence> map = createMap(true)) {
             map.put("hi", "there");
             assertEquals("there", map.get("hi").toString());
+            System.in.read();
         }
     }
 
