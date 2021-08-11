@@ -7,42 +7,34 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
+import java.util.stream.IntStream;
 
-public class LargeMapMain {
-    //    static int avgSize = 4096, maxSize = 40_000, entries= 500_000; // average ~= 4K
-    static int avgSize = 1024, maxSize = 8_000, entries = 1_000_000; // average ~= 1K
+public class VeryLargeMapMain {
+    static int avgSize = 16000, maxSize = 190_000, entries = 50_000_000; // average ~= 16K
 
     public static void main(String[] args) throws IOException {
-        ChronicleMap<CharSequence, CharSequence> map = createMap(false);
-        ChronicleMap<CharSequence, CharSequence> map2 = createMap(true);
-        StringBuilder key = new StringBuilder();
-        StringBuilder value = new StringBuilder();
-        Random rand = new Random(1);
-        for (int j = 0; j < 40; j++) {
-            for (int i = 0; i < entries / 10; i++) {
-                generate(rand, key, 1 + rand.nextInt(128));
-                generate(rand, value, (int) Math.pow(maxSize, rand.nextFloat()));
-                map.put(key, value);
-                map2.put(key, value);
-            }
+        ChronicleMap<CharSequence, CharSequence> map = createMap(true);
+        while (map.size() < entries) {
+            long start = System.nanoTime();
+            IntStream.range(0, 1000)
+                    .parallel()
+                    .forEach(t -> {
+                        Random rand = new Random();
+                        StringBuilder key = new StringBuilder();
+                        StringBuilder value = new StringBuilder();
+                        for (int k = 0; k < 1000; k++) {
+                            generate(rand, key, 1 + rand.nextInt(128));
+                            generate(rand, value, (int) Math.pow(maxSize, rand.nextFloat()));
+                            map.put(key, value);
+                        }
+                    });
+            long time = System.nanoTime() - start;
+            System.out.println("Entries per second: " + (long) (1e6 * 1e9 / time));
 
-            int repeat = Math.max(1, 9 - j);
-            for (int r = 0; r < repeat; r++) {
-                for (CharSequence cs : map2.keySet()) {
-                    generate(rand, value, (int) Math.pow(maxSize, rand.nextFloat()));
-                    map.put(cs, value);
-                    map2.put(cs, value);
-                }
-            }
-
-            System.out.println("any key map.size()= " + map.size() + ", sparse.size()= " + map2.size());
+            System.out.println("any key sparse.size()= " + map.size());
             ChronicleMap.SegmentStats[] ss = map.segmentStats();
             Arrays.sort(ss, Comparator.comparingLong(ChronicleMap.SegmentStats::usedBytes));
             System.out.println("segments " + ss.length + ", from " + ss[0] + " to " + ss[ss.length - 1]);
-
-            ChronicleMap.SegmentStats[] ss2 = map2.segmentStats();
-            Arrays.sort(ss2, Comparator.comparingLong(ChronicleMap.SegmentStats::usedBytes));
-            System.out.println("segments " + ss2.length + ", from " + ss2[0] + " to " + ss2[ss2.length - 1]);
 
             ProcessBuilder pb = new ProcessBuilder("bash", "-c", "ls -l *.map ; du *.map");
             pb.redirectErrorStream(true);
@@ -57,15 +49,14 @@ public class LargeMapMain {
     }
 
     private static ChronicleMap<CharSequence, CharSequence> createMap(boolean sparseFile) throws IOException {
-        File file = new File((sparseFile ? "sparse" : "default") + "-deleteme.map");
+        File file = new File("verylarge-deleteme.map");
         file.delete();
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
                 .entries(entries)
-                .actualSegments(64)
                 .averageKeySize(64)
                 .averageValueSize(avgSize)
-                .maxBloatFactor(4)
+//                .maxBloatFactor(2)
                 .sparseFile(sparseFile);
         ChronicleMap<CharSequence, CharSequence> map = builder.createPersistedTo(file);
         return map;

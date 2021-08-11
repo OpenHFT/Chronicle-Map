@@ -329,11 +329,11 @@ public final class ChronicleMapBuilder<K, V> implements
         // When replicated, having 16 chunks (=> 8 bits in bitsets) per entry seems more wasteful
         // because when replicated we have bit sets per each remote node, not only allocation
         // bit set as when non-replicated
-        if (avgEntrySize >= 64 * 64)
+        if (avgEntrySize >= 2 * 64 * 64)
             return replicated ? 32 : 64;
-        if (avgEntrySize >= 32 * 32)
+        if (avgEntrySize >= 2 * 32 * 32)
             return replicated ? 16 : 32;
-        if (avgEntrySize >= 16 * 16)
+        if (avgEntrySize >= 2 * 16 * 16)
             return replicated ? 8 : 16;
         return replicated ? 4 : 8;
     }

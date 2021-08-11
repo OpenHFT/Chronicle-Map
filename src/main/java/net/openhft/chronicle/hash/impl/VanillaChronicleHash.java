@@ -54,6 +54,8 @@ import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -92,6 +94,8 @@ public abstract class VanillaChronicleHash<K,
             AcquisitionStrategies.spinLoopOrFail(2, TimeUnit.SECONDS);
     private static final long GLOBAL_MUTABLE_STATE_LOCK_OFFSET = 0L;
     private static final long GLOBAL_MUTABLE_STATE_VALUE_OFFSET = 8L;
+    private final Runnable preShutdownAction;
+    private final boolean skipCloseOnExitHook;
     /////////////////////////////////////////////////
     // If the hash was created in the first place, or read from disk
     public transient boolean createdOrInMemory;
@@ -129,8 +133,6 @@ public abstract class VanillaChronicleHash<K,
     public transient CompactOffHeapLinearHashTable hashLookup;
     public transient Identity identity;
     protected int log2TiersInBulk;
-    private final Runnable preShutdownAction;
-    private final boolean skipCloseOnExitHook;
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
     protected transient BytesStore bs;
@@ -1053,12 +1055,27 @@ public abstract class VanillaChronicleHash<K,
             // "XFS: ... possible memory allocation deadlock size ... in kmem_alloc (mode:0x250)".
             // We can fix this by trying calling posix_fallocate to preallocate the space.
             if (OS.isLinux() && !sparseFile) {
-                PosixFallocate.fallocate(raf.getFD(), mappingOffsetInFile, minFileSize);
+                fallocate(mappingOffsetInFile, minFileSize - mappingOffsetInFile);
             }
         }
         final long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
         resources.addMemoryResource(address, mapSize);
         return new NativeBytesStore(address, mapSize, null, false);
+    }
+
+    private void fallocate(long mappingOffsetInFile, long length) throws IOException {
+        FileSystem fileSystem = file.toPath().getFileSystem();
+
+        long maxSize = 0;
+        for (FileStore fileStore : fileSystem.getFileStores()) {
+            long unallocatedSpace = fileStore.getUnallocatedSpace();
+            if (unallocatedSpace > length * 11 / 10) {
+                PosixFallocate.fallocate(raf.getFD(), mappingOffsetInFile, length);
+                return;
+            }
+            maxSize = Math.max(maxSize, unallocatedSpace);
+        }
+        throw new IOException("Not enough space to fallocate " + (length >> 20) + " MiB to " + fileSystem.getRootDirectories().iterator().next() + " unallocated was " + (maxSize >> 20) + " MiB");
     }
 
     private long bulkOffset(final int bulkIndex) {
