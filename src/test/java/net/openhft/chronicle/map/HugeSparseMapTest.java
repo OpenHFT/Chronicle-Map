@@ -18,11 +18,13 @@ public class HugeSparseMapTest {
             file.deleteOnExit();
             ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                     .of(CharSequence.class, CharSequence.class)
-                    .averageKeySize(8)
-                    // .entries(10_000_000_000L).averageValueSize(640) // 16 TB
+                    .averageKeySize(8);
+            if (sparseFile)
+                builder.entries(3_000_000_000L).averageValueSize(16); // 216 GB
+            else
+                builder.entries(10_000_000_000L).averageValueSize(640); // 16 TB
 //                    .entries(3_000_000_000L).averageValueSize(200) // 2 TB
-                    .entries(3_000_000_000L).averageValueSize(16) // 216 GB
-                    .sparseFile(sparseFile); // ~16 TB.
+            builder.sparseFile(sparseFile); // ~16 TB.
             ChronicleMap<CharSequence, CharSequence> map = builder.createPersistedTo(file);
             return map;
         } catch (Throwable t) {
