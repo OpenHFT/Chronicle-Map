@@ -2,6 +2,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.IOTools;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -33,6 +34,7 @@ public class HugeSparseMapTest {
         }
     }
 
+    @Ignore("https://github.com/OpenHFT/Chronicle-Map/issues/317")
     @Test
     public void hugeSparseMap() throws IOException {
         assumeTrue(OS.isLinux());
