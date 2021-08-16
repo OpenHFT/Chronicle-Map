@@ -23,6 +23,7 @@ import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.map.MapAbsentEntry;
 import net.openhft.chronicle.map.MapSegmentContext;
 import net.openhft.chronicle.map.ReplicatedChronicleMap;
+import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import net.openhft.chronicle.map.impl.IterationContext;
 import net.openhft.chronicle.map.impl.ReplicatedChronicleMapHolder;
 import net.openhft.sg.StageRef;
@@ -73,6 +74,14 @@ public class ReplicatedQueryAlloc extends QueryAlloc {
         long firstAttemptedTierIndex = s.tierIndex;
         long firstAttemptedTierBaseAddr = s.tierBaseAddr;
         boolean cleanedFirstAttemptedTier = forcedOldDeletedEntriesCleanup(prevPos);
+
+        if (cleanedFirstAttemptedTier) {
+            // Force recalculation of some properties as new slots may
+            // have become available and there might be "holes"
+            // created by removed entries.
+            ((CompiledReplicatedMapQueryContext) (Object) this).closeSearchKey();
+       }
+
         s.goToFirstTier();
         while (true) {
             boolean visitingFirstAttemptedTier = s.tier == firstAttemptedTier;
