@@ -11,6 +11,7 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
+@Ignore("https://github.com/OpenHFT/Chronicle-Map/issues/317")
 public class HugeSparseMapTest {
 
     private static ChronicleMap<CharSequence, CharSequence> createMap(boolean sparseFile) throws IOException {
@@ -34,7 +35,6 @@ public class HugeSparseMapTest {
         }
     }
 
-    @Ignore("https://github.com/OpenHFT/Chronicle-Map/issues/317")
     @Test
     public void hugeSparseMap() throws IOException {
         assumeTrue(OS.isLinux());
