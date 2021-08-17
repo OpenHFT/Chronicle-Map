@@ -89,7 +89,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
             nativeBytesStore.init(instance, false);
             bytesStore = nativeBytesStore;
         } else {
-            bytesStore = HeapBytesStore.wrap(instance);
+            bytesStore = BytesStore.wrap(instance);
         }
         return this;
     }

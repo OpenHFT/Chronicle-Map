@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.HeapBytesStore;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
@@ -26,12 +26,14 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
+
 public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAccess<byte[]> {
 
     /**
      * Cache field
      */
-    private transient HeapBytesStore<byte[]> bs;
+    private transient BytesStore<?, ?> bs;
 
     /**
      * State field
@@ -77,7 +79,7 @@ public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAcc
     @Override
     public Data<byte[]> getData(@NotNull byte[] instance) {
         array = instance;
-        bs = HeapBytesStore.wrap(array);
+        bs = BytesStore.wrap(array);
         return this;
     }
 
@@ -105,6 +107,6 @@ public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAcc
 
     @Override
     public String toString() {
-        return new String(array, 0, 0, array.length);
+        return new String(array, StandardCharsets.UTF_8);
     }
 }
