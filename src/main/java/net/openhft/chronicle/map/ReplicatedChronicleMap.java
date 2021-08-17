@@ -149,14 +149,14 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     protected void readMarshallableFields(@NotNull final WireIn wireIn) {
         super.readMarshallableFields(wireIn);
 
-        tierModIterBitSetSizeInBits = wireIn.read(() -> "tierModIterBitSetSizeInBits").int64();
-        tierModIterBitSetOuterSize = wireIn.read(() -> "tierModIterBitSetOuterSize").int64();
+        tierModIterBitSetSizeInBits = wireIn.read("tierModIterBitSetSizeInBits").int64();
+        tierModIterBitSetOuterSize = wireIn.read("tierModIterBitSetOuterSize").int64();
         segmentModIterBitSetsForIdentifierOuterSize =
-                wireIn.read(() -> "segmentModIterBitSetsForIdentifierOuterSize").int64();
+                wireIn.read("segmentModIterBitSetsForIdentifierOuterSize").int64();
         tierBulkModIterBitSetsForIdentifierOuterSize =
-                wireIn.read(() -> "tierBulkModIterBitSetsForIdentifierOuterSize").int64();
+                wireIn.read("tierBulkModIterBitSetsForIdentifierOuterSize").int64();
 
-        globalMutableStateClass = wireIn.read(() -> "globalMutableStateClass").text();
+        globalMutableStateClass = wireIn.read("globalMutableStateClass").text();
         if (globalMutableStateClass == null) {
             globalMutableStateClass = ReplicatedGlobalMutableState.class.getName();
             // Missing "globalMutableStateClass" means we are reading from old data store file
@@ -170,13 +170,13 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     public void writeMarshallable(@NotNull final WireOut wireOut) {
         super.writeMarshallable(wireOut);
 
-        wireOut.write(() -> "tierModIterBitSetSizeInBits").int64(tierModIterBitSetSizeInBits);
-        wireOut.write(() -> "tierModIterBitSetOuterSize").int64(tierModIterBitSetOuterSize);
-        wireOut.write(() -> "segmentModIterBitSetsForIdentifierOuterSize")
+        wireOut.write("tierModIterBitSetSizeInBits").int64(tierModIterBitSetSizeInBits);
+        wireOut.write("tierModIterBitSetOuterSize").int64(tierModIterBitSetOuterSize);
+        wireOut.write("segmentModIterBitSetsForIdentifierOuterSize")
                 .int64(segmentModIterBitSetsForIdentifierOuterSize);
-        wireOut.write(() -> "tierBulkModIterBitSetsForIdentifierOuterSize")
+        wireOut.write("tierBulkModIterBitSetsForIdentifierOuterSize")
                 .int64(tierBulkModIterBitSetsForIdentifierOuterSize);
-        wireOut.write(() -> "globalMutableStateClass").text(globalMutableStateClass);
+        wireOut.write("globalMutableStateClass").text(globalMutableStateClass);
     }
 
     @Override
