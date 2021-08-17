@@ -440,12 +440,12 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>AnalyticsMain</id>
+                        <id>MapFileAnalyzer</id>
                         <goals>
                             <goal>java</goal>
                         </goals>
                         <configuration>
-                            <mainClass>net.openhft.chronicle.map.internal.AnalyticsMain</mainClass>
+                            <mainClass>net.openhft.chronicle.map.MapFileAnalyzer</mainClass>
                             <classpathScope>compile</classpathScope>
                         </configuration>
                     </execution>
