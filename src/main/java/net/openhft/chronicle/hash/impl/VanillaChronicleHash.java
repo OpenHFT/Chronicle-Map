@@ -249,6 +249,7 @@ public abstract class VanillaChronicleHash<K,
         return preShutdownAction;
     }
 
+    @SuppressWarnings("unchecked")
     protected void readMarshallableFields(@NotNull final WireIn wireIn) {
         dataFileVersion = wireIn.read(() -> "dataFileVersion").text();
 
@@ -259,87 +260,87 @@ public abstract class VanillaChronicleHash<K,
 
         keyClass = wireIn.read(() -> "keyClass").lenientTypeLiteral();
         keySizeMarshaller = wireIn.read(() -> "keySizeMarshaller").object(SizeMarshaller.class);
-        keyReader = wireIn.read(() -> "keyReader").object(SizedReader.class);
-        keyDataAccess = wireIn.read(() -> "keyDataAccess").object(DataAccess.class);
+        keyReader = (SizedReader<K>) wireIn.read("keyReader").object(SizedReader.class);
+        keyDataAccess = (DataAccess<K>) wireIn.read("keyDataAccess").object(DataAccess.class);
 
-        checksumEntries = wireIn.read(() -> "checksumEntries").bool();
+        checksumEntries = wireIn.read("checksumEntries").bool();
 
-        actualSegments = wireIn.read(() -> "actualSegments").int32();
-        hashSplitting = wireIn.read(() -> "hashSplitting").typedMarshallable();
+        actualSegments = wireIn.read("actualSegments").int32();
+        hashSplitting = wireIn.read("hashSplitting").typedMarshallable();
 
-        chunkSize = wireIn.read(() -> "chunkSize").int64();
-        maxChunksPerEntry = wireIn.read(() -> "maxChunksPerEntry").int32();
-        actualChunksPerSegmentTier = wireIn.read(() -> "actualChunksPerSegmentTier").int64();
+        chunkSize = wireIn.read("chunkSize").int64();
+        maxChunksPerEntry = wireIn.read("maxChunksPerEntry").int32();
+        actualChunksPerSegmentTier = wireIn.read("actualChunksPerSegmentTier").int64();
 
-        segmentHeaderSize = wireIn.read(() -> "segmentHeaderSize").int32();
+        segmentHeaderSize = wireIn.read("segmentHeaderSize").int32();
 
-        tierHashLookupValueBits = wireIn.read(() -> "tierHashLookupValueBits").int32();
-        tierHashLookupKeyBits = wireIn.read(() -> "tierHashLookupKeyBits").int32();
-        tierHashLookupSlotSize = wireIn.read(() -> "tierHashLookupSlotSize").int32();
-        tierHashLookupCapacity = wireIn.read(() -> "tierHashLookupCapacity").int64();
-        maxEntriesPerHashLookup = wireIn.read(() -> "maxEntriesPerHashLookup").int64();
-        tierHashLookupInnerSize = wireIn.read(() -> "tierHashLookupInnerSize").int64();
-        tierHashLookupOuterSize = wireIn.read(() -> "tierHashLookupOuterSize").int64();
+        tierHashLookupValueBits = wireIn.read("tierHashLookupValueBits").int32();
+        tierHashLookupKeyBits = wireIn.read("tierHashLookupKeyBits").int32();
+        tierHashLookupSlotSize = wireIn.read("tierHashLookupSlotSize").int32();
+        tierHashLookupCapacity = wireIn.read("tierHashLookupCapacity").int64();
+        maxEntriesPerHashLookup = wireIn.read("maxEntriesPerHashLookup").int64();
+        tierHashLookupInnerSize = wireIn.read("tierHashLookupInnerSize").int64();
+        tierHashLookupOuterSize = wireIn.read("tierHashLookupOuterSize").int64();
 
-        tierFreeListInnerSize = wireIn.read(() -> "tierFreeListInnerSize").int64();
-        tierFreeListOuterSize = wireIn.read(() -> "tierFreeListOuterSize").int64();
+        tierFreeListInnerSize = wireIn.read("tierFreeListInnerSize").int64();
+        tierFreeListOuterSize = wireIn.read("tierFreeListOuterSize").int64();
 
-        tierEntrySpaceInnerSize = wireIn.read(() -> "tierEntrySpaceInnerSize").int64();
-        tierEntrySpaceInnerOffset = wireIn.read(() -> "tierEntrySpaceInnerOffset").int32();
-        tierEntrySpaceOuterSize = wireIn.read(() -> "tierEntrySpaceOuterSize").int64();
+        tierEntrySpaceInnerSize = wireIn.read("tierEntrySpaceInnerSize").int64();
+        tierEntrySpaceInnerOffset = wireIn.read("tierEntrySpaceInnerOffset").int32();
+        tierEntrySpaceOuterSize = wireIn.read("tierEntrySpaceOuterSize").int64();
 
-        tierSize = wireIn.read(() -> "tierSize").int64();
+        tierSize = wireIn.read("tierSize").int64();
 
-        maxExtraTiers = wireIn.read(() -> "maxExtraTiers").int64();
-        tierBulkSizeInBytes = wireIn.read(() -> "tierBulkSizeInBytes").int64();
-        tierBulkInnerOffsetToTiers = wireIn.read(() -> "tierBulkInnerOffsetToTiers").int64();
-        tiersInBulk = wireIn.read(() -> "tiersInBulk").int64();
-        log2TiersInBulk = wireIn.read(() -> "log2TiersInBulk").int32();
+        maxExtraTiers = wireIn.read("maxExtraTiers").int64();
+        tierBulkSizeInBytes = wireIn.read("tierBulkSizeInBytes").int64();
+        tierBulkInnerOffsetToTiers = wireIn.read("tierBulkInnerOffsetToTiers").int64();
+        tiersInBulk = wireIn.read("tiersInBulk").int64();
+        log2TiersInBulk = wireIn.read("log2TiersInBulk").int32();
     }
 
     @Override
     public void writeMarshallable(@NotNull final WireOut wireOut) {
 
-        wireOut.write(() -> "dataFileVersion").text(dataFileVersion);
+        wireOut.write("dataFileVersion").text(dataFileVersion);
 
-        wireOut.write(() -> "keyClass").typeLiteral(keyClass);
-        wireOut.write(() -> "keySizeMarshaller").object(keySizeMarshaller);
-        wireOut.write(() -> "keyReader").object(keyReader);
-        wireOut.write(() -> "keyDataAccess").object(keyDataAccess);
+        wireOut.write("keyClass").typeLiteral(keyClass);
+        wireOut.write("keySizeMarshaller").object(keySizeMarshaller);
+        wireOut.write("keyReader").object(keyReader);
+        wireOut.write("keyDataAccess").object(keyDataAccess);
 
-        wireOut.write(() -> "checksumEntries").bool(checksumEntries);
+        wireOut.write("checksumEntries").bool(checksumEntries);
 
-        wireOut.write(() -> "actualSegments").int32(actualSegments);
-        wireOut.write(() -> "hashSplitting").object(hashSplitting);
+        wireOut.write("actualSegments").int32(actualSegments);
+        wireOut.write("hashSplitting").object(hashSplitting);
 
-        wireOut.write(() -> "chunkSize").int64(chunkSize);
-        wireOut.write(() -> "maxChunksPerEntry").int32(maxChunksPerEntry);
-        wireOut.write(() -> "actualChunksPerSegmentTier").int64(actualChunksPerSegmentTier);
+        wireOut.write("chunkSize").int64(chunkSize);
+        wireOut.write("maxChunksPerEntry").int32(maxChunksPerEntry);
+        wireOut.write("actualChunksPerSegmentTier").int64(actualChunksPerSegmentTier);
 
-        wireOut.write(() -> "segmentHeaderSize").int32(segmentHeaderSize);
+        wireOut.write("segmentHeaderSize").int32(segmentHeaderSize);
 
-        wireOut.write(() -> "tierHashLookupValueBits").int32(tierHashLookupValueBits);
-        wireOut.write(() -> "tierHashLookupKeyBits").int32(tierHashLookupKeyBits);
-        wireOut.write(() -> "tierHashLookupSlotSize").int32(tierHashLookupSlotSize);
-        wireOut.write(() -> "tierHashLookupCapacity").int64(tierHashLookupCapacity);
-        wireOut.write(() -> "maxEntriesPerHashLookup").int64(maxEntriesPerHashLookup);
-        wireOut.write(() -> "tierHashLookupInnerSize").int64(tierHashLookupInnerSize);
-        wireOut.write(() -> "tierHashLookupOuterSize").int64(tierHashLookupOuterSize);
+        wireOut.write("tierHashLookupValueBits").int32(tierHashLookupValueBits);
+        wireOut.write("tierHashLookupKeyBits").int32(tierHashLookupKeyBits);
+        wireOut.write("tierHashLookupSlotSize").int32(tierHashLookupSlotSize);
+        wireOut.write("tierHashLookupCapacity").int64(tierHashLookupCapacity);
+        wireOut.write("maxEntriesPerHashLookup").int64(maxEntriesPerHashLookup);
+        wireOut.write("tierHashLookupInnerSize").int64(tierHashLookupInnerSize);
+        wireOut.write("tierHashLookupOuterSize").int64(tierHashLookupOuterSize);
 
-        wireOut.write(() -> "tierFreeListInnerSize").int64(tierFreeListInnerSize);
-        wireOut.write(() -> "tierFreeListOuterSize").int64(tierFreeListOuterSize);
+        wireOut.write("tierFreeListInnerSize").int64(tierFreeListInnerSize);
+        wireOut.write("tierFreeListOuterSize").int64(tierFreeListOuterSize);
 
-        wireOut.write(() -> "tierEntrySpaceInnerSize").int64(tierEntrySpaceInnerSize);
-        wireOut.write(() -> "tierEntrySpaceInnerOffset").int32(tierEntrySpaceInnerOffset);
-        wireOut.write(() -> "tierEntrySpaceOuterSize").int64(tierEntrySpaceOuterSize);
+        wireOut.write("tierEntrySpaceInnerSize").int64(tierEntrySpaceInnerSize);
+        wireOut.write("tierEntrySpaceInnerOffset").int32(tierEntrySpaceInnerOffset);
+        wireOut.write("tierEntrySpaceOuterSize").int64(tierEntrySpaceOuterSize);
 
-        wireOut.write(() -> "tierSize").int64(tierSize);
+        wireOut.write("tierSize").int64(tierSize);
 
-        wireOut.write(() -> "maxExtraTiers").int64(maxExtraTiers);
-        wireOut.write(() -> "tierBulkSizeInBytes").int64(tierBulkSizeInBytes);
-        wireOut.write(() -> "tierBulkInnerOffsetToTiers").int64(tierBulkInnerOffsetToTiers);
-        wireOut.write(() -> "tiersInBulk").int64(tiersInBulk);
-        wireOut.write(() -> "log2TiersInBulk").int32(log2TiersInBulk);
+        wireOut.write("maxExtraTiers").int64(maxExtraTiers);
+        wireOut.write("tierBulkSizeInBytes").int64(tierBulkSizeInBytes);
+        wireOut.write("tierBulkInnerOffsetToTiers").int64(tierBulkInnerOffsetToTiers);
+        wireOut.write("tiersInBulk").int64(tiersInBulk);
+        wireOut.write("log2TiersInBulk").int32(log2TiersInBulk);
     }
 
     protected VanillaGlobalMutableState createGlobalMutableState() {

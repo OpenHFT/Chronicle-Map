@@ -9,6 +9,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class ValueAlignmentRelocationTest {
 
     @NotNull
     private static String toString(final byte[] value) {
-        return new String(value, 0, 0, value.length);
+        return new String(value, StandardCharsets.UTF_8);
     }
 
     @Test

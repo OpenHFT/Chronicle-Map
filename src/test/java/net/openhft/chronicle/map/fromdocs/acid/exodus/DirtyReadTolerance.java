@@ -1,6 +1,6 @@
 package net.openhft.chronicle.map.fromdocs.acid.exodus;
 
-import net.openhft.affinity.AffinitySupport;
+import net.openhft.affinity.Affinity;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
@@ -36,7 +36,7 @@ public class DirtyReadTolerance<K, V> {
 
     static ChronicleMap<String, BondVOInterface> offHeap(String operand) throws IOException {
         // ensure thread ids are globally unique.
-        AffinitySupport.setThreadId();
+        Affinity.setThreadId();
         return ChronicleMapBuilder.of(String.class, BondVOInterface.class)
                 .entries(16)
                 .averageKeySize("123456789".length())

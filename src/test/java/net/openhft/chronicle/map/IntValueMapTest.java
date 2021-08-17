@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.Byteable;
-import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.Values;
 import org.junit.Test;
@@ -39,7 +39,7 @@ public class IntValueMapTest {
                 .averageValue("test")
                 .entries(20000).create()) {
             IntValue value = Values.newNativeReference(IntValue.class);
-            ((Byteable) value).bytesStore(NativeBytesStore.nativeStoreWithFixedCapacity(4), 0, 4);
+            ((Byteable) value).bytesStore(BytesStore.nativeStoreWithFixedCapacity(4), 0, 4);
 
             value.setValue(1);
             final String expected = "test";

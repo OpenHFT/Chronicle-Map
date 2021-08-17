@@ -16,7 +16,7 @@
 
 package net.openhft.chronicle.map.utility;
 
-import net.openhft.affinity.AffinitySupport;
+import net.openhft.affinity.Affinity;
 import net.openhft.chronicle.algo.locks.AcquisitionStrategies;
 import net.openhft.chronicle.algo.locks.ReadWriteLockingStrategy;
 import net.openhft.chronicle.algo.locks.TryAcquireOperations;
@@ -92,7 +92,7 @@ public class ProcessInstanceLimiter implements Runnable {
     private static final String DEFAULT_PROCESS_NAME = "_DEFAULT_";
 
     static {
-        AffinitySupport.setThreadId();
+        Affinity.setThreadId();
     }
 
     private final String sharedMapPath;
@@ -103,8 +103,8 @@ public class ProcessInstanceLimiter implements Runnable {
     private long timeUpdateInterval = DEFAULT_TIME_UPDATE_INTERVAL_MS;
     private long startTime;
     private long[] lastStartTimes;
-    private Map<String, Data> timedata = new ConcurrentHashMap<String, Data>();
-    private Map<String, Data> starttimedata = new ConcurrentHashMap<String, Data>();
+    private final Map<String, Data> timedata = new ConcurrentHashMap<String, Data>();
+    private final Map<String, Data> starttimedata = new ConcurrentHashMap<String, Data>();
 
     /**
      * Create a ProcessInstanceLimiter instance with a default callback, an

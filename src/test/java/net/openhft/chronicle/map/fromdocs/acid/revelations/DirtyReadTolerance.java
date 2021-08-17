@@ -3,12 +3,9 @@ package net.openhft.chronicle.map.fromdocs.acid.revelations;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-import net.openhft.chronicle.map.fromdocs.acid.exodus.DirtyReadOffender;
-import net.openhft.chronicle.map.fromdocs.acid.exodus.DirtyReadVictim;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.locks.StampedLock;
 
 public class DirtyReadTolerance<K, V> {
 

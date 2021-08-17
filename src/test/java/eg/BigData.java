@@ -16,7 +16,7 @@
 
 package eg;
 
-import net.openhft.affinity.AffinitySupport;
+import net.openhft.affinity.Affinity;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 
 import java.io.*;
@@ -121,7 +121,7 @@ public class BigData {
     }
 
     public static void populate(int n) {
-        AffinitySupport.setThreadId();
+        Affinity.setThreadId();
 
         long start = System.currentTimeMillis();
         BigDataStuff value = new BigDataStuff(0);
@@ -138,7 +138,7 @@ public class BigData {
 
     public static void _test() {
         // improves logging of these threads.
-        AffinitySupport.setThreadId();
+        Affinity.setThreadId();
         try {
             test();
         } catch (IOException e) {

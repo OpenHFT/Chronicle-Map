@@ -22,7 +22,7 @@ import net.openhft.chronicle.bytes.DynamicallySized;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.io.IORuntimeException;
 import net.openhft.chronicle.core.util.ObjectUtils;
-import net.openhft.chronicle.wire.AbstractBytesMarshallable;
+import net.openhft.chronicle.wire.BytesInBinaryMarshallable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +30,9 @@ import java.util.List;
 /**
  * Created by peter.lawrey on 23/04/2015.
  */
-public class MovingAverageArray extends AbstractBytesMarshallable implements DynamicallySized {
-    private transient List<MovingAverageCompact> buffer = new ArrayList<>();
-    private List<MovingAverageCompact> values = new ArrayList<>();
+public class MovingAverageArray extends BytesInBinaryMarshallable implements DynamicallySized {
+    private final transient List<MovingAverageCompact> buffer = new ArrayList<>();
+    private final List<MovingAverageCompact> values = new ArrayList<>();
 
     @Override
     public void readMarshallable(BytesIn bytes) throws IORuntimeException {

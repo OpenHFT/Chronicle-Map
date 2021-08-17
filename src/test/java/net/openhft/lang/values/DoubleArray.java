@@ -19,7 +19,6 @@ package net.openhft.lang.values;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.DynamicallySized;
-import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.values.Copyable;
 
 /**
@@ -27,16 +26,16 @@ import net.openhft.chronicle.values.Copyable;
  */
 public class DoubleArray implements Byteable, Copyable<DoubleArray>, DynamicallySized {
     static boolean HACK = true;
-    private static int CAPACITY = 0; // assume a 32-bit size.
-    private static int LENGTH = CAPACITY + 4; // assume a 32-bit size.
-    private static int BASE = LENGTH + 4;
+    private static final int CAPACITY = 0; // assume a 32-bit size.
+    private static final int LENGTH = CAPACITY + 4; // assume a 32-bit size.
+    private static final int BASE = LENGTH + 4;
 
     private final int capacity;
     private BytesStore bs;
     private long offset;
 
     public DoubleArray(int capacity) {
-        bs = NativeBytesStore.nativeStoreWithFixedCapacity(BASE + capacity * 8L);
+        bs = BytesStore.nativeStoreWithFixedCapacity(BASE + capacity * 8L);
         bs.writeInt(CAPACITY, capacity);
         offset = 0;
         this.capacity = capacity;

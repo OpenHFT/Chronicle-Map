@@ -18,9 +18,9 @@ package net.openhft.lang.values;
 
 import net.openhft.chronicle.bytes.BytesIn;
 import net.openhft.chronicle.bytes.BytesOut;
-import net.openhft.chronicle.wire.AbstractBytesMarshallable;
+import net.openhft.chronicle.wire.BytesInBinaryMarshallable;
 
-public class MovingAverageCompact extends AbstractBytesMarshallable {
+public class MovingAverageCompact extends BytesInBinaryMarshallable {
 
     private double movingAverage;
     private double high;

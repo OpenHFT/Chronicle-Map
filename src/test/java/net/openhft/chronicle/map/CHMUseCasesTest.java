@@ -104,7 +104,7 @@ interface IData extends BytesMarshallable {
             long magic = in.readLong();
             if (magic != MAGIC)
                 throw new AssertionError("Start " + Long.toHexString(magic));
-            text = in.readUTFΔ();
+            text = in.readUtf8();
             number = in.readInt();
             long magic2 = in.readLong();
             if (magic2 != MAGIC2)
@@ -114,7 +114,7 @@ interface IData extends BytesMarshallable {
         @Override
         public void writeMarshallable(@NotNull BytesOut out) {
             out.writeLong(MAGIC);
-            out.writeUTFΔ(text);
+            out.writeUtf8(text);
             out.writeInt(number);
             out.writeLong(MAGIC2);
         }
@@ -412,7 +412,7 @@ public class CHMUseCasesTest {
             byte[][] value = {bytes1, bytes2};
             map.put("Key".getBytes(), value);
 
-            assertEquals(value, map.get("Key".getBytes()));
+            assertArrayEquals(value, map.get("Key".getBytes()));
             mapChecks();
         }
     }

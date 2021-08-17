@@ -72,11 +72,11 @@ public class BasicReplicationTest {
             executorService.submit(processorTwo::processPendingChangesLoop);
             executorService.submit(processorThree::processPendingChangesLoop);
 
-            final Map[] maps = new Map[]{mapOne, mapTwo, mapThree};
+            final List<Map<String, String>> maps = Arrays.asList(mapOne, mapTwo, mapThree);
             final Random random = new Random(0xBAD5EED);
             for (int i = 0; i < 5000; i++) {
-                final int mapIndex = random.nextInt(maps.length);
-                final Map<String, String> map = maps[mapIndex];
+                final int mapIndex = random.nextInt(maps.size());
+                final Map<String, String> map = maps.get(mapIndex);
                 final String key = "key" + random.nextInt(100);
                 final String value = "val" + random.nextInt(500);
                 map.put(key, value);
@@ -135,7 +135,8 @@ public class BasicReplicationTest {
         void addDestinationMap(final ReplicatedChronicleMap<K, V, ?>.ModificationIterator modificationIterator,
                                final ReplicatedChronicleMap<K, V, ?> sourceMap,
                                final ReplicatedChronicleMap<K, V, ?> destinationMap) {
-            destinationMaps.add(new IteratorAndDestinationMap<K, V>(modificationIterator, sourceMap, destinationMap));
+
+            destinationMaps.add(new IteratorAndDestinationMap<>(modificationIterator, sourceMap, destinationMap));
             if (this.sourceMap != null && this.sourceMap != sourceMap) {
                 throw new IllegalArgumentException("All iterators must belong to the same source map");
             }
