@@ -16,7 +16,9 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.*;
+import net.openhft.chronicle.bytes.Byteable;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
@@ -78,8 +80,8 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
 
     private BytesStore allocateBytesStoreForInstance() {
         long instanceSize = nativeInstance.maxSize();
-        if (instanceSize > Bytes.MAX_BYTE_BUFFER_CAPACITY) {
-            return NativeBytesStore.nativeStoreWithFixedCapacity(instanceSize);
+        if (instanceSize > 0x7FFFFFF0) {
+            return BytesStore.nativeStoreWithFixedCapacity(instanceSize);
         } else {
             return BytesStore.wrap(ByteBuffer.allocate(Maths.toUInt31(instanceSize)));
         }
@@ -144,12 +146,12 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
 
     @Override
     public void readMarshallable(@NotNull WireIn wireIn) {
-        valueType = wireIn.read(() -> "valueType").typeLiteral();
+        valueType = wireIn.read("valueType").typeLiteral();
         initTransients();
     }
 
     @Override
     public void writeMarshallable(@NotNull WireOut wireOut) {
-        wireOut.write(() -> "valueType").typeLiteral(valueType);
+        wireOut.write("valueType").typeLiteral(valueType);
     }
 }

@@ -26,7 +26,7 @@ final class DefaultElasticBytes {
     }
 
     static Bytes<?> allocateDefaultElasticBytes(long bytesCapacity) {
-        if (bytesCapacity <= Bytes.MAX_BYTE_BUFFER_CAPACITY) {
+        if (bytesCapacity <= 0x7FFFFFF0) {
             return Bytes.elasticHeapByteBuffer((int) bytesCapacity);
         } else {
             return Bytes.allocateElasticDirect(bytesCapacity);

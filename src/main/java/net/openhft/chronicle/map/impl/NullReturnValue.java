@@ -20,23 +20,25 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import org.jetbrains.annotations.NotNull;
 
-public final class NullReturnValue implements InstanceReturnValue {
-    private static final NullReturnValue NULL_RETURN_VALUE = new NullReturnValue();
+public final class NullReturnValue<V> implements InstanceReturnValue<V> {
+
+    private static final NullReturnValue<?> NULL_RETURN_VALUE = new NullReturnValue<>();
 
     private NullReturnValue() {
     }
 
+    @SuppressWarnings("unchecked")
     public static <V> InstanceReturnValue<V> get() {
-        return NULL_RETURN_VALUE;
+        return (InstanceReturnValue<V>) NULL_RETURN_VALUE;
     }
 
     @Override
-    public Object returnValue() {
+    public V returnValue() {
         return null;
     }
 
     @Override
-    public void returnValue(@NotNull Data value) {
+    public void returnValue(@NotNull Data<V> value) {
         // ignore
     }
 }
