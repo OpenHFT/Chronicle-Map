@@ -37,8 +37,8 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * inefficient. See <a href="https://github.com/OpenHFT/Chronicle-Map#chronicle-map-is-not">the
  * README section</a>.
  * <p>
- * <p>Look for pre-defined key and value marshallers in {@link
- * net.openhft.chronicle.hash.serialization.impl} package. This package is not included into
+ * <p>Look for pre-defined key and value marshallers in the
+ * net.openhft.chronicle.hash.serialization.impl package. This package is not included into
  * Javadocs, but present in Chronicle Map distribution. If there are no existing marshallers for
  * your {@code Map} key or value types, define {@link BytesReader} and {@link BytesWriter} yourself.
  *

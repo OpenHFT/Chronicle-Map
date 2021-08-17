@@ -57,7 +57,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
 
     /**
      * Returns a {@code String}, useful for identifying this {@code ChronicleHash} in debugging, logging, and error reporting. {@link #toString()} of
-     * concrete {@code ChronicleHash} subinterfaces, {@link ChronicleMap} and {@link ChronicleSet}, has to follow {@link Map#toString()} and {@link
+     * concrete {@code ChronicleHash} subinterfaces, {@link ChronicleMap} and {@link ChronicleSet}, has to follow {@link Map#toString()}  and {@link
      * Set#toString()} contracts respectively, making it not always useful (or even impossible to use, if this {@code ChronicleHash} contains a lot of
      * entries) for the purposes listed above.
      * <p>

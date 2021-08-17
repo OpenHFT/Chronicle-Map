@@ -252,7 +252,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * number of times it can automatically expand is based on the {@code net.openhft.chronicle.map.ChronicleMapBuilder#maxBloatFactor}. If the map
      * expands you will see an increase in the available free space. NOTE: It is not possible to expand the chronicle map manually.
      * <p>
-     * see also {@see net.openhft.chronicle.map.ChronicleMap#remainingAutoResizes} as these operations are related.
+     * @see net.openhft.chronicle.map.ChronicleMap#remainingAutoResizes as these operations are related.
      */
     default short percentageFreeSpace() {
         throw new UnsupportedOperationException("todo");

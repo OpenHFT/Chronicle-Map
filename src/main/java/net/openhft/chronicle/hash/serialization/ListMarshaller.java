@@ -45,10 +45,9 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  *     .create();
  * }</pre>
  * <p>
- * <p>Look for pre-defined element marshallers in {@link
- * net.openhft.chronicle.hash.serialization.impl} package. This package is not included into
- * Javadocs, but present in Chronicle Map distribution. If there are no existing marshallers for
- * your {@code List} element type, define {@link BytesReader} and {@link BytesWriter} yourself.
+ * <p>Look for pre-defined element marshallers in the net.openhft.chronicle.hash.serialization.impl package.
+ * This package is not included into Javadocs, but present in Chronicle Map distribution. If there are no existing
+ * marshallers for your {@code List} element type, define {@link BytesReader} and {@link BytesWriter} yourself.
  *
  * @param <T> the element type of serialized Lists
  * @see SetMarshaller
