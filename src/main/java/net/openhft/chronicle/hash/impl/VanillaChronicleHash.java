@@ -19,7 +19,6 @@ package net.openhft.chronicle.hash.impl;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
-import net.openhft.chronicle.bytes.NativeBytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.Maths;
 import net.openhft.chronicle.core.OS;
@@ -1028,7 +1027,7 @@ public abstract class VanillaChronicleHash<K,
         }
         // mapping by hand, because MappedFile/MappedBytesStore doesn't allow to create a BS
         // which starts not from the beginning of the file, but has start() of 0
-        final NativeBytesStore extraStore = map(mapSize, mappingOffsetInFile);
+        final BytesStore extraStore = map(mapSize, mappingOffsetInFile);
         appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore,
                 firstBulkToMapOffsetWithinMapping);
     }
@@ -1036,7 +1035,7 @@ public abstract class VanillaChronicleHash<K,
     /**
      * @see net.openhft.chronicle.bytes.MappedFile#acquireByteStore(ReferenceOwner, long, BytesStore, MappedBytesStoreFactory)
      */
-    private NativeBytesStore map(long mapSize, final long mappingOffsetInFile) throws IOException {
+    private BytesStore map(long mapSize, final long mappingOffsetInFile) throws IOException {
         mapSize = pageAlign(mapSize);
         final long minFileSize = mappingOffsetInFile + mapSize;
         final FileChannel fileChannel = raf.getChannel();
@@ -1060,7 +1059,7 @@ public abstract class VanillaChronicleHash<K,
         }
         final long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
         resources.addMemoryResource(address, mapSize);
-        return new NativeBytesStore(address, mapSize, null, false);
+        return BytesStore.wrap(address, mapSize);
     }
 
     private void fallocate(long mappingOffsetInFile, long length) throws IOException {
@@ -1093,7 +1092,7 @@ public abstract class VanillaChronicleHash<K,
     private BytesStore nativeBytesStoreWithFixedCapacity(final long capacity) {
         final long address = OS.memory().allocate(capacity);
         resources.addMemoryResource(address, capacity);
-        return new NativeBytesStore<>(address, capacity, null, false);
+        return BytesStore.wrap(address, capacity);
     }
 
     private void appendBulkData(final int firstBulkToMapIndex,
