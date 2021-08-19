@@ -18,7 +18,7 @@
 package net.openhft.chronicle.map.perf;
 
 import net.openhft.chronicle.bytes.Byteable;
-import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.IOTools;
@@ -83,7 +83,7 @@ public class MapJLBHTest implements JLBHTask {
 
         Byteable byteable = (Byteable) datum;
         long capacity = byteable.maxSize();
-        byteable.bytesStore(NativeBytesStore.nativeStore(capacity), 0, capacity);
+        byteable.bytesStore(BytesStore.nativeStore(capacity), 0, capacity);
 
         try {
             write = ChronicleMapBuilder.of(Long.class, IFacade0.class)

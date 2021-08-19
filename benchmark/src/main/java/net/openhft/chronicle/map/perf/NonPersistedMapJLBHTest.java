@@ -18,7 +18,7 @@
 package net.openhft.chronicle.map.perf;
 
 import net.openhft.chronicle.bytes.Byteable;
-import net.openhft.chronicle.bytes.NativeBytesStore;
+import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.jlbh.JLBH;
 import net.openhft.chronicle.jlbh.JLBHOptions;
@@ -65,7 +65,7 @@ public class NonPersistedMapJLBHTest implements JLBHTask {
 
         Byteable byteable = (Byteable) datum;
         long capacity = byteable.maxSize();
-        byteable.bytesStore(NativeBytesStore.nativeStore(capacity), 0, capacity);
+        byteable.bytesStore(BytesStore.nativeStore(capacity), 0, capacity);
 
         write = read = ChronicleMapBuilder.of(Long.class, IFacade.class).constantValueSizeBySample(datum).entries(1_100_000).create();
     }
