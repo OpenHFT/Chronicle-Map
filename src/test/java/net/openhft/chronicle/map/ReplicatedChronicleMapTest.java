@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 import org.junit.Test;
@@ -38,7 +39,9 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
                 .of(Integer.class, CharSequence.class)
                 .entries(1000)
                 .averageValueSize(20);
-        ((ChronicleHashBuilderPrivateAPI<?, ?>) builder.privateAPI()).replication((byte) 1);
+
+        final ChronicleHashBuilderPrivateAPI<?, ?> privateAPI = Objects.requireNonNull(Jvm.getValue(builder,"privateAPI"));
+        privateAPI.replication((byte) 1);
         return builder.create();
     }
 
@@ -48,7 +51,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
                 .entries(1000)
                 .averageKeySize(20)
                 .averageValueSize(20);
-        ((ChronicleHashBuilderPrivateAPI<?, ?>) builder.privateAPI()).replication((byte) 1);
+        final ChronicleHashBuilderPrivateAPI<?, ?> privateAPI = Objects.requireNonNull(Jvm.getValue(builder,"privateAPI"));
+        privateAPI.replication((byte) 1);
         return builder.create();
     }
 

@@ -820,9 +820,4 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      */
     B skipCloseOnExitHook(boolean skipCloseOnExitHook);
 
-    /**
-     * @deprecated don't use private API in the client code
-     */
-    @Deprecated(/* to be removed in x.22 */)
-    Object privateAPI();
 }

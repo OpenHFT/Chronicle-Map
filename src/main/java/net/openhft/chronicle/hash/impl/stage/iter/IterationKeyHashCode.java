@@ -17,13 +17,10 @@
 package net.openhft.chronicle.hash.impl.stage.iter;
 
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.KeyHashCode;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
-import net.openhft.chronicle.hash.serialization.impl.IntegerDataAccess;
-import net.openhft.chronicle.hash.serialization.impl.WrongXxHash;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
@@ -42,11 +39,7 @@ public class IterationKeyHashCode implements KeyHashCode {
     void initKeyHash() {
         long addr = s.tierBaseAddr + e.keyOffset;
         long len = e.keySize;
-        if (len == 4 && hh.h().keyDataAccess instanceof IntegerDataAccess) {
-            keyHash = WrongXxHash.hashInt(OS.memory().readInt(addr));
-        } else {
-            keyHash = LongHashFunction.xx_r39().hashMemory(addr, len);
-        }
+        keyHash = LongHashFunction.xx_r39().hashMemory(addr, len);
     }
 
     @Override

@@ -23,6 +23,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
@@ -187,8 +188,8 @@ public final class ChronicleMapBuilder<K, V> implements
     boolean skipCloseOnExitHook = false;
     private String name;
     // not final because of cloning
-    private ChronicleMapBuilderPrivateAPI<K, V> privateAPI =
-            new ChronicleMapBuilderPrivateAPI<>(this);
+    @UsedViaReflection // Picked up via Jvm.getValue()
+    private ChronicleMapBuilderPrivateAPI<K, V> privateAPI = new ChronicleMapBuilderPrivateAPI<>(this);
     // used when configuring the number of segments.
     private int minSegments = -1;
     private int actualSegments = -1;
@@ -502,15 +503,6 @@ public final class ChronicleMapBuilder<K, V> implements
         } catch (CloneNotSupportedException e) {
             throw new AssertionError(e);
         }
-    }
-
-    /**
-     * @deprecated don't use private API in the client code
-     */
-    @Override
-    @Deprecated(/* to be removed in x.22 */)
-    public Object privateAPI() {
-        return privateAPI;
     }
 
     /**

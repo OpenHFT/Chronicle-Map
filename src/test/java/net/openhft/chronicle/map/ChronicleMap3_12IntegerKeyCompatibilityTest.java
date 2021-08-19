@@ -18,6 +18,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.io.Files;
 import net.openhft.chronicle.set.Builder;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -25,6 +26,7 @@ import java.net.URL;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore("As per https://github.com/OpenHFT/Chronicle-Map/issues/324, there is no compatibility anymore")
 public class ChronicleMap3_12IntegerKeyCompatibilityTest {
 
     @Test

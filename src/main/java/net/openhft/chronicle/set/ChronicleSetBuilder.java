@@ -25,8 +25,6 @@ import net.openhft.chronicle.hash.serialization.*;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -59,7 +57,7 @@ public final class ChronicleSetBuilder<K>
         //noinspection deprecation,unchecked
         privateAPI = new ChronicleSetBuilderPrivateAPI<>(
                 (ChronicleHashBuilderPrivateAPI<K, MapRemoteOperations<K, DummyValue, ?>>)
-                        chronicleMapBuilder.privateAPI());
+                        Jvm.getValue(chronicleMapBuilder, "privateAPI"));
     }
 
     /**
@@ -358,13 +356,5 @@ public final class ChronicleSetBuilder<K>
         return this;
     }
 
-    /**
-     * @deprecated don't use private API in the client code
-     */
-    @Deprecated(/* to be removed in x.22 */)
-    @Override
-    public Object privateAPI() {
-        return privateAPI;
-    }
 }
 

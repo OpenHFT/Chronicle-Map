@@ -54,3 +54,5 @@ local.properties
 *.cq4t
 *.cq4
 
+
+file.lock

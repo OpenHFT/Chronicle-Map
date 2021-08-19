@@ -24,7 +24,6 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.nio.ch.DirectBuffer;
 
 import java.nio.ByteBuffer;
 
@@ -85,7 +84,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     @Override
     public Data<ByteBuffer> getData(@NotNull ByteBuffer instance) {
         bb = instance;
-        if (instance instanceof DirectBuffer) {
+        if (instance.isDirect()) {
             nativeBytesStore.init(instance, false);
             bytesStore = nativeBytesStore;
         } else {

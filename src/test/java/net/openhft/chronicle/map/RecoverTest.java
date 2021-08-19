@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.hash.ChecksumEntry;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
@@ -58,8 +59,7 @@ public class RecoverTest {
                 .entries(2)
                 .actualSegments(1)
                 .checksumEntries(true);
-        ChronicleHashBuilderPrivateAPI<?, ?> privateAPI =
-                (ChronicleHashBuilderPrivateAPI<?, ?>) builder.privateAPI();
+        final ChronicleHashBuilderPrivateAPI<?, ?> privateAPI = Jvm.getValue(builder, "privateAPI");
         privateAPI.replication((byte) 1);
         privateAPI.cleanupRemovedEntries(false);
 
@@ -110,8 +110,8 @@ public class RecoverTest {
                     mapBB.putLong((int) offset, mapBB.getLong((int) offset) ^ (1L << bit));
                     ChronicleMapBuilder<Integer, Integer> recoverBuilder = ChronicleMap
                             .of(Integer.class, Integer.class);
-                    ChronicleHashBuilderPrivateAPI<?, ?> recoverPrivateAPI =
-                            (ChronicleHashBuilderPrivateAPI<?, ?>) recoverBuilder.privateAPI();
+                    final ChronicleHashBuilderPrivateAPI<?, ?> recoverPrivateAPI = Jvm.getValue(recoverBuilder, "privateAPI");
+
                     recoverPrivateAPI.replication((byte) 1);
                     recoverPrivateAPI.cleanupRemovedEntries(false);
                     try (ChronicleMap<Integer, Integer> recovered =

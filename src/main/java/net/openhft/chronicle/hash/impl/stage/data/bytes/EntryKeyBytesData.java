@@ -25,8 +25,6 @@ import net.openhft.chronicle.hash.impl.stage.entry.HashEntryStages;
 import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.impl.stage.hash.KeyBytesInterop;
-import net.openhft.chronicle.hash.serialization.impl.IntegerDataAccess;
-import net.openhft.chronicle.hash.serialization.impl.WrongXxHash;
 import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
@@ -76,12 +74,7 @@ public class EntryKeyBytesData<K> extends AbstractData<K> {
     @Override
     public long hash(LongHashFunction f) {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        if (f == LongHashFunction.xx_r39() && entry.keySize == 4 &&
-                hh.h().keyDataAccess instanceof IntegerDataAccess) {
-            return WrongXxHash.hashInt(s.segmentBS.readInt(entry.keyOffset));
-        } else {
-            return super.hash(f);
-        }
+        return super.hash(f);
     }
 
     @Override

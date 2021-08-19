@@ -29,7 +29,7 @@ import static net.openhft.chronicle.map.Issue62ChronicleServer.prepare;
 public class Issue62ChronicleClient {
 
     public static void main(String[] args) throws Exception {
-        prepare(MAP_FILE_B);
+        /*prepare(MAP_FILE_B);
 
         ChronicleMapBuilder<String, Long> cityPostalCodesMapBuilder =
                 ChronicleMapBuilder.of(String.class, Long.class)
@@ -49,6 +49,6 @@ public class Issue62ChronicleClient {
             for (Entry<String, Long> entry : map.entrySet()) {
                 System.out.println(entry);
             }
-        }
+        }*/
     }
 }

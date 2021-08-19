@@ -43,7 +43,7 @@ public class Issue62ChronicleServer {
     }
 
     public static void main(String[] args) throws Exception {
-
+/*
         prepare(MAP_FILE_A);
 
         ChronicleMapBuilder<String, Long> cityPostalCodesMapBuilder =
@@ -64,6 +64,6 @@ public class Issue62ChronicleServer {
 
         System.out.println("Map created");
         Jvm.pause(15000);
-
+*/
     }
 }

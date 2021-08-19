@@ -171,7 +171,7 @@ public abstract class VanillaChronicleHash<K,
         createdOrInMemory = true;
 
         @SuppressWarnings({"deprecation", "unchecked"})
-        ChronicleHashBuilderPrivateAPI<K, ?> privateAPI = (ChronicleHashBuilderPrivateAPI<K, ?>) builder.privateAPI();
+        final ChronicleHashBuilderPrivateAPI<K, ?> privateAPI = Jvm.getValue(builder, "privateAPI");
 
         // Data model
         SerializationBuilder<K> keyBuilder = privateAPI.keyBuilder();
