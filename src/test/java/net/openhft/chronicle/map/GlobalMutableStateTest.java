@@ -42,7 +42,7 @@ public class GlobalMutableStateTest {
 
     @Test
     public void globalMutableStateTest() {
-        Values.newNativeReference(ReplicatedGlobalMutableState.class);
+        Values.newNativeReference(ReplicatedGlobalMutableStateV2.class);
         Values.newNativeReference(VanillaGlobalMutableState.class);
     }
 }

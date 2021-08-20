@@ -158,9 +158,9 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
         globalMutableStateClass = wireIn.read("globalMutableStateClass").text();
         if (globalMutableStateClass == null) {
-            globalMutableStateClass = ReplicatedGlobalMutableState.class.getName();
             // Missing "globalMutableStateClass" means we are reading from old data store file
-            // Using legacy global mutable state class
+            throw new UnsupportedOperationException("ReplicatedGlobalMutableState is no longer supported. Use a pre 3.22 version.");
+            // Using legacy global mutable state class no longer supported
         }
 
         changeCount = new AtomicLong(0);
@@ -198,10 +198,10 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     }
 
     @Override
-    public ReplicatedGlobalMutableState globalMutableState() {
+    public ReplicatedGlobalMutableStateV2 globalMutableState() {
         throwExceptionIfClosed();
 
-        return (ReplicatedGlobalMutableState) super.globalMutableState();
+        return (ReplicatedGlobalMutableStateV2) super.globalMutableState();
     }
 
     @Override
@@ -337,7 +337,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             if (modificationIterator != null)
                 return modificationIterator;
 
-            final ReplicatedGlobalMutableState globalMutableState = globalMutableState();
+            final ReplicatedGlobalMutableStateV2 globalMutableState = globalMutableState();
             final boolean modificationIteratorInit =
                     globalMutableState.getModificationIteratorInitAt(remoteIdentifier);
             final ModificationIterator modIter =
