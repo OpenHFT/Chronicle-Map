@@ -31,7 +31,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>2.21.222-SNAPSHOT</version>
+                <version>2.21-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -551,7 +551,7 @@
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</connection>
         <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</developerConnection>
-        <tag>21-release</tag>
+        <tag>release/2.21</tag>
     </scm>
 
 </project>
