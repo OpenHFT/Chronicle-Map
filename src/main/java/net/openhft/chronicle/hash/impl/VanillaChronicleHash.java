@@ -222,6 +222,8 @@ public abstract class VanillaChronicleHash<K,
 
         preShutdownAction = privateAPI.getPreShutdownAction();
         skipCloseOnExitHook = privateAPI.skipCloseOnExitHook();
+
+        disableThreadSafetyCheck(true);
     }
 
     public static IOException throwRecoveryOrReturnIOException(@NotNull final File file,
@@ -681,12 +683,6 @@ public abstract class VanillaChronicleHash<K,
                 ? 0
                 : globalMutableState.getAllocatedExtraTierBulks();
         return sizeInBytesWithoutTiers + allocatedExtraTierBulks * tierBulkSizeInBytes;
-    }
-
-    @Override
-    protected boolean threadSafetyCheck(boolean isUsed) {
-        // disabled for chronicle map
-        return true;
     }
 
     @Override
