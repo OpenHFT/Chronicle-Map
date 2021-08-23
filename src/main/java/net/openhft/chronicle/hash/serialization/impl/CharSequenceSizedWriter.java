@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
+import net.openhft.chronicle.bytes.AppendableUtil;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesUtil;
 import net.openhft.chronicle.hash.serialization.SizedWriter;
@@ -38,7 +39,7 @@ public final class CharSequenceSizedWriter
 
     @Override
     public long size(@NotNull CharSequence toWrite) {
-        return BytesUtil.utf8Length(toWrite);
+        return AppendableUtil.findUtf8Length(toWrite);
     }
 
     @Override

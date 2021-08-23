@@ -16,7 +16,10 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.*;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.bytes.RandomDataInput;
+import net.openhft.chronicle.bytes.VanillaBytes;
+import net.openhft.chronicle.bytes.internal.NativeBytesStore;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -31,7 +34,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
         implements DataAccess<ByteBuffer> {
 
     // Cache fields
-    private transient NativeBytesStore nativeBytesStore;
+    private transient BytesStore nativeBytesStore;
     private transient VanillaBytes<Void> bytes;
 
     // State fields
@@ -43,7 +46,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     }
 
     private void initTransients() {
-        nativeBytesStore = NativeBytesStore.uninitialized();
+        nativeBytesStore = BytesStore.nativeStore(0);
         bytes = VanillaBytes.vanillaBytes();
     }
 
@@ -85,7 +88,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     public Data<ByteBuffer> getData(@NotNull ByteBuffer instance) {
         bb = instance;
         if (instance.isDirect()) {
-            nativeBytesStore.init(instance, false);
+            ((NativeBytesStore) nativeBytesStore).init(instance, false);
             bytesStore = nativeBytesStore;
         } else {
             bytesStore = BytesStore.wrap(instance);
@@ -97,7 +100,7 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     public void uninit() {
         bb = null;
         if (bytesStore == nativeBytesStore) {
-            nativeBytesStore.uninit();
+            ((NativeBytesStore) nativeBytesStore).uninit();
         }
     }
 
