@@ -1,8 +1,8 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.core.io.Closeable;
+import net.openhft.chronicle.core.io.ManagedCloseable;
 
-public interface MapClosable extends Closeable {
+public interface MapClosable extends ManagedCloseable {
 
     @Override
     default boolean isClosed() {
