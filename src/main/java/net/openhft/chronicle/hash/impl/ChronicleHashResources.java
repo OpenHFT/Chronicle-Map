@@ -84,26 +84,42 @@ public abstract class ChronicleHashResources implements Runnable {
      * constructor, because {@code ChronicleHashResources} instance is created before it's
      * {@link net.openhft.chronicle.hash.ChronicleHash}.
      */
-    public final synchronized void setChronicleHashIdentityString(
+    public final void setChronicleHashIdentityString(
             String chronicleHashIdentityString) {
         checkOpen();
-        this.chronicleHashIdentityString = chronicleHashIdentityString;
+
+        synchronized (this) {
+            checkOpen();
+            this.chronicleHashIdentityString = chronicleHashIdentityString;
+        }
     }
 
-    final synchronized void addMemoryResource(long address, long size) {
+    final void addMemoryResource(long address, long size) {
         checkOpen();
-        memoryResources.add(new MemoryResource(address, size));
+
+        synchronized (this) {
+            checkOpen();
+            memoryResources.add(new MemoryResource(address, size));
+        }
     }
 
-    final synchronized void addCloseable(Closeable closeable) {
+    final void addCloseable(Closeable closeable) {
         checkOpen();
-        closeables.add(closeable);
+
+        synchronized (this) {
+            checkOpen();
+            closeables.add(closeable);
+        }
     }
 
-    final synchronized void addContext(ContextHolder contextHolder) {
+    final void addContext(ContextHolder contextHolder) {
         checkOpen();
-        expungeStateContexts();
-        contexts.add(new WeakReference<>(contextHolder));
+
+        synchronized (this) {
+            checkOpen();
+            expungeStateContexts();
+            contexts.add(new WeakReference<>(contextHolder));
+        }
     }
 
     private void expungeStateContexts() {
@@ -163,17 +179,7 @@ public abstract class ChronicleHashResources implements Runnable {
     public final boolean releaseManually() {
         if (state == COMPLETELY_CLOSED)
             return false;
-        synchronized (this) {
-            if (state == COMPLETELY_CLOSED)
-                return false;
-            Throwable thrown = releaseEverything(false);
-            if (thrown != null)
-                throw Throwables.propagate(thrown);
-            return true;
-        }
-    }
 
-    private Throwable releaseEverything(boolean releaseFromCleaner) {
         // It's important to set state = PARTIALLY_CLOSED before calling closeContexts(), to ensure
         // that threads which access this chronicleHash for the first time concurrently with
         // chronicleHash.close() will either fail to register the context via addContext() (because
@@ -183,6 +189,18 @@ public abstract class ChronicleHashResources implements Runnable {
         // addCloseable() respectively.
         state = PARTIALLY_CLOSED;
 
+        synchronized (this) {
+            if (state == COMPLETELY_CLOSED)
+                return false;
+        }
+
+        Throwable thrown = releaseEverything(false);
+        if (thrown != null)
+            throw Throwables.propagate(thrown);
+        return true;
+    }
+
+    private Throwable releaseEverything(boolean releaseFromCleaner) {
         // Paranoiac mode: methods closeContexts(), closeCloseables(), releaseMemoryResources(),
         // releaseExtraSystemResources() and Throwables.returnOrSuppress() should never throw any
         // throwables (the first three should return them instead of throwing), but we don't trust
