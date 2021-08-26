@@ -131,15 +131,6 @@ public interface Replica extends Closeable {
         boolean nextEntry(@NotNull final Callback callback, final int chronicleId);
 
         /**
-         * Synchronous version which is kept for binary API compatibility.
-         *
-         * @deprecated see {@link #dirtyEntries(long, EventLoop)}
-         * @param fromTimeStamp the timestamp from which all entries should be dirty
-         */
-        @Deprecated(/* to be removed in x.22 */)
-        void dirtyEntries(long fromTimeStamp);
-
-        /**
          * Dirties all entries with a modification time equal to {@code fromTimeStamp} or newer and
          * origin identifier equal to the current node identifier. It means all these entries will
          * be considered as "new" by this ModificationIterator and iterated once again no matter if

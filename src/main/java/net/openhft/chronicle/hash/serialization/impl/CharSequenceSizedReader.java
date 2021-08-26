@@ -26,17 +26,12 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CharSequenceSizedReader implements SizedReader<CharSequence>,
+public final class CharSequenceSizedReader implements SizedReader<CharSequence>,
         StatefulCopyable<CharSequenceSizedReader>, ReadResolvable<CharSequenceSizedReader> {
 
     public static final CharSequenceSizedReader INSTANCE = new CharSequenceSizedReader();
 
-    /**
-     * @deprecated use {@link #INSTANCE} as {@code CharSequenceSizedReader} is immutable and
-     * stateless
-     */
-    @Deprecated(/* to be removed in x.22 */)
-    public CharSequenceSizedReader() {
+    private CharSequenceSizedReader() {
     }
 
     @NotNull

@@ -1052,22 +1052,6 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         }
 
         @Override
-        @Deprecated(/* to be removed in x.22 */)
-        public void dirtyEntries(long fromTimeStamp) {
-            throwExceptionIfClosed();
-
-            final DirtyEntriesHandler syncHandler = new DirtyEntriesHandler(segment -> true, fromTimeStamp);
-
-            try {
-                for (int i = 0; i < actualSegments + 1; i++) // Call [actualSegments + 1] times to trigger context close
-                    syncHandler.action();
-            } catch (InvalidEventHandlerException e) {
-                if (e.getCause() instanceof ChronicleHashClosedException)
-                    throw (ChronicleHashClosedException) e.getCause();
-            }
-        }
-
-        @Override
         public void dirtyEntries(long fromTimeStamp, @NotNull EventLoop eventLoop) {
             throwExceptionIfClosed();
 
