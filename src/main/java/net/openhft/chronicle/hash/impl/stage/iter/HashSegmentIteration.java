@@ -172,7 +172,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
         } while (currentHashLookupPos != startPos || steps == 0);
         if (!interrupted && leftEntries > 0) {
             throw new IllegalStateException(hh.h().toIdentityString() +
-                    ": We a tier without interruption, " +
+                    ": We went through a tier without interruption, " +
                     "but according to tier counters there should be " + leftEntries +
                     " more entries. Size diverged?");
         }
