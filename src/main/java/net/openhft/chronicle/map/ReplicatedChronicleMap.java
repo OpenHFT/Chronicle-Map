@@ -919,12 +919,12 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             throwExceptionIfClosed();
 
             while (true) {
-                final long nextEntryPos = nextEntryPos(callback, chronicleId);
-                if (nextEntryPos == NOT_FOUND)
-                    return false;
-                entryPos = nextEntryPos;
-
                 try (CompiledReplicatedMapIterationContext<K, V, R> context = iterationContext()) {
+                    final long nextEntryPos = nextEntryPos(callback, chronicleId);
+                    if (nextEntryPos == NOT_FOUND)
+                        return false;
+                    entryPos = nextEntryPos;
+
                     if (segmentIndex >= 0) {
                         // we are in first tiers (aka "segments")
                         context.initSegmentIndex(segmentIndex);
