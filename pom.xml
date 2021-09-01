@@ -12,7 +12,7 @@
 
     <artifactId>chronicle-map</artifactId>
 
-    <version>3.21.86-SNAPSHOT</version>
+    <version>3.21.86</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
@@ -551,7 +551,7 @@
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</connection>
         <developerConnection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</developerConnection>
-        <tag>release/2.21</tag>
+        <tag>chronicle-map-3.21.86</tag>
     </scm>
 
 </project>
