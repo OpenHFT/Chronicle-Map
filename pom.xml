@@ -358,9 +358,19 @@
                 <configuration>
                     <archive>
                         <manifest>
+                            <addClasspath>true</addClasspath>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+<!--                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>-->
                         </manifest>
+                        <manifestEntries>
+                            <X-Compile-Source-JDK>${maven.compiler.release}</X-Compile-Source-JDK>
+                            <Implementation-Version>${project.version}</Implementation-Version>
+                            <!--  See https://openjdk.java.net/jeps/261#Breaking-encapsulation-->
+                            <!--Unfortunately, only works for the main jar which this is not likely to be-->
+                            <Add-Opens>java.base/java.lang.reflect=ALL-UNNAMED</Add-Opens>
+                            <Add-Exports>java.base/jdk.internal.ref=ALL-UNNAMED java.base/sun.nio.ch=ALL-UNNAMED</Add-Exports>
+                            <Automatic-Module-Name>chronicle.map</Automatic-Module-Name>
+                        </manifestEntries>
                     </archive>
                 </configuration>
 
@@ -403,6 +413,17 @@
                             net.openhft.chronicle.set.*,
                             net.openhft.chronicle.hash.*
                         </Export-Package>
+                        <Add-Opens>java.base/java.lang.reflect=ALL-UNNAMED</Add-Opens>
+                        <Add-Exports>java.base/jdk.internal.ref=ALL-UNNAMED java.base/sun.nio.ch=ALL-UNNAMED</Add-Exports>
+                        <Automatic-Module-Name>chronicle.map</Automatic-Module-Name>
+                        <Implementation-Title>${project.name}</Implementation-Title>
+                        <Implementation-Version>${project.version}</Implementation-Version>
+                        <Implementation-Vendor-Id>${project.groupId}</Implementation-Vendor-Id>
+                        <Implementation-Vendor>${project.organization.name}</Implementation-Vendor>
+                        <Implementation-URL>${project.url}</Implementation-URL>
+                        <Specification-Title>${project.name}</Specification-Title>
+                        <Specification-Version>${project.version}</Specification-Version>
+                        <Specification-Vendor>${project.organization.name}</Specification-Vendor>
                     </instructions>
                 </configuration>
                 <executions>
