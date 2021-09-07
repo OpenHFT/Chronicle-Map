@@ -94,7 +94,6 @@ public final class InternalMapFileAnalyzer {
             output64(buffer, "modificationIteratorInitAt(r)0");
             output64(buffer, "modificationIteratorInitAt(r)1");
 
-
             header("Segment Headers Area");
             segmentHeadersOffset = 0x005c1000; // Why is this not picked up properly?
             buffer.position(segmentHeadersOffset);
@@ -102,7 +101,6 @@ public final class InternalMapFileAnalyzer {
             System.out.println("actualSegments = " + actualSegments);
             final int segmentHeaderSize = (int) props.get("segmentHeaderSize");
             System.out.println("segmentHeaderSize = " + segmentHeaderSize);
-
 
             for (int segment = 0; segment < actualSegments; segment++) {
                 buffer.position(segmentHeadersOffset + segment * segmentHeaderSize);
@@ -205,7 +203,6 @@ public final class InternalMapFileAnalyzer {
                 final int cardinality = cardinalities.get(segment);
                 System.out.format("%3d %10d (%2.2f%%)%n", segment, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
             }
-
 
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
