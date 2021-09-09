@@ -29,6 +29,10 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.openhft.chronicle.core.util.AssertUtil.SKIP_ASSERTIONS;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertPosition;
+
 /**
  * ChronicleHashResources is Runnable to be passed as "hunk" to {@link sun.misc.Cleaner}.
  */
@@ -94,7 +98,10 @@ public abstract class ChronicleHashResources implements Runnable {
         }
     }
 
-    final void addMemoryResource(long address, long size) {
+    final void addMemoryResource(final long address,
+                                 final long size) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(size);
         checkOpen();
 
         synchronized (this) {

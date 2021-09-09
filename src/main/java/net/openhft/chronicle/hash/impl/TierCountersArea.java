@@ -19,6 +19,9 @@ package net.openhft.chronicle.hash.impl;
 import net.openhft.chronicle.core.Memory;
 import net.openhft.chronicle.core.OS;
 
+import static net.openhft.chronicle.core.util.AssertUtil.SKIP_ASSERTIONS;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
+
 /**
  * The reason why this is not implemented via value interface, and offsets are allocated by hand --
  * this functionality is accessed concurrently from many threads, and native value implementations
@@ -36,70 +39,89 @@ public enum TierCountersArea {
     public static final long ENTRIES_OFFSET = TIER_OFFSET + 4L;
     public static final long DELETED_OFFSET = ENTRIES_OFFSET + 4L;
     private static final long UNSIGNED_INT_MASK = 0xFFFFFFFFL;
-    private static Memory memory = OS.memory();
+    private static final Memory MEMORY = OS.memory();
 
-    public static long nextTierIndex(long address) {
-        return memory.readLong(address + NEXT_TIER_INDEX_OFFSET);
+    public static long nextTierIndex(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        return MEMORY.readLong(address + NEXT_TIER_INDEX_OFFSET);
     }
 
-    public static void nextTierIndex(long address, long nextTierIndex) {
-        memory.writeLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
+    public static void nextTierIndex(final long address,
+                                     final long nextTierIndex) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        MEMORY.writeLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
     }
 
-    public static long lowestPossiblyFreeChunkTiered(long address) {
-        return memory.readLong(address + LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET);
+    public static long lowestPossiblyFreeChunkTiered(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        return MEMORY.readLong(address + LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET);
     }
 
-    public static void lowestPossiblyFreeChunkTiered(long address, long lowestPossiblyFreeChunk) {
-        memory.writeLong(address + LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET,
+    public static void lowestPossiblyFreeChunkTiered(final long address, final long lowestPossiblyFreeChunk) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        MEMORY.writeLong(address + LOWEST_POSSIBLY_FREE_CHUNK_TIERED_OFFSET,
                 lowestPossiblyFreeChunk);
     }
 
-    public static long prevTierIndex(long address) {
-        return memory.readLong(address + PREV_TIER_INDEX_OFFSET);
+    public static long prevTierIndex(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        return MEMORY.readLong(address + PREV_TIER_INDEX_OFFSET);
     }
 
-    public static void prevTierIndex(long address, long prevTierIndex) {
-        memory.writeLong(address + PREV_TIER_INDEX_OFFSET, prevTierIndex);
+    public static void prevTierIndex(final long address,
+                                     final long prevTierIndex) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        MEMORY.writeLong(address + PREV_TIER_INDEX_OFFSET, prevTierIndex);
     }
 
-    public static int segmentIndex(long address) {
-        return memory.readInt(address + SEGMENT_INDEX_OFFSET);
+    public static int segmentIndex(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        return MEMORY.readInt(address + SEGMENT_INDEX_OFFSET);
     }
 
-    public static void segmentIndex(long address, int segmentIndex) {
-        memory.writeInt(address + SEGMENT_INDEX_OFFSET, segmentIndex);
+    public static void segmentIndex(final long address, final int segmentIndex) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        MEMORY.writeInt(address + SEGMENT_INDEX_OFFSET, segmentIndex);
     }
 
-    public static int tier(long address) {
-        return memory.readInt(address + TIER_OFFSET);
+    public static int tier(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        return MEMORY.readInt(address + TIER_OFFSET);
     }
 
-    public static void tier(long address, int tier) {
-        memory.writeInt(address + TIER_OFFSET, tier);
+    public static void tier(final long address,
+                            final int tier) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        MEMORY.writeInt(address + TIER_OFFSET, tier);
     }
 
-    public static long entries(long address) {
-        return memory.readInt(address + ENTRIES_OFFSET) & UNSIGNED_INT_MASK;
+    public static long entries(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        return MEMORY.readInt(address + ENTRIES_OFFSET) & UNSIGNED_INT_MASK;
     }
 
-    public static void entries(long address, long entries) {
+    public static void entries(final long address,
+                               final long entries) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         if (entries >= (1L << 32)) {
             throw new IllegalStateException("tier entries overflow: up to " + UNSIGNED_INT_MASK +
                     " supported, " + entries + " given");
         }
-        memory.writeInt(address + ENTRIES_OFFSET, (int) entries);
+        MEMORY.writeInt(address + ENTRIES_OFFSET, (int) entries);
     }
 
-    public static long deleted(long address) {
-        return memory.readInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
+    public static long deleted(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        return MEMORY.readInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
     }
 
-    public static void deleted(long address, long deleted) {
+    public static void deleted(final long address,
+                               final long deleted) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         if (deleted >= (1L << 32)) {
             throw new IllegalStateException("tier deleted entries count overflow: up to " +
                     UNSIGNED_INT_MASK + " supported, " + deleted + " given");
         }
-        memory.writeInt(address + DELETED_OFFSET, (int) deleted);
+        MEMORY.writeInt(address + DELETED_OFFSET, (int) deleted);
     }
 }

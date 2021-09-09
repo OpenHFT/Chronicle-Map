@@ -28,6 +28,9 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static net.openhft.chronicle.core.util.AssertUtil.SKIP_ASSERTIONS;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertPosition;
 
 public final class BigSegmentHeader implements SegmentHeader {
     public static final BigSegmentHeader INSTANCE = new BigSegmentHeader();
@@ -97,17 +100,21 @@ public final class BigSegmentHeader implements SegmentHeader {
         return NANOSECONDS.toMillis(nanos + 900_000);
     }
 
-    private static boolean innerTryReadLock(
-            long address, long time, TimeUnit unit, boolean interruptible)
-            throws InterruptedException {
+    private static boolean innerTryReadLock(final long address,
+                                            final long time,
+                                            final TimeUnit unit,
+                                            final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryReadLock(A, null, address + LOCK_OFFSET) ||
                 tryReadLock0(address, time, unit, interruptible);
     }
 
-    private static boolean tryReadLock0(
-            long address, long time, TimeUnit unit, boolean interruptible)
-            throws InterruptedException {
-        long timeInNanos = unit.toNanos(time);
+    private static boolean tryReadLock0(final long address,
+                                        final long time,
+                                        final TimeUnit unit,
+                                        final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        final long timeInNanos = unit.toNanos(time);
         if (timeInNanos < TRY_LOCK_NANOS_THRESHOLD) {
             return tryReadLockNanos(address, timeInNanos, interruptible);
         } else {
@@ -115,9 +122,11 @@ public final class BigSegmentHeader implements SegmentHeader {
         }
     }
 
-    private static boolean tryReadLockNanos(long address, long timeInNanos, boolean interruptible)
-            throws InterruptedException {
-        long end = System.nanoTime() + timeInNanos;
+    private static boolean tryReadLockNanos(final long address,
+                                            final long timeInNanos,
+                                            final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        final long end = System.nanoTime() + timeInNanos;
         do {
             if (LOCK.tryReadLock(A, null, address + LOCK_OFFSET))
                 return true;
@@ -130,8 +139,10 @@ public final class BigSegmentHeader implements SegmentHeader {
     /**
      * Use a timer which is more insensitive to jumps in time like GCs and context switches.
      */
-    private static boolean tryReadLockMillis(long address, long timeInMillis, boolean interruptible)
-            throws InterruptedException {
+    private static boolean tryReadLockMillis(final long address,
+                                             long timeInMillis,
+                                             final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         long lastTime = System.currentTimeMillis();
         do {
             if (LOCK.tryReadLock(A, null, address + LOCK_OFFSET))
@@ -147,17 +158,21 @@ public final class BigSegmentHeader implements SegmentHeader {
         return false;
     }
 
-    private static boolean innerTryUpdateLock(
-            long address, long time, TimeUnit unit, boolean interruptible)
-            throws InterruptedException {
+    private static boolean innerTryUpdateLock(final long address,
+                                              final long time,
+                                              final TimeUnit unit,
+                                              final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET) ||
                 tryUpdateLock0(address, time, unit, interruptible);
     }
 
-    private static boolean tryUpdateLock0(
-            long address, long time, TimeUnit unit, boolean interruptible)
-            throws InterruptedException {
-        long timeInNanos = unit.toNanos(time);
+    private static boolean tryUpdateLock0(final long address,
+                                          final long time,
+                                          final TimeUnit unit,
+                                          final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        final long timeInNanos = unit.toNanos(time);
         if (timeInNanos < TRY_LOCK_NANOS_THRESHOLD) {
             return tryUpdateLockNanos(address, timeInNanos, interruptible);
         } else {
@@ -165,9 +180,11 @@ public final class BigSegmentHeader implements SegmentHeader {
         }
     }
 
-    private static boolean tryUpdateLockNanos(long address, long timeInNanos, boolean interruptible)
-            throws InterruptedException {
-        long end = System.nanoTime() + timeInNanos;
+    private static boolean tryUpdateLockNanos(final long address,
+                                              final long timeInNanos,
+                                              final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        final long end = System.nanoTime() + timeInNanos;
         do {
             if (LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET))
                 return true;
@@ -180,8 +197,10 @@ public final class BigSegmentHeader implements SegmentHeader {
     /**
      * Use a timer which is more insensitive to jumps in time like GCs and context switches.
      */
-    private static boolean tryUpdateLockMillis(
-            long address, long timeInMillis, boolean interruptible) throws InterruptedException {
+    private static boolean tryUpdateLockMillis(final long address,
+                                               long timeInMillis,
+                                               final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         long lastTime = System.currentTimeMillis();
         do {
             if (LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET))
@@ -197,17 +216,21 @@ public final class BigSegmentHeader implements SegmentHeader {
         return false;
     }
 
-    private static boolean innerTryWriteLock(
-            long address, long time, TimeUnit unit, boolean interruptible)
-            throws InterruptedException {
+    private static boolean innerTryWriteLock(final long address,
+                                             final long time,
+                                             final TimeUnit unit,
+                                             final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryWriteLock(A, null, address + LOCK_OFFSET) ||
                 tryWriteLock0(address, time, unit, interruptible);
     }
 
-    private static boolean tryWriteLock0(
-            long address, long time, TimeUnit unit, boolean interruptible)
-            throws InterruptedException {
-        long timeInNanos = unit.toNanos(time);
+    private static boolean tryWriteLock0(final long address,
+                                         final long time,
+                                         final TimeUnit unit,
+                                         final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        final long timeInNanos = unit.toNanos(time);
         if (timeInNanos < TRY_LOCK_NANOS_THRESHOLD) {
             return tryWriteLockNanos(address, timeInNanos, interruptible);
         } else {
@@ -215,9 +238,11 @@ public final class BigSegmentHeader implements SegmentHeader {
         }
     }
 
-    private static boolean tryWriteLockNanos(long address, long timeInNanos, boolean interruptible)
-            throws InterruptedException {
-        long end = System.nanoTime() + timeInNanos;
+    private static boolean tryWriteLockNanos(final long address,
+                                             final long timeInNanos,
+                                             final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        final long end = System.nanoTime() + timeInNanos;
         registerWait(address);
         try {
             do {
@@ -236,8 +261,10 @@ public final class BigSegmentHeader implements SegmentHeader {
     /**
      * Use a timer which is more insensitive to jumps in time like GCs and context switches.
      */
-    private static boolean tryWriteLockMillis(
-            long address, long timeInMillis, boolean interruptible) throws InterruptedException {
+    private static boolean tryWriteLockMillis(final long address,
+                                              long timeInMillis,
+                                              final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         long lastTime = System.currentTimeMillis();
         registerWait(address);
         try {
@@ -265,24 +292,30 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     private static void registerWait(long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.registerWait(A, null, address + LOCK_OFFSET);
     }
 
     private static void deregisterWait(long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.deregisterWait(A, null, address + LOCK_OFFSET);
     }
 
-    private static boolean innerTryUpgradeUpdateToWriteLock(
-            long address, long time, TimeUnit unit, boolean interruptible)
-            throws InterruptedException {
+    private static boolean innerTryUpgradeUpdateToWriteLock(final long address,
+                                                            final long time,
+                                                            final TimeUnit unit,
+                                                            final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryUpgradeUpdateToWriteLock(A, null, address + LOCK_OFFSET) ||
                 tryUpgradeUpdateToWriteLock0(address, time, unit, interruptible);
     }
 
-    private static boolean tryUpgradeUpdateToWriteLock0(
-            long address, long time, TimeUnit unit, boolean interruptible)
-            throws InterruptedException {
-        long timeInNanos = unit.toNanos(time);
+    private static boolean tryUpgradeUpdateToWriteLock0(final long address,
+                                                        final long time,
+                                                        final TimeUnit unit,
+                                                        final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        final long timeInNanos = unit.toNanos(time);
         if (timeInNanos < TRY_LOCK_NANOS_THRESHOLD) {
             return tryUpgradeUpdateToWriteLockNanos(address, timeInNanos, interruptible);
         } else {
@@ -291,9 +324,11 @@ public final class BigSegmentHeader implements SegmentHeader {
         }
     }
 
-    private static boolean tryUpgradeUpdateToWriteLockNanos(
-            long address, long timeInNanos, boolean interruptible) throws InterruptedException {
-        long end = System.nanoTime() + timeInNanos;
+    private static boolean tryUpgradeUpdateToWriteLockNanos(final long address,
+                                                            final long timeInNanos,
+                                                            final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        final long end = System.nanoTime() + timeInNanos;
         registerWait(address);
         try {
             do {
@@ -312,8 +347,10 @@ public final class BigSegmentHeader implements SegmentHeader {
     /**
      * Use a timer which is more insensitive to jumps in time like GCs and context switches.
      */
-    private static boolean tryUpgradeUpdateToWriteLockMillis(
-            long address, long timeInMillis, boolean interruptible) throws InterruptedException {
+    private static boolean tryUpgradeUpdateToWriteLockMillis(final long address,
+                                                             long timeInMillis,
+                                                             final boolean interruptible) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         long lastTime = System.currentTimeMillis();
         registerWait(address);
         try {
@@ -335,7 +372,9 @@ public final class BigSegmentHeader implements SegmentHeader {
         }
     }
 
-    private static RuntimeException tryDeregisterWaitAndRethrow(long address, Throwable throwable) {
+    private static RuntimeException tryDeregisterWaitAndRethrow(final long address,
+                                                                final Throwable throwable) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         try {
             deregisterWait(address);
         } catch (Throwable t) {
@@ -344,17 +383,20 @@ public final class BigSegmentHeader implements SegmentHeader {
         throw Jvm.rethrow(throwable);
     }
 
-    private static boolean tryUpgradeUpdateToWriteLockAndDeregisterWait0(long address) {
+    private static boolean tryUpgradeUpdateToWriteLockAndDeregisterWait0(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryUpgradeUpdateToWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public long entries(long address) {
+    public long entries(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return OS.memory().readInt(address + ENTRIES_OFFSET) & UNSIGNED_INT_MASK;
     }
 
     @Override
-    public void entries(long address, long entries) {
+    public void entries(final long address, final long entries) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         if (entries >= (1L << 32)) {
             throw new IllegalStateException("segment entries overflow: up to " + UNSIGNED_INT_MASK +
                     " supported, " + entries + " given");
@@ -363,12 +405,15 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public long deleted(long address) {
+    public long deleted(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return OS.memory().readInt(address + DELETED_OFFSET) & UNSIGNED_INT_MASK;
     }
 
     @Override
-    public void deleted(long address, long deleted) {
+    public void deleted(final long address,
+                        final long deleted) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         if (deleted >= (1L << 32)) {
             throw new IllegalStateException("segment deleted entries count overflow: up to " +
                     UNSIGNED_INT_MASK + " supported, " + deleted + " given");
@@ -377,28 +422,35 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public long lowestPossiblyFreeChunk(long address) {
+    public long lowestPossiblyFreeChunk(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return OS.memory().readInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET) & UNSIGNED_INT_MASK;
     }
 
     @Override
-    public void lowestPossiblyFreeChunk(long address, long lowestPossiblyFreeChunk) {
+    public void lowestPossiblyFreeChunk(final long address,
+                                        final long lowestPossiblyFreeChunk) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         OS.memory().writeInt(address + LOWEST_POSSIBLY_FREE_CHUNK_OFFSET,
                 (int) lowestPossiblyFreeChunk);
     }
 
     @Override
-    public long nextTierIndex(long address) {
+    public long nextTierIndex(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return OS.memory().readLong(address + NEXT_TIER_INDEX_OFFSET);
     }
 
     @Override
-    public void nextTierIndex(long address, long nextTierIndex) {
+    public void nextTierIndex(final long address,
+                              final long nextTierIndex) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         OS.memory().writeLong(address + NEXT_TIER_INDEX_OFFSET, nextTierIndex);
     }
 
     @Override
-    public void readLock(long address) {
+    public void readLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         try {
             if (!innerTryReadLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
                 throw deadLock();
@@ -408,33 +460,41 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public void readLockInterruptibly(long address) throws InterruptedException {
+    public void readLockInterruptibly(final long address) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         if (!tryReadLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
             throw deadLock();
     }
 
     @Override
-    public boolean tryReadLock(long address) {
+    public boolean tryReadLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryReadLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public boolean tryReadLock(long address, long time, TimeUnit unit) throws InterruptedException {
+    public boolean tryReadLock(final long address,
+                               final long time,
+                               final TimeUnit unit) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return innerTryReadLock(address, time, unit, true);
     }
 
     @Override
-    public boolean tryUpgradeReadToUpdateLock(long address) {
+    public boolean tryUpgradeReadToUpdateLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryUpgradeReadToUpdateLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public boolean tryUpgradeReadToWriteLock(long address) {
+    public boolean tryUpgradeReadToWriteLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryUpgradeReadToWriteLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public void updateLock(long address) {
+    public void updateLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         try {
             if (!innerTryUpdateLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
                 throw deadLock();
@@ -444,24 +504,29 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public void updateLockInterruptibly(long address) throws InterruptedException {
+    public void updateLockInterruptibly(final long address) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         if (!tryUpdateLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
             throw deadLock();
     }
 
     @Override
-    public boolean tryUpdateLock(long address) {
+    public boolean tryUpdateLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public boolean tryUpdateLock(long address, long time, TimeUnit unit)
-            throws InterruptedException {
+    public boolean tryUpdateLock(final long address,
+                                 final long time,
+                                 final TimeUnit unit) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return innerTryUpdateLock(address, time, unit, true);
     }
 
     @Override
-    public void writeLock(long address) {
+    public void writeLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         try {
             if (!innerTryWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
                 throw deadLock();
@@ -471,24 +536,29 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public void writeLockInterruptibly(long address) throws InterruptedException {
+    public void writeLockInterruptibly(final long address) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         if (!tryWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
             throw deadLock();
     }
 
     @Override
-    public boolean tryWriteLock(long address) {
+    public boolean tryWriteLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryWriteLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public boolean tryWriteLock(long address, long time, TimeUnit unit)
-            throws InterruptedException {
+    public boolean tryWriteLock(final long address,
+                                final long time,
+                                final TimeUnit unit) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return innerTryWriteLock(address, time, unit, true);
     }
 
     @Override
-    public void upgradeUpdateToWriteLock(long address) {
+    public void upgradeUpdateToWriteLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         try {
             if (!innerTryUpgradeUpdateToWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
                 throw deadLock();
@@ -498,54 +568,65 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public void upgradeUpdateToWriteLockInterruptibly(long address) throws InterruptedException {
+    public void upgradeUpdateToWriteLockInterruptibly(final long address) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         if (!tryUpgradeUpdateToWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS))
             throw deadLock();
     }
 
     @Override
-    public boolean tryUpgradeUpdateToWriteLock(long address) {
+    public boolean tryUpgradeUpdateToWriteLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.tryUpgradeUpdateToWriteLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public boolean tryUpgradeUpdateToWriteLock(long address, long time, TimeUnit unit)
-            throws InterruptedException {
+    public boolean tryUpgradeUpdateToWriteLock(final long address,
+                                               final long time,
+                                               final TimeUnit unit) throws InterruptedException {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return innerTryUpgradeUpdateToWriteLock(address, time, unit, true);
     }
 
     @Override
-    public void readUnlock(long address) {
+    public void readUnlock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.readUnlock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public void updateUnlock(long address) {
+    public void updateUnlock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.updateUnlock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public void downgradeUpdateToReadLock(long address) {
+    public void downgradeUpdateToReadLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.downgradeUpdateToReadLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public void writeUnlock(long address) {
+    public void writeUnlock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.writeUnlock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public void downgradeWriteToUpdateLock(long address) {
+    public void downgradeWriteToUpdateLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.downgradeWriteToUpdateLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public void downgradeWriteToReadLock(long address) {
+    public void downgradeWriteToReadLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.downgradeWriteToReadLock(A, null, address + LOCK_OFFSET);
     }
 
     @Override
-    public void resetLock(long address) {
+    public void resetLock(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         LOCK.reset(A, null, address + LOCK_OFFSET);
     }
 
@@ -555,7 +636,8 @@ public final class BigSegmentHeader implements SegmentHeader {
     }
 
     @Override
-    public long getLockState(long address) {
+    public long getLockState(final long address) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
         return LOCK.getState(A, null, address + LOCK_OFFSET);
     }
 

@@ -18,6 +18,10 @@ package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.OS;
 
+import static net.openhft.chronicle.core.util.AssertUtil.SKIP_ASSERTIONS;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertPosition;
+
 public final class LongCompactOffHeapLinearHashTable extends CompactOffHeapLinearHashTable {
 
     private static final long SCALE = 8L;
@@ -47,27 +51,45 @@ public final class LongCompactOffHeapLinearHashTable extends CompactOffHeapLinea
     }
 
     @Override
-    public long readEntry(long addr, long pos) {
-        return OS.memory().readLong(addr + pos);
+    public long readEntry(final long address,
+                          final long pos) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        return OS.memory().readLong(address + pos);
     }
 
     @Override
-    public long readEntryVolatile(long addr, long pos) {
-        return OS.memory().readVolatileLong(addr + pos);
+    public long readEntryVolatile(final long address,
+                                  final long pos) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        return OS.memory().readVolatileLong(address + pos);
     }
 
     @Override
-    public void writeEntryVolatile(long addr, long pos, long key, long value) {
-        OS.memory().writeVolatileLong(addr + pos, entry(key, value));
+    public void writeEntryVolatile(final long address,
+                                   final long pos,
+                                   final long key,
+                                   final long value) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        OS.memory().writeVolatileLong(address + pos, entry(key, value));
     }
 
     @Override
-    public void writeEntry(long addr, long pos, long newEntry) {
-        OS.memory().writeLong(addr + pos, newEntry);
+    public void writeEntry(final long address,
+                           final long pos,
+                           final long newEntry) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        OS.memory().writeLong(address + pos, newEntry);
     }
 
     @Override
-    public void clearEntry(long addr, long pos) {
-        OS.memory().writeLong(addr + pos, 0L);
+    public void clearEntry(final long address,
+                           final long pos) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        OS.memory().writeLong(address + pos, 0L);
     }
 }

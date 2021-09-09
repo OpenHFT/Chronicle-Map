@@ -18,6 +18,10 @@ package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.OS;
 
+import static net.openhft.chronicle.core.util.AssertUtil.SKIP_ASSERTIONS;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
+import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertPosition;
+
 public final class IntCompactOffHeapLinearHashTable extends CompactOffHeapLinearHashTable {
 
     private static final long SCALE = 4L;
@@ -47,27 +51,42 @@ public final class IntCompactOffHeapLinearHashTable extends CompactOffHeapLinear
     }
 
     @Override
-    public long readEntry(long addr, long pos) {
-        return OS.memory().readInt(addr + pos);
+    public long readEntry(final long address,
+                          final long pos) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        return OS.memory().readInt(address + pos);
     }
 
     @Override
-    public long readEntryVolatile(long addr, long pos) {
-        return OS.memory().readVolatileInt(addr + pos);
+    public long readEntryVolatile(final long address,
+                                  final long pos) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        return OS.memory().readVolatileInt(address + pos);
     }
 
     @Override
-    public void writeEntryVolatile(long addr, long pos, long key, long value) {
-        OS.memory().writeVolatileInt(addr + pos, (int) entry(key, value));
+    public void writeEntryVolatile(final long address,
+                                   final long pos,
+                                   final long key,
+                                   final long value) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        OS.memory().writeVolatileInt(address + pos, (int) entry(key, value));
     }
 
     @Override
-    public void writeEntry(long addr, long pos, long newEntry) {
-        OS.memory().writeInt(addr + pos, (int) newEntry);
+    public void writeEntry(long address, long pos, long newEntry) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        OS.memory().writeInt(address + pos, (int) newEntry);
     }
 
     @Override
-    public void clearEntry(long addr, long pos) {
-        OS.memory().writeInt(addr + pos, 0);
+    public void clearEntry(long address, long pos) {
+        assert SKIP_ASSERTIONS || assertAddress(address);
+        assert SKIP_ASSERTIONS || assertPosition(pos);
+        OS.memory().writeInt(address + pos, 0);
     }
 }
