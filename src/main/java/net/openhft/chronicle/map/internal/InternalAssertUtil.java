@@ -13,7 +13,7 @@ public final class InternalAssertUtil {
     public static boolean assertAddress(final long address) {
         if (Jvm.is64bit()) {
             // It is highly unlikely that we would ever address farther than 2^63
-            assert address > 0 : "address is negative: " + address;
+            assert address > 0 : "address is non positive: " + address;
         } else {
             // These memory addresses are illegal on a 32-bit machine
             assert address != 0 && address != -1 : "address is illegal: " + address;
@@ -22,7 +22,7 @@ public final class InternalAssertUtil {
     }
 
     public static boolean assertPosition(final long position) {
-        assert position > 0 : "position is negative: " + position;
+        assert position >= 0 : "position is negative: " + position;
         return true;
     }
 
