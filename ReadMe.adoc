@@ -8,6 +8,7 @@ image::docs\images\Map_line.png[width=20%]
 [caption="", link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
 image::https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[]
 image:https://javadoc.io/badge2/net.openhft/chronicle-map/javadoc.svg[link="https://www.javadoc.io/doc/net.openhft/chronicle-map/latest/index.html"]
+image:https://img.shields.io/badge/release%20notes-subscribe-brightgreen[link=”https://chronicle.software/release-notes/”]
 
 == Overview
 
@@ -92,3 +93,6 @@ The Chronicle Map documentation comprises:
 |===
 
 Linked documentation is contained in the `docs` folder.
+
+== Chronicle Software Release Notes
+https://chronicle.software/release-notes[Leave your e-mail] to get information about the latest releases and patches to stay up-to-date. 
