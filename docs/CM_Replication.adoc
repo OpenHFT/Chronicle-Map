@@ -21,8 +21,8 @@ For more information on Chronicle Map (Enterprise Edition), please contact mailt
 == Replication
 
 Chronicle Map Replication is a multi-master replicated data store. Chronicle Map supports replication over TCP/IP.
-
-image::http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg[TCP/IP Replication]
+//This URL does not exist anymore
+//image::http://openhft.net/wp-content/uploads/2014/07/Chronicle-Map-TCP-Replication_simple_02.jpg[TCP/IP Replication]
 
 == TCP Background
 TCP/IP is a reliable protocol. This means that, unless you have a network failure or hardware outage, the data is guaranteed to arrive. TCP/IP provides point-to-point connectivity. For example, if the message was sent to 100 hosts, the message would have to be sent 100 times.
@@ -164,7 +164,7 @@ try (ReplicatedMap clusterOnHost1 = createCluster(CLUSTER_YAML, 1);
 }
 ....
 
-This example is available in the repository https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise-Demo/blob/master/Example1/src/main/java/software/chronicle/enterprise/map/ThreeWayMapReplicationExampleMain.java[here]
+This example is available in the repository https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise-Demo/blob/master/Example1/src/main/java/software/chronicle/enterprise/map/demo/example1/ThreeWayMapReplicationExampleMain.java[here]
 
 == Replication event logging
 
