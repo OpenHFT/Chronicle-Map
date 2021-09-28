@@ -324,7 +324,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
 
     @Override
     public ModificationIterator acquireModificationIterator(final byte remoteIdentifier) {
-        throwExceptionIfClosed();
+        throwExceptionIfClosing();
 
         ModificationIterator modificationIterator = modificationIterators.get(remoteIdentifier);
         if (modificationIterator != null)
