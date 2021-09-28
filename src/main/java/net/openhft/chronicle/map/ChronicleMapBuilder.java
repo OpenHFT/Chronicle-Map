@@ -1900,9 +1900,12 @@ public final class ChronicleMapBuilder<K, V> implements
 
             final long dataStoreSize = map.globalMutableState().getDataStoreSize();
             if (!recover && dataStoreSize > file.length()) {
-                throw new IOException("The file " + file + " the map is serialized from " +
-                        "has unexpected length " + file.length() + ", probably corrupted. " +
-                        "Data store size is " + dataStoreSize);
+                if (file.length() == 0L)
+                    Jvm.warn().on(getClass(), "Overwriting truncated file: " + file.getAbsolutePath());
+                else
+                    throw new IOException("The file " + file + " the map is serialized from " +
+                            "has unexpected length " + file.length() + ", probably corrupted. " +
+                            "Data store size is " + dataStoreSize);
             }
             map.initTransientsFromBuilder(this);
             if (!recover) {
