@@ -724,6 +724,11 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
+    public void throwExceptionIfClosing() throws IllegalStateException {
+        if (this.isClosing())
+            throw new ChronicleHashClosedException(this.getClass().getName() + " closing", Jvm.getValue(this, "closedHere"));
+    }
+
     @Override
     public void throwExceptionIfClosed() throws IllegalStateException {
         if (this.isClosed())
