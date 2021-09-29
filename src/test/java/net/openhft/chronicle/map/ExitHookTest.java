@@ -26,8 +26,12 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -189,8 +193,22 @@ public class ExitHookTest {
         System.out.println("Classpath: " + classpath);
         String className = ExitHookTest.class.getCanonicalName();
 
-        String[] command = new String[]{javaBin, "-cp", classpath, className,
-                mapFile.getAbsolutePath(), outputFile.getAbsolutePath(), String.valueOf(skipCloseOnExitHook)};
+        // Because Java17 must be run using various module flags, these must be propagated
+        // to the child processes
+        // https://stackoverflow.com/questions/1490869/how-to-get-vm-arguments-from-inside-of-java-application
+        final RuntimeMXBean runtimeMxBean = ManagementFactory.getRuntimeMXBean();
+        final List<String> jvmArguments = runtimeMxBean.getInputArguments();
+
+        final  List<String> command = new ArrayList<>();
+        command.add(javaBin);
+        command.addAll(jvmArguments);
+        command.add("-cp");
+        command.add(classpath);
+        command.add(className);
+        command.add(mapFile.getAbsolutePath());
+        command.add(outputFile.getAbsolutePath());
+        command.add(String.valueOf(skipCloseOnExitHook));
+
         ProcessBuilder builder = new ProcessBuilder(command);
         builder.inheritIO();
         return builder.start();
