@@ -51,7 +51,7 @@ public class ChronicleMapTest {
         ONE.setValue(1);
     }
 
-    private StringBuilder sb = new StringBuilder();
+    private final StringBuilder sb = new StringBuilder();
 
     static void assertKeySet(Set<Integer> keySet, int[] expectedKeys) {
         Set<Integer> expectedSet = new HashSet<Integer>();
@@ -86,8 +86,8 @@ public class ChronicleMapTest {
         }
 
         entrySet = entrySet.stream().map(e ->
-                new AbstractMap.SimpleImmutableEntry<Integer, CharSequence>(
-                        e.getKey(), e.getValue().toString()))
+                        new AbstractMap.SimpleImmutableEntry<Integer, CharSequence>(
+                                e.getKey(), e.getValue().toString()))
                 .collect(toSet());
         assertEquals(expectedSet, entrySet);
     }
@@ -616,7 +616,7 @@ public class ChronicleMapTest {
             IllegalAccessException, InstantiationException {
         int entries = 3/*00 * 1000*/;
         try (ChronicleMap<CharSequence, LongValue> map2 = ChronicleMapBuilder.of(CharSequence.class,
-                LongValue.class)
+                        LongValue.class)
                 .entries((long) entries)
                 .minSegments(1)
                 .averageKeySize(10)
@@ -650,7 +650,7 @@ public class ChronicleMapTest {
             }
 
             try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence.class,
-                    LongValue.class)
+                            LongValue.class)
                     .entries((long) entries)
 //                    .minSegments(1)
                     .averageKeySize(10)
@@ -684,7 +684,7 @@ public class ChronicleMapTest {
                 }
             }
             try (ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder.of(CharSequence
-                    .class, LongValue.class)
+                            .class, LongValue.class)
                     .entries((long) entries)
                     .minSegments(1)
                     .averageKeySize(10)
@@ -724,7 +724,7 @@ public class ChronicleMapTest {
     public void testAcquireFromMultipleThreads() throws InterruptedException {
         int entries = 1000 * 1000;
         try (ChronicleMap<CharSequence, LongValue> map2 = ChronicleMapBuilder.of(CharSequence.class,
-                LongValue.class)
+                        LongValue.class)
                 .entries((long) entries)
                 .minSegments(128)
                 .averageKeySize(10)
@@ -751,7 +751,7 @@ public class ChronicleMapTest {
                     map2.acquireUsing(key2, Values.newNativeReference(LongValue.class)).getValue());
 
             try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence
-                    .class, LongValue.class)
+                            .class, LongValue.class)
                     .entries((long) entries)
                     .minSegments(128)
                     .averageKeySize(10)
@@ -778,7 +778,7 @@ public class ChronicleMapTest {
                         map1.acquireUsing(key1, Values.newNativeReference(LongValue.class)).getValue());
 
                 try (ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder.of(CharSequence
-                        .class, LongValue.class)
+                                .class, LongValue.class)
                         .entries((long) entries)
                         .minSegments(128)
                         .averageKeySize(10)
@@ -1760,7 +1760,7 @@ public class ChronicleMapTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAcquireUsingLockedWithString() throws IOException {
+    public void testAcquireUsingLockedWithString() {
 
         ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
                 .of(CharSequence.class, String.class)
@@ -1768,8 +1768,13 @@ public class ChronicleMapTest {
                 .entries(1000);
 
         try (final ChronicleMap<CharSequence, String> map = builder.create()) {
+
+            // Apparently, Java 17 does a better job internalizing/de-duplicating strings so, we have to explicitly create
+            // a new empty string
+            final String newEmptyString = new String("");
+
             // this will add the entry
-            try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("one", "")) {
+            try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("one", newEmptyString)) {
                 // do nothing
             }
         }
