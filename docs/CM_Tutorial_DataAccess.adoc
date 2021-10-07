@@ -22,7 +22,7 @@ is used instead of `SizedWriter.write()`.
 `DataAccess` assumes that the `Data` object, returned from the `getData()` method is cached in some way. That is why it also has an `uninit()` method to clear references to the serialized object after a query operation to a Chronicle Map is complete to prevent memory leaks. This, in turn, implies that the `DataAccess` implementation is stateful. Therefore,  `DataAccess` is made a sub-interface of
 `StatefulCopyable` to force all `DataAccess` implementations to implement `StatefulCopyable` as well.
 
-See <<CM_Tutorial_Understanding.adoc#, Understanding `StatefulCopyable`>> for more infromation
+See <<CM_Tutorial_Understanding.adoc#, Understanding `StatefulCopyable`>> for more information
 on this.
 
 If your `DataAccess` implementation is not actually stateful, it is free to return `this` from the  `StatefulCopyable.copy()` method.
@@ -110,7 +110,7 @@ public final class ByteArrayDataAccess extends AbstractData<byte[]> implements D
 
 The `getData()` method returns `this`, and the `DataAccess` implementation implements the `Data` interface as well. This is recommended practice, because it reduces the number of objects involved (hence pointer chasing), and keeps `DataAccess`, and `Data` logic together.
 
-The `Data` interface puts constraints on `equals()`, `hashCode()`, and `toString()` implementations. This is why `ByteArrayDataAccess` sub-class'es `AbstractData`, and inherits proper implementations from it.
+The `Data` interface puts constraints on `equals()`, `hashCode()`, and `toString()` implementations. This is why `ByteArrayDataAccess` sub-classes `AbstractData`, and inherits proper implementations from it.
 A serializer strategy implementation can have `equals()`, `hashCode()`, and `toString()` from a very different domain, because those methods are never called on serializers inside Chronicle Map.
 
 The easiest way to implement `equals()`, `hashCode()`, and `toString()` is to extend the `AbstractData` class. If it is not possible (perhaps the `Data` implementation already extends some other class), do this
