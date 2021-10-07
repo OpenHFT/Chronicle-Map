@@ -74,7 +74,7 @@ If you want to clean up corrupted entries, and ensure that the data store is in 
 
 In this tutorial, the term `ChronicleMap` instance (or simply `ChronicleMap`) is used to refer to an on-heap object providing access to a Chronicle Map data store (or Chronicle Map key-value store, or Chronicle Map store, or simply Chronicle Map, with space between two words in contrast to `ChronicleMap`), which could be purely in-memory, or persisted to disk.
 
-Currently the Java implementation doesn't allow creation of multiple accessor ChronicleMap` objects for a single *in-memory Chronicle Map store*; there is always a one-to-one relationship.
+Currently the Java implementation doesn't allow creation of multiple accessor `ChronicleMap` objects for a single *in-memory Chronicle Map store*; there is always a one-to-one relationship.
 
 A *persisted Chronicle Map store*, however, does allow creation of multiple accessor `ChronicleMap` instances; either within a single JVM process (although it is not recommended), or from concurrent JVM processes.
 
@@ -82,7 +82,7 @@ When no processes access the file, it could be  moved to another location in the
 even to another server. It could even run on different operating systems. When opened from another location you will observe the same data.
 
 If you don't need the Chronicle Map instance to survive a server restart (that is, you don't need
-persistence to disk; only multi-process access), mount the file on http://en.wikipedia.org/wiki/Tmpfs[tmpfs]. For example, on `Linux` it is as easy as placing you file in `/dev/shm` directory.
+persistence to disk; only multi-process access), mount the file on http://en.wikipedia.org/wiki/Tmpfs[tmpfs]. For example, on `Linux` it is as easy as placing your file in `/dev/shm` directory.
 
 == Configure entries
 
