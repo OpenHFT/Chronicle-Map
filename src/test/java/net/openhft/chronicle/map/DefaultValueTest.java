@@ -16,13 +16,26 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesIn;
+import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.bytes.BytesOut;
+import net.openhft.chronicle.core.io.IORuntimeException;
+import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.IntegerMarshaller;
 import net.openhft.chronicle.set.Builder;
+import net.openhft.chronicle.wire.BinaryWire;
+import net.openhft.chronicle.wire.SelfDescribingMarshallable;
+import net.openhft.chronicle.wire.Wire;
+import net.openhft.chronicle.wire.WireType;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.BufferOverflowException;
+import java.nio.BufferUnderflowException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,6 +43,57 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class DefaultValueTest {
+
+    @Test
+    public void test1() {
+        Bytes bytes = Bytes.allocateElasticOnHeap();
+
+        final Wire wire = WireType.BINARY.apply(bytes);
+
+        wire.getValueOut().object(new SimpleDefaultValueProvider<Integer, A>(new A(2, "b")));
+
+        final Object object = wire.getValueIn().object();
+
+        System.out.println(object);
+    }
+
+    private static class SimpleDefaultValueProvider<K, V> extends SelfDescribingMarshallable implements DefaultValueProvider<K, V> {
+
+        private final V defaultValue;
+
+        public SimpleDefaultValueProvider(V defaultValue) {
+            this.defaultValue = defaultValue;
+        }
+
+        @Override
+        public Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry) {
+            return null;
+        }
+    }
+
+    private static class A implements BytesMarshallable {
+        public A(int x, String y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        int x;
+        String y;
+
+        @Override
+        public void readMarshallable(BytesIn bytes) throws IORuntimeException, BufferUnderflowException, IllegalStateException {
+            x = bytes.readInt();
+            y = bytes.readUtf8();
+        }
+
+        @Override
+        public void writeMarshallable(BytesOut bytes) throws IllegalStateException, BufferOverflowException, BufferUnderflowException, ArithmeticException {
+            bytes.writeInt(x);
+            bytes.writeUtf8(y);
+        }
+    }
+
+
 
     @Test
     public void test() throws IllegalAccessException, InstantiationException, IOException {
@@ -66,4 +130,6 @@ public class DefaultValueTest {
             file.delete();
         }
     }
+
+
 }
