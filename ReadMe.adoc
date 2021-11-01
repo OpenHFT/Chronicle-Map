@@ -1,15 +1,22 @@
 = Chronicle Map
+Chronicle Software
+:css-signature: demo
+:toc: macro
+:toclevels: 2
+:icons: font
 
-image::docs\images\Map_line.png[width=20%]
-
-==== Version
-
-[#image-maven]
 image:https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[caption="",link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
 image:https://javadoc.io/badge2/net.openhft/chronicle-map/javadoc.svg[link="https://www.javadoc.io/doc/net.openhft/chronicle-map/latest/index.html"]
+//image:https://javadoc-badge.appspot.com/net.openhft/chronicle-map.svg?label=javadoc[JavaDoc, link=https://www.javadoc.io/doc/net.openhft/chronicle-map]
+image:https://img.shields.io/github/license/OpenHFT/Chronicle-Map[GitHub]
 image:https://img.shields.io/badge/release%20notes-subscribe-brightgreen[link="https://chronicle.software/release-notes/"]
+image:https://sonarcloud.io/api/project_badges/measure?project=OpenHFT_Chronicle-Map&metric=alert_status[link="https://sonarcloud.io/dashboard?id=OpenHFT_Chronicle-Map"]
 
-== Overview
+image::docs/images/Map_line.png[]
+
+toc::[]
+
+== About
 
 Chronicle Map is a super-fast, in-memory, non-blocking, key-value store, designed for low-latency, and/or multi-process
 applications such as trading and financial market applications.
