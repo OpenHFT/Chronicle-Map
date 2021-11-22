@@ -16,7 +16,11 @@
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
-
+    <properties>
+     <sonar.organization>openhft</sonar.organization>
+     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    </properties>
+    
     <dependencyManagement>
         <dependencies>
 
