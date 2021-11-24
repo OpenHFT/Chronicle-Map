@@ -181,7 +181,7 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
 
     @Override
     public int refCount() {
-        return 0;
+        return 1;
     }
 
     @NotNull
