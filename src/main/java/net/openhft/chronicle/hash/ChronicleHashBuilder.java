@@ -76,7 +76,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * <p>{@code name()} is a JVM-level configuration, it is not stored in the persistence file (or
      * the other way to say this: they are not parts of <a
-     * href="https://github.com/OpenHFT/Chronicle-Map/tree/master/spec">the Chronicle Map data store
+     * href="https://github.com/OpenHFT/Chronicle-Map/tree/ea/spec">the Chronicle Map data store
      * specification</a>) and have to be configured explicitly for each created on-heap {@code
      * ChronicleHash} instance, even if it is a view of an existing Chronicle Map data store. On the
      * other hand, {@code name()} could be different for different views of the same Chronicle
@@ -482,7 +482,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     /**
      * Configures whether hash containers, created by this builder, should compute and store entry
      * checksums. It is used to detect data corruption during recovery after crashes. See the
-     * <a href="https://github.com/OpenHFT/Chronicle-Map#entry-checksums">Entry Checksums section
+     * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#entry-checksums">Entry Checksums section
      * </a> in the Chronicle Map tutorial for more information.
      * <p>
      * <p>By default, {@linkplain #createPersistedTo(File) persisted} hash containers, created by
@@ -675,7 +675,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * #checksumEntries(boolean) checksumEntries(true)} is configured for the chronicle hash
      * container, recovery procedure checks for each entry that the checksums is correct, otherwise
      * it assumes the entry is corrupt and deletes it from the Chronicle Hash.</i> See the
-     * <a href="https://github.com/OpenHFT/Chronicle-Map#recovery">Recovery section</a> in the
+     * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#recovery">Recovery section</a> in the
      * Chronicle Map tutorial for more information.
      * <p>
      * <p>The difference between this method and {@link #recoverPersistedTo(File, boolean,
@@ -746,7 +746,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * #checksumEntries(boolean) checksumEntries(true)} is configured for the chronicle hash
      * container, recovery procedure checks for each entry that the checksums is correct, otherwise
      * it assumes the entry is corrupt and deletes it from the Chronicle Hash.</i> See the
-     * <a href="https://github.com/OpenHFT/Chronicle-Map#recovery">Recovery section</a> in the
+     * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#recovery">Recovery section</a> in the
      * Chronicle Map tutorial for more information.
      * <p>
      * <p>If this procedure encounters corruptions, it fixes them (<i>recovers</i> from them) and

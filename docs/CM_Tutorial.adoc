@@ -184,7 +184,7 @@ Replicated maps can be configured to run recovery on startup (prior to replicati
 
 The key, or value type, of `ChronicleMap<K, V>` could be:
 
- - Types with best possible out-of-the-box support:
+- Types with best possible out-of-the-box support:
    ** Any https://github.com/OpenHFT/Chronicle-Values[value interface]
    ** Any class implementing http://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/Byteable.html[`Byteable`] interface from https://github.com/OpenHFT/Chronicle-Bytes[Chronicle Bytes].
    ** Any class implementing http://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/BytesMarshallable.html[`BytesMarshallable`].
@@ -239,11 +239,12 @@ ChronicleSet<UUID> uuids =
         .create();
 ----
 
+[#custom-serializers]
 == Custom serializers
 
-Chronicle Map allows you to configure custom marshallers for key or value types which are not supported out-of-the-box. You can also serialize supported types like `String` in some custom way (encoded other than UTF-8), or serialize supported types more efficiently than by default.
+Chronicle Map allows you to configure custom marshallers for key or value types which are not supported out-of-the-box.You can also serialize supported types like `String` in some custom way (encoded other than UTF-8), or serialize supported types more efficiently than by default.
 
-There are three pairs of serialization interfaces. Only one of them should be chosen in a single implementation, and supplied to the `ChronicleMapBuilder` for the key or value type. These are:
+There are three pairs of serialization interfaces.Only one of them should be chosen in a single implementation, and supplied to the `ChronicleMapBuilder` for the key or value type.These are:
 
 - link:CM_Tutorial_Bytes.adoc[BytesWriter and BytesReader]
 - link:CM_Tutorial_Sized.adoc[SizedWriter and SizedReader]
@@ -251,7 +252,7 @@ There are three pairs of serialization interfaces. Only one of them should be ch
 
 === Custom serialization checklist
 
- 1. Choose the most suitable pair of serialization interfaces; link:CM_Tutorial_Bytes.adoc[BytesWriter and BytesReader], link:CM_Tutorial_Sized.adoc[SizedWriter and SizedReader], or link:CM_Tutorial_DataAccess.adoc[DataAccess and SizedReader]. Recommendations on which pair to choose are given in
+1. Choose the most suitable pair of serialization interfaces; link:CM_Tutorial_Bytes.adoc[BytesWriter and BytesReader], link:CM_Tutorial_Sized.adoc[SizedWriter and SizedReader], or link:CM_Tutorial_DataAccess.adoc[DataAccess and SizedReader]. Recommendations on which pair to choose are given in
  the linked sections, describing each pair.
 
  2. If implementation of the writer or reader part is configuration-less, give it a `private`

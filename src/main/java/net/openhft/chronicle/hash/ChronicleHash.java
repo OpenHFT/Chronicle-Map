@@ -107,7 +107,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * }}</pre>
      * <p>
      * <p>See documentation to {@link HashQueryContext} interface and methods in {@link MapMethods}
-     * interface for examples of using contexts. Also see <a href=" https://github.com/OpenHFT/Chronicle-Map#working-with-an-entry-within-a-context-section">
+     * interface for examples of using contexts. Also see <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#working-with-an-entry-within-a-context">
      * Working with an entry within a context</a> section in the Chronicle Map tutorial.
      *
      * @param key the queried key
@@ -126,7 +126,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * method instead of {@link #queryContext(Object)} might help to avoid unnecessary deserialization.
      * <p>
      * <p>See documentation to {@link HashQueryContext} interface and methods in {@link MapMethods}
-     * interface for examples of using contexts. Also see <a href=" https://github.com/OpenHFT/Chronicle-Map#working-with-an-entry-within-a-context-section">
+     * interface for examples of using contexts. Also see <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#working-with-an-entry-within-a-context">
      * Working with an entry within a context</a> section in the Chronicle Map tutorial.
      *
      * @param key the queried key as {@code Data}

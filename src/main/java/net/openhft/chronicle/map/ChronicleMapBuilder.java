@@ -118,7 +118,7 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  * <p><a name="jvm-configurations"></a>
  * There are some JVM-level configurations, which are not stored in the ChronicleMap's persistence
  * file (or the other way to say this: they are not parts of <a
- * href="https://github.com/OpenHFT/Chronicle-Map/tree/master/spec">the Chronicle Map data store
+ * href="https://github.com/OpenHFT/Chronicle-Map/tree/ea/spec">the Chronicle Map data store
  * specification</a>) and have to be configured explicitly for each created on-heap {@code
  * ChronicleMap} instance, even if it is a view of an existing Chronicle Map data store. On the
  * other hand, JVM-level configurations could be different for different views of the same Chronicle

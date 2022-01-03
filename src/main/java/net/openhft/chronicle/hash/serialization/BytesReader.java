@@ -27,9 +27,9 @@ import org.jetbrains.annotations.Nullable;
  * Deserializer of objects from bytes, pairing {@link BytesWriter}, without accepting additional
  * information about serialized objects.
  * <p>
- * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#byteswriter-and-bytesreader">{@code
+ * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_Bytes.adoc">{@code
  * BytesWriter} and {@code BytesReader}</a> and
- * <a href="https://github.com/OpenHFT/Chronicle-Map#custom-serialization-checklist">custom
+ * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#custom-serialization-checklist">custom
  * serialization checklist</a> sections in the Chronicle Map tutorial for more information on this
  * interface, how to implement and use it properly.
  *
