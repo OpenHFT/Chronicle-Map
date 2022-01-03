@@ -6,7 +6,7 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class Issue354 {
+public class Issue354Test {
 
     @Test
     public void reproduce() throws IOException {

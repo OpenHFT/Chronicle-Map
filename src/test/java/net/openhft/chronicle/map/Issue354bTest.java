@@ -10,7 +10,7 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertTrue;
 
-public class Issue354b {
+public class Issue354bTest {
 
     @Rule
     public TemporaryFolder testFolder = new TemporaryFolder();
