@@ -30,7 +30,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.core.util.AssertUtil.SKIP_ASSERTIONS;
 import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
-import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertPosition;
 
 public final class BigSegmentHeader implements SegmentHeader {
     public static final BigSegmentHeader INSTANCE = new BigSegmentHeader();
@@ -221,6 +220,7 @@ public final class BigSegmentHeader implements SegmentHeader {
                                              final TimeUnit unit,
                                              final boolean interruptible) throws InterruptedException {
         assert SKIP_ASSERTIONS || assertAddress(address);
+        assert address % 4 == 0;
         return LOCK.tryWriteLock(A, null, address + LOCK_OFFSET) ||
                 tryWriteLock0(address, time, unit, interruptible);
     }
@@ -545,6 +545,7 @@ public final class BigSegmentHeader implements SegmentHeader {
     @Override
     public boolean tryWriteLock(final long address) {
         assert SKIP_ASSERTIONS || assertAddress(address);
+        assert address % 4 == 0;
         return LOCK.tryWriteLock(A, null, address + LOCK_OFFSET);
     }
 
