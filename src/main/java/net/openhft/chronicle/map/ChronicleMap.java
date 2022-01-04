@@ -79,7 +79,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * <p>
      * <p>If the value class allows reusing, consider {@link #getUsing(Object, Object)} method
      * instead of this to reduce garbage creation. Read <a
-     * href="https://github.com/OpenHFT/Chronicle-Map#single-key-queries">the section about usage
+     * href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#single-key-queries">the section about usage
      * patterns in the Chronicle Map 3 Tutorial</a> for more.
      *
      * @param key the key whose associated value is to be returned

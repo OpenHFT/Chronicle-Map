@@ -27,7 +27,7 @@ import net.openhft.chronicle.set.ChronicleSet;
  * ChronicleMap} or {@link ChronicleSet} in builder, should implement the {@code StatefulCopyable}
  * interface.
  * <p>
- * <p>See <a href="https://github.com/OpenHFT/Chronicle-Map#understanding-statefulcopyable">
+ * <p>See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_Understanding.adoc">
  * Understanding {@code StatefulCopyable}</a> section in the Chronicle Map tutorial for more info
  * on how to implement and use this interface properly, and for examples.
  *

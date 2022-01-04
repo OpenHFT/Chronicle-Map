@@ -93,7 +93,7 @@ public final class BigSegmentHeader implements SegmentHeader {
                         " timeout specified.\n" +
                         " - This is a dead lock. If you perform multi-key queries, ensure you acquire\n" +
                         " segment locks in the order (ascending by segmentIndex()), you can find\n" +
-                        " an example here: https://github.com/OpenHFT/Chronicle-Map#multi-key-queries\n");
+                        " an example here: https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#multi-key-queries\n");
     }
 
     private static long roundUpNanosToMillis(long nanos) {

@@ -22,7 +22,7 @@ import java.io.File;
 
 /**
  * Information about a corruption, encountered in a persisted Chronicle Map during <a
- * href="https://github.com/OpenHFT/Chronicle-Map#recovery">recovery</a>.
+ * href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#recovery">recovery</a>.
  * <p>
  * <p>Recovery procedure doesn't guarantee accuracy of the corruption events. Only two things are
  * guaranteed:
@@ -77,7 +77,7 @@ public interface ChronicleHashCorruption {
     @Beta
     interface Listener {
         /**
-         * Called when <a href="https://github.com/OpenHFT/Chronicle-Map#recovery">recovery</a>
+         * Called when <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#recovery">recovery</a>
          * procedure encounters a corruption of a persisted Chronicle Map.
          * <p>
          * <p>During a recovery procedure, <i>this method might be called concurrently from multiple

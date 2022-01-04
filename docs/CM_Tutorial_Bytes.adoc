@@ -20,7 +20,7 @@ used when efficiency is not the top priority, or when gains of using other pairs
 
 Basically you should implement two serialization methods:
 
- - `void write(Bytes out, @NotNull T toWrite)` from `BytesWriter` interface, which writes the given
+- `void write(Bytes out, @NotNull T toWrite)` from `BytesWriter` interface, which writes the given
  `toWrite` instance of the serialized type to the given `out` bytes sink.
  - `T read(Bytes in, @Nullable T using)` from `BytesReader` interface, which reads the serialized
  object into the given `using` instance (if the serialized type is reusable, the `using` object is
@@ -115,7 +115,7 @@ minimizing the amount of produced garbage. This is a recommended practice.
 
 Some additional notes:
 
- - If the reader, or writer, interface implementation is not configurable, and doesn't have
+- If the reader, or writer, interface implementation is not configurable, and doesn't have
  per-instance cache or state fields (it doesn't have instance fields at all), there is
  a convention to make such implementation classes `final`, give them a `private` constructor, and then
  expose a single `INSTANCE` constant; a sole instance of this implementation in the JVM.
@@ -124,6 +124,7 @@ Some additional notes:
  - If *both* the writer and reader interface implementations have no fields, it might be a good idea
  to merge them into a single type, in order to keep writing and reading logic together.
 
+[#custom-charsequence-encoding]
 === Custom `CharSequence` encoding
 
 Another example shows how to serialize `CharSequence`s using custom encoding (rather than UTF-8):
@@ -393,7 +394,7 @@ try (ChronicleMap<String, CharSequence> englishToChinese = ChronicleMap
 
 Some notes on this form of custom serialization:
 
- - Both `CharSequenceCustomEncodingBytesWriter` and `CharSequenceCustomEncodingBytesReader` have
+- Both `CharSequenceCustomEncodingBytesWriter` and `CharSequenceCustomEncodingBytesReader` have
  configurations (charset and input buffer size). They are implemented as normal classes rather
  than classes with `private` constructors and a single `INSTANCE`.
  - Both writer and reader classes have some "cache" fields; their contents are mutated during

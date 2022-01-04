@@ -29,11 +29,11 @@ import org.jetbrains.annotations.Nullable;
  * of the serialized form isn't written in the beginning of the serialized form itself, but managed
  * by {@link ChronicleHash} implementation and passed to the reading methods.
  * <p>
- * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map#sizedwriter-and-sizedreader">{@code
+ * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_DataAccess.adoc">{@code
  * SizedWriter} and {@code SizedReader}</a>,
- * <a href="https://github.com/OpenHFT/Chronicle-Map#dataaccess-and-sizedreader">{@link DataAccess}
+ * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_DataAccess.adoc">{@link DataAccess}
  * and {@code SizedReader}</a> and
- * <a href="https://github.com/OpenHFT/Chronicle-Map#custom-serialization-checklist">custom
+ * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#custom-serialization-checklist">custom
  * serialization checklist</a> sections in the Chronicle Map tutorial for more information on this
  * interface, how to implement and use it properly.
  *
