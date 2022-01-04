@@ -1,68 +1,38 @@
 package net.openhft.chronicle.map.impl;
 
-import net.openhft.chronicle.map.impl.stage.query.Absent;
-import net.openhft.chronicle.hash.AbstractData;
-import net.openhft.chronicle.algo.bytes.Access;
-import net.openhft.chronicle.hash.impl.stage.entry.Alloc;
-import java.util.ArrayList;
-import java.util.function.BiFunction;
-import net.openhft.chronicle.hash.impl.BigSegmentHeader;
+import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.algo.bitset.BitSetFrame;
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import net.openhft.chronicle.hash.ChecksumEntry;
-import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
-import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.set.ChronicleSet;
-import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
-import java.util.ConcurrentModificationException;
-import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.serialization.DataAccess;
-import net.openhft.chronicle.set.DummyValueData;
-import net.openhft.chronicle.map.ExternalMapQueryContext;
-import net.openhft.chronicle.set.ExternalSetQueryContext;
-import net.openhft.chronicle.hash.HashEntry;
+import net.openhft.chronicle.algo.bitset.ReusableBitSet;
+import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.algo.hashing.LongHashFunction;
+import net.openhft.chronicle.bytes.*;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IOTools;
-import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
+import net.openhft.chronicle.hash.*;
+import net.openhft.chronicle.hash.impl.*;
+import net.openhft.chronicle.hash.impl.stage.entry.*;
+import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
+import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
-import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.hash.impl.stage.entry.KeyHashCode;
-import java.util.List;
-import net.openhft.chronicle.hash.impl.LocalLockState;
-import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
-import net.openhft.chronicle.algo.hashing.LongHashFunction;
-import net.openhft.chronicle.map.MapAbsentEntry;
+import net.openhft.chronicle.hash.serialization.DataAccess;
+import net.openhft.chronicle.hash.serialization.SizedReader;
+import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
+import net.openhft.chronicle.map.impl.ret.UsableReturnValue;
+import net.openhft.chronicle.map.impl.stage.data.ZeroBytesStore;
+import net.openhft.chronicle.map.impl.stage.query.Absent;
 import net.openhft.chronicle.map.impl.stage.query.MapAndSetContext;
-import net.openhft.chronicle.map.MapClosable;
-import net.openhft.chronicle.map.MapContext;
-import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.map.MapSegmentContext;
-import net.openhft.chronicle.algo.MemoryUnit;
-import net.openhft.chronicle.bytes.NoBytesStore;
-import net.openhft.chronicle.hash.impl.stage.entry.NoChecksumStrategy;
+import net.openhft.chronicle.set.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import net.openhft.chronicle.hash.impl.util.Objects;
-import net.openhft.chronicle.bytes.PointerBytesStore;
-import net.openhft.chronicle.bytes.RandomDataInput;
-import net.openhft.chronicle.algo.bitset.ReusableBitSet;
-import net.openhft.chronicle.hash.impl.SegmentHeader;
-import net.openhft.chronicle.hash.SegmentLock;
-import net.openhft.chronicle.set.SetContext;
-import net.openhft.chronicle.set.SetEntry;
-import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
-import net.openhft.chronicle.hash.serialization.SizedReader;
-import net.openhft.chronicle.hash.impl.stage.hash.ThreadLocalState;
-import net.openhft.chronicle.hash.impl.TierCountersArea;
+
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import net.openhft.chronicle.map.impl.ret.UsableReturnValue;
-import net.openhft.chronicle.bytes.VanillaBytes;
-import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
-import net.openhft.chronicle.map.VanillaChronicleMap;
-import net.openhft.chronicle.map.impl.stage.data.ZeroBytesStore;
+import java.util.function.BiFunction;
 
 /**
  * Generated code
@@ -1692,14 +1662,14 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public void unlock() {
+        public synchronized void unlock() {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             switch (CompiledMapQueryContext.this.localLockState()) {
-                case UNLOCKED :
-                case READ_LOCKED :
-                case UPDATE_LOCKED :
-                    return ;
-                case WRITE_LOCKED :
+                case UNLOCKED:
+                case READ_LOCKED:
+                case UPDATE_LOCKED:
+                    return;
+                case WRITE_LOCKED:
                     CompiledMapQueryContext.this.closeDelayedUpdateChecksum();
                     if ((CompiledMapQueryContext.this.decrementWriteGuarded()) == 0)
                         CompiledMapQueryContext.this.segmentHeader().downgradeWriteToUpdateLock(CompiledMapQueryContext.this.segmentHeaderAddress());
@@ -1710,10 +1680,10 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public void lock() {
+        public synchronized void lock() {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             switch (CompiledMapQueryContext.this.localLockState()) {
-                case UNLOCKED :
+                case UNLOCKED:
                     CompiledMapQueryContext.this.checkIterationContextNotLockedInThisThread();
                     if (CompiledMapQueryContext.this.writeZeroGuarded()) {
                         if (!(CompiledMapQueryContext.this.updateZeroGuarded())) {

@@ -21,7 +21,6 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.values.Values;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -60,26 +59,31 @@ public class WordCountTest {
         }
     }
 
-    @Ignore("https://github.com/OpenHFT/Chronicle-Map/issues/376")
+    ///@Ignore("https://github.com/OpenHFT/Chronicle-Map/issues/376")
+    // change to be a soak test because it turned out to be flaky
     @Test
     public void wordCountTest() {
-        try (ChronicleMap<CharSequence, IntValue> map = ChronicleMap
-                .of(CharSequence.class, IntValue.class)
-                .averageKeySize(7) // average word is 7 ascii bytes long (text in english)
-                .entries(expectedMap.size())
-                .create()) {
-            IntValue v = Values.newNativeReference(IntValue.class);
+        for (int i = 0; i < 2_000; i++) {
 
-            for (String word : words) {
-                try (Closeable ignored = map.acquireContext(word, v)) {
-                    v.addValue(1);
+
+            try (ChronicleMap<CharSequence, IntValue> map = ChronicleMap
+                    .of(CharSequence.class, IntValue.class)
+                    .averageKeySize(7) // average word is 7 ascii bytes long (text in english)
+                    .entries(expectedMap.size())
+                    .create()) {
+                IntValue v = Values.newNativeReference(IntValue.class);
+
+                for (String word : words) {
+                    try (Closeable ignored = map.acquireContext(word, v)) {
+                        v.addValue(1);
+                    }
                 }
-            }
 
-            assertEquals(expectedMap.size(), map.size());
-            expectedMap.forEach((key, value) ->
-                    assertEquals((int) value, map.get(key).getValue())
-            );
+                assertEquals(expectedMap.size(), map.size());
+                expectedMap.forEach((key, value) ->
+                        assertEquals((int) value, map.get(key).getValue())
+                );
+            }
         }
     }
 }
