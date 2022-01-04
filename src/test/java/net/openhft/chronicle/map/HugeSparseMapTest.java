@@ -36,7 +36,7 @@ public class HugeSparseMapTest {
 
     @Test
     public void hugeSparseMap() throws IOException {
-        assumeTrue(OS.isLinux());
+        assumeTrue(OS.isLinux() && isTeamCityAgent());
         try (ChronicleMap<CharSequence, CharSequence> map = createMap(true)) {
             map.put("hi", "there");
             assertEquals("there", map.get("hi").toString());
@@ -45,10 +45,16 @@ public class HugeSparseMapTest {
 
     @Test(expected = IOException.class)
     public void hugeAllocatedMap() throws IOException {
-        assumeTrue(OS.isLinux());
+        assumeTrue(OS.isLinux() && isTeamCityAgent());
         try (ChronicleMap<CharSequence, CharSequence> map = createMap(false)) {
             map.put("hi", "there");
             assertEquals("there", map.get("hi").toString());
         }
     }
+
+    // Only run under TC as GH agents cannot run these tests
+    private boolean isTeamCityAgent() {
+        return System.getProperty("teamcity.build.id") != null;
+    }
+
 }
