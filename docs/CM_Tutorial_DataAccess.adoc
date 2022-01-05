@@ -35,10 +35,14 @@ For example, look at the `DataAccess` implementation for `byte[]`:
 ```java
 public final class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAccess<byte[]> {
 
-    /** Cache field */
+    /**
+     * Cache field
+     */
     private transient HeapBytesStore<byte[]> bs;
 
-    /** State field */
+    /**
+     * State field
+     */
     private transient byte[] array;
 
     public ByteArrayDataAccess() {
@@ -46,7 +50,7 @@ public final class ByteArrayDataAccess extends AbstractData<byte[]> implements D
     }
 
     private void initTransients() {
-        bs = HeapBytesStore.uninitialized();
+        bs = HeapBytesStore.wrap(new byte[100]);
     }
 
     @Override
@@ -80,14 +84,13 @@ public final class ByteArrayDataAccess extends AbstractData<byte[]> implements D
     @Override
     public Data<byte[]> getData(@NotNull byte[] instance) {
         array = instance;
-        bs.init(instance);
+        bs.write(0, instance);
         return this;
     }
 
     @Override
     public void uninit() {
         array = null;
-        bs.uninit();
     }
 
     @Override
