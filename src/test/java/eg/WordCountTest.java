@@ -60,31 +60,25 @@ public class WordCountTest {
     }
 
     ///@Ignore("https://github.com/OpenHFT/Chronicle-Map/issues/376")
-    // change to be a soak test because it turned out to be flaky
     @Test
     public void wordCountTest() {
-        for (int i = 0; i < 2_000; i++) {
+        try (ChronicleMap<CharSequence, IntValue> map = ChronicleMap
+                .of(CharSequence.class, IntValue.class)
+                .averageKeySize(7) // average word is 7 ascii bytes long (text in english)
+                .entries(expectedMap.size())
+                .create()) {
+            IntValue v = Values.newNativeReference(IntValue.class);
 
-
-            try (ChronicleMap<CharSequence, IntValue> map = ChronicleMap
-                    .of(CharSequence.class, IntValue.class)
-                    .averageKeySize(7) // average word is 7 ascii bytes long (text in english)
-                    .entries(expectedMap.size())
-                    .create()) {
-                IntValue v = Values.newNativeReference(IntValue.class);
-
-                for (String word : words) {
-                    try (Closeable ignored = map.acquireContext(word, v)) {
-                        v.addValue(1);
-                    }
+            for (String word : words) {
+                try (Closeable ignored = map.acquireContext(word, v)) {
+                    v.addValue(1);
                 }
-
-                assertEquals(expectedMap.size(), map.size());
-                expectedMap.forEach((key, value) ->
-                        assertEquals((int) value, map.get(key).getValue())
-                );
             }
+
+            assertEquals(expectedMap.size(), map.size());
+            expectedMap.forEach((key, value) ->
+                    assertEquals((int) value, map.get(key).getValue())
+            );
         }
     }
 }
-

@@ -17,6 +17,7 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.algo.locks.*;
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.MappedBytesStoreFactory;
 import net.openhft.chronicle.core.Jvm;
@@ -38,9 +39,7 @@ import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
-import net.openhft.chronicle.wire.Marshallable;
-import net.openhft.chronicle.wire.WireIn;
-import net.openhft.chronicle.wire.WireOut;
+import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,8 +169,7 @@ public abstract class VanillaChronicleHash<K,
         dataFileVersion = BuildVersion.version();
         createdOrInMemory = true;
 
-        @SuppressWarnings({"deprecation", "unchecked"})
-        final ChronicleHashBuilderPrivateAPI<K, ?> privateAPI = Jvm.getValue(builder, "privateAPI");
+        @SuppressWarnings({"deprecation", "unchecked"}) final ChronicleHashBuilderPrivateAPI<K, ?> privateAPI = Jvm.getValue(builder, "privateAPI");
 
         // Data model
         SerializationBuilder<K> keyBuilder = privateAPI.keyBuilder();
@@ -785,11 +783,27 @@ public abstract class VanillaChronicleHash<K,
     public void globalMutableStateLock() {
         throwExceptionIfClosed();
 
-        GLOBAL_MUTABLE_STATE_LOCK_ACQUISITION_STRATEGY.acquire(
-                GLOBAL_MUTABLE_STATE_LOCK_TRY_ACQUIRE_OPERATION, GLOBAL_MUTABLE_STATE_LOCKING_STRATEGY,
-                nativeAccess(),
-                null,
-                globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
+        try {
+            GLOBAL_MUTABLE_STATE_LOCK_ACQUISITION_STRATEGY.acquire(
+                    GLOBAL_MUTABLE_STATE_LOCK_TRY_ACQUIRE_OPERATION, GLOBAL_MUTABLE_STATE_LOCKING_STRATEGY,
+                    nativeAccess(),
+                    null,
+                    globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
+        } catch (IllegalStateException ise) {
+            // Todo: This is to provide more info for solving https://github.com/OpenHFT/Chronicle-Map/issues/376
+            final int val = nativeAccess().readInt(null, globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET);
+            System.err.println("Unable to acquire lock!");
+            System.err.println("Lock value was = " + val);
+            System.err.format("BS address:   %xd   NTZ: %d%n", bsAddress(), Long.numberOfTrailingZeros(bsAddress()));
+            System.err.format("Lock Address: %xd   NTZ: %d%n", globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET, Long.numberOfTrailingZeros(globalMutableStateAddress() + GLOBAL_MUTABLE_STATE_LOCK_OFFSET));
+            System.err.println("ByteStore:");
+            System.err.println(bs.bytesForRead().toHexString());
+            System.err.println(bs.toDebugString());
+            final Wire text = new TextWire(Bytes.elasticByteBuffer());
+            writeMarshallable(text);
+            System.err.println(text);
+            throw ise;
+        }
     }
 
     public void globalMutableStateUnlock() {
