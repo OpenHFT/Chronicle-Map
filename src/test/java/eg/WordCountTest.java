@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.values.Values;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.reducing;
 import static org.junit.Assert.assertEquals;
 
+@Ignore("see https://github.com/OpenHFT/Chronicle-Map/issues/381")
 public class WordCountTest {
 
     static String[] words;
