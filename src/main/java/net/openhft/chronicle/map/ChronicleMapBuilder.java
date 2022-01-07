@@ -399,11 +399,11 @@ public final class ChronicleMapBuilder<K, V> implements
         headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
 
         // Write the size-prefixed blob to the file
-        ((Buffer)headerBuffer).position(0);
-        ((Buffer)headerBuffer).limit(headerLimit);
+        headerBuffer.position(0);
+        headerBuffer.limit(headerLimit);
         writeFully(fileChannel, 0, headerBuffer);
 
-        ((Buffer)headerBuffer).position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
         return headerBuffer;
     }
 
