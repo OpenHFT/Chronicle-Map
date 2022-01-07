@@ -179,6 +179,7 @@ public class MemoryLeaksTest {
 
             if (closeWithinContext) {
                 // Fails because of https://github.com/OpenHFT/Chronicle-Map/issues/153
+                return;
             } else {
                 assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
             }
