@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
@@ -398,11 +399,11 @@ public final class ChronicleMapBuilder<K, V> implements
         headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
 
         // Write the size-prefixed blob to the file
-        headerBuffer.position(0);
-        headerBuffer.limit(headerLimit);
+        ((Buffer)headerBuffer).position(0);
+        ((Buffer)headerBuffer).limit(headerLimit);
         writeFully(fileChannel, 0, headerBuffer);
 
-        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        ((Buffer)headerBuffer).position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
         return headerBuffer;
     }
 

@@ -55,12 +55,8 @@ public class ExitHookTest {
         System.out.println("1");
         File shutdownActionConfirmationFile = new File(args[1]);
         System.out.println("2");
-        ChronicleMapBuilder<Integer, Integer> mapBuilder = null;
-        try {
-            mapBuilder = createMapBuilder();
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
+        final ChronicleMapBuilder<Integer, Integer> mapBuilder = createMapBuilder();
+
         System.out.println("3");
         boolean skipCloseOnExitHook = false;
         System.out.println("4");

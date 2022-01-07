@@ -32,6 +32,7 @@ import net.openhft.chronicle.hash.impl.util.CleanerUtils;
 import net.openhft.chronicle.hash.impl.util.jna.PosixFallocate;
 import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
 import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
+import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import net.openhft.chronicle.hash.serialization.SizedReader;
@@ -57,7 +58,10 @@ import java.nio.file.FileSystem;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.Long.numberOfTrailingZeros;
 import static java.lang.Math.max;
@@ -688,6 +692,42 @@ public abstract class VanillaChronicleHash<K,
         if (resources != null && resources.releaseManually()) {
             cleanupOnClose();
         }
+    }
+
+    @Override
+    protected void assertCloseable() {
+        // Make a best-effort making sure there are no outstanding write-locks before closing
+        final long deadlineNs = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while (openContextsThatAreWriteLocked().findAny().isPresent()) {
+            if (System.nanoTime() > deadlineNs) {
+                final List<InterProcessReadWriteUpdateLock> locked = openContextsThatAreWriteLocked().collect(Collectors.toList());
+                final String msg = String.format(
+                        "There are %d open contexts with write-locks held and so, this %s cannot be closed properly meaning memory remains allocated: %s",
+                        locked.size(), getClass().getSimpleName(), locked);
+                Jvm.error().on(VanillaChronicleHash.class, msg);
+                break;
+                // Apparently, close shall release all locks and that is done before deallocating memory
+                // so we cannot throw an exception here.
+                // throw new IllegalStateException(msg);
+            }
+            Jvm.pause(100);
+        }
+    }
+
+    // This method can only take a snapshot of the current situation so, it is not strictly thread-safe.
+    private Stream<InterProcessReadWriteUpdateLock> openContextsThatAreWriteLocked() {
+        return Stream.of(resources)
+                .map(ChronicleHashResources::contexts)
+                // if context() is null, we have no contexts
+                .filter(Objects::nonNull)
+                .flatMap(List::stream)
+                .map(WeakReference::get)
+                // WeakReference may return null if the object was collected so, we need to eliminate these
+                .filter(Objects::nonNull)
+                .map(ContextHolder::get)
+                .filter(InterProcessReadWriteUpdateLock.class::isInstance)
+                .map(InterProcessReadWriteUpdateLock.class::cast)
+                .filter(l -> l.writeLock().isHeld());
     }
 
     protected void cleanupOnClose() {

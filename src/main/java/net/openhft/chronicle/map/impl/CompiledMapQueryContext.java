@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
+import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
+
 /**
  * Generated code
  */
@@ -955,6 +957,13 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
                 return true;
             }
         }
+
+        @Override
+        public boolean isHeld() {
+            return  CompiledMapQueryContext.this.m != null &&
+                    CompiledMapQueryContext.this.localLockState != null &&
+                    CompiledMapQueryContext.this.localLockState != UNLOCKED;
+        }
     }
 
     public class UpdateLock implements InterProcessLock {
@@ -1122,6 +1131,13 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
                 case UPDATE_LOCKED :
                 case WRITE_LOCKED :
             }
+        }
+
+        @Override
+        public boolean isHeld() {
+            return CompiledMapQueryContext.this.m != null &&
+                    CompiledMapQueryContext.this.localLockState != null &&
+                    CompiledMapQueryContext.this.localLockState != UNLOCKED;
         }
     }
 
@@ -1719,6 +1735,14 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
                 case WRITE_LOCKED :
             }
         }
+
+        @Override
+        public boolean isHeld() {
+            return CompiledMapQueryContext.this.m != null &&
+                    CompiledMapQueryContext.this.localLockState != null &&
+                    CompiledMapQueryContext.this.localLockState != UNLOCKED;
+        }
+
     }
 
     @Override
@@ -4051,7 +4075,7 @@ PRESENT, ABSENT;    }
     @NotNull
     @Override
     public InterProcessLock writeLock() {
-        this.checkOnEachPublicOperation();
+        // The write-lock is final and thread-safe
         return this.innerWriteLock;
     }
 

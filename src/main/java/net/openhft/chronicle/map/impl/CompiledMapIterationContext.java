@@ -63,6 +63,8 @@ import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.map.VanillaChronicleMap;
 import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 
+import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
+
 /**
  * Generated code
  */
@@ -714,6 +716,13 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
                 return true;
             }
         }
+
+        @Override
+        public boolean isHeld() {
+            return CompiledMapIterationContext.this.m != null &&
+                    CompiledMapIterationContext.this.localLockState != null &&
+                    CompiledMapIterationContext.this.localLockState != UNLOCKED;
+        }
     }
 
     public class UpdateLock implements InterProcessLock {
@@ -881,6 +890,13 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
                 default :
                     throw new IllegalStateException((((CompiledMapIterationContext.this.h().toIdentityString()) + ": unexpected localLockState=") + (CompiledMapIterationContext.this.localLockState())));
             }
+        }
+
+        @Override
+        public boolean isHeld() {
+            return CompiledMapIterationContext.this.m != null &&
+                    CompiledMapIterationContext.this.localLockState != null &&
+                    CompiledMapIterationContext.this.localLockState != UNLOCKED;
         }
     }
 
@@ -1477,6 +1493,13 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         public boolean isHeldByCurrentThread() {
             CompiledMapIterationContext.this.checkOnEachLockOperation();
             return CompiledMapIterationContext.this.localLockState().write;
+        }
+
+        @Override
+        public boolean isHeld() {
+            return CompiledMapIterationContext.this.m != null &&
+                    CompiledMapIterationContext.this.localLockState != null &&
+                    CompiledMapIterationContext.this.localLockState != UNLOCKED;
         }
     }
 
@@ -3209,7 +3232,7 @@ PRESENT, ABSENT;    }
     @NotNull
     @Override
     public InterProcessLock writeLock() {
-        this.checkOnEachPublicOperation();
+        // The write-lock is final and thread-safe
         return this.innerWriteLock;
     }
 

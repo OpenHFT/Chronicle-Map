@@ -20,8 +20,6 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.Throwables;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;

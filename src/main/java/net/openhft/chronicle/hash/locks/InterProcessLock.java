@@ -56,6 +56,13 @@ public interface InterProcessLock extends Lock {
     boolean isHeldByCurrentThread();
 
     /**
+     * Returns if this lock is held by any thread.
+     *
+     * @return if held
+     */
+    boolean isHeld();
+
+    /**
      * Acquires the lock. If this lock (or a stronger-level lock, in the context of {@link
      * InterProcessReadWriteUpdateLock}) is already held by the current thread, this call returns
      * immediately.
