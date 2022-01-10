@@ -708,7 +708,7 @@ public abstract class VanillaChronicleHash<K,
                 break;
                 // Apparently, close shall release all locks and that is done before deallocating memory
                 // so we cannot throw an exception here.
-                // throw new IllegalStateException(msg);
+                // otherwise, we might elect to throw a new IllegalStateException
             }
             Jvm.pause(100);
         }
