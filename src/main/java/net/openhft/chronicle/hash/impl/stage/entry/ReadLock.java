@@ -127,4 +127,11 @@ public class ReadLock implements InterProcessLock {
         s.readUnlockAndDecrementCount();
         s.setLocalLockState(UNLOCKED);
     }
+
+    @Override
+    public boolean isHeld() {
+        return s.localLockState != null &&
+                s.localLockState != UNLOCKED;
+    }
+
 }

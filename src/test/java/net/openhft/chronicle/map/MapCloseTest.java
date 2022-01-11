@@ -26,6 +26,8 @@ import java.util.concurrent.Semaphore;
 
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
 import static net.openhft.chronicle.map.ChronicleMap.of;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.fail;
 
 public class MapCloseTest {
 
@@ -41,7 +43,7 @@ public class MapCloseTest {
     public void testGetAfterCloseThrowsChronicleHashClosedException() throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
                 of(Integer.class, Integer.class).entries(1).create();
-        Thread t = new Thread(() -> map.close());
+        Thread t = new Thread(map::close);
         t.start();
         t.join();
         map.get(1);
@@ -52,7 +54,7 @@ public class MapCloseTest {
             throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
                 of(Integer.class, Integer.class).entries(1).create();
-        Thread t = new Thread(() -> map.close());
+        Thread t = new Thread(map::close);
         t.start();
         t.join();
         map.forEach((k, v) -> {
@@ -64,7 +66,7 @@ public class MapCloseTest {
             throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
                 of(Integer.class, Integer.class).entries(1).create();
-        Thread t = new Thread(() -> map.close());
+        Thread t = new Thread(map::close);
         t.start();
         t.join();
         map.size();
@@ -77,6 +79,7 @@ public class MapCloseTest {
                 of(Integer.class, Integer.class).entries(1).create();
         Object lock = new Object();
         CountDownLatch latch = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
         synchronized (lock) {
             new Thread() {
                 @Override
@@ -85,12 +88,15 @@ public class MapCloseTest {
                     latch.countDown();
                     synchronized (lock) {
                         cxt.close();
+                        latch2.countDown();
                     }
                 }
             }.start();
             latch.await();
             map.close();
         }
+        latch2.await();
+        map.close();
         LOCK_TIMEOUT_SECONDS = 60;
     }
 

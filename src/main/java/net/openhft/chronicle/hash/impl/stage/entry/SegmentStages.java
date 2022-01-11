@@ -562,6 +562,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     @NotNull
     @Override
     public InterProcessLock writeLock() {
+        // The write-lock is final and thread-safe. Consider removing checkOnEachPublicOperation()
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return innerWriteLock;
     }

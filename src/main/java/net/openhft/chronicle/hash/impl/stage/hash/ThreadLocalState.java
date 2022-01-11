@@ -147,4 +147,27 @@ public abstract class ThreadLocalState {
     }
 
     public abstract Thread owner();
+
+    /**
+     * Returns if this ThreadLocalState prevents a Map from being closed (which may be an asynchronous snapshot operation).
+     * <p>
+     * This method returns a snapshot value from a potentially volatile source that may change at any time.
+     *
+     * @return if prevents closing
+     */
+    public boolean preventClose() {
+        return isLocked();
+    }
+
+    /**
+     * Returns if this ThreadLocalState is locked (asynchronous snapshot operation).
+     * <p>
+     * This method returns a snapshot value from a volatile source that may change at any time.
+     *
+     * @return if locked
+     */
+    protected boolean isLocked() {
+        return contextLock == CONTEXT_LOCKED_LOCALLY;
+    }
+
 }

@@ -20,14 +20,15 @@ import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
 import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
+import net.openhft.chronicle.map.impl.CompiledMapIterationContext;
+import net.openhft.chronicle.map.impl.CompiledReplicatedMapQueryContext;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 
-import static net.openhft.chronicle.hash.impl.LocalLockState.READ_LOCKED;
-import static net.openhft.chronicle.hash.impl.LocalLockState.UPDATE_LOCKED;
+import static net.openhft.chronicle.hash.impl.LocalLockState.*;
 
 @Staged
 public class UpdateLock implements InterProcessLock {
@@ -211,5 +212,11 @@ public class UpdateLock implements InterProcessLock {
         }
         s.incrementRead();
         s.setLocalLockState(READ_LOCKED);
+    }
+
+    @Override
+    public boolean isHeld() {
+        return s.localLockState != null &&
+                s.localLockState != UNLOCKED;
     }
 }

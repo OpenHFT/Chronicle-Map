@@ -52,6 +52,7 @@ public class WordCountTest {
                     new String(ByteStreams.toByteArray(binaryIS), UTF_8);
             words = fullText.split("\\s+");
             expectedMap = Arrays.stream(words)
+                    .map(CharSequence.class::cast)
                     .collect(groupingBy(
                             Function.identity(),
                             reducing(0, e -> 1, Integer::sum))

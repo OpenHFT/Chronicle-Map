@@ -26,7 +26,10 @@ import net.openhft.chronicle.hash.impl.util.CleanerUtils;
 import net.openhft.chronicle.hash.serialization.impl.StringSizedReader;
 import net.openhft.chronicle.hash.serialization.impl.StringUtf8DataAccess;
 import net.openhft.chronicle.values.Values;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -40,7 +43,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assume.assumeFalse;
 
 @RunWith(Parameterized.class)
@@ -152,7 +154,6 @@ public class MemoryLeaksTest {
         }
     }
 
-    @Ignore("see https://github.com/OpenHFT/Chronicle-Map/issues/153")
     @Test(timeout = 60_000)
     public void testExplicitChronicleMapCloseReleasesMemory()
             throws IOException, InterruptedException {
@@ -176,7 +177,13 @@ public class MemoryLeaksTest {
                 map.close();
             }
 
-            assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
+            if (closeWithinContext) {
+                // Fails because of https://github.com/OpenHFT/Chronicle-Map/issues/153
+                return;
+            } else {
+                assertEquals(nativeMemoryUsedBeforeMap, nativeMemoryUsed());
+            }
+
             // Wait until chronicle map context (hence serializers) is collected by the GC
             for (int i = 0; i < 6_000; i++) {
                 if (serializerCount.get() == serializersBeforeMap)
@@ -189,7 +196,9 @@ public class MemoryLeaksTest {
             // This assertion ensures GC doesn't reclaim the map before or during the loop iteration
             // above, to ensure that we test that the direct memory and contexts are released because
             // of the manual map.close(), despite the "leak" of the map object itself.
-            Assert.assertEquals(0, map.offHeapMemoryUsed());
+
+            // Assertion disabled because a closed map now guards offHeapMemoryUsed()
+            //Assert.assertEquals(0, map.offHeapMemoryUsed());
         }
     }
 
