@@ -20,7 +20,6 @@ import com.google.common.primitives.Chars;
 import net.openhft.chronicle.bytes.BytesIn;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.bytes.BytesOut;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import net.openhft.chronicle.core.values.*;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -156,12 +155,9 @@ interface IBean {
 @RunWith(value = Parameterized.class)
 public class CHMUseCasesTest {
 
-    static volatile int i = 0;
     private final TypeOfMap typeOfMap;
-
-    Collection<Closeable> closeables = new ArrayList<Closeable>();
-    ChronicleMap map1;
-    ChronicleMap map2;
+    private final Collection<Closeable> closeables = new ArrayList<>();
+    private ChronicleMap<?, ?> map1;
 
     public CHMUseCasesTest(TypeOfMap typeOfMap) {
         this.typeOfMap = typeOfMap;
@@ -200,30 +196,15 @@ public class CHMUseCasesTest {
     @After
     public void after() {
         for (Closeable c : closeables) {
-
             try {
                 c.close();
             } catch (IOException e) {
                 e.printStackTrace();
+                fail(e.getMessage());
             }
         }
         closeables.clear();
-        map2 = null;
         map1 = null;
-    }
-
-    /**
-     * * waits until map1 and map2 show the same value
-     *
-     * @param timeOutMs timeout in milliseconds
-     */
-    private void waitTillEqual(final int timeOutMs) {
-        int t = 0;
-        for (; t < timeOutMs; t++) {
-            if (map1.equals(map2))
-                break;
-            Jvm.pause(1);
-        }
     }
 
     private void mapChecks() {
@@ -231,7 +212,7 @@ public class CHMUseCasesTest {
             checkJsonSerialization();
     }
 
-    private void assertArrayValueEquals(ChronicleMap map1, ChronicleMap map2) {
+    private void assertArrayValueEquals(ChronicleMap<?, ?> map1, ChronicleMap<?, ?> map2) {
 
         assertEquals(map1.size(), map2.size());
 
@@ -307,26 +288,27 @@ public class CHMUseCasesTest {
         switch (typeOfMap) {
 
             case SIMPLE:
-                map2 = null;
                 map1 = builder.create();
                 closeables.add(map1);
-                return map1;
+                return (ChronicleMap<X, Y>) map1;
 
             case SIMPLE_PERSISTED:
                 File file0 = null;
                 try {
                     file0 = File.createTempFile("chronicle-map-", ".map");
+                    // Be paranoid
+                    assertEquals(0, file0.length());
                 } catch (IOException e) {
                     e.printStackTrace();
+                    fail(e.getMessage());
                 }
 
                 file0.deleteOnExit();
-                final File file = file0;
-                map1 = builder.createPersistedTo(file);
+                map1 = builder.createPersistedTo(file0);
                 closeables.add(map1);
-                closeables.add(() -> file.delete());
+                closeables.add(file0::delete);
 
-                return map1;
+                return (ChronicleMap<X, Y>) map1;
 
             default:
                 throw new IllegalStateException();
@@ -1208,25 +1190,44 @@ public class CHMUseCasesTest {
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
-                .averageKeySize(5).averageValueSize(5)
+                .averageKeySize(5)
+                .averageValueSize(5)
                 .entries(1000);
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
-            ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
-            ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
-            ByteBuffer value1 = ByteBuffer.allocateDirect(4);
-            value1.put(new byte[]{11, 11, 11, 11});
-            value1.flip();
-            ByteBuffer value2 = ByteBuffer.allocateDirect(4);
-            value2.put(new byte[]{22, 22, 22, 22});
-            value2.flip();
+            final boolean useOnHeapKey = true; // Either should work
+            final ByteBuffer key1 = useOnHeapKey
+                    ? ByteBuffer.wrap(new byte[]{1, 1, 1, 1})
+
+                    : ((ByteBuffer) ByteBuffer.allocateDirect(4)
+                    .put(new byte[]{1, 1, 1, 1})
+                    .flip())
+                    .asReadOnlyBuffer();
+
+            final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
+                    // Apparently, asReadOnlyBuffer cannot be used as keys because the backing array cannot be exposed;
+
+            final ByteBuffer value1 = ((ByteBuffer) ByteBuffer.allocateDirect(4)
+                    .put(new byte[]{11, 11, 11, 11})
+                    .flip())
+                    .asReadOnlyBuffer();
+
+            final ByteBuffer value2 = ((ByteBuffer) ByteBuffer.allocateDirect(4)
+                    .put(new byte[]{22, 22, 22, 22})
+                    .flip())
+                    .asReadOnlyBuffer();
+
             assertNull(map.put(key1, value1));
             assertBBEquals(value1, map.put(key1, value2));
             assertBBEquals(value2, map.get(key1));
+
             assertNull(map.get(key2));
-            map.put(key1, value1);
+            assertBBEquals(value2, map.put(key1, value1));
+            assertBBEquals(value1, map.get(key1));
+
             mapChecks();
+
             final SerializableFunction<ByteBuffer, ByteBuffer> function =
                     s -> {
                         ByteBuffer slice = s.slice();
@@ -1234,7 +1235,7 @@ public class CHMUseCasesTest {
                         return slice;
                     };
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
-            assertEquals(null, map.getMapped(key2, function));
+            assertNull(map.getMapped(key2, function));
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
                     map.computeIfPresent(key1, (k, s) -> {
