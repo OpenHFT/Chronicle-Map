@@ -54,7 +54,13 @@ The same code is run on both Windows and Linux. However, we encourage all our cl
 Will Chronicle Map work in *Docker* environments “out-of-the-box”. For example, two java programs running on dockers?
 
 === Answer
-While Chronicle Map has not been tested with *Docker*, we are not aware of any reason why it would not if you use Chronicle Map for IPC (https://en.wikipedia.org/wiki/Inter-process_communication). In other words, if you  distribute data between two or more instances of the same map, then the same memory mapped file which holds your map data would have to be available to all the instances of Chronicle Map. We assume this would have to be in the same docker. Alternatively, you could replicate the data between your maps using Chronicle Map Enterprise.
+Yes, Chronicle Map works in Docker containers. If you wish to share maps between docker containers and/or the host,
+you should ensure that:
+
+* containers share IPC namespace (run with `--ipc="host"`)
+* queues are mounted on bind-mounted folders from the host (i.e. `-v /host/dir/1/:/container/dir`)
+
+Alternatively, you could replicate the data between containers using https://chronicle.software/products/map[Chronicle Map Enterprise].
 
 == What are the performance benefits of Disk vs RAM?
 

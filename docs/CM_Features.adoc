@@ -70,7 +70,7 @@ queries*.
  - **Durability** - no; Chronicle Map can be persisted to disk, but with no guarantee as to how frequently this
  happens. This is under the control of the OS. All data is guaranteed to be written to disk when the Map is closed.
  - **Clustering** and **replication** for Chronicle
- Map is provided by https://github.com/ChronicleEnterprise/Chronicle-Map-Enterprise[Chronicle Map Enterprise].
+ Map is provided by https://chronicle.software/products/map[Chronicle Map Enterprise].
 
 == What is the data structure of Chronicle Map?
 Simply put, a Chronicle Map data store is a big chunk of shared memory (optionally mapped to disk).
