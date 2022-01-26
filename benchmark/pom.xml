@@ -89,6 +89,26 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>jlbh</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <mainClass>net.openhft.chronicle.map.perf.MapJLBHTest</mainClass>
+                    <arguments>
+                        <argument>-Xmx512m</argument>
+                        <argument>-Dpath=/data/tmp</argument>
+                    </arguments>
+                </configuration>
+            </plugin>
         </plugins>
 
         <pluginManagement>
