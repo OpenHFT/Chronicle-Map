@@ -742,16 +742,6 @@ public abstract class VanillaChronicleHash<K,
         keyDataAccess = null;
     }
 
-    /**
-     * @return !isClosed()
-     * @Deprecated use !isClosed() instead
-     */
-    @Deprecated(/*remove in x.23*/)
-    @Override
-    public boolean isOpen() {
-        return !isClosed();
-    }
-
     public final void checkKey(final Object key) {
         final Class<K> keyClass = keyClass();
         if (!keyClass.isInstance(key)) {
