@@ -209,5 +209,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      *
      * @return {@code true} is {@link #close()} is not yet called
      */
-    boolean isOpen();
+    default boolean isOpen() {
+        return !isClosed();
+    }
 }

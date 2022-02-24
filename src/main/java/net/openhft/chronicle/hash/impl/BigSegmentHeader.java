@@ -21,7 +21,6 @@ import net.openhft.chronicle.algo.bytes.NativeAccess;
 import net.openhft.chronicle.algo.locks.VanillaReadWriteUpdateWithWaitsLockingStrategy;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.core.threads.ThreadHints;
 import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 
 import java.util.concurrent.TimeUnit;
@@ -130,7 +129,7 @@ public final class BigSegmentHeader implements SegmentHeader {
             if (LOCK.tryReadLock(A, null, address + LOCK_OFFSET))
                 return true;
             checkInterrupted(interruptible);
-            ThreadHints.onSpinWait();
+            Jvm.nanoPause();
         } while (System.nanoTime() <= end);
         return false;
     }
@@ -147,7 +146,7 @@ public final class BigSegmentHeader implements SegmentHeader {
             if (LOCK.tryReadLock(A, null, address + LOCK_OFFSET))
                 return true;
             checkInterrupted(interruptible);
-            ThreadHints.onSpinWait();
+            Jvm.nanoPause();
             long now = System.currentTimeMillis();
             if (now != lastTime) {
                 lastTime = now;
@@ -188,7 +187,7 @@ public final class BigSegmentHeader implements SegmentHeader {
             if (LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET))
                 return true;
             checkInterrupted(interruptible);
-            ThreadHints.onSpinWait();
+            Jvm.nanoPause();
         } while (System.nanoTime() <= end);
         return false;
     }
@@ -205,7 +204,7 @@ public final class BigSegmentHeader implements SegmentHeader {
             if (LOCK.tryUpdateLock(A, null, address + LOCK_OFFSET))
                 return true;
             checkInterrupted(interruptible);
-            ThreadHints.onSpinWait();
+            Jvm.nanoPause();
             long now = System.currentTimeMillis();
             if (now != lastTime) {
                 lastTime = now;
@@ -249,7 +248,7 @@ public final class BigSegmentHeader implements SegmentHeader {
                 if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
                     return true;
                 checkInterrupted(interruptible);
-                ThreadHints.onSpinWait();
+                Jvm.nanoPause();
             } while (System.nanoTime() <= end);
             deregisterWait(address);
             return false;
@@ -272,7 +271,7 @@ public final class BigSegmentHeader implements SegmentHeader {
                 if (LOCK.tryWriteLockAndDeregisterWait(A, null, address + LOCK_OFFSET))
                     return true;
                 checkInterrupted(interruptible);
-                ThreadHints.onSpinWait();
+                Jvm.nanoPause();
                 long now = System.currentTimeMillis();
                 if (now != lastTime) {
                     lastTime = now;
@@ -335,7 +334,7 @@ public final class BigSegmentHeader implements SegmentHeader {
                 if (tryUpgradeUpdateToWriteLockAndDeregisterWait0(address))
                     return true;
                 checkInterrupted(interruptible);
-                ThreadHints.onSpinWait();
+                Jvm.nanoPause();
             } while (System.nanoTime() <= end);
             deregisterWait(address);
             return false;
@@ -358,7 +357,7 @@ public final class BigSegmentHeader implements SegmentHeader {
                 if (tryUpgradeUpdateToWriteLockAndDeregisterWait0(address))
                     return true;
                 checkInterrupted(interruptible);
-                ThreadHints.onSpinWait();
+                Jvm.nanoPause();
                 long now = System.currentTimeMillis();
                 if (now != lastTime) {
                     lastTime = now;
