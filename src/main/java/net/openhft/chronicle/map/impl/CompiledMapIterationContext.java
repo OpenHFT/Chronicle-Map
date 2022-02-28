@@ -932,7 +932,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         }
 
         public WrappedValueBytesData() {
-            this.wrappedValueBytes = new VanillaBytes(NoBytesStore.NO_BYTES_STORE);
+            this.wrappedValueBytes = VanillaBytes.vanillaBytes();
         }
 
         private final VanillaBytes wrappedValueBytes;
@@ -1867,7 +1867,7 @@ PRESENT, ABSENT;    }
 
     @NotNull
     private static VanillaBytes unmonitoredVanillaBytes(PointerBytesStore segmentBS) {
-        VanillaBytes bytes = new VanillaBytes(segmentBS);
+        VanillaBytes bytes = new VanillaBytes(segmentBS) {};
         IOTools.unmonitor(bytes);
         return bytes;
     }
