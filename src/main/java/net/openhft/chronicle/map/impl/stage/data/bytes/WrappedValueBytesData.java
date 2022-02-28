@@ -32,8 +32,7 @@ import static net.openhft.chronicle.bytes.NoBytesStore.NO_BYTES_STORE;
 public class WrappedValueBytesData<V> extends AbstractData<V> {
 
     @Stage("WrappedValueBytes")
-    private final VanillaBytes wrappedValueBytes =
-            new VanillaBytes(NO_BYTES_STORE);
+    private final VanillaBytes wrappedValueBytes = VanillaBytes.vanillaBytes();
     @StageRef
     ValueBytesInterop<V> vi;
     @StageRef

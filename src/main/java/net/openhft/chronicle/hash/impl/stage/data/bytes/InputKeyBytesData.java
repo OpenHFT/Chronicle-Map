@@ -32,8 +32,7 @@ import static net.openhft.chronicle.bytes.NoBytesStore.NO_BYTES_STORE;
 public class InputKeyBytesData<K> extends AbstractData<K> {
 
     @Stage("InputKeyBytes")
-    private final VanillaBytes inputKeyBytes =
-            new VanillaBytes(NO_BYTES_STORE);
+    private final VanillaBytes inputKeyBytes = VanillaBytes.vanillaBytes();;
     @StageRef
     KeyBytesInterop<K> ki;
     @StageRef
