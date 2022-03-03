@@ -25,7 +25,7 @@ public class NoUpperBoundChunksPerEntryTest {
     public void noUpperBoundChunksPerEntryTest() {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .averageValueSize(1).entries(10000L).actualSegments(1).create();
+                        .averageValueSize(2).entries(10000L).actualSegments(1).create();
         String ultraLargeValue = "";
         for (int i = 0; i < 100; i++) {
             ultraLargeValue += "Hello";
