@@ -42,7 +42,7 @@ public final class CanonicalRandomAccessFiles {
     private static final String DISABLE_LOCKING = "chronicle.map.disable.locking";
     private static final boolean USE_EXCLUSIVE_LOCKING = !Jvm.getBoolean(DISABLE_LOCKING);
     private static final boolean USE_SHARED_LOCKING = !OS.isWindows() && !Jvm.getBoolean(DISABLE_LOCKING) &&
-            !"shared".equalsIgnoreCase(System.getProperty(DISABLE_LOCKING));
+            !"shared".equalsIgnoreCase(Jvm.getProperty(DISABLE_LOCKING));
     private static final AtomicBoolean LOCK_WARNING_PRINTED = new AtomicBoolean();
     private static final ConcurrentHashMap<File, RafReference> CANONICAL_RAFS = new ConcurrentHashMap<>();
 
@@ -253,7 +253,7 @@ public final class CanonicalRandomAccessFiles {
 
     private static void printWarningTheFirstTime() {
         if (LOCK_WARNING_PRINTED.compareAndSet(false, true)) {
-            Jvm.warn().on(CanonicalRandomAccessFiles.class, "File locking is disabled or not supported on this platform (" + System.getProperty("os.name") + "). " +
+            Jvm.warn().on(CanonicalRandomAccessFiles.class, "File locking is disabled or not supported on this platform (" + Jvm.getProperty("os.name") + "). " +
                     "Make sure you are not running ChronicleMapBuilder::*recover* methods when other processes or threads have the mapped file open!");
         }
     }

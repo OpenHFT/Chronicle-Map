@@ -55,7 +55,7 @@ public final class BigSegmentHeader implements SegmentHeader {
         // result to InterProcessDeadLockException.
         int timeout = 60;
         try {
-            timeout = Integer.parseInt(System.getProperty("net.openhft.chronicle.map.lockTimeoutSeconds", String.valueOf(timeout)));
+            timeout = Integer.parseInt(Jvm.getProperty("net.openhft.chronicle.map.lockTimeoutSeconds", String.valueOf(timeout)));
         } catch (NumberFormatException ex) {
             // ignore
         }
