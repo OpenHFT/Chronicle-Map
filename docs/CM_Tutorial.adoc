@@ -201,6 +201,8 @@ The key, or value type, of `ChronicleMap<K, V>` could be:
     ** Any type implementing `java.io.Serializable`, including boxed primitive types (except those listed
     above) and array types.
     ** Types implementing `net.openhft.chronicle.wire.Marshallable` can be used as key or value types with `MarshallableReaderWriter`. It's much less efficient than `BytesMarshallable`, but it may bring some benefits due to its self-describing format. Handling schema changes (added or removed fields) comes out-of-the-box.
++
+NOTE: Chronicle Map does not consider use of `BytesMarshallable#usesSelfDescribingMessage` method.
 
  - Any other type, if <<CM_Tutorial.adoc#custom-serializers,custom serializers>> are provided.
 
