@@ -93,8 +93,6 @@ public class DefaultValueTest {
         }
     }
 
-
-
     @Test
     public void test() throws IllegalAccessException, InstantiationException, IOException {
         File file = Builder.getPersistenceFile();
@@ -130,6 +128,5 @@ public class DefaultValueTest {
             file.delete();
         }
     }
-
 
 }
