@@ -22,6 +22,8 @@ import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.SetMarshaller;
 import org.jetbrains.annotations.NotNull;
 
+import static net.openhft.chronicle.core.util.ObjectUtils.requireNonNull;
+
 /**
  * {@link BytesWriter} implementation for {@link CharSequence}, for the primary ChronicleMap's key
  * or value type {@link CharSequenceUtf8DataAccess} + {@link CharSequenceSizedReader} are more
@@ -39,8 +41,7 @@ public final class CharSequenceBytesWriter
 
     @Override
     public void write(Bytes out, @NotNull CharSequence toWrite) {
-        if (toWrite == null)
-            throw new NullPointerException("BytesWriter couldn't write null");
+        requireNonNull(toWrite);
         out.writeUtf8(toWrite);
     }
 

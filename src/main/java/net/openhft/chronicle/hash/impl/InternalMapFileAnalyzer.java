@@ -62,7 +62,7 @@ public final class InternalMapFileAnalyzer {
             buffer.get(headerData);
             final String header = new String(headerData, StandardCharsets.UTF_8);
 
-            final Bytes<Void> bytes = Bytes.allocateDirect(Integer.BYTES + len);
+            final Bytes<Void> bytes = Bytes.allocateDirect(Integer.BYTES + (long) len);
             bytes.writeInt(len);
             bytes.write(headerData);
             final long expectedHashCode = new XxHash(0).applyAsLong(bytes.bytesStore());
@@ -330,7 +330,7 @@ public final class InternalMapFileAnalyzer {
         final byte[] alignment = new byte[alignmentLength];
         buffer.get(alignment);
         final String text = Arrays.toString(alignment) + " (" + alignmentLength + " bytes)";
-        output(buffer.position() - alignmentLength, alignmentLength, "[alignmentBytes]", text);
+        output(buffer.position() - (long) alignmentLength, alignmentLength, "[alignmentBytes]", text);
     }
 
     static long unsignedValue(ByteBuffer buffer, int bytes) {

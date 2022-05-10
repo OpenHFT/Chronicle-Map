@@ -454,6 +454,7 @@ public final class BigSegmentHeader implements SegmentHeader {
             if (!innerTryReadLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
                 throw deadLock();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new AssertionError(e);
         }
     }
@@ -498,6 +499,7 @@ public final class BigSegmentHeader implements SegmentHeader {
             if (!innerTryUpdateLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
                 throw deadLock();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new AssertionError(e);
         }
     }
@@ -530,6 +532,7 @@ public final class BigSegmentHeader implements SegmentHeader {
             if (!innerTryWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
                 throw deadLock();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new AssertionError(e);
         }
     }
@@ -563,6 +566,7 @@ public final class BigSegmentHeader implements SegmentHeader {
             if (!innerTryUpgradeUpdateToWriteLock(address, LOCK_TIMEOUT_SECONDS, SECONDS, false))
                 throw deadLock();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new AssertionError(e);
         }
     }
