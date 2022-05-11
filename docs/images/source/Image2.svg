@@ -4,205 +4,185 @@
 	 viewBox="0 0 2993.4 2639.2" style="enable-background:new 0 0 2993.4 2639.2;" xml:space="preserve">
 <style type="text/css">
 	.st0{fill:#181F4C;}
-	.st1{fill:#212449;}
+	.st1{fill:#FFFFFF;}
 	.st2{font-family:'Poppins-Regular';}
 	.st3{font-size:50px;}
 	.st4{fill:#756EB0;}
-	.st5{fill:#E09531;stroke:#E09531;stroke-width:5;stroke-miterlimit:10;}
-	.st6{fill:#FFFFFF;}
-	.st7{font-size:46.187px;}
-	.st8{fill:none;stroke:#FFFFFF;stroke-width:8;stroke-miterlimit:10;}
-	.st9{fill:#FFFFFF;stroke:#FFFFFF;stroke-width:6;stroke-miterlimit:10;}
-	.st10{font-size:62px;}
-	.st11{fill:#C779A8;}
-	.st12{font-size:41.0005px;}
+	.st5{fill:none;stroke:#FFFFFF;stroke-width:8;stroke-miterlimit:10;}
+	.st6{fill:#FFFFFF;stroke:#FFFFFF;stroke-width:6;stroke-miterlimit:10;}
+	.st7{font-size:62px;}
+	.st8{fill:#C779A8;}
+	.st9{font-size:41.0005px;}
+	.st10{fill:none;stroke:#FFFFFF;stroke-width:5;stroke-miterlimit:10;stroke-dasharray:12,12;}
+	.st11{fill:#E09531;stroke:#E09531;stroke-width:5;stroke-miterlimit:10;}
+	.st12{font-size:52.6977px;}
 	.st13{fill:#D2D2D2;}
-	.st14{font-size:17.7353px;}
-	.st15{font-size:49.6719px;}
-	.st16{fill:none;stroke:#FFFFFF;stroke-width:5;stroke-miterlimit:10;stroke-dasharray:12,12;}
+	.st14{fill:#212449;}
+	.st15{font-size:38.1295px;}
+	.st16{font-size:16.1146px;}
+	.st17{fill:#09A79D;stroke:#09A79D;stroke-width:5;stroke-miterlimit:10;}
 </style>
 <rect x="-5.8" class="st0" width="2999.2" height="2639.2"/>
-<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 1007.9126 1328.1335)" class="st1 st2 st3">TCP/IP </text>
-<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 1851.127 1328.1326)" class="st1 st2 st3">TCP/IP </text>
-<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 1429.6034 1719.7261)" class="st1 st2 st3">TCP/IP </text>
+<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 1007.9396 1328.1337)" class="st1 st2 st3">TCP/IP </text>
+<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 1851.1569 1328.1329)" class="st1 st2 st3">TCP/IP </text>
+<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 1429.6322 1719.726)" class="st1 st2 st3">TCP/IP </text>
+<rect x="476.3" y="1502.1" class="st4" width="882.8" height="966.7"/>
 <g>
-	<rect x="476.3" y="1502.1" class="st4" width="882.8" height="966.7"/>
+	<path class="st5" d="M1024.2,1976c-13.7-44.9-21.9-60.5-34-71.7"/>
 	<g>
-		
-			<rect x="945.9" y="1997.4" transform="matrix(1 -2.347664e-03 2.347664e-03 1 -4.8575 2.403)" class="st5" width="150.4" height="145.8"/>
-		<text transform="matrix(1.0039 -2.442849e-03 2.600153e-03 1 970.6145 2084.2505)" class="st6 st2 st7">K =V</text>
+		<polygon class="st6" points="1006.2,1892.7 968.5,1875.1 972.4,1917.9 		"/>
 	</g>
+</g>
+<path class="st5" d="M823.2,1973c23.9-59,37.6-79,57.1-92.5"/>
+<g>
+	<path class="st5" d="M800,2158.4c13.7,44.9,21.9,60.5,34,71.7"/>
 	<g>
-		
-			<rect x="741.8" y="1997.3" transform="matrix(1 -2.347664e-03 2.347664e-03 1 -4.8579 1.9238)" class="st5" width="150.4" height="145.8"/>
-		<text transform="matrix(1.0039 -2.442849e-03 2.600153e-03 1 766.527 2084.1848)" class="st6 st2 st7">K =V</text>
+		<polygon class="st6" points="818,2241.7 855.7,2259.3 851.8,2216.5 		"/>
 	</g>
-	<g id="C5BaB0.tif_00000017517681447609171140000003057264961226741633_">
+</g>
+<path class="st5" d="M1034.8,2164.6c-23.9,59-37.6,79-57.1,92.5"/>
+<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 513.3113 1586.0709)" class="st1 st2 st7">Server 2 </text>
+<g>
+	<g>
+		<polygon class="st8" points="805.4,1555.7 1041.4,1555.5 1043.2,1838.2 807.3,1838.4 		"/>
+		<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 827.3088 1612.2101)" class="st1 st2 st9">Chronicle </text>
 		
-			<image style="overflow:visible;enable-background:new    ;" width="580" height="670" id="Layer_0_00000146463331763452926700000003392051492628318646_" xlink:href="9C1FC1DD968DA34.png"  transform="matrix(0.2113 0 0 0.2721 856.456 2261.2712)">
+			<image style="overflow:visible;enable-background:new    ;" width="422" height="446" xlink:href="FD234D72230B5AC7.png"  transform="matrix(0.3246 0 0 0.3159 857.8923 1681.4899)">
 		</image>
 	</g>
+	<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 880.3351 1659.0225)" class="st1 st2 st9">Map</text>
+</g>
+<rect x="1644.9" y="1502.1" class="st4" width="882.8" height="966.7"/>
+<g>
+	<path class="st5" d="M2192.8,1976c-13.7-44.9-21.9-60.5-34-71.7"/>
 	<g>
-		<path class="st8" d="M1024.2,1976c-13.7-44.9-21.9-60.5-34-71.7"/>
-		<g>
-			<polygon class="st9" points="1006.2,1892.7 968.5,1875.1 972.4,1917.9 			"/>
-		</g>
-	</g>
-	<path class="st8" d="M823.2,1973c23.9-59,37.6-79,57.1-92.5"/>
-	<g>
-		<path class="st8" d="M800,2158.4c13.7,44.9,21.9,60.5,34,71.7"/>
-		<g>
-			<polygon class="st9" points="818,2241.7 855.7,2259.3 851.8,2216.5 			"/>
-		</g>
-	</g>
-	<path class="st8" d="M1034.8,2164.6c-23.9,59-37.6,79-57.1,92.5"/>
-	<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 513.2854 1586.0707)" class="st6 st2 st10">Server 2 </text>
-	<g>
-		<g>
-			<polygon class="st11" points="805.4,1555.7 1041.4,1555.5 1043.2,1838.2 807.3,1838.4 			"/>
-			<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 827.2835 1612.2098)" class="st6 st2 st12">Chronicle </text>
-			
-				<image style="overflow:visible;enable-background:new    ;" width="422" height="446" xlink:href="FD234D72230B5AC7.png"  transform="matrix(0.3246 0 0 0.3159 857.8923 1681.4899)">
-			</image>
-		</g>
-		<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 880.3091 1659.0221)" class="st6 st2 st12">Map</text>
+		<polygon class="st6" points="2174.8,1892.7 2137.1,1875.1 2140.9,1917.9 		"/>
 	</g>
 </g>
+<path class="st5" d="M1991.8,1973c23.9-59,37.6-79,57.1-92.5"/>
 <g>
-	<rect x="1644.9" y="1502.1" class="st4" width="882.8" height="966.7"/>
+	<path class="st5" d="M1968.6,2158.4c13.7,44.9,21.9,60.5,34,71.7"/>
 	<g>
-		
-			<rect x="2114.5" y="1997.4" transform="matrix(1 -2.347664e-03 2.347664e-03 1 -4.8543 5.1464)" class="st5" width="150.4" height="145.8"/>
-		<text transform="matrix(1.0039 -2.442849e-03 2.600153e-03 1 2139.189 2084.2505)" class="st6 st2 st7">K =V</text>
+		<polygon class="st6" points="1986.6,2241.7 2024.3,2259.3 2020.4,2216.5 		"/>
 	</g>
+</g>
+<path class="st5" d="M2203.3,2164.6c-23.9,59-37.6,79-57.1,92.5"/>
+<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 2253.2549 1583.1847)" class="st1 st2 st7">Server 3 </text>
+<g>
 	<g>
+		<polygon class="st8" points="1970.4,1555.7 2206.4,1555.5 2208.2,1838.2 1972.3,1838.4 		"/>
+		<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 1992.3591 1612.2097)" class="st1 st2 st9">Chronicle </text>
 		
-			<rect x="1910.4" y="1997.3" transform="matrix(1 -2.347664e-03 2.347664e-03 1 -4.8547 4.6672)" class="st5" width="150.4" height="145.8"/>
-		<text transform="matrix(1.0039 -2.442849e-03 2.600153e-03 1 1935.1016 2084.1848)" class="st6 st2 st7">K =V</text>
-	</g>
-	<g id="C5BaB0.tif_00000174572795449563955030000012750630544871075998_">
-		
-			<image style="overflow:visible;enable-background:new    ;" width="580" height="670" id="Layer_0_00000077325551124727106220000011556019372670687642_" xlink:href="9C1FC1DD968DA34.png"  transform="matrix(0.2113 0 0 0.2721 2025.0306 2261.2712)">
+			<image style="overflow:visible;enable-background:new    ;" width="422" height="446" xlink:href="FD234D72230B5AC7.png"  transform="matrix(0.3246 0 0 0.3159 2022.9392 1681.4899)">
 		</image>
 	</g>
+	<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 2045.3854 1659.0221)" class="st1 st2 st9">Map</text>
+</g>
+<rect x="1066.4" y="176.6" class="st4" width="882.8" height="966.7"/>
+<g>
+	<path class="st5" d="M1614.2,497.1c-13.7-44.9-21.9-60.5-34-71.7"/>
 	<g>
-		<path class="st8" d="M2192.8,1976c-13.7-44.9-21.9-60.5-34-71.7"/>
-		<g>
-			<polygon class="st9" points="2174.8,1892.7 2137.1,1875.1 2140.9,1917.9 			"/>
-		</g>
-	</g>
-	<path class="st8" d="M1991.8,1973c23.9-59,37.6-79,57.1-92.5"/>
-	<g>
-		<path class="st8" d="M1968.6,2158.4c13.7,44.9,21.9,60.5,34,71.7"/>
-		<g>
-			<polygon class="st9" points="1986.6,2241.7 2024.3,2259.3 2020.4,2216.5 			"/>
-		</g>
-	</g>
-	<path class="st8" d="M2203.3,2164.6c-23.9,59-37.6,79-57.1,92.5"/>
-	<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 2253.2241 1583.1844)" class="st6 st2 st10">Server 3 </text>
-	<g>
-		<g>
-			<polygon class="st11" points="1970.4,1555.7 2206.4,1555.5 2208.2,1838.2 1972.3,1838.4 			"/>
-			<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 1992.3304 1612.2098)" class="st6 st2 st12">Chronicle </text>
-			
-				<image style="overflow:visible;enable-background:new    ;" width="422" height="446" xlink:href="FD234D72230B5AC7.png"  transform="matrix(0.3246 0 0 0.3159 2022.9392 1681.4899)">
-			</image>
-		</g>
-		<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 2045.3561 1659.0221)" class="st6 st2 st12">Map</text>
+		<polygon class="st6" points="1596.3,413.8 1558.6,396.3 1562.4,439.1 		"/>
 	</g>
 </g>
+<path class="st5" d="M1413.3,494.1c23.9-59,37.6-79,57.1-92.5"/>
 <g>
-	<rect x="1066.4" y="176.6" class="st4" width="882.8" height="966.7"/>
+	<path class="st5" d="M1390.1,679.6c13.7,44.9,21.9,60.5,34,71.7"/>
 	<g>
-		
-			<rect x="1536" y="518.5" transform="matrix(1 -2.347664e-03 2.347664e-03 1 -1.384 3.7841)" class="st5" width="150.4" height="145.8"/>
-		<text transform="matrix(1.0039 -2.442849e-03 2.600153e-03 1 1560.6724 605.3718)" class="st6 st2 st7">K =V</text>
+		<polygon class="st6" points="1408.1,762.8 1445.8,780.4 1441.9,737.6 		"/>
 	</g>
+</g>
+<path class="st5" d="M1624.8,685.7c-23.9,59-37.6,79-57.1,92.5"/>
+<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 1102.0162 261.9074)" class="st1 st2 st7">Server 1 </text>
+<g>
 	<g>
+		<polygon class="st8" points="1394.9,816.3 1630.9,816.1 1632.7,1098.8 1396.8,1099 		"/>
+		<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 1416.8542 872.8206)" class="st1 st2 st9">Chronicle </text>
 		
-			<rect x="1331.9" y="518.4" transform="matrix(1 -2.347664e-03 2.347664e-03 1 -1.3844 3.305)" class="st5" width="150.4" height="145.8"/>
-		<text transform="matrix(1.0039 -2.442849e-03 2.600153e-03 1 1356.5848 605.3062)" class="st6 st2 st7">K =V</text>
-	</g>
-	<g id="C5BaB0.tif_00000073001809244503816420000011975482553236749723_">
-		
-			<image style="overflow:visible;enable-background:new    ;" width="580" height="670" id="Layer_0_00000021813891197873812200000003277322912708145552_" xlink:href="9C1FC1DD968DA34.png"  transform="matrix(0.2113 0 0 0.2721 1446.5138 204.8125)">
+			<image style="overflow:visible;enable-background:new    ;" width="422" height="446" xlink:href="FD234D72230B5AC7.png"  transform="matrix(0.3246 0 0 0.3159 1447.4357 942.1007)">
 		</image>
 	</g>
+	<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 1469.8805 919.6331)" class="st1 st2 st9">Map</text>
+</g>
+<g>
+	<path class="st1" d="M1388.4,1121.6c-112.2,137.7-224.4,275.3-336.6,413"/>
 	<g>
-		<path class="st8" d="M1614.2,497.1c-13.7-44.9-21.9-60.5-34-71.7"/>
+		<path class="st10" d="M1365.7,1149.5c-97.1,119.1-194.2,238.2-291.3,357.3"/>
 		<g>
-			<polygon class="st9" points="1596.3,413.8 1558.6,396.3 1562.4,439.1 			"/>
+			<polygon class="st1" points="1341.8,1139.4 1388.4,1121.6 1380.4,1170.9 			"/>
 		</g>
-	</g>
-	<path class="st8" d="M1413.3,494.1c23.9-59,37.6-79,57.1-92.5"/>
-	<g>
-		<path class="st8" d="M1390.1,679.6c13.7,44.9,21.9,60.5,34,71.7"/>
 		<g>
-			<polygon class="st9" points="1408.1,762.8 1445.8,780.4 1441.9,737.6 			"/>
+			<polygon class="st1" points="1059.7,1485.4 1051.8,1534.6 1098.4,1516.9 			"/>
 		</g>
-	</g>
-	<path class="st8" d="M1624.8,685.7c-23.9,59-37.6,79-57.1,92.5"/>
-	<text transform="matrix(0.9711 -2.442569e-03 2.515135e-03 1 1101.9885 261.9073)" class="st6 st2 st10">Server 1 </text>
-	<g>
-		<g>
-			<polygon class="st11" points="1394.9,816.3 1630.9,816.1 1632.7,1098.8 1396.8,1099 			"/>
-			<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 1416.8269 872.8207)" class="st6 st2 st12">Chronicle </text>
-			
-				<image style="overflow:visible;enable-background:new    ;" width="422" height="446" xlink:href="FD234D72230B5AC7.png"  transform="matrix(0.3246 0 0 0.3159 1447.4357 942.1007)">
-			</image>
-		</g>
-		<text transform="matrix(0.987 -2.442547e-03 2.556150e-03 1 1469.8525 919.6329)" class="st6 st2 st12">Map</text>
 	</g>
 </g>
 <g>
-	<rect x="2114.3" y="515.2" class="st13" width="553.8" height="289.5"/>
+	<path class="st1" d="M1633.8,1121.6c112.2,137.7,224.4,275.3,336.6,413"/>
+	<g>
+		<path class="st10" d="M1656.5,1149.5c97.1,119.1,194.2,238.2,291.3,357.3"/>
+		<g>
+			<polygon class="st1" points="1641.8,1170.9 1633.8,1121.6 1680.4,1139.4 			"/>
+		</g>
+		<g>
+			<polygon class="st1" points="1923.8,1516.9 1970.4,1534.6 1962.4,1485.4 			"/>
+		</g>
+	</g>
+</g>
+<g>
+	<path class="st1" d="M1065.3,1628.5c294.5,1.2,589,2.3,883.5,3.5"/>
+	<g>
+		<path class="st10" d="M1101.1,1628.6c270.6,1.1,541.2,2.2,811.8,3.2"/>
+		<g>
+			<polygon class="st1" points="1108.3,1653.6 1065.3,1628.5 1108.5,1603.7 			"/>
+		</g>
+		<g>
+			<polygon class="st1" points="1905.5,1656.8 1948.8,1632 1905.7,1606.9 			"/>
+		</g>
+	</g>
+</g>
+<g>
+	
+		<rect x="1556.3" y="516.7" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -1.3346 3.7127)" class="st11" width="155" height="145.4"/>
+	<text transform="matrix(1.0146 -2.442529e-03 2.627555e-03 1 1566.1702 609.2388)" class="st1 st2 st12">K = V</text>
+</g>
+<g>
+	
+		<rect x="1310.9" y="514.1" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -1.3295 3.1553)" class="st11" width="155" height="145.4"/>
+	<text transform="matrix(1.0146 -2.442529e-03 2.627555e-03 1 1320.7701 606.6958)" class="st1 st2 st12">K = V</text>
+</g>
+<g>
+	
+		<rect x="946.7" y="1996.6" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -4.6979 2.3318)" class="st11" width="155" height="145.4"/>
+	<text transform="matrix(1.0146 -2.442529e-03 2.627555e-03 1 956.5701 2089.1958)" class="st1 st2 st12">K = V</text>
+</g>
+<g>
+	
+		<rect x="722.5" y="1997.6" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -4.7007 1.8226)" class="st11" width="155" height="145.4"/>
+	<text transform="matrix(1.0146 -2.442529e-03 2.627555e-03 1 732.3701 2090.1516)" class="st1 st2 st12">K = V</text>
+</g>
+<g>
+	
+		<rect x="2119.8" y="1993" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -4.6866 4.9967)" class="st11" width="155" height="145.4"/>
+	<text transform="matrix(1.0146 -2.442529e-03 2.627555e-03 1 2129.7327 2085.5457)" class="st1 st2 st12">K = V</text>
+</g>
+<g>
+	
+		<rect x="1892.9" y="1993" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -4.6872 4.4811)" class="st11" width="155" height="145.4"/>
+	<text transform="matrix(1.0146 -2.442529e-03 2.627555e-03 1 1902.7701 2085.5459)" class="st1 st2 st12">K = V</text>
+</g>
+<g>
+	<rect x="2137.1" y="550.1" class="st13" width="411.2" height="222.3"/>
+	<text transform="matrix(0.9594 -2.442528e-03 2.484607e-03 1 2212.5527 731.5932)" class="st14 st2 st15">= Key-Value Entry</text>
+	<text transform="matrix(0.9594 -2.442528e-03 2.484607e-03 1 2211.8025 626.9626)" class="st14 st2 st15">= Java Process</text>
 	<g>
 		
-			<rect x="2135.3" y="711.2" transform="matrix(1 -2.319139e-03 2.319139e-03 1 -1.7221 5.0361)" class="st5" width="70.6" height="67.7"/>
-		<text transform="matrix(1.0161 -2.442530e-03 2.631516e-03 1 2150.6838 751.6233)" class="st6 st2 st14">K =V</text>
+			<rect x="2153.6" y="696.4" transform="matrix(1 -2.479750e-03 2.479750e-03 1 -1.7754 5.3965)" class="st11" width="43.4" height="44.5"/>
+		<text transform="matrix(0.9294 -2.442505e-03 2.406895e-03 1 2156.4783 724.8311)" class="st1 st2 st16">K = V</text>
 	</g>
-	<text transform="matrix(0.9918 -2.442562e-03 2.568637e-03 1 2215.825 751.6227)" class="st1 st2 st15">= Key-Value Entry</text>
-	<text transform="matrix(0.9918 -2.442562e-03 2.568637e-03 1 2214.8127 615.3165)" class="st1 st2 st15">= Java Process</text>
-	<g id="C5BaB0.tif_00000158709152760953008340000003519120622365805476_">
-		
-			<image style="overflow:visible;enable-background:new    ;" width="580" height="670" id="Layer_0_00000067933664127861876850000018054281013386994058_" xlink:href="9C1FC1DD968DA34.png"  transform="matrix(0.1218 0 0 0.1555 2126.7185 537.3005)">
-		</image>
-	</g>
+	
+		<rect x="2149.8" y="587.4" transform="matrix(1 -2.479750e-03 2.479750e-03 1 -1.5148 5.3962)" class="st17" width="51.1" height="52.3"/>
 </g>
-<g>
-	<path class="st6" d="M1388.4,1121.6c-112.2,137.7-224.4,275.3-336.6,413"/>
-	<g>
-		<path class="st16" d="M1365.7,1149.5c-97.1,119.1-194.2,238.2-291.3,357.3"/>
-		<g>
-			<polygon class="st6" points="1341.8,1139.4 1388.4,1121.6 1380.4,1170.9 			"/>
-		</g>
-		<g>
-			<polygon class="st6" points="1059.7,1485.4 1051.8,1534.6 1098.4,1516.9 			"/>
-		</g>
-	</g>
-</g>
-<g>
-	<path class="st6" d="M1633.8,1121.6c112.2,137.7,224.4,275.3,336.6,413"/>
-	<g>
-		<path class="st16" d="M1656.5,1149.5c97.1,119.1,194.2,238.2,291.3,357.3"/>
-		<g>
-			<polygon class="st6" points="1641.8,1170.9 1633.8,1121.6 1680.4,1139.4 			"/>
-		</g>
-		<g>
-			<polygon class="st6" points="1923.8,1516.9 1970.4,1534.6 1962.4,1485.4 			"/>
-		</g>
-	</g>
-</g>
-<g>
-	<path class="st6" d="M1065.3,1628.5c294.5,1.2,589,2.3,883.5,3.5"/>
-	<g>
-		<path class="st16" d="M1101.1,1628.6c270.6,1.1,541.2,2.2,811.8,3.2"/>
-		<g>
-			<polygon class="st6" points="1108.3,1653.6 1065.3,1628.5 1108.5,1603.7 			"/>
-		</g>
-		<g>
-			<polygon class="st6" points="1905.5,1656.8 1948.8,1632 1905.7,1606.9 			"/>
-		</g>
-	</g>
-</g>
+<rect x="1437.1" y="223.1" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -0.6709 3.4442)" class="st17" width="157.7" height="147.9"/>
+<rect x="838.9" y="2278.5" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -5.3412 2.0906)" class="st17" width="157.7" height="147.9"/>
+<rect x="2007.5" y="2279.3" transform="matrix(1 -2.271525e-03 2.271525e-03 1 -5.3401 4.7452)" class="st17" width="157.7" height="147.9"/>
 </svg>
