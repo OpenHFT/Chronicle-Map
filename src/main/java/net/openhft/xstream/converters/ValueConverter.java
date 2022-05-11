@@ -26,11 +26,10 @@ import net.openhft.chronicle.values.ArrayFieldModel;
 import net.openhft.chronicle.values.FieldModel;
 import net.openhft.chronicle.values.ValueModel;
 import net.openhft.chronicle.values.Values;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.NoSuchElementException;
 
 /**
  * @author Rob Austin.
@@ -104,7 +103,7 @@ public class ValueConverter implements Converter {
             final String name = reader.getNodeName();
 
             FieldModel fieldModel =
-                    valueModel.fields().filter(f -> f.name().equals(name)).findAny().get();
+                    valueModel.fields().filter(f -> f.name().equals(name)).findAny().orElseThrow(() -> new NoSuchElementException("No element with name " + name));
 
             if (fieldModel instanceof ArrayFieldModel) {
 

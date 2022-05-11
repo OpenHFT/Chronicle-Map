@@ -206,6 +206,7 @@ public class ChronicleStampedLock extends StampedLock {
                 Thread.sleep((long) (1000 * Math.random()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         } while (
                 readLockHolderCount.getVolatileValue() > 0 ||
@@ -269,6 +270,7 @@ public class ChronicleStampedLock extends StampedLock {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         } while (l < 0L);
 
@@ -332,6 +334,7 @@ public class ChronicleStampedLock extends StampedLock {
                 Thread.sleep((long) (1000 * Math.random()));
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         } while (
                 l != 0L ||
@@ -392,6 +395,7 @@ public class ChronicleStampedLock extends StampedLock {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
+                Thread.currentThread().interrupt();
             }
         } while (l < 0L);
 

@@ -38,7 +38,7 @@ public class AutoResizeTest {
                 .createOrRecoverPersistedTo(cmap)) {
 
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0.0, actual);
+            Assert.assertNotEquals(0, actual);
         }
 
         // if the file already exists  it will reuse the existing settings, set above
@@ -47,7 +47,7 @@ public class AutoResizeTest {
                 .of(String.class, String.class)
                 .createOrRecoverPersistedTo(cmap)) {
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0.0, actual);
+            Assert.assertNotEquals(0, actual);
         }
     }
 
@@ -61,7 +61,7 @@ public class AutoResizeTest {
                 .create()) {
 
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0.0, actual);
+            Assert.assertNotEquals(0, actual);
         }
     }
 }

@@ -24,7 +24,7 @@ import java.util.WeakHashMap;
 
 final class ChronicleHashCloseOnExitHook {
 
-    private static WeakHashMap<VanillaChronicleHash.Identity, Long> maps = new WeakHashMap<>();
+    private static WeakHashMap<VanillaChronicleHash<?, ?, ?, ?>.Identity, Long> maps = new WeakHashMap<>();
     private static long order = 0;
 
     static {
@@ -34,13 +34,13 @@ final class ChronicleHashCloseOnExitHook {
     private ChronicleHashCloseOnExitHook() {
     }
 
-    static synchronized void add(VanillaChronicleHash hash) {
+    static synchronized void add(VanillaChronicleHash<?, ?, ?, ?> hash) {
         if (maps == null)
             throw new IllegalStateException("Shutdown in progress");
         maps.put(hash.identity, order++);
     }
 
-    static synchronized void remove(VanillaChronicleHash hash) {
+    static synchronized void remove(VanillaChronicleHash<?, ?, ?, ?> hash) {
         if (maps == null)
             return; // we are already in shutdown
         maps.remove(hash.identity);
@@ -48,13 +48,13 @@ final class ChronicleHashCloseOnExitHook {
 
     private static void closeAll() {
         try {
-            WeakHashMap<VanillaChronicleHash.Identity, Long> maps;
+            WeakHashMap<VanillaChronicleHash<?, ?, ?, ?>.Identity, Long> maps;
             synchronized (ChronicleHashCloseOnExitHook.class) {
                 maps = ChronicleHashCloseOnExitHook.maps;
                 ChronicleHashCloseOnExitHook.maps = null;
             }
 
-            TreeMap<Long, VanillaChronicleHash> orderedMaps = new TreeMap<>();
+            TreeMap<Long, VanillaChronicleHash<?, ?, ?, ?>> orderedMaps = new TreeMap<>();
             maps.forEach((identity, order) -> orderedMaps.put(order, identity.hash()));
             // close later added maps first
             orderedMaps.descendingMap().values().forEach(h -> {

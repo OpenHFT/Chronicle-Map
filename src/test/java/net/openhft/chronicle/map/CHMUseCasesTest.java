@@ -249,8 +249,8 @@ public class CHMUseCasesTest {
 
             map1.getAll(file);
 
-            VanillaChronicleMap vanillaMap = (VanillaChronicleMap) map1;
-            ChronicleMapBuilder builder = ChronicleMap
+            VanillaChronicleMap<?, ?, ?> vanillaMap = (VanillaChronicleMap<?, ?, ?>) map1;
+            ChronicleMapBuilder<?, ?> builder = ChronicleMap
                     .of(map1.keyClass(), map1.valueClass())
                     .entriesPerSegment(
                             max(divideRoundUp(map1.size(), vanillaMap.actualSegments), 1))
@@ -261,7 +261,7 @@ public class CHMUseCasesTest {
                 builder.worstAlignment(vanillaMap.worstAlignment);
             }
 
-            try (ChronicleMap actual = builder.create()) {
+            try (ChronicleMap<?, ?> actual = builder.create()) {
                 actual.putAll(file);
 
                 if (map1.valueClass() == char[].class ||
