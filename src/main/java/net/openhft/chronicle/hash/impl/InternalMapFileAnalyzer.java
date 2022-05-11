@@ -162,15 +162,15 @@ public final class InternalMapFileAnalyzer {
                         } else {
                             keyText = "";
                         }
-                        outputFormat("%08X - %08X  %010X %010X %010X -> %08X %s %n",
+                        System.out.format("%08X - %08X  %010X %010X %010X -> %08X %s %n",
                                 pos, pos + tierHashLookupSlotSize - 1, hl,
                                 hashLookupKey, hashLookupValue, chunkAddress, keyText);
                     } else {
-                        outputFormat("%08X - %08X  %010X%n", pos, pos + tierHashLookupSlotSize - 1, hl);
+                        System.out.format("%08X - %08X  %010X%n", pos, pos + tierHashLookupSlotSize - 1, hl);
                     }
                 }
                 cardinalities.add(usedSlots);
-                outputFormat("%d cardinality (%.2f%% used)) %n", usedSlots, 100.00d * ((double) usedSlots) / actualChunksPerSegmentTier);
+                System.out.format("%d cardinality (%.2f%% used)) %n", usedSlots, 100.00d * ((double) usedSlots) / actualChunksPerSegmentTier);
 
                 header("Segment Tier Counters Area " + segment);
                 buffer.position((int) (oldPos + segment * tierSize + tierHashLookupOuterSize));
@@ -188,12 +188,12 @@ public final class InternalMapFileAnalyzer {
                 final byte[] bits = new byte[actualChunksPerSegmentTier / 8];
                 buffer.get(bits);
                 final int cardinality = cardinality(bits);
-                outputFormat("%08X - %08X  BITMAP (%d bytes, %d bits, %d cardinality (%.2f%% used)) %n", freeListPos, freeListPos + bits.length - 1, bits.length, actualChunksPerSegmentTier, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
+                System.out.format("%08X - %08X  BITMAP (%d bytes, %d bits, %d cardinality (%.2f%% used)) %n", freeListPos, freeListPos + bits.length - 1, bits.length, actualChunksPerSegmentTier, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
 
                 header("Entry Space " + segment);
                 buffer.position(entrySpacePos);
                 final int chunksBytes = actualChunksPerSegmentTier * chunkSize;
-                outputFormat("%08X - %08X  CHUNKS (%d bytes)%n", entrySpacePos, entrySpacePos + chunksBytes, chunksBytes);
+                System.out.format("%08X - %08X  CHUNKS (%d bytes)%n", entrySpacePos, entrySpacePos + chunksBytes, chunksBytes);
 
                 // break;
             }
@@ -201,7 +201,7 @@ public final class InternalMapFileAnalyzer {
             header("Allocation overview");
             for (int segment = 0; segment < cardinalities.size(); segment++) {
                 final int cardinality = cardinalities.get(segment);
-                outputFormat("%3d %10d (%2.2f%%)%n", segment, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
+                System.out.format("%3d %10d (%2.2f%%)%n", segment, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
             }
 
         } catch (ClassNotFoundException e) {
@@ -257,7 +257,7 @@ public final class InternalMapFileAnalyzer {
     }
 
     static void header(final String tag) {
-        outputFormat("%n*** %s ***%n", tag);
+        System.out.format("%n*** %s ***%n", tag);
     }
 
     static int output8(ByteBuffer buffer, final String tag) {
@@ -296,35 +296,31 @@ public final class InternalMapFileAnalyzer {
     }
 
     static void output(final long addr, final String tag, final long out) {
-        outputFormat("%08X - %08X  %-30s: 0x%016X (%d)%n", addr, addr + Long.BYTES - 1, tag, out, out);
+        System.out.format("%08X - %08X  %-30s: 0x%016X (%d)%n", addr, addr + Long.BYTES - 1, tag, out, out);
     }
 
     static void output24u(final long addr, final String tag, final long out) {
-        outputFormat("%08X - %08X  %-30s: 0x%06X           (%d)%n", addr, addr + 3 - 1, tag, out, out);
+        System.out.format("%08X - %08X  %-30s: 0x%06X           (%d)%n", addr, addr + 3 - 1, tag, out, out);
     }
 
     static void output32u(final long addr, final String tag, final long out) {
-        outputFormat("%08X - %08X  %-30s: 0x%08X         (%d)%n", addr, addr + 4 - 1, tag, out, out);
+        System.out.format("%08X - %08X  %-30s: 0x%08X         (%d)%n", addr, addr + 4 - 1, tag, out, out);
     }
 
     static void output40u(final long addr, final String tag, final long out) {
-        outputFormat("%08X - %08X  %-30s: 0x%010X       (%d)%n", addr, addr + 5 - 1, tag, out, out);
+        System.out.format("%08X - %08X  %-30s: 0x%010X       (%d)%n", addr, addr + 5 - 1, tag, out, out);
     }
 
     static void output(final long addr, final String tag, final int out) {
-        outputFormat("%08X - %08X  %-30s: 0x%08X         (%d)%n", addr, addr + Integer.BYTES - 1, tag, out, out);
+        System.out.format("%08X - %08X  %-30s: 0x%08X         (%d)%n", addr, addr + Integer.BYTES - 1, tag, out, out);
     }
 
     static void output(final long addr, final String tag, final byte out) {
-        outputFormat("%08X - %08X  %-30s: 0x%02X               (%d)%n", addr, addr, tag, out, out);
+        System.out.format("%08X - %08X  %-30s: 0x%02X               (%d)%n", addr, addr, tag, out, out);
     }
 
     static void output(final long addr, final int length, final String tag, final Object out) {
-        outputFormat("%08X - %08X  %-30s: %s%n", addr, addr + length - 1, tag, out.toString());
-    }
-
-    private static void outputFormat(String format, Object ... args) {
-        System.out.format(format, args);
+        System.out.format("%08X - %08X  %-30s: %s%n", addr, addr + length - 1, tag, out.toString());
     }
 
     static void align(ByteBuffer buffer, int boundary) {
