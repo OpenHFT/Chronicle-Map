@@ -24,7 +24,9 @@ See <<docs/CM_Features.adoc#,Features doc>> for more information.
 
 The size of a Chronicle Map is not limited by memory (RAM), but rather by the available disk capacity.
 
-image::docs\images\CM_Overview.jpg[]
+.Overview
+image::docs\images\Image1_.png[750,650]
+
 
 === Use cases
 Chronicle Map is used in production around the
@@ -67,7 +69,8 @@ The following diagram shows an example of Chronicle Map replication over three s
 Chronicle Map Replication is part of Chronicle Map (Enterprise Edition); a commercially supported
 version of our successful open source Chronicle Map.
 
-image::docs\images\Configure_Three_Way_Replication.png[]
+.Three-Way Replication
+image::docs\images\Image2_.png[750,650]
 
 Replication is multi-master, lock-free, redundant, deterministic, and eventually consistent.
 
