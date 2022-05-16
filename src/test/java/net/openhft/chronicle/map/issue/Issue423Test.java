@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 
 import static org.junit.Assert.assertNotNull;
 
@@ -28,7 +29,13 @@ public class Issue423Test {
         final RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file.getCanonicalFile());
         final FileChannel fileChannel = raf.getChannel();
 
-        assertNotNull(fileChannel.tryLock());
+        final FileLock lock = fileChannel.tryLock();
+        try {
+            assertNotNull(lock);
+        } finally {
+            if (lock != null)
+                lock.close();
+        }
 
     }
 }
