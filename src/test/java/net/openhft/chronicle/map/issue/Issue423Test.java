@@ -12,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class Issue423Test {
 
@@ -20,8 +21,10 @@ public class Issue423Test {
         final File file = new File("issue423");
 
         try {
-            ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class)
-                    // This will throw an IllegalArgumentException as .entries() are not called
+            ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                    // This will throw an IllegalArgumentException as the value seize is not known
+                    //.averageValueSize(10)
+                    .entries(100)
                     .createPersistedTo(file);
 
         } catch (IllegalStateException ignored) {
@@ -34,6 +37,9 @@ public class Issue423Test {
             // Make sure we can lock (hence the file was not previously locked)
             assertNotNull(lock);
         }
+
+        // Make sure the file can be deleted despite an Exception was thrown by the builder
+        assertTrue(file.delete());
 
     }
 }
