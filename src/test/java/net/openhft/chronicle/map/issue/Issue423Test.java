@@ -30,12 +30,14 @@ public class Issue423Test {
         } catch (IllegalStateException ignored) {
             // expected path
         }
-        final RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file.getCanonicalFile());
-        final FileChannel fileChannel = raf.getChannel();
 
-        try (FileLock lock = fileChannel.tryLock()) {
-            // Make sure we can lock (hence the file was not previously locked)
-            assertNotNull(lock);
+        try (RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file.getCanonicalFile());
+             FileChannel fileChannel = raf.getChannel();) {
+
+            try (FileLock lock = fileChannel.tryLock()) {
+                // Make sure we can lock (hence the file was not previously locked)
+                assertNotNull(lock);
+            }
         }
 
         // Make sure the file can be deleted despite an Exception was thrown by the builder
