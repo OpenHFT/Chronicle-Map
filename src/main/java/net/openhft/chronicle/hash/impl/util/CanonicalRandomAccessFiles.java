@@ -50,7 +50,8 @@ public final class CanonicalRandomAccessFiles {
     }
 
     public static RandomAccessFile acquire(@NotNull final File file) throws FileNotFoundException {
-        return acquire0(file, (ref) -> {}).raf;
+        return acquire0(file, (ref) -> {
+        }).raf;
     }
 
     private static RafReference acquire0(@NotNull final File file, Consumer<RafReference> action) {
@@ -77,7 +78,8 @@ public final class CanonicalRandomAccessFiles {
     }
 
     public static void release(@NotNull final File file) {
-        release0(file, (ref) -> {});
+        release0(file, (ref) -> {
+        });
     }
 
     private static RafReference release0(@NotNull final File file, Consumer<RafReference> action) {
@@ -172,40 +174,40 @@ public final class CanonicalRandomAccessFiles {
                                             @NotNull final FileIOAction fileIOAction) {
         AtomicBoolean locked = new AtomicBoolean(false);
 
-        acquire0(canonicalFile, (rafReference) -> {
-                    if (rafReference.lockRef != null)
-                        return;
+        try {
+            acquire0(canonicalFile, (rafReference) -> {
+                        if (rafReference.lockRef != null)
+                            return;
 
-                    try {
-                        if (USE_EXCLUSIVE_LOCKING) {
-                            try (FileLock ignored = fileChannel.tryLock()) {
-                                if (ignored == null) {
-                                    rafReference.lockRef = null;
+                        try {
+                            if (USE_EXCLUSIVE_LOCKING) {
+                                try (FileLock lock = fileChannel.tryLock()) {
+                                    if (lock == null) {
+                                        rafReference.lockRef = null;
+                                        return;
+                                    }
 
-                                    return;
+                                    fileIOAction.fileIOAction();
+
+                                    locked.set(true);
+                                } catch (OverlappingFileLockException ignored) {
+                                    // File lock is being held by this JVM, unsuccessful attempt.
                                 }
-
+                            } else {
                                 fileIOAction.fileIOAction();
 
                                 locked.set(true);
                             }
-                            catch (OverlappingFileLockException ignored) {
-                                // File lock is being held by this JVM, unsuccessful attempt.
-                            }
-                        } else {
-                            fileIOAction.fileIOAction();
 
-                            locked.set(true);
+                            rafReference.lockRef = null;
+                        } catch (Exception e) {
+                            throw Jvm.rethrow(e);
                         }
-
-                        rafReference.lockRef = null;
-                    } catch (Exception e) {
-                        throw Jvm.rethrow(e);
                     }
-                }
-        );
-
-        release(canonicalFile);
+            );
+        } finally {
+            release(canonicalFile);
+        }
 
         return locked.get();
     }
