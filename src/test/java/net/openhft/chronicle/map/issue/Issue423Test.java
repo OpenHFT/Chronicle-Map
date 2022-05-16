@@ -23,7 +23,6 @@ public class Issue423Test {
         try {
             ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                     // This will throw an IllegalArgumentException as the value seize is not known
-                    //.averageValueSize(10)
                     .entries(100)
                     .createPersistedTo(file);
 
