@@ -21,6 +21,7 @@ public class Issue423Test {
 
         try {
             ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class)
+                    // This will throw an IllegalArgumentException as .entries() are not called
                     .createPersistedTo(file);
 
         } catch (IllegalStateException ignored) {
@@ -29,12 +30,9 @@ public class Issue423Test {
         final RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file.getCanonicalFile());
         final FileChannel fileChannel = raf.getChannel();
 
-        final FileLock lock = fileChannel.tryLock();
-        try {
+        try (FileLock lock = fileChannel.tryLock()) {
+            // Make sure we can lock (hence the file was not previously locked)
             assertNotNull(lock);
-        } finally {
-            if (lock != null)
-                lock.close();
         }
 
     }
