@@ -46,12 +46,16 @@ public final class CanonicalRandomAccessFiles {
     private static final AtomicBoolean LOCK_WARNING_PRINTED = new AtomicBoolean();
     private static final ConcurrentHashMap<File, RafReference> CANONICAL_RAFS = new ConcurrentHashMap<>();
 
+    // https://stackoverflow.com/questions/3375307/how-to-disable-code-formatting-for-some-part-of-the-code-using-comments
+    // @formatter:off
+    private static final Consumer<RafReference> NO_OP = rr -> {};
+    // @formatter:on
+
     private CanonicalRandomAccessFiles() {
     }
 
     public static RandomAccessFile acquire(@NotNull final File file) throws FileNotFoundException {
-        return acquire0(file, (ref) -> {
-        }).raf;
+        return acquire0(file, NO_OP).raf;
     }
 
     private static RafReference acquire0(@NotNull final File file, Consumer<RafReference> action) {
@@ -78,8 +82,7 @@ public final class CanonicalRandomAccessFiles {
     }
 
     public static void release(@NotNull final File file) {
-        release0(file, (ref) -> {
-        });
+        release0(file, NO_OP);
     }
 
     private static RafReference release0(@NotNull final File file, Consumer<RafReference> action) {

@@ -14,7 +14,7 @@ import java.nio.channels.FileLock;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-public class Issue423Test {
+public class Issue423LockFileRemainsLockedOnWindowsIfBuilderThrowsTest {
 
     @Test
     public void reproduce() throws IOException {
