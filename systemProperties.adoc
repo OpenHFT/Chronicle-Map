@@ -1,0 +1,11 @@
+== System Properties
+Below, a number of relevant System Properties are listed.
+
+.System properties
+[cols=4*, options="header"]
+|===
+| Property Key | Default | Description | Java Variable Name (Type)
+| chronicle.map.creation.debug | `false` | If 'true', displays message regarding aspects of map creation, including what the existing file is and what the name and header of the map is  | _MAP_CREATION_DEBUG_ (boolean)
+| chronicle.map.sparseFile | `false` | Dictates if a file is a sparseFile or not, which is important to know as the fragmented file may hang the program and cause dmsg reports | sparseFile (boolean)
+| net.openhft.chronicle.map.lockTimeoutSeconds | 60 | Used to determine the time it takes to acquire a lock, in seconds. | _LOCK_TIMEOUT_SESSIONS_ (int)
+|===
