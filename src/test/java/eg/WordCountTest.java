@@ -37,7 +37,6 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.reducing;
 import static org.junit.Assert.assertEquals;
 
-@Ignore("see https://github.com/OpenHFT/Chronicle-Map/issues/381")
 public class WordCountTest {
 
     static String[] words;
