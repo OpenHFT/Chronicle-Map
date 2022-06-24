@@ -2242,7 +2242,7 @@ PRESENT, ABSENT;    }
 
     @NotNull
     private static VanillaBytes unmonitoredVanillaBytes(PointerBytesStore segmentBS) {
-        VanillaBytes bytes = new VanillaBytes(segmentBS) {};
+        VanillaBytes bytes = new VanillaBytes(segmentBS);
         IOTools.unmonitor(bytes);
         return bytes;
     }
