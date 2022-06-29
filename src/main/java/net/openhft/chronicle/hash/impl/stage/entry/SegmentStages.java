@@ -20,8 +20,8 @@ import net.openhft.chronicle.algo.bitset.ReusableBitSet;
 import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
 import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.NativeBytes;
 import net.openhft.chronicle.bytes.PointerBytesStore;
-import net.openhft.chronicle.bytes.VanillaBytes;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.hash.Data;
@@ -29,7 +29,6 @@ import net.openhft.chronicle.hash.SegmentLock;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.hash.Chaining;
 import net.openhft.chronicle.hash.impl.stage.hash.CheckOnEachPublicOperation;
-import net.openhft.chronicle.hash.impl.stage.hash.LogHolder;
 import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
@@ -53,7 +52,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     @Stage("Segment")
     public final PointerBytesStore segmentBS = new PointerBytesStore();
     @Stage("Segment")
-    public final Bytes segmentBytes = unmonitoredVanillaBytes(segmentBS);
+    public final Bytes segmentBytes = unmonitoredBytes(segmentBS);
     @StageRef
     public VanillaChronicleHashHolder<?> hh;
     @Stage("Segment")
@@ -112,8 +111,8 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     int totalWriteLockCount;
 
     @NotNull
-    private static VanillaBytes unmonitoredVanillaBytes(PointerBytesStore segmentBS) {
-        VanillaBytes bytes = new VanillaBytes(segmentBS) {};
+    private static Bytes unmonitoredBytes(PointerBytesStore segmentBS) {
+        Bytes bytes = new NativeBytes(segmentBS);
         IOTools.unmonitor(bytes);
         return bytes;
     }
