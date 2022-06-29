@@ -22,18 +22,24 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.IOTools;
+import net.openhft.chronicle.core.util.NanoSampler;
 import net.openhft.chronicle.jlbh.JLBH;
 import net.openhft.chronicle.jlbh.JLBHOptions;
 import net.openhft.chronicle.jlbh.JLBHTask;
-import net.openhft.chronicle.core.util.NanoSampler;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * model name      : Intel(R) Core(TM) i7-10710U CPU @ 1.10GHz
@@ -50,25 +56,33 @@ import java.io.IOException;
  * -------------------------------------------------------------------------------------------------------------------
  */
 public class MapJLBHTest implements JLBHTask {
-    private static final int WARM_UP_ITERATIONS = 40_000;
-    private static final int KEYS = Integer.getInteger("keys", 100_000);
-    private ChronicleMap<Long, IFacade0> read;
-    private ChronicleMap<Long, IFacade0> write;
+    private static final int KEYS = Integer.getInteger("keys", 10_000_000);
+    private static final int WARM_UP_ITERATIONS = Math.max(100_000, KEYS / 2);
+    private static final String PATH = System.getProperty("path", OS.TMP);
+    private static final int THROUGHPUT = Integer.getInteger("throughput", 1_000_000);
+    private static final int THREADS = 6;
+    private int count = 0;
+    private ChronicleMap<Long, IFacade0> map;
     private NanoSampler readSampler;
     private NanoSampler writeSampler;
     private NanoSampler e2eSampler;
-    private File mapFile = new File(OS.TMP + "/perfmap/map.cm3");
-    private long counter = -WARM_UP_ITERATIONS;
-    private IFacade0 datum = Values.newNativeReference(IFacade0.class);
+    private File mapFile = new File(PATH, "map" + System.nanoTime() + ".cm3");
+    private ThreadLocal<Worker> workerTL = ThreadLocal.withInitial(Worker::new);
+    private ExecutorService service = new ThreadPoolExecutor(THREADS, THREADS,
+            1L, TimeUnit.MINUTES,
+            new ArrayBlockingQueue<>(THREADS * 4),
+            new NamedThreadFactory("worker", true),
+            new ThreadPoolExecutor.CallerRunsPolicy());
 
     public static void main(String[] args) {
         //Create the JLBH options you require for the benchmark
         JLBHOptions options = new JLBHOptions()
                 .warmUpIterations(WARM_UP_ITERATIONS)
-                .iterations(10_000_000)
-                .throughput(110_000)
+                .iterations(Math.max(10_000_000, KEYS))
+                .throughput(THROUGHPUT)
                 .runs(5)
-                .recordOSJitter(false).accountForCoordinatedOmission(false)
+                .recordOSJitter(false)
+                .accountForCoordinatedOmission(true)
                 .jlbhTask(new MapJLBHTest());
         new JLBH(options).start();
     }
@@ -77,22 +91,25 @@ public class MapJLBHTest implements JLBHTask {
     public void init(JLBH jlbh) {
         IOTools.deleteDirWithFiles(mapFile.getParent(), 2);
         mapFile.getParentFile().mkdirs();
+        mapFile.deleteOnExit();
         readSampler = jlbh.addProbe("Read");
         writeSampler = jlbh.addProbe("Write");
         e2eSampler = jlbh;
 
+        IFacade0 datum = Values.newNativeReference(IFacade0.class);
         Byteable byteable = (Byteable) datum;
         long capacity = byteable.maxSize();
+        System.out.println("Data size: " + capacity);
         byteable.bytesStore(BytesStore.nativeStore(capacity), 0, capacity);
 
         try {
-            write = ChronicleMapBuilder.of(Long.class, IFacade0.class)
+            final long entries = KEYS;
+            map = ChronicleMapBuilder.of(Long.class, IFacade0.class)
                     .constantValueSizeBySample(datum)
-                    .entries(KEYS * 2L)
-                    .createPersistedTo(mapFile);
-            read = ChronicleMapBuilder.of(Long.class, IFacade0.class)
-                    .constantValueSizeBySample(datum)
-                    .entries(KEYS * 2L)
+                    .entries(entries)
+                    .sparseFile(true)
+                    .maxBloatFactor(1.2)
+                    .actualSegments(32)
                     .createPersistedTo(mapFile);
         } catch (IOException ex) {
             throw Jvm.rethrow(ex);
@@ -101,34 +118,13 @@ public class MapJLBHTest implements JLBHTask {
 
     @Override
     public void run(long startTimeNS) {
-        long runNo = counter++ % KEYS;
-        datum.setValue10(startTimeNS);
-        long startWrite = System.nanoTime();
-        write.put(runNo, datum);
-        long endWrite = System.nanoTime();
-        long writeTime = endWrite - startWrite;
-        writeSampler.sampleNanos(writeTime);
-
-        IFacade0 dataRead = read.getUsing(runNo - 1, datum);
-        long nanos = System.nanoTime();
-        if (dataRead != null) {
-            readSampler.sampleNanos(nanos - endWrite);
-        }
-        e2eSampler.sampleNanos(nanos - startTimeNS);
-    }
-
-    @Override
-    public void warmedUp() {
-        counter = 0;
+        service.execute(() -> workerTL.get().run(startTimeNS));
     }
 
     @Override
     public void complete() {
-        write.close();
-        read.close();
+        map.close();
     }
-
-    //IFacade (at the bottom) is the façade we need tested
 
     interface IFacadeBase {
         short getValue0();
@@ -207,6 +203,8 @@ public class MapJLBHTest implements JLBHTask {
 
         void setValue18(short value);
     }
+
+    //IFacade (at the bottom) is the façade we need tested
 
     interface IFacadeSon extends IFacadeBase {
         long getValue19();
@@ -554,5 +552,45 @@ public class MapJLBHTest implements JLBHTask {
         void setSonAt(int idx, IFacadeSon son);
 
         IFacadeSon getSonAt(int idx);
+    }
+
+    class Worker {
+        private IFacade0 datum = Values.newNativeReference(IFacade0.class);
+        private IFacade0 datum2 = Values.newNativeReference(IFacade0.class);
+        private Random random = new Random();
+
+        public Worker() {
+            Byteable byteable = (Byteable) datum;
+            long capacity = byteable.maxSize();
+            byteable.bytesStore(BytesStore.nativeStore(capacity), 0, capacity);
+        }
+
+        public void run(long startTimeNS) {
+            long runNo = generateKey();
+            datum.setValue10(startTimeNS);
+            long startWrite = System.nanoTime();
+            map.put(runNo, datum);
+            long endWrite = System.nanoTime();
+            long writeTime = endWrite - startWrite;
+
+            long runNo2 = generateKey();
+            long startRead = System.nanoTime();
+            IFacade0 dataRead = map.getUsing(runNo2, datum2);
+            long endRead = System.nanoTime();
+
+            synchronized (e2eSampler) {
+                writeSampler.sampleNanos(writeTime);
+                readSampler.sampleNanos(endRead - startRead);
+                e2eSampler.sampleNanos(endRead - startTimeNS);
+            }
+        }
+
+        private long generateKey() {
+            // warmup
+            if (count < WARM_UP_ITERATIONS)
+                return count++;
+            // logarithmic distribution
+            return (long) Math.pow(KEYS, random.nextDouble());
+        }
     }
 }
