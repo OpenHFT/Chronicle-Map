@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class ParallelStartupTest {
     @Test
@@ -59,8 +58,6 @@ public class ParallelStartupTest {
 
             for (int i = 0; i < thread.length; i++)
                 thread[i].join();
-
-            assertTrue(file.delete());
 
             assertEquals(thread.length, succ.get());
         } catch (Exception ex) {
