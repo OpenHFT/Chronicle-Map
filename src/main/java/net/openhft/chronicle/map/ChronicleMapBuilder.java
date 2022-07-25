@@ -1900,9 +1900,10 @@ public final class ChronicleMapBuilder<K, V> implements
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
 
             final long dataStoreSize = map.globalMutableState().getDataStoreSize();
-            if (!recover && dataStoreSize > file.length()) {
+            long fileLength = raf.length();
+            if (!recover && dataStoreSize > fileLength) {
                 throw new IOException("The file " + file + " the map is serialized from " +
-                        "has unexpected length " + file.length() + ", probably corrupted. " +
+                        "has unexpected length " + fileLength + ", probably corrupted. " +
                         "Data store size is " + dataStoreSize);
             }
             map.initTransientsFromBuilder(this);
