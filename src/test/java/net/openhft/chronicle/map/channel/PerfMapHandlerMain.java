@@ -212,8 +212,7 @@ public class PerfMapHandlerMain implements JLBHTask {
     public void complete() {
         this.complete = true;
         readerThread.interrupt();
-        client.close();
-        Closeable.closeQuietly(main);
+        Closeable.closeQuietly(client, main);
     }
 
     interface TimedPassMapServiceIn {
