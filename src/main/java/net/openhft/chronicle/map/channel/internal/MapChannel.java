@@ -24,6 +24,7 @@ public class MapChannel<VALUE, REPLY> extends SimpleCloseable implements Chronic
     private final MapService<VALUE, REPLY> mapService;
     private final ChronicleChannelCfg channelCfg;
     private final ChronicleMap<Bytes<?>, VALUE> map;
+    // TODO FIX this runs out of memory.
     private final Wire replyWire = WireType.BINARY_LIGHT.apply(Bytes.allocateElasticOnHeap());
 
     public MapChannel(String mapName, MapService<VALUE, REPLY> mapService, ChronicleContext context, ChronicleChannelCfg channelCfg) {
