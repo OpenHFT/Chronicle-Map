@@ -2,14 +2,9 @@ package net.openhft.chronicle.map.channel;
 
 import net.openhft.affinity.AffinityLock;
 import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableReaderWriter;
-import net.openhft.chronicle.hash.serialization.impl.BytesSizedMarshaller;
-import net.openhft.chronicle.hash.serialization.impl.MarshallableReaderWriter;
 import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.wire.Marshallable;
+import net.openhft.chronicle.map.channel.internal.MapChannel;
 import net.openhft.chronicle.wire.channel.AbstractHandler;
 import net.openhft.chronicle.wire.channel.ChronicleChannel;
 import net.openhft.chronicle.wire.channel.ChronicleChannelCfg;
@@ -33,25 +28,7 @@ public class MapHandler<VALUE, REPLY> extends AbstractHandler<MapHandler<VALUE, 
 
     @Override
     public void run(ChronicleContext context, ChronicleChannel channel) {
-        // assume it has to already exist, but if not take a guess on sizes
-        final Class<VALUE> valueClass = mapService.valueClass();
-        final Class<Bytes<?>> bytesClass = (Class) Bytes.class;
-        final ChronicleMapBuilder<Bytes<?>, VALUE> builder = ChronicleMap.of(bytesClass, valueClass)
-                .keyMarshaller(new BytesSizedMarshaller())
-                .averageKeySize(32)
-                .averageValueSize(256)
-                .entries(1000000)
-                .putReturnsNull(true)
-                .removeReturnsNull(true);
-        if (BytesMarshallable.class.isAssignableFrom(valueClass)) {
-            //noinspection unchecked,rawtypes
-            builder.valueMarshaller(new BytesMarshallableReaderWriter<>((Class) valueClass));
-        } else if (Marshallable.class.isAssignableFrom(valueClass)) {
-            //noinspection unchecked,rawtypes
-            builder.valueMarshaller(new MarshallableReaderWriter<>((Class) valueClass));
-        }
-        try (ChronicleMap<Bytes<?>, VALUE> map = builder
-                .createPersistedTo(context.toFile(mapName + ".cm3"))) {
+        try (ChronicleMap<Bytes<?>, VALUE> map = MapChannel.createMap(mapName, mapService, context)) {
             REPLY REPLY = channel.methodWriter(mapService().replyClass());
             mapService.map(map);
             mapService.reply(REPLY);
@@ -66,7 +43,7 @@ public class MapHandler<VALUE, REPLY> extends AbstractHandler<MapHandler<VALUE, 
 
     @Override
     public ChronicleChannel asInternalChannel(ChronicleContext context, ChronicleChannelCfg channelCfg) {
-        throw new UnsupportedOperationException();
+        return new MapChannel(mapName, mapService, context, channelCfg);
     }
 
     protected MapService<VALUE, REPLY> mapService() {
