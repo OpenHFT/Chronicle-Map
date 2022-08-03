@@ -85,6 +85,11 @@
 
         <dependency>
             <groupId>net.openhft</groupId>
+            <artifactId>affinity</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.openhft</groupId>
             <artifactId>chronicle-core</artifactId>
         </dependency>
 
@@ -189,12 +194,6 @@
         <dependency>
             <groupId>org.powermock</groupId>
             <artifactId>powermock-api-mockito</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>affinity</artifactId>
             <scope>test</scope>
         </dependency>
 
