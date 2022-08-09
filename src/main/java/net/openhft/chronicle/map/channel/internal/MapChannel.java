@@ -79,11 +79,6 @@ public class MapChannel<VALUE, REPLY> extends SimpleCloseable implements Chronic
     }
 
     @Override
-    public ChannelHeader headerIn(Function<ChannelHeader, ChannelHeader> redirectFunction) {
-        return OK;
-    }
-
-    @Override
     public void testMessage(long now) {
         throw new UnsupportedOperationException();
     }
