@@ -47,12 +47,6 @@
             </dependency>
 
             <dependency>
-                <groupId>io.hawt</groupId>
-                <artifactId>hawtio-embedded</artifactId>
-                <version>2.15.0</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.skyscreamer</groupId>
                 <artifactId>jsonassert</artifactId>
                 <version>1.5.0</version>
@@ -218,12 +212,6 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.hawt</groupId>
-            <artifactId>hawtio-embedded</artifactId>
             <scope>test</scope>
         </dependency>
 
