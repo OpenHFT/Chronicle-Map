@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.Type;
 import java.nio.file.Paths;
 
+@Deprecated(/* for removal in x.24 */)
 public class MapFileManager extends JMXFileManager implements MapFileManagerMBean {
     private static final long TIME_OUT = 5_000;
     private String header;

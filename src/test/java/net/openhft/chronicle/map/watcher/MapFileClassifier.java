@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+@Deprecated(/* for removal in x.24 */)
 public class MapFileClassifier implements FileClassifier {
     @Override
     public FileManager classify(String base, String relative) {

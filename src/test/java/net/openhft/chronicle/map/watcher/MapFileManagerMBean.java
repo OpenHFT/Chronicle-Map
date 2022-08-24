@@ -5,6 +5,7 @@
 package net.openhft.chronicle.map.watcher;
 
 @SuppressWarnings("unused")
+@Deprecated(/* for removal in x.24 */)
 public interface MapFileManagerMBean {
 
     public String getHeader();

@@ -11,6 +11,7 @@ import net.openhft.chronicle.core.watcher.FileSystemWatcher;
 
 import java.io.File;
 
+@Deprecated(/* for removal in x.24 */)
 public class MapWatcherMain {
     public static void main(String[] args) throws Exception {
         FileSystemWatcher fsw = new FileSystemWatcher();
