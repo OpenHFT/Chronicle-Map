@@ -36,12 +36,13 @@ import static org.junit.Assert.*;
 public class ExitHookTest {
 
     private static final int KEY = 1;
-    private static final int JVM_STARTUP_WAIT_TIME_MS = 2_000;
+    private static final int JVM_STARTUP_WAIT_TIME_MS = 10_000;
     public static final int CHILD_PROCESS_WAIT_TIME_MS = 3_000;
 
     private static final String PRE_SHUTDOWN_ACTION_EXECUTED = "PRE_SHUTDOWN_ACTION_EXECUTED";
     private static final String USER_SHUTDOWN_HOOK_EXECUTED = "USER_SHUTDOWN_HOOK_EXECUTED";
     private static final String LOCKED = "LOCKED";
+    private static AtomicReference<ChronicleMap<Integer, Integer>> mapReference;
 
     @Rule
     public TemporaryFolder folder = new TemporaryFolder();
@@ -56,43 +57,44 @@ public class ExitHookTest {
 
         boolean skipCloseOnExitHook = Boolean.parseBoolean(args[3]);
 
-        AtomicReference<ChronicleMap<Integer, Integer>> mapReference = new AtomicReference<>();
+        mapReference = new AtomicReference<>();
         System.out.println("exit hook: " + skipCloseOnExitHook);
-        if (skipCloseOnExitHook) {
-            mapBuilder.skipCloseOnExitHook(true);
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                // In practice, do something with map before shutdown - like create a new map using data from this map.
-                long started = System.currentTimeMillis();
-
-                ChronicleMap<Integer, Integer> map = mapReference.get();
-                if (map != null)
-                    map.close();
-                System.out.println("Closing map took " + (System.currentTimeMillis() - started) + " ms");
-
-                try {
-                    System.out.println("Executing user defined shutdown hook");
-                    Preconditions.checkState(shutdownActionConfirmationFile.exists());
-                    Files.write(shutdownActionConfirmationFile.toPath(),
-                            USER_SHUTDOWN_HOOK_EXECUTED.getBytes());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                }
-            }));
-        } else {
-            mapBuilder.setPreShutdownAction(() -> {
-                try {
-                    System.out.println("Executing pre-shutdown action");
-                    Preconditions.checkState(shutdownActionConfirmationFile.exists());
-                    Files.write(shutdownActionConfirmationFile.toPath(),
-                            PRE_SHUTDOWN_ACTION_EXECUTED.getBytes());
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    throw new RuntimeException(e);
-                }
-            });
-        }
         try {
+            if (skipCloseOnExitHook) {
+                mapBuilder.skipCloseOnExitHook(true);
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                    // In practice, do something with map before shutdown - like create a new map using data from this map.
+                    long started = System.currentTimeMillis();
+
+                    ChronicleMap<Integer, Integer> map = mapReference.get();
+                    if (map != null)
+                        map.close();
+                    System.out.println("Closing map took " + (System.currentTimeMillis() - started) + " ms");
+
+                    try {
+                        System.out.println("Executing user defined shutdown hook");
+                        Preconditions.checkState(shutdownActionConfirmationFile.exists());
+                        Files.write(shutdownActionConfirmationFile.toPath(),
+                                USER_SHUTDOWN_HOOK_EXECUTED.getBytes());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                }));
+            } else {
+                mapBuilder.setPreShutdownAction(() -> {
+                    try {
+                        System.out.println("Executing pre-shutdown action");
+                        Preconditions.checkState(shutdownActionConfirmationFile.exists());
+                        Files.write(shutdownActionConfirmationFile.toPath(),
+                                PRE_SHUTDOWN_ACTION_EXECUTED.getBytes());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException(e);
+                    }
+                });
+            }
+
             mapReference.set(mapBuilder.createPersistedTo(mapFile));
             System.out.println("Locking");
             try (ExternalMapQueryContext<Integer, Integer, ?> c = mapReference.get().queryContext(KEY)) {
@@ -100,7 +102,7 @@ public class ExitHookTest {
                 Files.write(lockConfirmationFile.toPath(), LOCKED.getBytes());
                 Thread.sleep(CHILD_PROCESS_WAIT_TIME_MS);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             e.printStackTrace();
             throw e;
         }
@@ -183,6 +185,7 @@ public class ExitHookTest {
                     String line = lineIterator.next();
                     assertEquals(LOCKED, line);
                     assertFalse(lineIterator.hasNext());
+                    break;
                 } else {
                     Jvm.pause(10);
                 }
