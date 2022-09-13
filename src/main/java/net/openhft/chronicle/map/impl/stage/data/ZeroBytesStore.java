@@ -19,6 +19,7 @@ package net.openhft.chronicle.map.impl.stage.data;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.ReferenceChangeListener;
 import net.openhft.chronicle.core.io.ReferenceOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,6 +183,14 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     @Override
     public int refCount() {
         return 1;
+    }
+
+    @Override
+    public void addReferenceChangeListener(ReferenceChangeListener referenceChangeListener) {
+    }
+
+    @Override
+    public void removeReferenceChangeListener(ReferenceChangeListener referenceChangeListener) {
     }
 
     @NotNull
