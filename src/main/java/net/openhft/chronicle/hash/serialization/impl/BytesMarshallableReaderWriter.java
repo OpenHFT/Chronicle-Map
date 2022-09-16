@@ -27,7 +27,7 @@ public class BytesMarshallableReaderWriter<V extends BytesMarshallable>
             using = createInstance();
 
         VanillaBytes vanillaBytes = VANILLA_BYTES_TL.get();
-        vanillaBytes.bytesStore(in, in.readPosition(), size);
+        vanillaBytes.bytesStore(in.bytesStore(), in.readPosition(), size);
         using.readMarshallable(vanillaBytes);
         return using;
     }
