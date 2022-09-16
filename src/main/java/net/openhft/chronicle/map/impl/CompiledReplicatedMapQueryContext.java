@@ -4656,7 +4656,7 @@ PRESENT, ABSENT;    }
         boolean isDeleted = replicatedInputBytes.readBoolean();
         long keySize = this.m().keySizeMarshaller.readSize(replicatedInputBytes);
         long keyOffset = replicatedInputBytes.readPosition();
-        this.initInputKey(this.getInputKeyBytesAsData(replicatedInputBytes, keyOffset, keySize));
+        this.initInputKey(this.getInputKeyBytesAsData(replicatedInputBytes.bytesStore(), keyOffset, keySize));
         replicatedInputBytes.readSkip(keySize);
         if (isDeleted) {
             this.innerUpdateLock.lock();
@@ -4664,7 +4664,7 @@ PRESENT, ABSENT;    }
         } else {
             long valueSize = this.m().valueSizeMarshaller.readSize(replicatedInputBytes);
             long valueOffset = replicatedInputBytes.readPosition();
-            Data<V> value = this.wrapValueBytesAsData(replicatedInputBytes, valueOffset, valueSize);
+            Data<V> value = this.wrapValueBytesAsData(replicatedInputBytes.bytesStore(), valueOffset, valueSize);
             replicatedInputBytes.readSkip(valueSize);
             this.innerWriteLock.lock();
             this.m().remoteOperations.put(this, value);
