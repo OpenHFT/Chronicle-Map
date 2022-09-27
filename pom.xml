@@ -17,6 +17,7 @@
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
     <properties>
+     <zero.cost.assertions>disabled</zero.cost.assertions>
      <sonar.organization>openhft</sonar.organization>
      <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
@@ -67,7 +68,12 @@
         </dependencies>
 
     </dependencyManagement>
-    <dependencies>
+        <dependencies>
+            <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>assertions-${zero.cost.assertions}</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <!-- note using org.jetbrains jar breaks the build -->
@@ -227,7 +233,6 @@
             <version>1.11</version>
             <scope>provided</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -468,6 +473,12 @@
         </plugins>
     </build>
     <profiles>
+        <profile>
+            <id>assertions</id>
+            <properties>
+                <zero.cost.assertions>enabled</zero.cost.assertions>
+            </properties>
+        </profile>
         <profile>
             <id>pre-java9</id>
             <dependencies>
