@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static net.openhft.chronicle.core.util.AssertUtil.SKIP_ASSERTIONS;
+import static net.openhft.chronicle.assertions.AssertUtil.SKIP_ASSERTIONS;
 import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
 
 public final class BigSegmentHeader implements SegmentHeader {
