@@ -63,4 +63,4 @@ You can define the snapshot version in your `pom.xml`; for example:
 ```
 
 '''
-<<../ReadMe.adoc#,Back to ReadMe>>
+<<../README.adoc#,Back to ReadMe>>

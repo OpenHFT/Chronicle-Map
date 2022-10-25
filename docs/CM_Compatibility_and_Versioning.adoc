@@ -117,4 +117,4 @@ incompatible, its revision should be set to `<x+1>-pre` until the next productio
 Releases and updates to the `<minor>` number in the library version should be synchronized with updates to the specification revision number.
 
 '''
-<<../ReadMe.adoc#,Back to ReadMe>>
+<<../README.adoc#,Back to ReadMe>>
