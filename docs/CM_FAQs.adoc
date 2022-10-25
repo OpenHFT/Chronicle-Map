@@ -123,4 +123,4 @@ link:https://www.jetbrains.com/help/idea/delegate-build-and-run-actions-to-maven
 
 '''
 
-<<../ReadMe.adoc#,Back to ReadMe>>
+<<../README.adoc#,Back to ReadMe>>
