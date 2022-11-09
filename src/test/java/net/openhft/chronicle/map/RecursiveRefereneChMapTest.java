@@ -46,7 +46,7 @@ public class RecursiveRefereneChMapTest {
 
     public static class StupidCycle implements Serializable {
         int dummy;
-        Object cycle[] = {this};
+        Object[] cycle = {this};
     }
 
     public static class StupidCycle2 extends StupidCycle implements Externalizable {

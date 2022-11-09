@@ -11,7 +11,7 @@ import java.util.concurrent.locks.StampedLock;
 
 public class DirtyReadTolerance<K, V> {
 
-    public static void main(String args[]) throws Exception {
+    public static void main(String[] args) throws Exception {
         System.out.println("DirtyReadOffender,chrAig[" + args[0] + "]coupon=3.50,DirtyReadVictim");
         String isoLevel = args[0];
 
