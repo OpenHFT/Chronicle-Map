@@ -8,7 +8,7 @@ import java.util.concurrent.locks.StampedLock;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadIntolerant {
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         try {
             String isoLevel = args[0];
             long sleepMock = Long.parseLong(args[1]);

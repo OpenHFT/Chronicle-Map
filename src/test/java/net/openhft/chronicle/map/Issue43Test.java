@@ -46,7 +46,7 @@ public class Issue43Test {
     }
 
     private static class ValueWrapper {
-        private final double values[];
+        private final double[] values;
 
         public ValueWrapper(double[] values) {
             this.values = values;

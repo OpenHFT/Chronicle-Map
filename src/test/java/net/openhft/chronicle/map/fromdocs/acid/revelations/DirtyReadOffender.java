@@ -10,7 +10,7 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadOffender {
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
         try {
