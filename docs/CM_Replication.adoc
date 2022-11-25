@@ -173,12 +173,11 @@ For example:
 
 [source, java]
 ----
-ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.of(Integer.class,
-                MyDto.class)
-                .entries(10)
-                .averageValueSize(128)
-                .actualSegments(1)
-                .valueMarshaller(new MarshallableReaderWriter<>(MyDto.class));
+ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.of(Integer.class, MyDto.class)
+        .entries(10)
+        .averageValueSize(128)
+        .actualSegments(1)
+        .valueMarshaller(new MarshallableReaderWriter<>(MyDto.class));
 ----
 
 However, `ReplicatedMapCfg` is not able to express `valueMarshaller()`, but it is possible to do this in a subclass, for example:
@@ -187,11 +186,11 @@ However, `ReplicatedMapCfg` is not able to express `valueMarshaller()`, but it i
 ----
 public class MarshallableReplicatedMapCfg<K, V extends Marshallable> extends ReplicatedMapCfg<K, V> {
 
-   public ChronicleMapBuilder<K, V> mapBuilder(byte localHostId) {
-   ChronicleMapBuilder<K, V> builder = super.mapBuilder(localHostId);
-   builder.valueMarshaller(new MarshallableReaderWriter<V>(valueClass()));
-   return builder;
-   }
+    public ChronicleMapBuilder<K, V> mapBuilder(byte localHostId) {
+        ChronicleMapBuilder<K, V> builder = super.mapBuilder(localHostId);
+        builder.valueMarshaller(new MarshallableReaderWriter<V>(valueClass()));
+        return builder;
+    }
 }
 ----
 
