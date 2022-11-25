@@ -166,6 +166,48 @@ try (ReplicatedMap clusterOnHost1 = createCluster(CLUSTER_YAML, 1);
 
 This example is available in the Chronicle Map Enterprise Demo - for access contact info@chronicle.software
 
+=== Implementing Custom Serializers
+
+In Chronicle Map, custom serializers can be applied to `ChronicleMapBuilder` using `valueMarshaller()` method.
+For example:
+
+[source, java]
+----
+ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.of(Integer.class, MyDto.class)
+        .entries(10)
+        .averageValueSize(128)
+        .actualSegments(1)
+        .valueMarshaller(new MarshallableReaderWriter<>(MyDto.class));
+----
+
+However, `ReplicatedMapCfg` is not able to express `valueMarshaller()`, but it is possible to do this in a subclass, for example:
+
+[source, java]
+----
+public class MarshallableReplicatedMapCfg<K, V extends Marshallable> extends ReplicatedMapCfg<K, V> {
+
+    public ChronicleMapBuilder<K, V> mapBuilder(byte localHostId) {
+        ChronicleMapBuilder<K, V> builder = super.mapBuilder(localHostId);
+        builder.valueMarshaller(new MarshallableReaderWriter<V>(valueClass()));
+        return builder;
+    }
+}
+----
+
+Then this class should be added as an alias in the Java code and finally be specified in the YAML file explicitly:
+
+[source, java]
+----
+ClassAliasPool.CLASS_ALIASES.addAlias(MarshallableReplicatedMapCfg.class);
+----
+
+[source, yaml]
+----
+valueclass.map: !MarshallableReplicatedMapCfg {
+           ...
+}
+----
+
 == Replication event logging
 
 Chronicle Map Enterprise can be configured to log all replication events to a Chronicle Queue for auditing purposes.
