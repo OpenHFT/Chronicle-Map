@@ -28,7 +28,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
-                <version>3.23.0</version>
+                <version>3.23.1-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -39,30 +39,6 @@
                 <version>2.24ea-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>com.thoughtworks.xstream</groupId>
-                <artifactId>xstream</artifactId>
-                <version>1.4.19</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.skyscreamer</groupId>
-                <artifactId>jsonassert</artifactId>
-                <version>1.5.0</version>
-            </dependency>
-
-            <dependency>
-                <groupId>net.openhft</groupId>
-                <artifactId>zero-allocation-hashing</artifactId>
-                <version>0.16</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.samskivert</groupId>
-                <artifactId>samskivert</artifactId>
-                <version>1.9</version>
             </dependency>
 
         </dependencies>
