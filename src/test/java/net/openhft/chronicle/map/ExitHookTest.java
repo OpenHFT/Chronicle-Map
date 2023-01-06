@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.testframework.process.JavaProcessBuilder;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -150,8 +151,7 @@ public class ExitHookTest {
 
     @Test
     public void testSkipExitHook() throws IOException, InterruptedException {
-        if (!OS.isLinux() && !OS.isMacOSX())
-            return; // This test runs only in Unix-like OSes
+        Assume.assumeTrue("This test runs only in Unix-like OSes", OS.isLinux() || OS.isMacOSX());
         File mapFile = folder.newFile();
         File lockingConfirmationFile = folder.newFile();
         File shutdownActionConfirmationFile = folder.newFile();
