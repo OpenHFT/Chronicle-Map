@@ -30,8 +30,6 @@ import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
 import net.openhft.chronicle.hash.impl.util.CleanerUtils;
 import net.openhft.chronicle.hash.impl.util.jna.PosixFallocate;
-import net.openhft.chronicle.hash.impl.util.jna.PosixMsync;
-import net.openhft.chronicle.hash.impl.util.jna.WindowsMsync;
 import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
@@ -41,6 +39,8 @@ import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.wire.*;
+import net.openhft.posix.MSyncFlag;
+import net.openhft.posix.PosixAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -883,11 +883,7 @@ public abstract class VanillaChronicleHash<K,
                         ": unexpected firstFreeTierIndex value " + firstFreeTierIndex);
             }
             if (firstFreeTierIndex == 0) {
-                try {
-                    allocateTierBulk();
-                } catch (IOException e) {
-                    throw new RuntimeException(toIdentityString(), e);
-                }
+                allocateTierBulk();
                 firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
                 if (firstFreeTierIndex <= 0) {
                     throw new RuntimeException(toIdentityString() +
@@ -907,7 +903,7 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void allocateTierBulk() throws IOException {
+    private void allocateTierBulk() {
         final int allocatedExtraTierBulks = globalMutableState.getAllocatedExtraTierBulks();
 
         mapTierBulks(allocatedExtraTierBulks);
@@ -937,6 +933,7 @@ public abstract class VanillaChronicleHash<K,
         globalMutableState.addDataStoreSize(tierBulkSizeInBytes);
     }
 
+    // TODO: x.25 remove throws IOException
     public void msync() throws IOException {
         throwExceptionIfClosed();
 
@@ -945,21 +942,14 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void msync(long address, long length) throws IOException {
+    private void msync(long address, long length) {
         // address should be a multiple of page size
         if (OS.pageAlign(address) != address) {
             final long oldAddress = address;
             address = OS.pageAlign(address) - OS.pageSize();
             length += oldAddress - address;
         }
-        if (OS.isMacOSX()) {
-            // see issue https://github.com/OpenHFT/Chronicle-Map/issues/304
-            // todo get msync to work on mac
-        } else if (OS.isWindows()) {
-            WindowsMsync.msync(raf, address, length);
-        } else {
-            PosixMsync.msync(address, length);
-        }
+        PosixAPI.posix().msync(address, length, MSyncFlag.MS_SYNC);
     }
 
     public void linkAndZeroOutFreeTiers(long firstTierIndex, long lastTierIndex) {
