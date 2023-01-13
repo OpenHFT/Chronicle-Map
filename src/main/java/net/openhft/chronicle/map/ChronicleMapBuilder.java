@@ -27,6 +27,7 @@ import net.openhft.chronicle.core.annotation.UsedViaReflection;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
+import net.openhft.chronicle.hash.VanillaGlobalMutableState;
 import net.openhft.chronicle.hash.impl.*;
 import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
 import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
@@ -163,6 +164,7 @@ public final class ChronicleMapBuilder<K, V> implements
             };
     private static final int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
     private static final boolean MAP_CREATION_DEBUG = Jvm.getBoolean("chronicle.map.creation.debug");
+    private static final int FILE_LOCK_TIMEOUT = Jvm.getInteger("chronicle.map.file.lock.timeout.secs", 10);
 
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
@@ -1689,6 +1691,9 @@ public final class ChronicleMapBuilder<K, V> implements
         replicated = replicationIdentifier != -1;
         persisted = true;
 
+        // This line pre-initializes CachedCompiler - the first call may take time as Javac needs to scan the whole classpath
+        Values.nativeClassFor(VanillaGlobalMutableState.class);
+
         // It's important to canonicalize the file, because CanonicalRandomAccessFiles.acquire()
         // relies on java.io.File equality, which doesn't account symlinks itself.
         final File canonicalFile = file.getCanonicalFile();
@@ -1727,9 +1732,10 @@ public final class ChronicleMapBuilder<K, V> implements
                         break;
                     else {
                         try {
-                            pauser.pause(10, TimeUnit.SECONDS);
+                            pauser.pause(FILE_LOCK_TIMEOUT, TimeUnit.SECONDS);
                         } catch (TimeoutException e) {
-                            Jvm.warn().on(getClass(), "Failed to write header: can't acquire exclusive file lock on empty file [" + canonicalFile + "] for 10 seconds", e);
+                            Jvm.warn().on(getClass(), "Failed to write header: can't acquire exclusive file " +
+                                    "lock on empty file [" + canonicalFile + "] for " + FILE_LOCK_TIMEOUT + " seconds", e);
 
                             Jvm.rethrow(e);
                         }
