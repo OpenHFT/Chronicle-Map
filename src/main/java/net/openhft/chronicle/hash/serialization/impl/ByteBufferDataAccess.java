@@ -20,6 +20,7 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.bytes.VanillaBytes;
 import net.openhft.chronicle.bytes.internal.NativeBytesStore;
+import net.openhft.chronicle.core.io.ReferenceOwner;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -34,7 +35,6 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
         implements DataAccess<ByteBuffer> {
 
     // Cache fields
-    private transient BytesStore nativeBytesStore;
     private transient VanillaBytes<Void> bytes;
 
     // State fields
@@ -46,7 +46,6 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     }
 
     private void initTransients() {
-        nativeBytesStore = BytesStore.nativeStore(0);
         bytes = VanillaBytes.vanillaBytes();
     }
 
@@ -87,21 +86,15 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     @Override
     public Data<ByteBuffer> getData(@NotNull ByteBuffer instance) {
         bb = instance;
-        if (instance.isDirect()) {
-            ((NativeBytesStore) nativeBytesStore).init(instance, false);
-            bytesStore = nativeBytesStore;
-        } else {
-            bytesStore = BytesStore.wrap(instance);
-        }
+        bytesStore = BytesStore.follow(instance);
         return this;
     }
 
     @Override
     public void uninit() {
         bb = null;
-        if (bytesStore == nativeBytesStore) {
-            ((NativeBytesStore) nativeBytesStore).uninit();
-        }
+        bytesStore.release(ReferenceOwner.INIT);
+        bytesStore = null;
     }
 
     @Override
