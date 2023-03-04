@@ -94,4 +94,4 @@ related errors.
 link:https://www.jetbrains.com/help/idea/delegate-build-and-run-actions-to-maven.html#delegate_to_maven[Configure IntelliJ to use maven to build the project]
 
 '''
-<<../ReadMe.adoc#,Back to ReadMe>>
+<<../README.adoc#,Back to ReadMe>>
