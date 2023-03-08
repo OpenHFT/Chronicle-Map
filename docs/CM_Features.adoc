@@ -128,13 +128,6 @@ Please contact us at mailto:sales@chronicle.software[sales@chronicle.software] i
 
 NOTE: For access to commercially available features please contact mailto:sales@chronicle.software[sales@chronicle.software].
 
-== Peer projects
- - Chronicle Datagrid.  Reactive processing framework
- supporting Chronicle Map as a backend.
-
- - http://vanillajava.blogspot.com/2015/09/chronicle-journal-customizable-data.html[Chronicle Journal]. Another
- key-value built by Chronicle Software, with different properties.
-
 == Community support:
  - https://github.com/OpenHFT/Chronicle-Map/issues[Issues]
  - https://groups.google.com/forum/#!forum/chronicle-map[Chronicle Map mailing list]
