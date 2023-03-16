@@ -64,19 +64,8 @@ best use of the product, and can also deliver
 projects using a mix of our resources and
 your own.
 
-=== Replication Environment Example
-The following diagram shows an example of Chronicle Map replication over three servers (or sites).
-Chronicle Map Replication is part of Chronicle Map (Enterprise Edition); a commercially supported
-version of our successful open source Chronicle Map.
-
-.Three-Way Replication
-image::docs\images\Image2_.png[750,650]
-
-Replication is multi-master, lock-free, redundant, deterministic, and eventually consistent.
-
-The writer can optionally wait for replication to occur across nodes or regions.
-
-NOTE: See <<docs/CM_Replication.adoc#,Chronicle Map Replication>> for more information.
+=== Replication
+See <<docs/CM_Replication.adoc#,Chronicle Map Replication>> for more information.
 
 '''
 == Documentation
