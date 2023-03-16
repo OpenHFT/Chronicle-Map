@@ -18,16 +18,14 @@ applications, such as trading and financial market applications.
  - **High concurrency**: Write queries scale well up to the number of hardware execution threads in
  the server. Read queries never block each other.
  - **Persistence to disk** - (Optional)
- - **Multi-master replication** - (Optional, commercial functionality) - Eventually-consistent, fully-redundant, asynchronous replication across
- servers, "last write wins" strategy by default, allows to implement custom https://en.wikipedia.org/wiki/Conflict-free_replicated_data_type[state-based CRDT] strategy.
+ - **Replication** - (Optional, commercial functionality) - replication from one to N other servers across LAN/WAN
 
 == Unique features
  - Multiple processes can access a Chronicle Map concurrently. At the same time,
  the data store is *in-process* for each of the accessing processes. Out-of-process approach to IPC
  is simply incompatible with Chronicle Map's median latency target of < 1 μs.
 
- - Replication *without logs*, with constant footprint cost, guarantees progress even if the network
- doesn't sustain write rates.
+ - Replication
 
 NOTE: See <<CM_Replication.adoc#,Chronicle Map Replication>> for more information.
 
@@ -70,7 +68,7 @@ queries*.
  - **Durability** - no; Chronicle Map can be persisted to disk, but with no guarantee as to how frequently this
  happens. This is under the control of the OS. All data is guaranteed to be written to disk when the Map is closed.
  - **Clustering** and **replication** for Chronicle
- Map is provided by https://chronicle.software/products/map[Chronicle Map Enterprise].
+ Map is provided by https://chronicle.software/queue-enterprise/[Chronicle Queue Enterprise].
 
 == What is the data structure of Chronicle Map?
 Simply put, a Chronicle Map data store is a big chunk of shared memory (optionally mapped to disk).
@@ -83,7 +81,7 @@ It is split into independent segments; each segment has:
 
  - a lock in shared memory (implemented via CAS loops) for managing concurrent access.
 
-See https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[ Chronicle Map data store design overview] for more information.
+See https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[Chronicle Map data store design overview] for more information.
 
 == Chronicle Map is not
 
@@ -115,7 +113,7 @@ Please contact us at mailto:sales@chronicle.software[sales@chronicle.software] i
 |Open source
 |Remote calls
 |Commercially available
-|Eventually-consistent replication (100% redundancy)
+|Replication
 |Commercially available
 |Synchronous replication
 |Commercially available
