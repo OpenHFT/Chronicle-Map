@@ -460,7 +460,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         private boolean cachedEntryKeyRead = false;
 
         public boolean cachedEntryKeyInit() {
-            return (this.cachedEntryKeyRead) != false;
+            return this.cachedEntryKeyRead;
         }
 
         private void initCachedEntryKey() {
@@ -1069,7 +1069,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         private boolean cachedWrappedValueRead = false;
 
         public boolean cachedWrappedValueInit() {
-            return (this.cachedWrappedValueRead) != false;
+            return this.cachedWrappedValueRead;
         }
 
         private void initCachedWrappedValue() {
@@ -2103,7 +2103,7 @@ PRESENT, ABSENT;    }
     public boolean entryRemovedOnThisIteration = false;
 
     boolean entryRemovedOnThisIterationInit() {
-        return (this.entryRemovedOnThisIteration) != false;
+        return this.entryRemovedOnThisIteration;
     }
 
     protected void initEntryRemovedOnThisIteration(boolean entryRemovedOnThisIteration) {
@@ -4061,7 +4061,7 @@ PRESENT, ABSENT;    }
     public boolean delayedUpdateChecksum = false;
 
     boolean delayedUpdateChecksumInit() {
-        return (this.delayedUpdateChecksum) != false;
+        return this.delayedUpdateChecksum;
     }
 
     public void initDelayedUpdateChecksum(boolean delayedUpdateChecksum) {

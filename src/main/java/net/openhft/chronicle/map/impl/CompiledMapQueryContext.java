@@ -528,7 +528,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         private boolean cachedEntryKeyRead = false;
 
         public boolean cachedEntryKeyInit() {
-            return (this.cachedEntryKeyRead) != false;
+            return this.cachedEntryKeyRead;
         }
 
         private void initCachedEntryKey() {
@@ -815,7 +815,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         private boolean cachedInputKeyRead = false;
 
         public boolean cachedInputKeyInit() {
-            return (this.cachedInputKeyRead) != false;
+            return this.cachedInputKeyRead;
         }
 
         private void initCachedInputKey() {
@@ -1313,7 +1313,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         private boolean cachedWrappedValueRead = false;
 
         public boolean cachedWrappedValueInit() {
-            return (this.cachedWrappedValueRead) != false;
+            return this.cachedWrappedValueRead;
         }
 
         private void initCachedWrappedValue() {
@@ -2400,7 +2400,7 @@ PRESENT, ABSENT;    }
     private boolean inputKeyDataAccessInitialized = false;
 
     public boolean inputKeyDataAccessInit() {
-        return (this.inputKeyDataAccessInitialized) != false;
+        return (this.inputKeyDataAccessInitialized);
     }
 
     void initInputKeyDataAccess() {
@@ -2451,7 +2451,7 @@ PRESENT, ABSENT;    }
     private boolean inputValueDataAccessInitialized = false;
 
     public boolean inputValueDataAccessInit() {
-        return (this.inputValueDataAccessInitialized) != false;
+        return (this.inputValueDataAccessInitialized);
     }
 
     void initInputValueDataAccess() {
@@ -3721,7 +3721,7 @@ PRESENT, ABSENT;    }
     public boolean delayedUpdateChecksum = false;
 
     boolean delayedUpdateChecksumInit() {
-        return (this.delayedUpdateChecksum) != false;
+        return (this.delayedUpdateChecksum);
     }
 
     public void initDelayedUpdateChecksum(boolean delayedUpdateChecksum) {
