@@ -720,6 +720,7 @@ public abstract class VanillaChronicleHash<K,
                 .map(ChronicleHashResources::contexts)
                 // if context() is null, we have no contexts
                 .filter(Objects::nonNull)
+                .map(ArrayList::new) // take a copy in case it changes
                 .flatMap(List::stream)
                 .map(WeakReference::get)
                 // WeakReference may return null if the object was collected so, we need to eliminate these
