@@ -1,5 +1,6 @@
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.hash.serialization.impl.CommonMarshallableReaderWriter;
 import net.openhft.chronicle.wire.BytesInBinaryMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
@@ -41,9 +42,7 @@ public class SerializableTest {
                 .entries(10)
                 .create();
 
-        String expected = IntStream.range(0, 4096)
-                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
-                .collect(Collectors.joining(""));
+        String expected = expected();
 
         Foo value = new Foo(expected);
         map.put(1, value);
@@ -60,9 +59,7 @@ public class SerializableTest {
                 .entries(10)
                 .create();
 
-        String expected = IntStream.range(0, 4096)
-                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
-                .collect(Collectors.joining(""));
+        String expected = expected();
 
         Bar value = new Bar(expected);
         map.put(1, value);
@@ -81,14 +78,11 @@ public class SerializableTest {
                 .entries(10)
                 .create();
 
-        String expected = IntStream.range(0, 4096)
-                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
-                .collect(Collectors.joining(""));
+        String expected = expected();
 
         Bar2 value = new Bar2(expected);
         map.put(1, value);
         assertTrue(value.usesSelfDescribingMessage());
-        // TODO: should be assertTrue - https://github.com/OpenHFT/Chronicle-Map/issues/318 ?
         assertFalse("we call bytes marshallable in this case", value.writeMarshallableWireOutCalled);
         String actual = map.get(1).x;
 
@@ -97,15 +91,14 @@ public class SerializableTest {
 
     @Test
     public void test2d() {
+        // if you create the Map of value type == Marshallable then it will use a TypedMarshallableReaderWriter
         ChronicleMap<Integer, Marshallable> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Marshallable.class)
                 .name("bar")
                 .averageValueSize(1024)
                 .entries(10)
                 .create();
 
-        String expected = IntStream.range(0, 4096)
-                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
-                .collect(Collectors.joining(""));
+        String expected = expected();
 
         Bar2 value = new Bar2(expected);
         map.put(1, value);
@@ -115,6 +108,53 @@ public class SerializableTest {
         String actual = bar2.x;
 
         assertEquals(expected, actual);
+    }
+
+    @Test
+    public void test2e() {
+        ChronicleMap<Integer, Bar> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar.class)
+                .name("bar")
+                .averageValueSize(4096)
+                .entries(10)
+                .valueMarshaller(new CommonMarshallableReaderWriter(Bar.class))
+                .create();
+
+        String expected = expected();
+
+        Bar value = new Bar(expected);
+        map.put(1, value);
+        assertFalse(value.usesSelfDescribingMessage());
+        assertFalse(value.writeMarshallableWireOutCalled);
+        String actual = map.get(1).x;
+
+        assertEquals(expected, actual);
+    }
+    @Test
+    public void test2f() {
+        ChronicleMap<Integer, Bar2> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar2.class)
+                .name("bar")
+                .averageValueSize(1024)
+                .entries(10)
+                .valueMarshaller(new CommonMarshallableReaderWriter(Bar2.class))
+                .create();
+
+        String expected = expected();
+
+        Bar2 value = new Bar2(expected);
+        map.put(1, value);
+        assertTrue(value.usesSelfDescribingMessage());
+        assertTrue(value.writeMarshallableWireOutCalled);
+        String actual = map.get(1).x;
+
+        assertEquals(expected, actual);
+    }
+
+    @NotNull
+    private static String expected() {
+        String expected = IntStream.range(0, 4096)
+                .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
+                .collect(Collectors.joining(""));
+        return expected;
     }
 
     public static class Foo implements Serializable {
