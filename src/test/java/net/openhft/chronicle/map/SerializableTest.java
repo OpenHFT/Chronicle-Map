@@ -1,6 +1,5 @@
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.hash.serialization.impl.CommonMarshallableReaderWriter;
 import net.openhft.chronicle.wire.BytesInBinaryMarshallable;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
@@ -83,7 +82,7 @@ public class SerializableTest {
         Bar2 value = new Bar2(expected);
         map.put(1, value);
         assertTrue(value.usesSelfDescribingMessage());
-        assertFalse("we call bytes marshallable in this case", value.writeMarshallableWireOutCalled);
+        assertTrue(value.writeMarshallableWireOutCalled);
         String actual = map.get(1).x;
 
         assertEquals(expected, actual);
@@ -106,45 +105,6 @@ public class SerializableTest {
         assertTrue(value.writeMarshallableWireOutCalled);
         Bar2 bar2 = (Bar2) map.get(1);
         String actual = bar2.x;
-
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    public void test2e() {
-        ChronicleMap<Integer, Bar> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar.class)
-                .name("bar")
-                .averageValueSize(4096)
-                .entries(10)
-                .valueMarshaller(new CommonMarshallableReaderWriter(Bar.class))
-                .create();
-
-        String expected = expected();
-
-        Bar value = new Bar(expected);
-        map.put(1, value);
-        assertFalse(value.usesSelfDescribingMessage());
-        assertFalse(value.writeMarshallableWireOutCalled);
-        String actual = map.get(1).x;
-
-        assertEquals(expected, actual);
-    }
-    @Test
-    public void test2f() {
-        ChronicleMap<Integer, Bar2> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar2.class)
-                .name("bar")
-                .averageValueSize(1024)
-                .entries(10)
-                .valueMarshaller(new CommonMarshallableReaderWriter(Bar2.class))
-                .create();
-
-        String expected = expected();
-
-        Bar2 value = new Bar2(expected);
-        map.put(1, value);
-        assertTrue(value.usesSelfDescribingMessage());
-        assertTrue(value.writeMarshallableWireOutCalled);
-        String actual = map.get(1).x;
 
         assertEquals(expected, actual);
     }

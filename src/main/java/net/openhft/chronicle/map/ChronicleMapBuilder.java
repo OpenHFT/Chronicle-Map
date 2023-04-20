@@ -21,6 +21,7 @@ import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesMarshallable;
+import net.openhft.chronicle.bytes.CommonMarshallable;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.annotation.UsedViaReflection;
@@ -262,15 +263,24 @@ public final class ChronicleMapBuilder<K, V> implements
             builder.averageKeySize(128);
         if (!builder.isValueSizeKnown())
             builder.averageValueSize(512);
-        if (BytesMarshallable.class.isAssignableFrom(valueClass)) {
-            builder.valueMarshaller(new BytesMarshallableReaderWriter<>((Class) valueClass));
-        } else if (Marshallable.class.isAssignableFrom(valueClass)) {
-            //noinspection unchecked
-            builder.averageValueSize(1024)
-                    .valueMarshaller(
-                            valueClass.isMemberClass() && Modifier.isFinal(valueClass.getModifiers())
-                                    ? new MarshallableReaderWriter<>((Class) valueClass)
-                                    : new TypedMarshallableReaderWriter<>((Class) valueClass));
+        if (CommonMarshallable.class.isAssignableFrom(valueClass)) {
+            boolean bytesMarshallable;
+            try {
+                bytesMarshallable = !USDMUtil.USDM.get(valueClass);
+            } catch (Throwable t) {
+                bytesMarshallable = BytesMarshallable.class.isAssignableFrom(valueClass);
+                // ReadBytesMarshallable && WriteBytesMarshallable
+            }
+            if (bytesMarshallable) {
+                builder.valueMarshaller(new BytesMarshallableReaderWriter<>((Class) valueClass));
+            } else {
+                //noinspection unchecked
+                builder.averageValueSize(1024)
+                        .valueMarshaller(
+                                valueClass.isMemberClass() && Modifier.isFinal(valueClass.getModifiers()) // need to know is effectively final
+                                        ? new MarshallableReaderWriter<>((Class) valueClass)
+                                        : new TypedMarshallableReaderWriter<>((Class) valueClass));
+            }
         }
         return builder;
     }
