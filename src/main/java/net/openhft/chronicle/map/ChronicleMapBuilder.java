@@ -1861,7 +1861,7 @@ public final class ChronicleMapBuilder<K, V> implements
                                                               @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
 
         if (recover) {
-            Jvm.warn().on(ChronicleMapBuilder.class, "Recovery operation needs exclusive access to the ChronicleMap or else the result is unspecified including the risk of loosing and/or corrupting partial or all data.");
+            Jvm.warn().on(ChronicleMapBuilder.class, "Recovery operation needs exclusive access to the ChronicleMap or else the result is unspecified including the risk of losing and/or corrupting partial or all data.");
             Jvm.warn().on(ChronicleMapBuilder.class, "Do not use recovery as a standard way of opening a ChronicleMap.");
         }
 
