@@ -197,11 +197,12 @@ public abstract class ChronicleHashResources implements Runnable {
         synchronized (this) {
             if (state == COMPLETELY_CLOSED)
                 return false;
+
+            Throwable thrown = releaseEverything(false);
+            if (thrown != null)
+                throw Throwables.propagate(thrown);
         }
 
-        Throwable thrown = releaseEverything(false);
-        if (thrown != null)
-            throw Throwables.propagate(thrown);
         return true;
     }
 

@@ -16,13 +16,17 @@
 
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.core.OS;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 
 public class NoUpperBoundChunksPerEntryTest {
 
     @Test
     public void noUpperBoundChunksPerEntryTest() {
+        Assume.assumeTrue(OS.is64Bit());
+
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                         .averageValueSize(2).entries(10000L).actualSegments(1).create();
