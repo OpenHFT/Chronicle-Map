@@ -111,7 +111,7 @@ public class DirtyReadVictimIPCTest {
                         new DirtyReadOffenderIPCTest()
                 );
                 offendingWriter.start();
-                Thread.sleep(20_000);
+                Thread.sleep(1000);
 
             } finally {
                 boolean r;
@@ -202,7 +202,8 @@ public class DirtyReadVictimIPCTest {
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim sleeping 2 seconds"
                 );
-                Thread.sleep(2_000);
+                Thread.sleep(500);
+
             } finally {
                 if (offHeapLock.validate(stamp)) {
                     System.out.println(

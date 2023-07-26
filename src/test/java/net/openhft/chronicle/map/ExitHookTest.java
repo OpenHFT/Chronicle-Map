@@ -38,7 +38,7 @@ public class ExitHookTest {
 
     private static final int KEY = 1;
     private static final int JVM_STARTUP_WAIT_TIME_MS = 10_000;
-    public static final int CHILD_PROCESS_WAIT_TIME_MS = 3_000;
+    public static final int CHILD_PROCESS_WAIT_TIME_MS = 500;
 
     private static final String PRE_SHUTDOWN_ACTION_EXECUTED = "PRE_SHUTDOWN_ACTION_EXECUTED";
     private static final String USER_SHUTDOWN_HOOK_EXECUTED = "USER_SHUTDOWN_HOOK_EXECUTED";

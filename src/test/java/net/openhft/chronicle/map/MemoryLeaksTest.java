@@ -189,8 +189,8 @@ public class MemoryLeaksTest {
                 if (serializerCount.get() == serializersBeforeMap)
                     break;
                 System.gc();
-                byte[] garbage = new byte[10_000_000];
-                Thread.sleep(10);
+                byte[] garbage = new byte[50_000_000];
+                Thread.sleep(1);
             }
             Assert.assertTrue(serializerCount.get() == serializersBeforeMap);
             // This assertion ensures GC doesn't reclaim the map before or during the loop iteration

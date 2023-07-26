@@ -71,7 +71,7 @@ public class DirtyReadVictimTest {
                         new DirtyReadOffenderTest()
                 );
                 offendingWriter.start();
-                Thread.sleep(20_000);
+                Thread.sleep(500);
 
             } finally {
                 boolean r;
@@ -163,7 +163,8 @@ public class DirtyReadVictimTest {
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim sleeping 2 seconds"
                 );
-                Thread.sleep(2_000);
+                Thread.sleep(1000);
+
             } finally {
                 if (offHeapLock.validate(stamp)) {
                     System.out.println(

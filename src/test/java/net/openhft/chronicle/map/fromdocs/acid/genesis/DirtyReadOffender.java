@@ -24,7 +24,7 @@ public class DirtyReadOffender implements Runnable {
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender sleeping 60 seconds "
             );
-            Thread.sleep(60 * 1_000);
+            Thread.sleep(500);
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender awakening "

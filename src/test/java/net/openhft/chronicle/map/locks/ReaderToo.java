@@ -11,8 +11,8 @@ class ReaderToo implements Runnable {
     public void run() {
         try {
             String isoLevel = "READER_TOO";
-            long sleepMock = Long.parseLong("0");
-            long holdTime = Long.parseLong("20");
+            long sleepMock = 0;
+            long holdTime = 1;
             /**
              *  ben.cotton@rutgers.edu   START
              */

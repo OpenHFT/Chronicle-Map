@@ -60,7 +60,7 @@ public class DirtyReadVictim implements Runnable {
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim sleeping 10 seconds"
                 );
-                Thread.sleep(10_000);
+                Thread.sleep(500);
             } finally {
                 if (this.offHeapLock.validate(stamp)) {
                     System.out.println(

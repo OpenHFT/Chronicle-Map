@@ -22,8 +22,8 @@ public class DirtyReadOffender_WriterReaderTest {
     @Test
     public void main() {
         try {
-            long sleepT = Long.parseLong("8");
-            long holdTime = Long.parseLong("20");
+            long sleepT = 1;
+            long holdTime = 1;
 
             Thread tooThread = new Thread(new WriterToo());
             tooThread.start();

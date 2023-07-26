@@ -12,8 +12,8 @@ class DirtyReadOffenderTest implements Runnable {
     public void run() {
 
         try {
-            long sleepT = Long.parseLong("5");
-            long holdTime = Long.parseLong("10");
+            long sleepT = 1;
+            long holdTime = 1;
 
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
