@@ -22,8 +22,8 @@ public class DirtyReadOffender_WriterReaderTest {
     @Test
     public void main() {
         try {
-            long sleepT = 1;
-            long holdTime = 1;
+            long sleepT = 8;
+            long holdTime = 20;
 
             Thread tooThread = new Thread(new WriterToo());
             tooThread.start();

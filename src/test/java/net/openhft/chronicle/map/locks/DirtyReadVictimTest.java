@@ -71,7 +71,7 @@ public class DirtyReadVictimTest {
                         new DirtyReadOffenderTest()
                 );
                 offendingWriter.start();
-                Thread.sleep(500);
+                Thread.sleep(20_000);
 
             } finally {
                 boolean r;
