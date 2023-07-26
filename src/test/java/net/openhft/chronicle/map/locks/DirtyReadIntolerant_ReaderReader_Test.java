@@ -17,8 +17,8 @@ public class DirtyReadIntolerant_ReaderReader_Test {
     @Test
     public void main() {
         try {
-            long sleepMock = 1;
-            long holdTime = 1;
+            long sleepMock = Long.parseLong("5");
+            long holdTime = Long.parseLong("25");
 
             Thread tooThread = new Thread(new ReaderToo());
             tooThread.start();
