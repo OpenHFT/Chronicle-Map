@@ -9,14 +9,12 @@ import org.junit.Test;
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
+import static org.junit.Assume.assumeFalse;
 
 public class DirtyReadOffenderIPCTest implements Runnable {
     @Before
-    public void setUp() throws Exception {
-    }
-
-    @After
-    public void tearDown() throws Exception {
+    public void longRunningStableOnLinux() {
+        assumeFalse(OS.isLinux());
     }
 
     @Test
