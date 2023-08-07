@@ -20,8 +20,6 @@ import com.thoughtworks.xstream.converters.Converter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.xstream.converters.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.List;

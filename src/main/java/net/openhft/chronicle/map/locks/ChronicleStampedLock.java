@@ -9,8 +9,6 @@ import net.openhft.chronicle.values.Values;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.locks.StampedLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 

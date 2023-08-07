@@ -2,7 +2,6 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.IOTools;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;

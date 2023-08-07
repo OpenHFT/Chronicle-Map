@@ -15,7 +15,6 @@ import net.openhft.chronicle.wire.channel.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.function.Function;
 
 public class MapChannel<VALUE, REPLY> extends SimpleCloseable implements ChronicleChannel {
 
