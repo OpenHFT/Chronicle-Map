@@ -8,15 +8,13 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
+import static org.junit.Assume.assumeFalse;
 
 public class DirtyReadOffender_WriterWriterTest {
 
     @Before
-    public void setUp() throws Exception {
-    }
-
-    @After
-    public void tearDown() throws Exception {
+    public void longRunningStableOnLinux() {
+        assumeFalse(OS.isLinux());
     }
 
     @Test

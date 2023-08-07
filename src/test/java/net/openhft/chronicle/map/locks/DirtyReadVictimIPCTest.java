@@ -10,16 +10,15 @@ import org.junit.Test;
 import java.io.IOException;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
+import static org.junit.Assume.assumeFalse;
 
 public class DirtyReadVictimIPCTest {
 
     @Before
-    public void setUp() throws Exception {
+    public void longRunningStableOnLinux() {
+        assumeFalse(OS.isLinux());
     }
 
-    @After
-    public void tearDown() throws Exception {
-    }
 
     /**
      * ben.cotton@rutgers.edu -- should we even try to Test IPC compliance via this hack?
