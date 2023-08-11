@@ -3,8 +3,10 @@ package net.openhft.chronicle.map;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -12,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Created by catst01 on 24/10/2018.
@@ -29,20 +32,20 @@ public class MissSizedMapsTest {
     }
 
     private void check(final ChronicleMap<String, String> actual) throws IOException, URISyntaxException {
-        URI uri = MissSizedMapsTest.class.getResource("/input.txt").toURI();
+        URI uri = MissSizedMapsTest.class.getResource("/input.txt.gz").toURI();
 
-        List<String> strings = Files.readAllLines(Paths.get(uri));
         Map<String, String> expected = new HashMap<>();
 
         int maxKey = 0;
         int maxValue = 0;
-        for (String s : strings) {
-            String[] split = s.split("&");
-            expected.put(split[0], split[1]);
-            actual.put(split[0], split[1]);
-            maxKey = Integer.max(maxKey, split[0].length());
-            maxValue = Integer.max(maxValue, split[1].length());
-
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(new GZIPInputStream(uri.toURL().openStream())))) {
+            for (String s; (s = br.readLine()) != null; ) {
+                String[] split = s.split("&");
+                expected.put(split[0], split[1]);
+                actual.put(split[0], split[1]);
+                maxKey = Integer.max(maxKey, split[0].length());
+                maxValue = Integer.max(maxValue, split[1].length());
+            }
         }
 
         Assert.assertEquals(actual.size(), expected.size());
