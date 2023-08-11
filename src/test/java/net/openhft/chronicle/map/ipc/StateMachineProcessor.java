@@ -17,8 +17,6 @@
 package net.openhft.chronicle.map.ipc;
 
 import net.openhft.chronicle.core.Jvm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *

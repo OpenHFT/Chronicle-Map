@@ -16,16 +16,6 @@
 
 package net.openhft.chronicle.map;
 
-import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map.Entry;
-
-import static net.openhft.chronicle.map.Issue62ChronicleServer.MAP_FILE_B;
-import static net.openhft.chronicle.map.Issue62ChronicleServer.prepare;
-
 public class Issue62ChronicleClient {
 
     public static void main(String[] args) throws Exception {

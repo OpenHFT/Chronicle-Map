@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assert.*;
 
 public class DirtyReadVictimTest {
 

@@ -25,7 +25,6 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.IntegerMarshaller;
 import net.openhft.chronicle.set.Builder;
-import net.openhft.chronicle.wire.BinaryWire;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;

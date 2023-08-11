@@ -16,21 +16,6 @@
 
 package net.openhft.chronicle.map.fromdocs.pingpong_latency;
 
-import net.openhft.chronicle.algo.locks.AcquisitionStrategies;
-import net.openhft.chronicle.algo.locks.ReadWriteLockingStrategy;
-import net.openhft.chronicle.algo.locks.TryAcquireOperations;
-import net.openhft.chronicle.algo.locks.VanillaReadWriteWithWaitsLockingStrategy;
-import net.openhft.chronicle.bytes.Byteable;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
-import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
-import static net.openhft.chronicle.values.Values.newNativeReference;
-
 public class PingPongLockLeft {
 //    public static void main(String... ignored) throws IOException, InterruptedException {
 //        ChronicleMap<String, BondVOInterface> chm = PingPongCASLeft.acquireCHM();

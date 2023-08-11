@@ -19,7 +19,6 @@ package net.openhft.chronicle.hash.serialization.impl;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.bytes.VanillaBytes;
-import net.openhft.chronicle.bytes.internal.NativeBytesStore;
 import net.openhft.chronicle.core.io.ReferenceOwner;
 import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.hash.Data;

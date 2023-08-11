@@ -16,9 +16,7 @@
 
 package net.openhft.chronicle.map.fromdocs.acid.revelations;
 
-import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.Group;
-import net.openhft.chronicle.values.MaxUtf8Length;
 
 interface ChronicleStampedLockVOInterface {
 

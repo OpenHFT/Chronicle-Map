@@ -24,7 +24,6 @@ import com.google.common.collect.testing.features.CollectionSize;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -32,7 +31,6 @@ import org.junit.Assert;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import static com.google.common.collect.testing.MapTestSuiteBuilder.using;
 import static com.google.common.collect.testing.features.MapFeature.*;

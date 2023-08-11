@@ -18,7 +18,6 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.pool.ClassAliasPool;
-import net.openhft.chronicle.hash.serialization.impl.MarshallableReaderWriter;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import net.openhft.chronicle.wire.WireOut;

@@ -2,7 +2,6 @@ package net.openhft.chronicle.map.fromdocs.acid.revelations;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-import net.openhft.chronicle.map.fromdocs.acid.ChronicleAcidIsolation;
 
 import java.util.concurrent.locks.StampedLock;
 

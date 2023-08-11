@@ -26,8 +26,6 @@ import java.util.concurrent.Semaphore;
 
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
 import static net.openhft.chronicle.map.ChronicleMap.of;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
 
 public class MapCloseTest {
 
