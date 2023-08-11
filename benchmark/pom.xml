@@ -21,7 +21,7 @@
 
     <groupId>net.openhft</groupId>
     <artifactId>chronicle-map-benchmarks</artifactId>
-    <version>2.21-SNAPSHOT</version>
+    <version>2.24-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map/Benchmarks</name>
     <description>Chronicle-Map-Benchmarks</description>
 
@@ -34,7 +34,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
-                <version>3.22.3</version>
+                <version>3.24.0-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -82,7 +82,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
                 <configuration>
                     <compilerVersion>1.8</compilerVersion>
                     <source>1.8</source>
@@ -117,11 +116,9 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.0.0-M1</version>
                 </plugin>
                 <plugin>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
                 </plugin>
             </plugins>
         </pluginManagement>
