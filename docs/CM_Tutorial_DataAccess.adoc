@@ -33,12 +33,12 @@ primitives. For such types of objects, `DataAccess` allows bypassing of the inte
 For example, look at the `DataAccess` implementation for `byte[]`:
 
 ```java
-public final class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAccess<byte[]> {
+public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAccess<byte[]> {
 
     /**
      * Cache field
      */
-    private transient HeapBytesStore<byte[]> bs;
+    private transient BytesStore<?, ?> bs;
 
     /**
      * State field
@@ -50,7 +50,7 @@ public final class ByteArrayDataAccess extends AbstractData<byte[]> implements D
     }
 
     private void initTransients() {
-        bs = HeapBytesStore.wrap(new byte[100]);
+        bs = null;
     }
 
     @Override
@@ -84,13 +84,14 @@ public final class ByteArrayDataAccess extends AbstractData<byte[]> implements D
     @Override
     public Data<byte[]> getData(@NotNull byte[] instance) {
         array = instance;
-        bs.write(0, instance);
+        bs = BytesStore.wrap(array);
         return this;
     }
 
     @Override
     public void uninit() {
         array = null;
+        bs = null;
     }
 
     @Override
@@ -108,6 +109,11 @@ public final class ByteArrayDataAccess extends AbstractData<byte[]> implements D
         // no fields to read
         initTransients();
     }
+
+    @Override
+    public String toString() {
+        return new String(array, StandardCharsets.UTF_8);
+    }
 }
 ```
 
@@ -123,11 +129,12 @@ Corresponding `SizedReader` for `byte[]`:
 
 ```java
 public final class ByteArraySizedReader
-        implements SizedReader<byte[]>, Marshallable, ReadResolvable<ByteArraySizedReader> {
+        implements SizedReader<byte[]>, EnumMarshallable<ByteArraySizedReader> {
 
     public static final ByteArraySizedReader INSTANCE = new ByteArraySizedReader();
 
-    private ByteArraySizedReader() {}
+    private ByteArraySizedReader() {
+    }
 
     @NotNull
     @Override
@@ -143,16 +150,7 @@ public final class ByteArraySizedReader
         return using;
     }
 
-    @Override
-    public void writeMarshallable(@NotNull WireOut wireOut) {
-        // no fields to write
-    }
-
-    @Override
-    public void readMarshallable(@NotNull WireIn wireIn) {
-        // no fields to read
-    }
-
+    @NotNull
     @Override
     public ByteArraySizedReader readResolve() {
         return INSTANCE;
