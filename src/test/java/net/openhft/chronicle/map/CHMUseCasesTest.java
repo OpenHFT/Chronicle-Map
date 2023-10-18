@@ -44,6 +44,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -1087,10 +1088,10 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
-            ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
-            ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
-            ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
-            ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22});
+            ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1}).order(ByteOrder.nativeOrder());
+            ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2}).order(ByteOrder.nativeOrder());
+            ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11}).order(ByteOrder.nativeOrder());
+            ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22}).order(ByteOrder.nativeOrder());
             assertNull(map.put(key1, value1));
             assertBBEquals(value1, map.put(key1, value2));
             assertBBEquals(value2, map.get(key1));
@@ -1123,8 +1124,8 @@ public class CHMUseCasesTest {
 
             map.put(key1, value1);
             map.put(key2, value2);
-            ByteBuffer valueA = ByteBuffer.allocateDirect(8);
-            ByteBuffer valueB = ByteBuffer.allocate(8);
+            ByteBuffer valueA = ByteBuffer.allocateDirect(8).order(ByteOrder.nativeOrder());
+            ByteBuffer valueB = ByteBuffer.allocate(8).order(ByteOrder.nativeOrder());
 //            assertBBEquals(value1, valueA);
             try (ExternalMapQueryContext<ByteBuffer, ByteBuffer, ?> c = map.queryContext(key1)) {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
@@ -1173,7 +1174,7 @@ public class CHMUseCasesTest {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
                 assertNotNull(entry);
 
-                ByteBuffer bb1 = ByteBuffer.allocate(8);
+                ByteBuffer bb1 = ByteBuffer.allocate(8).order(ByteOrder.nativeOrder());
                 bb1.put(value1);
                 bb1.putShort((short) 12345);
                 bb1.flip();
