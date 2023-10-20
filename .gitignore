@@ -4,6 +4,9 @@
 data/
 perfmap/
 
+## static analysis tool
+infer-out/
+
 ### Compiled class file
 *.class
 
