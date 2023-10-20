@@ -181,7 +181,7 @@ public abstract class ChronicleHashResources implements Runnable {
         return null;
     }
 
-    public final boolean releaseManually() {
+    public synchronized final boolean releaseManually() {
         if (state == COMPLETELY_CLOSED)
             return false;
 
