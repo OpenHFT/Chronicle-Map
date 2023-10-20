@@ -1628,7 +1628,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public boolean isHeldByCurrentThread() {
+        public synchronized boolean isHeldByCurrentThread() {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             return CompiledMapQueryContext.this.localLockState().write;
         }
@@ -1737,7 +1737,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public boolean isHeld() {
+        public synchronized boolean isHeld() {
             return CompiledMapQueryContext.this.m != null &&
                     CompiledMapQueryContext.this.localLockState != null &&
                     CompiledMapQueryContext.this.localLockState != UNLOCKED;
