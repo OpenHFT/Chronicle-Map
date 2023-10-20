@@ -19,36 +19,6 @@ src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashResources.java:161: w
   163.                       } catch (Throwable t) {
 
 #2
-src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1513: warning: Thread Safety Violation
-  Unprotected write. Non-private method `CompiledMapQueryContext$WriteLock.tryLock()` indirectly writes to field `this.this$0.contextModCount` outside of synchronization.
- Reporting because another access to the same memory occurs on a background thread, although this access may not. 
-  1511.           public boolean tryLock() {
-  1512.               CompiledMapQueryContext.this.checkOnEachLockOperation();
-  1513. >             switch (CompiledMapQueryContext.this.localLockState()) {
-  1514.                   case UNLOCKED :
-  1515.                       CompiledMapQueryContext.this.checkIterationContextNotLockedInThisThread();
-
-#3
-src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1515: warning: Thread Safety Violation
-  Read/Write race. Non-private method `CompiledMapQueryContext$WriteLock.tryLock()` indirectly reads without synchronization from `this.this$0.rootContextInThisThread.iterationContextLockedInThisThread`. Potentially races with write in method `CompiledMapQueryContext$WriteLock.unlock()`.
- Reporting because another access to the same memory occurs on a background thread, although this access may not. 
-  1513.               switch (CompiledMapQueryContext.this.localLockState()) {
-  1514.                   case UNLOCKED :
-  1515. >                     CompiledMapQueryContext.this.checkIterationContextNotLockedInThisThread();
-  1516.                       if (CompiledMapQueryContext.this.writeZeroGuarded()) {
-  1517.                           if (!(CompiledMapQueryContext.this.updateZeroGuarded())) {
-
-#4
-src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1520: warning: Thread Safety Violation
-  Unprotected write. Non-private method `CompiledMapQueryContext$WriteLock.tryLock()` indirectly writes to field `this.this$0.rootContextInThisThread.iterationContextLockedInThisThread` outside of synchronization.
- Reporting because another access to the same memory occurs on a background thread, although this access may not. 
-  1518.                               if (CompiledMapQueryContext.this.segmentHeader().tryUpgradeUpdateToWriteLock(CompiledMapQueryContext.this.segmentHeaderAddress())) {
-  1519.                                   CompiledMapQueryContext.this.incrementWriteGuarded();
-  1520. >                                 CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-  1521.                                   return true;
-  1522.                               } else {
-
-#5
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1575: warning: Thread Safety Violation
   Unprotected write. Non-private method `CompiledMapQueryContext$WriteLock.tryLock(...)` indirectly writes to field `this.this$0.contextModCount` outside of synchronization.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
@@ -58,9 +28,9 @@ src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1575: 
   1576.                   case UNLOCKED :
   1577.                       CompiledMapQueryContext.this.checkIterationContextNotLockedInThisThread();
 
-#6
+#3
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1577: warning: Thread Safety Violation
-  Read/Write race. Non-private method `CompiledMapQueryContext$WriteLock.tryLock(...)` indirectly reads without synchronization from `this.this$0.rootContextInThisThread.iterationContextLockedInThisThread`. Potentially races with write in method `CompiledMapQueryContext$WriteLock.unlock()`.
+  Read/Write race. Non-private method `CompiledMapQueryContext$WriteLock.tryLock(...)` indirectly reads without synchronization from `this.this$0.rootContextInThisThread.iterationContextLockedInThisThread`. Potentially races with write in method `CompiledMapQueryContext$WriteLock.tryLock()`.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
   1575.               switch (CompiledMapQueryContext.this.localLockState()) {
   1576.                   case UNLOCKED :
@@ -68,7 +38,7 @@ src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1577: 
   1578.                       if (CompiledMapQueryContext.this.writeZeroGuarded()) {
   1579.                           if (!(CompiledMapQueryContext.this.updateZeroGuarded())) {
 
-#7
+#4
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1582: warning: Thread Safety Violation
   Unprotected write. Non-private method `CompiledMapQueryContext$WriteLock.tryLock(...)` indirectly writes to field `this.this$0.rootContextInThisThread.iterationContextLockedInThisThread` outside of synchronization.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
@@ -78,7 +48,7 @@ src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1582: 
   1583.                                   return true;
   1584.                               } else {
 
-#8
+#5
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1633: warning: Thread Safety Violation
   Unprotected write. Non-private method `CompiledMapQueryContext$WriteLock.isHeldByCurrentThread()` indirectly writes to field `this.this$0.contextModCount` outside of synchronization.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
@@ -88,7 +58,7 @@ src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1633: 
   1634.           }
   1635.   
 
-#9
+#6
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1642: warning: Thread Safety Violation
   Unprotected write. Non-private method `CompiledMapQueryContext$WriteLock.lockInterruptibly()` indirectly writes to field `this.this$0.contextModCount` outside of synchronization.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
@@ -98,9 +68,9 @@ src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1642: 
   1643.                   case UNLOCKED :
   1644.                       CompiledMapQueryContext.this.checkIterationContextNotLockedInThisThread();
 
-#10
+#7
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1644: warning: Thread Safety Violation
-  Read/Write race. Non-private method `CompiledMapQueryContext$WriteLock.lockInterruptibly()` indirectly reads without synchronization from `this.this$0.rootContextInThisThread.iterationContextLockedInThisThread`. Potentially races with write in method `CompiledMapQueryContext$WriteLock.unlock()`.
+  Read/Write race. Non-private method `CompiledMapQueryContext$WriteLock.lockInterruptibly()` indirectly reads without synchronization from `this.this$0.rootContextInThisThread.iterationContextLockedInThisThread`. Potentially races with write in method `CompiledMapQueryContext$WriteLock.tryLock()`.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
   1642.               switch (CompiledMapQueryContext.this.localLockState()) {
   1643.                   case UNLOCKED :
@@ -108,7 +78,7 @@ src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1644: 
   1645.                       if (CompiledMapQueryContext.this.writeZeroGuarded()) {
   1646.                           if (!(CompiledMapQueryContext.this.updateZeroGuarded())) {
 
-#11
+#8
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1660: warning: Thread Safety Violation
   Unprotected write. Non-private method `CompiledMapQueryContext$WriteLock.lockInterruptibly()` indirectly writes to field `this.this$0.rootContextInThisThread.iterationContextLockedInThisThread` outside of synchronization.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
@@ -118,9 +88,9 @@ src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1660: 
   1661.                       return ;
   1662.                   case READ_LOCKED :
 
-#12
+#9
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1741: warning: Thread Safety Violation
-  Read/Write race. Non-private method `CompiledMapQueryContext$WriteLock.isHeld()` reads without synchronization from `this.this$0.localLockState`. Potentially races with write in method `CompiledMapQueryContext$WriteLock.unlock()`.
+  Read/Write race. Non-private method `CompiledMapQueryContext$WriteLock.isHeld()` reads without synchronization from `this.this$0.localLockState`. Potentially races with write in method `CompiledMapQueryContext$WriteLock.tryLock()`.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
   1739.           @Override
   1740.           public boolean isHeld() {
@@ -128,6 +98,6 @@ src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1741: 
   1742.                       CompiledMapQueryContext.this.localLockState != null &&
   1743.                       CompiledMapQueryContext.this.localLockState != UNLOCKED;
 
-Found 13 issues
+Found 10 issues
                         Issue Type(ISSUED_TYPE_ID): #
-  Thread Safety Violation(THREAD_SAFETY_VIOLATION): 13
+  Thread Safety Violation(THREAD_SAFETY_VIOLATION): 10

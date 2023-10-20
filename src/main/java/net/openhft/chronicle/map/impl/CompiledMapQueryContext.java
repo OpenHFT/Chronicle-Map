@@ -1508,7 +1508,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public boolean tryLock() {
+        public synchronized boolean tryLock() {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             switch (CompiledMapQueryContext.this.localLockState()) {
                 case UNLOCKED :
