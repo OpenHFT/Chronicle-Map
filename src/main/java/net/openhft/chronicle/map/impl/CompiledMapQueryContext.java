@@ -1634,7 +1634,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public void lockInterruptibly() throws InterruptedException {
+        public synchronized void lockInterruptibly() throws InterruptedException {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
                 throw new InterruptedException();
@@ -1655,7 +1655,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
                                 throw CompiledMapQueryContext.this.debugContextsAndLocksGuarded(e);
                             }
                         }
-                    } 
+                    }
                     CompiledMapQueryContext.this.incrementWriteGuarded();
                     CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
                     return ;
