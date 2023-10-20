@@ -1566,7 +1566,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public boolean tryLock(long time, @NotNull
+        public synchronized boolean tryLock(long time, @NotNull
         TimeUnit unit) throws InterruptedException {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())

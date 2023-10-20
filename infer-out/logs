@@ -1,746 +1,746 @@
-[90830][      debug] Opening a new database connection Primary CaptureDatabase
-[90830][      debug] Opening a new database connection Primary AnalysisDatabase
-[90830][      debug] Sqlite write daemon: starting up
-[90830][      debug] Sqlite write daemon: set up complete, waiting for connections
-[90830][environment] CWD = /Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map
-[90830][environment] No .inferconfig file found
-[90830][environment] Project root = /Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map
-[90830][environment] INFER_ARGS =   @/var/folders/46/021wbfj97knb3m7s2khbp36r0000gn/T/args.tmp.407893
-[90830][environment]                --progress-bar-style multiline
-[90830][environment] command line arguments:   infer --racerd-only -- mvn compile
-[90830][environment] Could not retrieve available memory (possibly not on Linux)
-[90830][environment] Active checkers: racerd (C/C++/ObjC, C#/.Net, Java)
-[90830][environment] Scheduler: file
-[90830][environment] Cores used: 4
-[90830][environment] Infer version v1.1.0-022656fbc3
-[90830][environment] Copyright 2009 - present Facebook. All Rights Reserved.
-[90830][environment] 
-[90830][   progress] Capturing in maven mode...
-[90830][      debug] Running maven capture:
-[90830][      debug] mvn 'compile' '-P' 'infer-capture'
+[95979][      debug] Opening a new database connection Primary CaptureDatabase
+[95979][      debug] Opening a new database connection Primary AnalysisDatabase
+[95979][      debug] Sqlite write daemon: starting up
+[95979][      debug] Sqlite write daemon: set up complete, waiting for connections
+[95979][environment] CWD = /Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map
+[95979][environment] No .inferconfig file found
+[95979][environment] Project root = /Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map
+[95979][environment] INFER_ARGS =   @/var/folders/46/021wbfj97knb3m7s2khbp36r0000gn/T/args.tmp.06a62c
+[95979][environment]                --progress-bar-style multiline
+[95979][environment] command line arguments:   infer --racerd-only -- mvn compile
+[95979][environment] Could not retrieve available memory (possibly not on Linux)
+[95979][environment] Active checkers: racerd (C/C++/ObjC, C#/.Net, Java)
+[95979][environment] Scheduler: file
+[95979][environment] Cores used: 4
+[95979][environment] Infer version v1.1.0-022656fbc3
+[95979][environment] Copyright 2009 - present Facebook. All Rights Reserved.
+[95979][environment] 
+[95979][   progress] Capturing in maven mode...
+[95979][      debug] Running maven capture:
+[95979][      debug] mvn 'compile' '-P' 'infer-capture'
 
-[90860][      debug] Opening a new database connection Primary CaptureDatabase
-[90860][      debug] Opening a new database connection Primary AnalysisDatabase
-[90860][      debug] Current working directory: '/Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map'
-[90860][      debug] Trying to execute: javac '-J-Duser.language=en' '@/private/var/folders/46/021wbfj97knb3m7s2khbp36r0000gn/T/org.codehaus.plexus.compiler.javac.JavacCompiler3367251474268106942arguments' '@/Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map/infer-out/tmp/javac_args.tmp.78f267' 2>'/Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map/infer-out/tmp/javac.tmp.c7c72c.out'
-[90860][      debug] *** Success. Logs:
-[90860][      debug] Translating 269 source files (372 classes)
-[90860][      debug] Global tenv size global_tenv_size_mb: 0
-[90860][      debug] done capturing all files
-[90860][      debug] GC stats for capture:
-[90860][      debug]   minor_words: 2.85769e+08
-[90860][      debug]   promoted_words: 2.03183e+07
-[90860][      debug]   major_words: 3.07088e+07
-[90860][      debug]   minor_collections: 413
-[90860][      debug]   major_collections: 45
-[90860][      debug]   compactions: 0
-[90860][      debug]   top_heap_words: 12475392
-[90860][      debug]   
-[90860][      debug] GC stats for main_process_full:
-[90860][      debug]   minor_words: 2.88758e+08
-[90860][      debug]   promoted_words: 2.09491e+07
-[90860][      debug]   major_words: 3.13746e+07
-[90860][      debug]   minor_collections: 422
-[90860][      debug]   major_collections: 45
-[90860][      debug]   compactions: 0
-[90860][      debug]   top_heap_words: 12475392
-[90860][      debug]   
-[90860][      debug] Closing an existing database connection Primary CaptureDatabase
-[90860][      debug] Closing an existing database connection Primary AnalysisDatabase
-[90860][      debug] [90830][      debug] GC stats for capture:
-[90830][      debug]   minor_words: 79356
-[90830][      debug]   promoted_words: 0
-[90830][      debug]   major_words: 0
-[90830][      debug]   minor_collections: 0
-[90830][      debug]   major_collections: 0
-[90830][      debug]   compactions: 0
-[90830][      debug]   top_heap_words: 499712
-[90830][      debug]   
-[90830][environment] Parallel jobs: 4
-[90830][      debug] Closing an existing database connection Primary CaptureDatabase
-[90830][      debug] Closing an existing database connection Primary AnalysisDatabase
-[90830][      debug] 
+[96011][      debug] Opening a new database connection Primary CaptureDatabase
+[96011][      debug] Opening a new database connection Primary AnalysisDatabase
+[96011][      debug] Current working directory: '/Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map'
+[96011][      debug] Trying to execute: javac '-J-Duser.language=en' '@/private/var/folders/46/021wbfj97knb3m7s2khbp36r0000gn/T/org.codehaus.plexus.compiler.javac.JavacCompiler845750610557145409arguments' '@/Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map/infer-out/tmp/javac_args.tmp.8f54e6' 2>'/Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map/infer-out/tmp/javac.tmp.c4c80e.out'
+[96011][      debug] *** Success. Logs:
+[96011][      debug] Translating 269 source files (372 classes)
+[96011][      debug] Global tenv size global_tenv_size_mb: 0
+[96011][      debug] done capturing all files
+[96011][      debug] GC stats for capture:
+[96011][      debug]   minor_words: 2.85769e+08
+[96011][      debug]   promoted_words: 2.02391e+07
+[96011][      debug]   major_words: 3.06296e+07
+[96011][      debug]   minor_collections: 418
+[96011][      debug]   major_collections: 45
+[96011][      debug]   compactions: 0
+[96011][      debug]   top_heap_words: 12475392
+[96011][      debug]   
+[96011][      debug] GC stats for main_process_full:
+[96011][      debug]   minor_words: 2.88758e+08
+[96011][      debug]   promoted_words: 2.06884e+07
+[96011][      debug]   major_words: 3.1114e+07
+[96011][      debug]   minor_collections: 427
+[96011][      debug]   major_collections: 46
+[96011][      debug]   compactions: 0
+[96011][      debug]   top_heap_words: 12475392
+[96011][      debug]   
+[96011][      debug] Closing an existing database connection Primary CaptureDatabase
+[96011][      debug] Closing an existing database connection Primary AnalysisDatabase
+[96011][      debug] [95979][      debug] GC stats for capture:
+[95979][      debug]   minor_words: 79356
+[95979][      debug]   promoted_words: 0
+[95979][      debug]   major_words: 0
+[95979][      debug]   minor_collections: 0
+[95979][      debug]   major_collections: 0
+[95979][      debug]   compactions: 0
+[95979][      debug]   top_heap_words: 499712
+[95979][      debug]   
+[95979][environment] Parallel jobs: 4
+[95979][      debug] Closing an existing database connection Primary CaptureDatabase
+[95979][      debug] Closing an existing database connection Primary AnalysisDatabase
+[95979][      debug] 
 
 
 
 Opening a new database connection Primary CaptureDatabase
-[90830][      debug] Opening a new database connection Primary AnalysisDatabase
-[90830][      debug] 
-[90830][   progress] Found 282 source files to analyze in /Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map/infer-out
-[90830][      debug] Opening a new database connection Primary CaptureDatabase
-[90830][      debug] Closing an existing database connection Primary CaptureDatabase
-[90830][      debug] Opening a new database connection Primary AnalysisDatabase
-[90830][      debug] Closing an existing database connection Primary AnalysisDatabase
-[90830][      debug] [90880][      debug] Opening a new database connection Primary CaptureDatabase
-[90880][      debug] Opening a new database connection Primary AnalysisDatabase
-[90880][      debug] 
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/OwnerThreadHolder.java starting
-[90878][      debug] Opening a new database connection Primary CaptureDatabase
-[90878][      debug] Opening a new database connection Primary AnalysisDatabase
-[90878][      debug] 
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/QueryCheckOnEachPublicOperation.java starting
-[90881][      debug] Opening a new database connection Primary CaptureDatabase
-[90881][      debug] Opening a new database connection Primary AnalysisDatabase
-[90881][      debug] 
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/package-info.java starting
-[90879][      debug] Opening a new database connection Primary CaptureDatabase
-[90879][      debug] Opening a new database connection Primary AnalysisDatabase
-[90879][      debug] 
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/package-info.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/package-info.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapAbsent.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/package-info.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/AcquireHandle.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/OwnerThreadHolder.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/QueryContextInterface.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/QueryContextInterface.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/SelectedSelectionKeySet.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/AcquireHandle.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/NotReusingSizedMarshallableDataAccess.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/QueryCheckOnEachPublicOperation.java DONE
-[90878][   progress] src/main/java/net/openhft/xstream/converters/AbstractChronicleMapConverter.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/SelectedSelectionKeySet.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/replication/MapRemoteQueryContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/replication/MapRemoteQueryContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/UpdateLock.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/NotReusingSizedMarshallableDataAccess.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/HashSegmentIteration.java starting
-[90878][   progress] src/main/java/net/openhft/xstream/converters/AbstractChronicleMapConverter.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/replication/DefaultEventualConsistencyStrategy.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/replication/DefaultEventualConsistencyStrategy.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHashHolder.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHashHolder.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/EnumMarshallable.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/EnumMarshallable.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHash.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHash.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/KeyBytesInterop.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/KeyBytesInterop.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/channel/MapService.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/channel/MapService.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/KeyHashCode.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/KeyHashCode.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationAlloc.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/UpdateLock.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/HashQuery.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapAbsent.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/HashSplitting.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationAlloc.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteableDataAccess.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/HashQuery.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedChronicleMapHolder.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedChronicleMapHolder.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/ZeroBytesStore.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteableDataAccess.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/ChronicleHashCorruptionImpl.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/ChronicleHashCorruptionImpl.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/SegmentsRecovery.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/HashSplitting.java DONE
-[90881][   progress] src/main/java/net/openhft/xstream/converters/CharSequenceConverter.java starting
-[90881][   progress] src/main/java/net/openhft/xstream/converters/CharSequenceConverter.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/ContinuedFraction.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/HashSegmentIteration.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/ReturnValue.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/ReturnValue.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHash.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/ContinuedFraction.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/FindByName.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/FindByName.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/channel/MapHandler.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/ZeroBytesStore.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/HashQueryContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/HashQueryContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/SetQueryContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/SetQueryContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/ret/UsingReturnValue.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/ret/UsingReturnValue.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashCloseOnExitHook.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashCloseOnExitHook.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/data/bytes/EntryKeyBytesData.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/data/bytes/EntryKeyBytesData.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/entry/ReplicatedMapEntryStages.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/entry/ReplicatedMapEntryStages.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/ReplicatedHashSegmentContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/ReplicatedHashSegmentContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/replication/RemoteOperationContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/replication/RemoteOperationContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Objects.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Objects.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/VanillaChronicleMapHolder.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/VanillaChronicleMapHolder.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/replication/SetRemoteQueryContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/replication/SetRemoteQueryContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceSizedReader.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceSizedReader.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/IterationCheckOnEachPublicOperation.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/IterationCheckOnEachPublicOperation.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedTierRecovery.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHash.java DONE
-[90879][   progress] src/main/java/net/openhft/xstream/converters/ByteBufferConverter.java starting
-[90879][   progress] src/main/java/net/openhft/xstream/converters/ByteBufferConverter.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/instance/WrappedValueInstanceDataHolder.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/instance/WrappedValueInstanceDataHolder.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializationBuilder.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializationBuilder.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DefaultElasticBytes.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DefaultElasticBytes.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBuilderSizedReader.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBuilderSizedReader.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/MapSegmentIteration.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedTierRecovery.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapIterator.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/MapSegmentIteration.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ChecksumHashing.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ChecksumHashing.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/set/SetSegmentContext.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/set/SetSegmentContext.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessDeadLockException.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessDeadLockException.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/FileIOUtils.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/FileIOUtils.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/internal/AnalyticsHolder.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/internal/AnalyticsHolder.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/Gamma.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapIterator.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedIterationContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedIterationContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/MemoryResource.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/MemoryResource.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/MapIterationContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/MapIterationContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapQueryContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapQueryContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/HashContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/HashContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/input/ReplicatedInput.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/Gamma.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizedReader.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizedReader.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/WrappedValueInstanceDataHolderAccess.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/WrappedValueInstanceDataHolderAccess.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/CompactOffHeapLinearHashTable.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/CompactOffHeapLinearHashTable.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/InMemoryChronicleHashResources.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/InMemoryChronicleHashResources.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryStages.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/SegmentsRecovery.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBuilderUtf8DataAccess.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryStages.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapEntryDelegating.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/input/ReplicatedInput.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSetBuilderPrivateAPI.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBuilderUtf8DataAccess.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBytesReader.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapEntryDelegating.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SizedMarshallableDataAccess.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBytesReader.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSetBuilderPrivateAPI.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SizedMarshallableDataAccess.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/Precision.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationSegmentStages.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/Precision.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapAbsentDelegating.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationSegmentStages.java DONE
-[90880][   progress] src/main/java/net/openhft/xstream/converters/VanillaChronicleMapConverter.java starting
-[90880][   progress] src/main/java/net/openhft/xstream/converters/VanillaChronicleMapConverter.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/locks/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/locks/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/channel/AbstractMapService.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/channel/AbstractMapService.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/AbstractChronicleMap.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapAbsentDelegating.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/set/DummyValueData.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/set/DummyValueData.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/set/ExternalSetQueryContext.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/set/ExternalSetQueryContext.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/MapSegmentContext.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/MapSegmentContext.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/DefaultValueProvider.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/DefaultValueProvider.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalizableReader.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalizableReader.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/internal/package-info.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/internal/package-info.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/MapEntryOperations.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/MapEntryOperations.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/channel/internal/MapChannel.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/channel/internal/MapChannel.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/DataAccess.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/DataAccess.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/ReplicatedChronicleMapHolderImpl.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/channel/MapHandler.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/Alloc.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/Alloc.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/ret/DefaultReturnValue.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/ret/DefaultReturnValue.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/JsonSerializer.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/ReplicatedChronicleMapHolderImpl.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/MapAbsentEntry.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/JsonSerializer.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteArrayDataAccess.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/MapAbsentEntry.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashLookupPos.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashLookupPos.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/replication/MapRemoteOperations.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/replication/MapRemoteOperations.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/BuildVersion.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteArrayDataAccess.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/Chaining.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/AbstractChronicleMap.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapDiagnostics.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/BuildVersion.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashResources.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/Chaining.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashRecoveryFailedException.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashRecoveryFailedException.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableReader.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashResources.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/BytesReader.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/BytesReader.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/TypedMarshallableReaderWriter.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableReader.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/MapClosable.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/MapClosable.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/HashSegmentContext.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/HashSegmentContext.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ConstantSizeMarshaller.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/TypedMarshallableReaderWriter.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteableSizedReader.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteableSizedReader.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapQueryContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapDiagnostics.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializableReader.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializableReader.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizeMarshaller.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizeMarshaller.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/internal/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/internal/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteBufferSizedReader.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ConstantSizeMarshaller.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapQuery.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteBufferSizedReader.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/DummyValueZeroData.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/DummyValueZeroData.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/ExternalMapQueryContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/ExternalMapQueryContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DoubleMarshaller.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DoubleMarshaller.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/LocalLockState.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/LocalLockState.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapMethods.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapQuery.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DoubleDataAccess.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapMethods.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DoubleDataAccess.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashClosedException.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashClosedException.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/Data.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/Data.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAbsent.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAbsent.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Cleaner.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Cleaner.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/package-info.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/package-info.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/TierCountersArea.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/TierCountersArea.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryChecksumStrategy.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryChecksumStrategy.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesSizedMarshaller.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesSizedMarshaller.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/InputKeyHashCode.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/InputKeyHashCode.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/bytes/EntryValueBytesData.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/bytes/EntryValueBytesData.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/DefaultValue.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/DefaultValue.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/ThreadLocalState.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/ThreadLocalState.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapBuilderPrivateAPI.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapBuilderPrivateAPI.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/Absent.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/AbstractData.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/Absent.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashCorruption.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashCorruption.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/BigSegmentHeader.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/AbstractData.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/KeySearch.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/KeySearch.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CachingCreatingMarshaller.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CachingCreatingMarshaller.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapSegmentIteration.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapSegmentIteration.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CommonMarshallableReaderWriter.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CommonMarshallableReaderWriter.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/TierRecovery.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/BigSegmentHeader.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/replication/ReplicableEntry.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/replication/ReplicableEntry.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QuerySegmentStages.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QuerySegmentStages.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/MapEntryOperationsDelegation.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/MapEntryOperationsDelegation.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/LongCompactOffHeapLinearHashTable.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/LongCompactOffHeapLinearHashTable.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/InstanceCreatingMarshaller.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/InstanceCreatingMarshaller.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/OldDeletedEntriesCleanupThread.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/OldDeletedEntriesCleanupThread.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMap.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/TierRecovery.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/LongDataAccess.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMap.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/LongDataAccess.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/locks/ChronicleStampedLockVOInterface.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/locks/ChronicleStampedLockVOInterface.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringUtf8DataAccess.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/IntegerMarshaller.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringUtf8DataAccess.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/replication/ReplicatedQueryAlloc.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/IntegerMarshaller.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteBufferDataAccess.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteBufferDataAccess.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/LongMarshaller.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/replication/ReplicatedQueryAlloc.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/PersistedChronicleHashResources.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/PersistedChronicleHashResources.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ValueDataAccess.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/LongMarshaller.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BooleanMarshaller.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ValueDataAccess.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAndSetContext.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAndSetContext.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/data/bytes/InputKeyBytesData.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BooleanMarshaller.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/set/SetEntry.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/set/SetEntry.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableDataAccess.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/data/bytes/InputKeyBytesData.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/ReplicatedChronicleMap.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableDataAccess.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QueryHashLookupSearch.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QueryHashLookupSearch.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/SearchAllocatedChunks.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/SearchAllocatedChunks.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/ValueBytesInterop.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/ValueBytesInterop.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ValueReader.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ValueReader.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QueryAlloc.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QueryAlloc.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/ReplicatedGlobalMutableStateV2.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/ReplicatedGlobalMutableStateV2.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StopBitSizeMarshaller.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StopBitSizeMarshaller.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesAsSizedReader.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesAsSizedReader.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/Beta.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/Beta.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSetBuilder.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSetBuilder.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalBytesMarshallableDataAccess.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalBytesMarshallableDataAccess.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/set/SetFromMap.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/set/SetFromMap.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapAbsentDelegatingForIteration.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapAbsentDelegatingForIteration.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/AbstractCharSequenceUtf8DataAccess.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/AbstractCharSequenceUtf8DataAccess.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/set/SetContext.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/set/SetContext.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalizableDataAccess.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalizableDataAccess.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/AllocatedChunks.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/AllocatedChunks.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceBytesReader.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceBytesReader.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleFileLockException.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleFileLockException.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceBytesWriter.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceBytesWriter.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/WriteThroughEntry.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/map/WriteThroughEntry.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ExternalHashQueryContext.java starting
-[90881][   progress] src/main/java/net/openhft/chronicle/hash/ExternalHashQueryContext.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledMapIterationContext.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/ReplicatedChronicleMap.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/ContextHolder.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/ContextHolder.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/set/DummyValue.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/set/DummyValue.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/WrappedValueBytesDataAccess.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/WrappedValueBytesDataAccess.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/DefaultSpi.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/DefaultSpi.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/replication/TimeProvider.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/replication/TimeProvider.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/CheckOnEachPublicOperation.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/CheckOnEachPublicOperation.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/MapFileAnalyzer.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/MapFileAnalyzer.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/LogHolder.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/LogHolder.java DONE
-[90878][   progress] src/main/java/net/openhft/xstream/converters/ValueConverter.java starting
-[90878][   progress] src/main/java/net/openhft/xstream/converters/ValueConverter.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/LocksInterface.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/LocksInterface.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringSizedReader.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessLock.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessLock.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/bytes/WrappedValueBytesData.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringSizedReader.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/SegmentStages.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/bytes/WrappedValueBytesData.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/VanillaChronicleMap.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/SegmentStages.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/HashEntry.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/HashEntry.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/ChainingInterface.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/ChainingInterface.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/SegmentLock.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/SegmentLock.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/NoChecksumStrategy.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/NoChecksumStrategy.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashBuilder.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashBuilder.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/WriteLock.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/WriteLock.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/NullReturnValue.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/NullReturnValue.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/MapMarshaller.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/MapMarshaller.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SetMarshaller.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SetMarshaller.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/IntegerDataAccess_3_13.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/IntegerDataAccess_3_13.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CharSequences.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CharSequences.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/CompilationAnchor.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/CompilationAnchor.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessReadWriteUpdateLock.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessReadWriteUpdateLock.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationKeyHashCode.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationKeyHashCode.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedMapQueryContext.java starting
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedMapQueryContext.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapIterationContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/VanillaChronicleMap.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/SetAbsentEntry.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/SetAbsentEntry.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/replication/SetReplicableEntry.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/replication/SetReplicableEntry.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizedWriter.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizedWriter.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapMethodsSupport.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapMethodsSupport.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/InternalMapFileAnalyzer.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/InternalMapFileAnalyzer.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/entry/MapEntryStages.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/entry/MapEntryStages.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/MapQueryContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/MapQueryContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/replication/MapReplicableEntry.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/replication/MapReplicableEntry.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CleanerUtils.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CleanerUtils.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/ret/UsableReturnValue.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/ret/UsableReturnValue.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapEntrySet.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapEntrySet.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/VanillaChronicleMapHolderImpl.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/VanillaChronicleMapHolderImpl.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/Replica.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/Replica.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/IterationContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/IterationContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/jna/PosixFallocate.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/jna/PosixFallocate.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ReadLock.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ReadLock.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/PoissonDistribution.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/PoissonDistribution.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapEntry.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/MapEntry.java DONE
-[90880][   progress] src/main/java/net/openhft/xstream/converters/StringBuilderConverter.java starting
-[90880][   progress] src/main/java/net/openhft/xstream/converters/StringBuilderConverter.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/VanillaGlobalMutableState.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/VanillaGlobalMutableState.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/StatefulCopyable.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/StatefulCopyable.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/replication/SetRemoteOperations.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/replication/SetRemoteOperations.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedMapIterationContext.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedMapIterationContext.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/DummyValueMarshaller.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/DummyValueMarshaller.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CanonicalRandomAccessFiles.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapQueryContext.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceUtf8DataAccess.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CanonicalRandomAccessFiles.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/replication/ReplicableEntryDelegating.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceUtf8DataAccess.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/set/SetEntryOperations.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/set/SetEntryOperations.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/BytesWriter.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/BytesWriter.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/SegmentHeader.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/SegmentHeader.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/ret/InstanceReturnValue.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/ret/InstanceReturnValue.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/MapContext.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/MapContext.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/replication/ReplicationUpdate.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/replication/ReplicableEntryDelegating.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializableDataAccess.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/replication/ReplicationUpdate.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSet.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSet.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/ChecksumEntry.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/ChecksumEntry.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/IntCompactOffHeapLinearHashTable.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializableDataAccess.java DONE
-[90880][   progress] src/main/java/net/openhft/xstream/converters/internal/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/xstream/converters/internal/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/internal/InternalAssertUtil.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/IntCompactOffHeapLinearHashTable.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashLookupSearch.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashLookupSearch.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/internal/InternalAssertUtil.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/set/internal/package-info.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/set/internal/package-info.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/HashAbsentEntry.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/HashAbsentEntry.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableReaderWriter.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableReaderWriter.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Throwables.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Throwables.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/SizePrefixedBlob.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/SizePrefixedBlob.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapQuery.java starting
-[90879][   progress] src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/locks/ChronicleStampedLock.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapQuery.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteArraySizedReader.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteArraySizedReader.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/MarshallableReaderWriter.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/MarshallableReaderWriter.java DONE
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ChecksumStrategy.java starting
-[90880][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ChecksumStrategy.java DONE
-[90881][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledMapIterationContext.java DONE
-[90879][   progress] src/main/java/net/openhft/chronicle/map/locks/ChronicleStampedLock.java DONE
-[90878][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapIterationContext.java DONE
+[95979][      debug] Opening a new database connection Primary AnalysisDatabase
+[95979][      debug] 
+[95979][   progress] Found 282 source files to analyze in /Users/yokurang/Documents/Academics/School/CurrClasses/PCDP/pcdp/mini-project/Chronicle-Map/infer-out
+[95979][      debug] Opening a new database connection Primary CaptureDatabase
+[95979][      debug] Closing an existing database connection Primary CaptureDatabase
+[95979][      debug] Opening a new database connection Primary AnalysisDatabase
+[95979][      debug] Closing an existing database connection Primary AnalysisDatabase
+[95979][      debug] [96031][      debug] Opening a new database connection Primary CaptureDatabase
+[96031][      debug] Opening a new database connection Primary AnalysisDatabase
+[96031][      debug] 
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/OwnerThreadHolder.java starting
+[96032][      debug] Opening a new database connection Primary CaptureDatabase
+[96032][      debug] Opening a new database connection Primary AnalysisDatabase
+[96032][      debug] 
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/package-info.java starting
+[96030][      debug] Opening a new database connection Primary CaptureDatabase
+[96030][      debug] Opening a new database connection Primary AnalysisDatabase
+[96030][      debug] 
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/package-info.java starting
+[96029][      debug] Opening a new database connection Primary CaptureDatabase
+[96029][      debug] Opening a new database connection Primary AnalysisDatabase
+[96029][      debug] 
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/QueryCheckOnEachPublicOperation.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/package-info.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/package-info.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapAbsent.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/AcquireHandle.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/OwnerThreadHolder.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/package-info.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/package-info.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/QueryContextInterface.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/QueryContextInterface.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/SelectedSelectionKeySet.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/AcquireHandle.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/NotReusingSizedMarshallableDataAccess.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/QueryCheckOnEachPublicOperation.java DONE
+[96029][   progress] src/main/java/net/openhft/xstream/converters/AbstractChronicleMapConverter.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/SelectedSelectionKeySet.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/replication/MapRemoteQueryContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/replication/MapRemoteQueryContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/UpdateLock.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/NotReusingSizedMarshallableDataAccess.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/HashSegmentIteration.java starting
+[96029][   progress] src/main/java/net/openhft/xstream/converters/AbstractChronicleMapConverter.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/replication/DefaultEventualConsistencyStrategy.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/replication/DefaultEventualConsistencyStrategy.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHashHolder.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHashHolder.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/EnumMarshallable.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/EnumMarshallable.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHash.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHash.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/KeyBytesInterop.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/KeyBytesInterop.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/channel/MapService.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/channel/MapService.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/KeyHashCode.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/KeyHashCode.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationAlloc.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/UpdateLock.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/HashQuery.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationAlloc.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/HashSplitting.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapAbsent.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteableDataAccess.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/HashQuery.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedChronicleMapHolder.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedChronicleMapHolder.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/ZeroBytesStore.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/HashSplitting.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/ChronicleHashCorruptionImpl.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteableDataAccess.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/SegmentsRecovery.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/HashSegmentIteration.java DONE
+[96032][   progress] src/main/java/net/openhft/xstream/converters/CharSequenceConverter.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/ChronicleHashCorruptionImpl.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/ContinuedFraction.java starting
+[96032][   progress] src/main/java/net/openhft/xstream/converters/CharSequenceConverter.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/ReturnValue.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/ReturnValue.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHash.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/ContinuedFraction.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/FindByName.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/FindByName.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/channel/MapHandler.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/ZeroBytesStore.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/package-info.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/package-info.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/HashQueryContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/HashQueryContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/set/SetQueryContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/set/SetQueryContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/ret/UsingReturnValue.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/ret/UsingReturnValue.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashCloseOnExitHook.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashCloseOnExitHook.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/data/bytes/EntryKeyBytesData.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/data/bytes/EntryKeyBytesData.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/package-info.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/package-info.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/entry/ReplicatedMapEntryStages.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/entry/ReplicatedMapEntryStages.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/ReplicatedHashSegmentContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/ReplicatedHashSegmentContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/replication/RemoteOperationContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/replication/RemoteOperationContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Objects.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Objects.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/VanillaChronicleMapHolder.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/VanillaChronicleMapHolder.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/set/replication/SetRemoteQueryContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/set/replication/SetRemoteQueryContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceSizedReader.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceSizedReader.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/IterationCheckOnEachPublicOperation.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/IterationCheckOnEachPublicOperation.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedTierRecovery.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/VanillaChronicleHash.java DONE
+[96032][   progress] src/main/java/net/openhft/xstream/converters/ByteBufferConverter.java starting
+[96032][   progress] src/main/java/net/openhft/xstream/converters/ByteBufferConverter.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/instance/WrappedValueInstanceDataHolder.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/instance/WrappedValueInstanceDataHolder.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializationBuilder.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializationBuilder.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DefaultElasticBytes.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DefaultElasticBytes.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBuilderSizedReader.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBuilderSizedReader.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/MapSegmentIteration.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/MapSegmentIteration.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapIterator.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedTierRecovery.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ChecksumHashing.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ChecksumHashing.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/set/SetSegmentContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/set/SetSegmentContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessDeadLockException.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessDeadLockException.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/FileIOUtils.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/FileIOUtils.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/internal/AnalyticsHolder.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/internal/AnalyticsHolder.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/Gamma.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapIterator.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedIterationContext.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedIterationContext.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/MemoryResource.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/MemoryResource.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/MapIterationContext.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/MapIterationContext.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/MapQueryContext.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/MapQueryContext.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/set/package-info.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/set/package-info.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/HashContext.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/HashContext.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/input/ReplicatedInput.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/Gamma.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizedReader.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizedReader.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashBuilderPrivateAPI.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/WrappedValueInstanceDataHolderAccess.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/WrappedValueInstanceDataHolderAccess.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/CompactOffHeapLinearHashTable.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/CompactOffHeapLinearHashTable.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/InMemoryChronicleHashResources.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/InMemoryChronicleHashResources.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryStages.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryStages.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBuilderUtf8DataAccess.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/input/ReplicatedInput.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapEntryDelegating.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/SegmentsRecovery.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSetBuilderPrivateAPI.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBuilderUtf8DataAccess.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBytesReader.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringBytesReader.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SizedMarshallableDataAccess.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapEntryDelegating.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSetBuilderPrivateAPI.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/Precision.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/Precision.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationSegmentStages.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SizedMarshallableDataAccess.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapAbsentDelegating.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationSegmentStages.java DONE
+[96030][   progress] src/main/java/net/openhft/xstream/converters/VanillaChronicleMapConverter.java starting
+[96030][   progress] src/main/java/net/openhft/xstream/converters/VanillaChronicleMapConverter.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/locks/package-info.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/locks/package-info.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/channel/AbstractMapService.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/channel/AbstractMapService.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/AbstractChronicleMap.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapAbsentDelegating.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/set/DummyValueData.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/set/DummyValueData.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/set/ExternalSetQueryContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/set/ExternalSetQueryContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/MapSegmentContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/MapSegmentContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/DefaultValueProvider.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/DefaultValueProvider.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalizableReader.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalizableReader.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/internal/package-info.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/internal/package-info.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/MapEntryOperations.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/MapEntryOperations.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/channel/internal/MapChannel.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/channel/internal/MapChannel.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/DataAccess.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/DataAccess.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/ReplicatedChronicleMapHolderImpl.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/channel/MapHandler.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/Alloc.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/Alloc.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/ret/DefaultReturnValue.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/ret/DefaultReturnValue.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/JsonSerializer.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/ReplicatedChronicleMapHolderImpl.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/MapAbsentEntry.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/MapAbsentEntry.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteArrayDataAccess.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/JsonSerializer.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashLookupPos.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashLookupPos.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/replication/MapRemoteOperations.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/replication/MapRemoteOperations.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/BuildVersion.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteArrayDataAccess.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/Chaining.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/AbstractChronicleMap.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/MapDiagnostics.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/Chaining.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashResources.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/BuildVersion.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashRecoveryFailedException.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashRecoveryFailedException.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableReader.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableReader.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/BytesReader.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/BytesReader.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/TypedMarshallableReaderWriter.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/TypedMarshallableReaderWriter.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/MapClosable.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/MapClosable.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/MapDiagnostics.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/HashSegmentContext.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/HashSegmentContext.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ConstantSizeMarshaller.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteableSizedReader.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/ChronicleHashResources.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapQueryContext.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteableSizedReader.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializableReader.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializableReader.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizeMarshaller.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizeMarshaller.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/internal/package-info.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/internal/package-info.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteBufferSizedReader.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ConstantSizeMarshaller.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapQuery.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteBufferSizedReader.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/DummyValueZeroData.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/DummyValueZeroData.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/ExternalMapQueryContext.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/ExternalMapQueryContext.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DoubleMarshaller.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DoubleMarshaller.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/LocalLockState.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/LocalLockState.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/MapMethods.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/ReplicatedMapQuery.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DoubleDataAccess.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/MapMethods.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/DoubleDataAccess.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashClosedException.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashClosedException.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/Data.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/Data.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAbsent.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAbsent.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Cleaner.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Cleaner.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/package-info.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/package-info.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/TierCountersArea.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/TierCountersArea.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryChecksumStrategy.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashEntryChecksumStrategy.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesSizedMarshaller.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesSizedMarshaller.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/InputKeyHashCode.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/InputKeyHashCode.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/bytes/EntryValueBytesData.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/bytes/EntryValueBytesData.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/DefaultValue.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/DefaultValue.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/ThreadLocalState.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/ThreadLocalState.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapBuilderPrivateAPI.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/Absent.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/Absent.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/AbstractData.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/AbstractData.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashCorruption.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashCorruption.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/BigSegmentHeader.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapBuilderPrivateAPI.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/KeySearch.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/KeySearch.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CachingCreatingMarshaller.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CachingCreatingMarshaller.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapSegmentIteration.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapSegmentIteration.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CommonMarshallableReaderWriter.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CommonMarshallableReaderWriter.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/TierRecovery.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/BigSegmentHeader.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/replication/ReplicableEntry.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/replication/ReplicableEntry.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QuerySegmentStages.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QuerySegmentStages.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/MapEntryOperationsDelegation.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/MapEntryOperationsDelegation.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/LongCompactOffHeapLinearHashTable.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/LongCompactOffHeapLinearHashTable.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/InstanceCreatingMarshaller.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/InstanceCreatingMarshaller.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/OldDeletedEntriesCleanupThread.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/TierRecovery.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMap.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/OldDeletedEntriesCleanupThread.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/LongDataAccess.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMap.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/locks/ChronicleStampedLockVOInterface.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/locks/ChronicleStampedLockVOInterface.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringUtf8DataAccess.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringUtf8DataAccess.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/IntegerMarshaller.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/LongDataAccess.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/replication/ReplicatedQueryAlloc.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/IntegerMarshaller.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteBufferDataAccess.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/replication/ReplicatedQueryAlloc.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/LongMarshaller.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteBufferDataAccess.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/PersistedChronicleHashResources.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/PersistedChronicleHashResources.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ValueDataAccess.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/LongMarshaller.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BooleanMarshaller.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ValueDataAccess.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAndSetContext.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapAndSetContext.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/data/bytes/InputKeyBytesData.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BooleanMarshaller.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/set/SetEntry.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/set/SetEntry.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableDataAccess.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/data/bytes/InputKeyBytesData.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/ReplicatedChronicleMap.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableDataAccess.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QueryHashLookupSearch.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QueryHashLookupSearch.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/SearchAllocatedChunks.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/SearchAllocatedChunks.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/ValueBytesInterop.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/ValueBytesInterop.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ValueReader.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ValueReader.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QueryAlloc.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/query/QueryAlloc.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/ReplicatedGlobalMutableStateV2.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/ReplicatedGlobalMutableStateV2.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StopBitSizeMarshaller.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StopBitSizeMarshaller.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesAsSizedReader.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesAsSizedReader.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/Beta.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/Beta.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSetBuilder.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSetBuilder.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalBytesMarshallableDataAccess.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalBytesMarshallableDataAccess.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/set/SetFromMap.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/set/SetFromMap.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapAbsentDelegatingForIteration.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/iter/ReplicatedMapAbsentDelegatingForIteration.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/AbstractCharSequenceUtf8DataAccess.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/AbstractCharSequenceUtf8DataAccess.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/set/SetContext.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/set/SetContext.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalizableDataAccess.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ExternalizableDataAccess.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/AllocatedChunks.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/AllocatedChunks.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceBytesReader.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceBytesReader.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleFileLockException.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleFileLockException.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceBytesWriter.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceBytesWriter.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/WriteThroughEntry.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/map/WriteThroughEntry.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/ExternalHashQueryContext.java starting
+[96032][   progress] src/main/java/net/openhft/chronicle/hash/ExternalHashQueryContext.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledMapIterationContext.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/ReplicatedChronicleMap.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/ContextHolder.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/ContextHolder.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/set/DummyValue.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/set/DummyValue.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/WrappedValueBytesDataAccess.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/WrappedValueBytesDataAccess.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/DefaultSpi.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/DefaultSpi.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/replication/TimeProvider.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/replication/TimeProvider.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/CheckOnEachPublicOperation.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/CheckOnEachPublicOperation.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/MapFileAnalyzer.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/LogHolder.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/LogHolder.java DONE
+[96029][   progress] src/main/java/net/openhft/xstream/converters/ValueConverter.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/MapFileAnalyzer.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/LocksInterface.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/LocksInterface.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringSizedReader.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/StringSizedReader.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessLock.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessLock.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/bytes/WrappedValueBytesData.java starting
+[96029][   progress] src/main/java/net/openhft/xstream/converters/ValueConverter.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/SegmentStages.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/data/bytes/WrappedValueBytesData.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/package-info.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/package-info.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/VanillaChronicleMap.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/SegmentStages.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/HashEntry.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/HashEntry.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/ChainingInterface.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/hash/ChainingInterface.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/SegmentLock.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/SegmentLock.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/NoChecksumStrategy.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/NoChecksumStrategy.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashBuilder.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/ChronicleHashBuilder.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/WriteLock.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/WriteLock.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/NullReturnValue.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/NullReturnValue.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/MapMarshaller.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/MapMarshaller.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SetMarshaller.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SetMarshaller.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/IntegerDataAccess_3_13.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/IntegerDataAccess_3_13.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CharSequences.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CharSequences.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/CompilationAnchor.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/CompilationAnchor.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessReadWriteUpdateLock.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/locks/InterProcessReadWriteUpdateLock.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationKeyHashCode.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/iter/IterationKeyHashCode.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedMapQueryContext.java starting
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedMapQueryContext.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapIterationContext.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/VanillaChronicleMap.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/set/SetAbsentEntry.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/set/SetAbsentEntry.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/set/replication/SetReplicableEntry.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/set/replication/SetReplicableEntry.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizedWriter.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/SizedWriter.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/MapMethodsSupport.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/MapMethodsSupport.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/InternalMapFileAnalyzer.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/InternalMapFileAnalyzer.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/entry/MapEntryStages.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/entry/MapEntryStages.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/MapQueryContext.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/MapQueryContext.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/replication/MapReplicableEntry.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/replication/MapReplicableEntry.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CleanerUtils.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CleanerUtils.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/ret/UsableReturnValue.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/ret/UsableReturnValue.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapEntrySet.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/ChronicleMapEntrySet.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/VanillaChronicleMapHolderImpl.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/map/VanillaChronicleMapHolderImpl.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/Replica.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/Replica.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/IterationContext.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/IterationContext.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/jna/PosixFallocate.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/jna/PosixFallocate.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ReadLock.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ReadLock.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/PoissonDistribution.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/math/PoissonDistribution.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/MapEntry.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/MapEntry.java DONE
+[96030][   progress] src/main/java/net/openhft/xstream/converters/StringBuilderConverter.java starting
+[96030][   progress] src/main/java/net/openhft/xstream/converters/StringBuilderConverter.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/VanillaGlobalMutableState.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/VanillaGlobalMutableState.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/StatefulCopyable.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/StatefulCopyable.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/set/replication/SetRemoteOperations.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/set/replication/SetRemoteOperations.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedMapIterationContext.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/impl/ReplicatedMapIterationContext.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/set/DummyValueMarshaller.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/set/DummyValueMarshaller.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CanonicalRandomAccessFiles.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapQueryContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceUtf8DataAccess.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/CharSequenceUtf8DataAccess.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/replication/ReplicableEntryDelegating.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/replication/ReplicableEntryDelegating.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/set/SetEntryOperations.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/set/SetEntryOperations.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/BytesWriter.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/BytesWriter.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/SegmentHeader.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/SegmentHeader.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/ret/InstanceReturnValue.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/ret/InstanceReturnValue.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/MapContext.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/MapContext.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/replication/ReplicationUpdate.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/replication/ReplicationUpdate.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializableDataAccess.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/CanonicalRandomAccessFiles.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSet.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/set/ChronicleSet.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/ChecksumEntry.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/ChecksumEntry.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/IntCompactOffHeapLinearHashTable.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/IntCompactOffHeapLinearHashTable.java DONE
+[96030][   progress] src/main/java/net/openhft/xstream/converters/internal/package-info.java starting
+[96030][   progress] src/main/java/net/openhft/xstream/converters/internal/package-info.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/internal/InternalAssertUtil.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/map/internal/InternalAssertUtil.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashLookupSearch.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/HashLookupSearch.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/SerializableDataAccess.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/set/internal/package-info.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/set/internal/package-info.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/HashAbsentEntry.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/HashAbsentEntry.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableReaderWriter.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/BytesMarshallableReaderWriter.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Throwables.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/util/Throwables.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/SizePrefixedBlob.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/SizePrefixedBlob.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapQuery.java starting
+[96030][   progress] src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/locks/ChronicleStampedLock.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/map/impl/stage/query/MapQuery.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteArraySizedReader.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/ByteArraySizedReader.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/MarshallableReaderWriter.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/serialization/impl/MarshallableReaderWriter.java DONE
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ChecksumStrategy.java starting
+[96031][   progress] src/main/java/net/openhft/chronicle/hash/impl/stage/entry/ChecksumStrategy.java DONE
+[96032][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledMapIterationContext.java DONE
+[96030][   progress] src/main/java/net/openhft/chronicle/map/locks/ChronicleStampedLock.java DONE
+[96029][   progress] src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapIterationContext.java DONE
 Backend stats:
-[90830][      debug]   summary_file_try_load= 18090
-[90830][      debug]   summary_read_from_disk= 2157
-[90830][      debug]   summary_cache_hits= 13809 (43%)
-[90830][      debug]   summary_cache_misses= 18090
-[90830][      debug]   ondemand_procs_analyzed= 5793
-[90830][      debug]   proc_locker_lock_time_user= 0.00000000
-[90830][      debug]   proc_locker_lock_time_sys= 0.00000000
-[90830][      debug]   proc_locker_lock_time_wall= 0.00000000
-[90830][      debug]   proc_locker_unlock_time_user= 0.00000000
-[90830][      debug]   proc_locker_unlock_time_sys= 0.00000000
-[90830][      debug]   proc_locker_unlock_time_wall= 0.00000000
-[90830][      debug]   restart_scheduler_useful_time_user= 0.00000000
-[90830][      debug]   restart_scheduler_useful_time_sys= 0.00000000
-[90830][      debug]   restart_scheduler_useful_time_wall= 0.00000000
-[90830][      debug]   restart_scheduler_total_time_user= 0.00000000
-[90830][      debug]   restart_scheduler_total_time_sys= 0.00000000
-[90830][      debug]   restart_scheduler_total_time_wall= 0.00000000
-[90830][      debug]   pulse_aliasing_contradictions= 0
-[90830][      debug]   pulse_args_length_contradictions= 0
-[90830][      debug]   pulse_captured_vars_length_contradictions= 0
-[90830][      debug]   pulse_disjuncts_dropped= 0
-[90830][      debug]   pulse_interrupted_loops= 0
-[90830][      debug]   pulse_summaries_contradictions= 0
-[90830][      debug]   pulse_summaries_count= []
-[90830][      debug]   pulse_summaries_total_disjuncts= 0
-[90830][      debug]   topl_reachable_calls= 0
-[90830][      debug]   timeouts= 0
-[90830][      debug]   timings= timings for racerd:
-[90830][      debug]     p10: 0.000002s p20: 0.000035s p30: 0.000055s p40: 0.000083s
-[90830][      debug]     p50: 0.000114s p60: 0.000151s p70: 0.000228s p80: 0.000336s
-[90830][      debug]     p90: 0.000620s p95: 0.001187s p96: 0.001491s p97: 0.002004s
-[90830][      debug]     p98: 0.002755s p99: 0.004272s p99.9: 0.009830s p99.99: 0.017219s 
-[90830][      debug]   timings for preanalysis:
-[90830][      debug]     p10: 0.000036s p20: 0.000046s p30: 0.000053s p40: 0.000062s
-[90830][      debug]     p50: 0.000074s p60: 0.000097s p70: 0.000131s p80: 0.000188s
-[90830][      debug]     p90: 0.000380s p95: 0.000633s p96: 0.000734s p97: 0.000879s
-[90830][      debug]     p98: 0.001204s p99: 0.002231s p99.9: 0.006140s p99.99: 0.017855s 
-[90830][      debug]   
-[90830][      debug]   longest_proc_duration_heap= [
-[90830][      debug]   239550us: src/main/java/net/openhft/chronicle/map/channel/MapHandler.java: ChronicleChannel MapHandler.asInternalChannel(ChronicleContext,ChronicleChannelCfg)
-[90830][      debug]   238945us: src/main/java/net/openhft/chronicle/map/channel/internal/MapChannel.java: MapChannel.<init>(String,MapService,ChronicleContext,ChronicleChannelCfg)
-[90830][      debug]   237426us: src/main/java/net/openhft/chronicle/map/channel/internal/MapChannel.java: ChronicleMap MapChannel.createMap(String,MapService,ChronicleContext)
-[90830][      debug]   230804us: src/main/java/net/openhft/chronicle/map/ReplicatedChronicleMap.java: boolean ReplicatedChronicleMap$ModificationIterator$DirtyEntriesHandler.action()
-[90830][      debug]   190473us: src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java: ChronicleMap ChronicleMapBuilder.createPersistedTo(File)
-[90830][      debug]   189933us: src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java: ChronicleMap ChronicleMapBuilder.createWithFile(File,boolean,boolean,ChronicleHashCorruption$Listener)
-[90830][      debug]   179331us: src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java: VanillaChronicleMap ChronicleMapBuilder.openWithExistingFile(File,RandomAccessFile,ChronicleHashResources,boolean,boolean,ChronicleHashCorruption$Listener)
-[90830][      debug]   154154us: src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapQueryContext.java: void CompiledReplicatedMapQueryContext.doInsert(Data)
-[90830][      debug]   127888us: src/main/java/net/openhft/chronicle/hash/impl/stage/iter/SegmentsRecovery.java: void SegmentsRecovery.removeDuplicatesInSegments(ChronicleHashCorruption$Listener,ChronicleHashCorruptionImpl)
-[90830][      debug]   126292us: src/main/java/net/openhft/chronicle/hash/impl/stage/iter/TierRecovery.java: void TierRecovery.removeDuplicatesInSegment(ChronicleHashCorruption$Listener,ChronicleHashCorruptionImpl)
-[90830][      debug]   ]
-[90830][      debug]   
-[90830][      debug] GC stats for backend_stats.gc_stats_add.:
-[90830][      debug]   minor_words: 5.7161e+08
-[90830][      debug]   promoted_words: 1.21244e+07
-[90830][      debug]   major_words: 3.40872e+07
-[90830][      debug]   minor_collections: 590
-[90830][      debug]   major_collections: 90
-[90830][      debug]   compactions: 0
-[90830][      debug]   top_heap_words: 15578624
-[90830][      debug]   
-[90830][      debug] GC stats for backend_stats.gc_stats_max.:
-[90830][      debug]   minor_words: 1.8001e+08
-[90830][      debug]   promoted_words: 3.60423e+06
-[90830][      debug]   major_words: 1.05094e+07
-[90830][      debug]   minor_collections: 186
-[90830][      debug]   major_collections: 28
-[90830][      debug]   compactions: 0
-[90830][      debug]   top_heap_words: 4308480
-[90830][      debug]   
-[90830][      debug] Average over 4 processes
-[90830][      debug] GC stats for backend_stats.gc_stats_average.:
-[90830][      debug]   minor_words: 1.42903e+08
-[90830][      debug]   promoted_words: 3.0311e+06
-[90830][      debug]   major_words: 8.5218e+06
-[90830][      debug]   minor_collections: 147
-[90830][      debug]   major_collections: 22
-[90830][      debug]   compactions: 0
-[90830][      debug]   top_heap_words: 3894656
-[90830][      debug]   
-[90830][      debug] Analysis phase finished in 1.61s
-[90830][      debug] backend_stats.scheduler_process_analysis_time_user= 0.17188500
-[90830][      debug] backend_stats.scheduler_process_analysis_time_sys= 0.33646600
-[90830][      debug] backend_stats.scheduler_process_analysis_time_wall= 1.60274029
-[90830][      debug] GC stats for analysis_scheduler:
-[90830][      debug]   minor_words: 1.22563e+07
-[90830][      debug]   promoted_words: 319095
-[90830][      debug]   major_words: 356927
-[90830][      debug]   minor_collections: 15
-[90830][      debug]   major_collections: 4
-[90830][      debug]   compactions: 1
-[90830][      debug]   top_heap_words: 875008
-[90830][      debug]   
-[90830][     result] 
+[95979][      debug]   summary_file_try_load= 18062
+[95979][      debug]   summary_read_from_disk= 2152
+[95979][      debug]   summary_cache_hits= 13767 (43%)
+[95979][      debug]   summary_cache_misses= 18062
+[95979][      debug]   ondemand_procs_analyzed= 5797
+[95979][      debug]   proc_locker_lock_time_user= 0.00000000
+[95979][      debug]   proc_locker_lock_time_sys= 0.00000000
+[95979][      debug]   proc_locker_lock_time_wall= 0.00000000
+[95979][      debug]   proc_locker_unlock_time_user= 0.00000000
+[95979][      debug]   proc_locker_unlock_time_sys= 0.00000000
+[95979][      debug]   proc_locker_unlock_time_wall= 0.00000000
+[95979][      debug]   restart_scheduler_useful_time_user= 0.00000000
+[95979][      debug]   restart_scheduler_useful_time_sys= 0.00000000
+[95979][      debug]   restart_scheduler_useful_time_wall= 0.00000000
+[95979][      debug]   restart_scheduler_total_time_user= 0.00000000
+[95979][      debug]   restart_scheduler_total_time_sys= 0.00000000
+[95979][      debug]   restart_scheduler_total_time_wall= 0.00000000
+[95979][      debug]   pulse_aliasing_contradictions= 0
+[95979][      debug]   pulse_args_length_contradictions= 0
+[95979][      debug]   pulse_captured_vars_length_contradictions= 0
+[95979][      debug]   pulse_disjuncts_dropped= 0
+[95979][      debug]   pulse_interrupted_loops= 0
+[95979][      debug]   pulse_summaries_contradictions= 0
+[95979][      debug]   pulse_summaries_count= []
+[95979][      debug]   pulse_summaries_total_disjuncts= 0
+[95979][      debug]   topl_reachable_calls= 0
+[95979][      debug]   timeouts= 0
+[95979][      debug]   timings= timings for racerd:
+[95979][      debug]     p10: 0.000002s p20: 0.000035s p30: 0.000055s p40: 0.000084s
+[95979][      debug]     p50: 0.000113s p60: 0.000150s p70: 0.000229s p80: 0.000341s
+[95979][      debug]     p90: 0.000611s p95: 0.001162s p96: 0.001446s p97: 0.001951s
+[95979][      debug]     p98: 0.002595s p99: 0.004271s p99.9: 0.008909s p99.99: 0.016631s 
+[95979][      debug]   timings for preanalysis:
+[95979][      debug]     p10: 0.000037s p20: 0.000047s p30: 0.000054s p40: 0.000063s
+[95979][      debug]     p50: 0.000075s p60: 0.000099s p70: 0.000132s p80: 0.000189s
+[95979][      debug]     p90: 0.000387s p95: 0.000658s p96: 0.000794s p97: 0.000931s
+[95979][      debug]     p98: 0.001253s p99: 0.002097s p99.9: 0.006925s p99.99: 0.018328s 
+[95979][      debug]   
+[95979][      debug]   longest_proc_duration_heap= [
+[95979][      debug]   241556us: src/main/java/net/openhft/chronicle/map/channel/MapHandler.java: ChronicleChannel MapHandler.asInternalChannel(ChronicleContext,ChronicleChannelCfg)
+[95979][      debug]   240972us: src/main/java/net/openhft/chronicle/map/channel/internal/MapChannel.java: MapChannel.<init>(String,MapService,ChronicleContext,ChronicleChannelCfg)
+[95979][      debug]   239408us: src/main/java/net/openhft/chronicle/map/channel/internal/MapChannel.java: ChronicleMap MapChannel.createMap(String,MapService,ChronicleContext)
+[95979][      debug]   234183us: src/main/java/net/openhft/chronicle/map/ReplicatedChronicleMap.java: boolean ReplicatedChronicleMap$ModificationIterator$DirtyEntriesHandler.action()
+[95979][      debug]   191188us: src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java: ChronicleMap ChronicleMapBuilder.createPersistedTo(File)
+[95979][      debug]   188506us: src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java: ChronicleMap ChronicleMapBuilder.createWithFile(File,boolean,boolean,ChronicleHashCorruption$Listener)
+[95979][      debug]   174032us: src/main/java/net/openhft/chronicle/map/ChronicleMapBuilder.java: VanillaChronicleMap ChronicleMapBuilder.openWithExistingFile(File,RandomAccessFile,ChronicleHashResources,boolean,boolean,ChronicleHashCorruption$Listener)
+[95979][      debug]   154984us: src/main/java/net/openhft/chronicle/map/impl/CompiledReplicatedMapQueryContext.java: void CompiledReplicatedMapQueryContext.doInsert(Data)
+[95979][      debug]   131709us: src/main/java/net/openhft/chronicle/hash/impl/stage/iter/SegmentsRecovery.java: void SegmentsRecovery.removeDuplicatesInSegments(ChronicleHashCorruption$Listener,ChronicleHashCorruptionImpl)
+[95979][      debug]   129473us: src/main/java/net/openhft/chronicle/hash/impl/stage/iter/TierRecovery.java: void TierRecovery.removeDuplicatesInSegment(ChronicleHashCorruption$Listener,ChronicleHashCorruptionImpl)
+[95979][      debug]   ]
+[95979][      debug]   
+[95979][      debug] GC stats for backend_stats.gc_stats_add.:
+[95979][      debug]   minor_words: 5.70496e+08
+[95979][      debug]   promoted_words: 1.22097e+07
+[95979][      debug]   major_words: 3.41273e+07
+[95979][      debug]   minor_collections: 590
+[95979][      debug]   major_collections: 91
+[95979][      debug]   compactions: 0
+[95979][      debug]   top_heap_words: 14288896
+[95979][      debug]   
+[95979][      debug] GC stats for backend_stats.gc_stats_max.:
+[95979][      debug]   minor_words: 1.80297e+08
+[95979][      debug]   promoted_words: 4.14825e+06
+[95979][      debug]   major_words: 1.16604e+07
+[95979][      debug]   minor_collections: 184
+[95979][      debug]   major_collections: 25
+[95979][      debug]   compactions: 0
+[95979][      debug]   top_heap_words: 4308480
+[95979][      debug]   
+[95979][      debug] Average over 4 processes
+[95979][      debug] GC stats for backend_stats.gc_stats_average.:
+[95979][      debug]   minor_words: 1.42624e+08
+[95979][      debug]   promoted_words: 3.05242e+06
+[95979][      debug]   major_words: 8.53184e+06
+[95979][      debug]   minor_collections: 147
+[95979][      debug]   major_collections: 22
+[95979][      debug]   compactions: 0
+[95979][      debug]   top_heap_words: 3572224
+[95979][      debug]   
+[95979][      debug] Analysis phase finished in 1.62s
+[95979][      debug] backend_stats.scheduler_process_analysis_time_user= 0.17247600
+[95979][      debug] backend_stats.scheduler_process_analysis_time_sys= 0.33754700
+[95979][      debug] backend_stats.scheduler_process_analysis_time_wall= 1.61731204
+[95979][      debug] GC stats for analysis_scheduler:
+[95979][      debug]   minor_words: 1.22231e+07
+[95979][      debug]   promoted_words: 322728
+[95979][      debug]   major_words: 360433
+[95979][      debug]   minor_collections: 15
+[95979][      debug]   major_collections: 4
+[95979][      debug]   compactions: 1
+[95979][      debug]   top_heap_words: 875008
+[95979][      debug]   
+[95979][     result] 
 src/main/java/net/openhft/chronicle/map/impl/CompiledMapQueryContext.java:1575: warning: Thread Safety Violation
   Unprotected write. Non-private method `CompiledMapQueryContext$WriteLock.tryLock(...)` indirectly writes to field `this.this$0.contextModCount` outside of synchronization.
  Reporting because another access to the same memory occurs on a background thread, although this access may not. 
@@ -791,30 +791,30 @@ Found 8 issues (console output truncated to 5, see '/Users/yokurang/Documents/Ac
                         Issue Type(ISSUED_TYPE_ID): #
   Thread Safety Violation(THREAD_SAFETY_VIOLATION): 8
 
-[90830][      debug] GC stats for report:
-[90830][      debug]   minor_words: 3.56238e+06
-[90830][      debug]   promoted_words: 27429
-[90830][      debug]   major_words: 41522
-[90830][      debug]   minor_collections: 4
-[90830][      debug]   major_collections: 0
-[90830][      debug]   compactions: 0
-[90830][      debug]   top_heap_words: 875008
-[90830][      debug]   
-[90830][      debug] GC stats for main_process_full:
-[90830][      debug]   minor_words: 1.91001e+07
-[90830][      debug]   promoted_words: 797263
-[90830][      debug]   major_words: 883649
-[90830][      debug]   minor_collections: 27
-[90830][      debug]   major_collections: 5
-[90830][      debug]   compactions: 1
-[90830][      debug]   top_heap_words: 875008
-[90830][      debug]   
-[90833][      debug] Opening a new database connection Primary CaptureDatabase
-[90833][      debug] Closing an existing database connection Primary CaptureDatabase
-[90833][      debug] Opening a new database connection Primary AnalysisDatabase
-[90833][      debug] Closing an existing database connection Primary AnalysisDatabase
-[90833][      debug] Detected 152 spec overwrites.
-[90833][      debug] Sqlite write daemon: terminating
-[90830][      debug] Closing an existing database connection Primary CaptureDatabase
-[90830][      debug] Closing an existing database connection Primary AnalysisDatabase
-[90830][      debug] 
+[95979][      debug] GC stats for report:
+[95979][      debug]   minor_words: 3.56238e+06
+[95979][      debug]   promoted_words: 27322
+[95979][      debug]   major_words: 41415
+[95979][      debug]   minor_collections: 4
+[95979][      debug]   major_collections: 0
+[95979][      debug]   compactions: 0
+[95979][      debug]   top_heap_words: 875008
+[95979][      debug]   
+[95979][      debug] GC stats for main_process_full:
+[95979][      debug]   minor_words: 1.90668e+07
+[95979][      debug]   promoted_words: 800789
+[95979][      debug]   major_words: 887048
+[95979][      debug]   minor_collections: 27
+[95979][      debug]   major_collections: 5
+[95979][      debug]   compactions: 1
+[95979][      debug]   top_heap_words: 875008
+[95979][      debug]   
+[95982][      debug] Opening a new database connection Primary CaptureDatabase
+[95982][      debug] Closing an existing database connection Primary CaptureDatabase
+[95982][      debug] Opening a new database connection Primary AnalysisDatabase
+[95982][      debug] Closing an existing database connection Primary AnalysisDatabase
+[95982][      debug] Detected 156 spec overwrites.
+[95982][      debug] Sqlite write daemon: terminating
+[95979][      debug] Closing an existing database connection Primary CaptureDatabase
+[95979][      debug] Closing an existing database connection Primary AnalysisDatabase
+[95979][      debug] 
