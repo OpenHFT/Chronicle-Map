@@ -158,17 +158,6 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
         return true;
     }
 
-    @Deprecated(/* to be removed in x.25 */)
-    @Override
-    public byte[] internalNumberBuffer() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public byte[] internalNumberBuffer() {
-        throw new UnsupportedOperationException();
-    }
-
     @Override
     public void reserve(ReferenceOwner id) throws IllegalStateException {
     }
@@ -176,11 +165,6 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     @Override
     public boolean tryReserve(ReferenceOwner id) throws IllegalStateException {
         return false;
-    }
-
-    @Override
-    public boolean reservedBy(ReferenceOwner owner) {
-        return true;
     }
 
     @Override

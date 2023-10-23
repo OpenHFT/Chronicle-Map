@@ -94,7 +94,7 @@ public class BytesMarshallableDataAccess<T extends BytesMarshallable>
                     target.capacity() - targetOffset);
             targetBytes.writePosition(targetOffset);
             instance.writeMarshallable(targetBytes);
-            targetBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+            targetBytes.bytesStore(BytesStore.empty(), 0, 0);
         }
     }
 

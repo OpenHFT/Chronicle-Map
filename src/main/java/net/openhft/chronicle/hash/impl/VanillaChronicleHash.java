@@ -224,8 +224,6 @@ public abstract class VanillaChronicleHash<K,
 
         preShutdownAction = privateAPI.getPreShutdownAction();
         skipCloseOnExitHook = privateAPI.skipCloseOnExitHook();
-
-        disableThreadSafetyCheck(true);
     }
 
     public static IOException throwRecoveryOrReturnIOException(@NotNull final File file,
@@ -934,8 +932,7 @@ public abstract class VanillaChronicleHash<K,
         globalMutableState.addDataStoreSize(tierBulkSizeInBytes);
     }
 
-    // TODO: x.25 remove throws IOException
-    public void msync() throws IOException {
+    public void msync() {
         throwExceptionIfClosed();
 
         if (persisted()) {

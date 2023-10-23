@@ -71,12 +71,6 @@
 
         <dependency>
             <groupId>net.openhft</groupId>
-            <artifactId>chronicle-bytes</artifactId>
-            <version>2.24ea19</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.openhft</groupId>
             <artifactId>posix</artifactId>
         </dependency>
 

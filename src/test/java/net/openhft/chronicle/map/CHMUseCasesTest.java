@@ -1174,7 +1174,7 @@ public class CHMUseCasesTest {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
                 assertNotNull(entry);
 
-                ByteBuffer bb1 = ByteBuffer.allocate(8);
+                ByteBuffer bb1 = ByteBuffer.allocate(8).order(ByteOrder.nativeOrder());
                 bb1.put(value1);
                 bb1.putShort((short) 12345);
                 bb1.flip();
