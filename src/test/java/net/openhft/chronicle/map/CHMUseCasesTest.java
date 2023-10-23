@@ -1108,17 +1108,17 @@ public class CHMUseCasesTest {
                     };
 
             map.put(key1, value1);
-            assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
+            assertBBEquals(wrapAsByteBuffer(new byte[]{11, 11}), map.getMapped(key1, function));
             assertEquals(null, map.getMapped(key2, function));
             mapChecks();
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
+            assertBBEquals(wrapAsByteBuffer(new byte[]{12, 10}),
                     map.computeIfPresent(key1, (k, s) -> {
                         s.put(0, (byte) (s.get(0) + 1));
                         s.put(1, (byte) (s.get(1) - 1));
                         return function.apply(s);
                     }));
 
-            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));
+            assertBBEquals(wrapAsByteBuffer(new byte[]{12, 10}), map.get(key1));
 
             mapChecks();
 
@@ -1183,6 +1183,21 @@ public class CHMUseCasesTest {
 
             mapChecks();
         }
+    }
+
+    @NotNull
+    private static ByteBuffer newDIrectByteBufferOf(int capacity1) {
+        return ByteBuffer.allocateDirect(capacity1).order(ByteOrder.nativeOrder());
+    }
+
+    @NotNull
+    private static ByteBuffer newByteBufferOf(int capacity) {
+        return ByteBuffer.allocate(capacity).order(ByteOrder.nativeOrder());
+    }
+
+    @NotNull
+    private static ByteBuffer wrapAsByteBuffer(byte[] array) {
+        return ByteBuffer.wrap(array).order(ByteOrder.nativeOrder());
     }
 
     @Test

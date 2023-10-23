@@ -158,6 +158,11 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
         return true;
     }
 
+    @Deprecated(/* to be removed in x.25 */)
+    public byte[] internalNumberBuffer() {
+        throw new UnsupportedOperationException();
+    }
+
     @Override
     public byte[] internalNumberBuffer() {
         throw new UnsupportedOperationException();
