@@ -26,8 +26,6 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-import static net.openhft.chronicle.bytes.NoBytesStore.NO_BYTES_STORE;
-
 @Staged
 public class WrappedValueBytesData<V> extends AbstractData<V> {
 
@@ -95,7 +93,7 @@ public class WrappedValueBytesData<V> extends AbstractData<V> {
     }
 
     void closeWrappedValueBytes() {
-        wrappedValueBytes.bytesStore(NO_BYTES_STORE, 0, 0);
+        wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
         wrappedValueBytesUsed = false;
     }
 

@@ -17,7 +17,7 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.collect.Lists;
-import net.openhft.chronicle.bytes.NoBytesStore;
+import net.openhft.chronicle.bytes.internal.NoBytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.values.IntValue;

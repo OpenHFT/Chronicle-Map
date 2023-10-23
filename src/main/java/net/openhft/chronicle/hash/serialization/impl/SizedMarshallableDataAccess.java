@@ -104,7 +104,7 @@ public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T
             targetBytes.bytesStore((BytesStore) target, targetOffset, size);
             targetBytes.writePosition(targetOffset);
             sizedWriter.write(targetBytes, size, instance);
-            targetBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+            targetBytes.bytesStore(BytesStore.empty(), 0, 0);
         }
     }
 

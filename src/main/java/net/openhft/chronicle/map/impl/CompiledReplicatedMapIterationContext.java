@@ -1038,8 +1038,8 @@ PRESENT, ALL;    }
         public void doCloseWrappedValueBytes() {
             if (!(this.wrappedValueBytesInit()))
                 return ;
-            
-            wrappedValueBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+
+            wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
             wrappedValueBytesUsed = false;
         }
 
@@ -1186,7 +1186,7 @@ PRESENT, ALL;    }
                 return ;
             
             this.closeWrappedValueBytesDependants();
-            wrappedValueBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+            wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
             wrappedValueBytesUsed = false;
         }
 

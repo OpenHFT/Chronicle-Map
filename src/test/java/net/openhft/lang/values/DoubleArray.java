@@ -21,6 +21,9 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.DynamicallySized;
 import net.openhft.chronicle.values.Copyable;
 
+import java.io.IOException;
+import java.nio.channels.FileLock;
+
 /**
  * Created by peter.lawrey on 23/04/2015.
  */
@@ -60,6 +63,16 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
     @Override
     public long maxSize() {
         return BASE + capacity * 8;
+    }
+
+    @Override
+    public FileLock lock(boolean shared) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FileLock tryLock(boolean shared) throws IOException {
+        throw new UnsupportedOperationException();
     }
 
     public int length() {

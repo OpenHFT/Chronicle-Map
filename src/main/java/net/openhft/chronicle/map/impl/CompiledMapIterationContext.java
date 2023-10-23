@@ -1,64 +1,35 @@
 package net.openhft.chronicle.map.impl;
 
-import net.openhft.chronicle.hash.AbstractData;
-import net.openhft.chronicle.algo.bytes.Access;
-import net.openhft.chronicle.hash.impl.stage.entry.Alloc;
-import java.util.ArrayList;
-import java.util.function.BiFunction;
-import net.openhft.chronicle.hash.impl.BigSegmentHeader;
+import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.algo.bitset.BitSetFrame;
-import net.openhft.chronicle.bytes.Bytes;
-import net.openhft.chronicle.bytes.BytesStore;
-import net.openhft.chronicle.bytes.BytesUtil;
-import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import net.openhft.chronicle.hash.ChecksumEntry;
-import net.openhft.chronicle.hash.impl.stage.entry.ChecksumStrategy;
-import net.openhft.chronicle.hash.ChronicleHash;
-import net.openhft.chronicle.hash.ChronicleHashCorruption;
-import net.openhft.chronicle.map.ChronicleHashCorruptionImpl;
-import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
-import net.openhft.chronicle.map.ChronicleMap;
-import net.openhft.chronicle.set.ChronicleSet;
-import net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable;
-import java.util.ConcurrentModificationException;
-import java.util.function.Consumer;
-import net.openhft.chronicle.hash.Data;
-import net.openhft.chronicle.hash.serialization.DataAccess;
-import net.openhft.chronicle.map.ExternalMapQueryContext;
-import net.openhft.chronicle.hash.HashEntry;
-import net.openhft.chronicle.hash.HashSegmentContext;
+import net.openhft.chronicle.algo.bitset.ReusableBitSet;
+import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
+import net.openhft.chronicle.algo.bytes.Access;
+import net.openhft.chronicle.algo.hashing.LongHashFunction;
+import net.openhft.chronicle.bytes.*;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.IOTools;
+import net.openhft.chronicle.hash.*;
+import net.openhft.chronicle.hash.impl.*;
+import net.openhft.chronicle.hash.impl.stage.entry.*;
+import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
+import net.openhft.chronicle.hash.impl.util.Objects;
 import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.hash.locks.InterProcessLock;
-import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.hash.impl.stage.entry.KeyHashCode;
-import java.util.List;
-import net.openhft.chronicle.hash.impl.LocalLockState;
-import net.openhft.chronicle.hash.impl.stage.entry.LocksInterface;
-import net.openhft.chronicle.algo.hashing.LongHashFunction;
-import net.openhft.chronicle.map.MapAbsentEntry;
-import net.openhft.chronicle.map.MapContext;
-import net.openhft.chronicle.map.MapEntry;
-import net.openhft.chronicle.algo.MemoryUnit;
-import net.openhft.chronicle.bytes.NoBytesStore;
-import net.openhft.chronicle.hash.impl.stage.entry.NoChecksumStrategy;
-import org.jetbrains.annotations.NotNull;
-import net.openhft.chronicle.hash.impl.util.Objects;
-import net.openhft.chronicle.bytes.PointerBytesStore;
-import java.util.function.Predicate;
-import net.openhft.chronicle.bytes.RandomDataInput;
-import net.openhft.chronicle.algo.bitset.ReusableBitSet;
-import net.openhft.chronicle.hash.impl.SegmentHeader;
-import net.openhft.chronicle.hash.SegmentLock;
-import net.openhft.chronicle.set.SetContext;
-import net.openhft.chronicle.algo.bitset.SingleThreadedFlatBitSetFrame;
+import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.SizedReader;
-import net.openhft.chronicle.hash.impl.TierCountersArea;
+import net.openhft.chronicle.map.*;
+import net.openhft.chronicle.set.ChronicleSet;
+import net.openhft.chronicle.set.SetContext;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
-import net.openhft.chronicle.bytes.VanillaBytes;
-import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
-import net.openhft.chronicle.map.VanillaChronicleMap;
-import net.openhft.chronicle.hash.VanillaGlobalMutableState;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 
@@ -911,8 +882,8 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         public void doCloseWrappedValueBytes() {
             if (!(this.wrappedValueBytesInit()))
                 return ;
-            
-            wrappedValueBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+
+            wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
             wrappedValueBytesUsed = false;
         }
 
@@ -1047,7 +1018,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
                 return ;
             
             this.closeWrappedValueBytesDependants();
-            wrappedValueBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+            wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
             wrappedValueBytesUsed = false;
         }
 
