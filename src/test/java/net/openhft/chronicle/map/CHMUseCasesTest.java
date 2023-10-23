@@ -44,7 +44,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.*;
 import java.util.function.BiFunction;
 
@@ -1108,17 +1107,17 @@ public class CHMUseCasesTest {
                     };
 
             map.put(key1, value1);
-            assertBBEquals(wrapAsByteBuffer(new byte[]{11, 11}), map.getMapped(key1, function));
+            assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
             assertEquals(null, map.getMapped(key2, function));
             mapChecks();
-            assertBBEquals(wrapAsByteBuffer(new byte[]{12, 10}),
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
                     map.computeIfPresent(key1, (k, s) -> {
                         s.put(0, (byte) (s.get(0) + 1));
                         s.put(1, (byte) (s.get(1) - 1));
                         return function.apply(s);
                     }));
 
-            assertBBEquals(wrapAsByteBuffer(new byte[]{12, 10}), map.get(key1));
+            assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}), map.get(key1));
 
             mapChecks();
 
@@ -1174,7 +1173,7 @@ public class CHMUseCasesTest {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
                 assertNotNull(entry);
 
-                ByteBuffer bb1 = ByteBuffer.allocate(8).order(ByteOrder.nativeOrder());
+                ByteBuffer bb1 = ByteBuffer.allocate(8);
                 bb1.put(value1);
                 bb1.putShort((short) 12345);
                 bb1.flip();
@@ -1183,21 +1182,6 @@ public class CHMUseCasesTest {
 
             mapChecks();
         }
-    }
-
-    @NotNull
-    private static ByteBuffer newDIrectByteBufferOf(int capacity1) {
-        return ByteBuffer.allocateDirect(capacity1).order(ByteOrder.nativeOrder());
-    }
-
-    @NotNull
-    private static ByteBuffer newByteBufferOf(int capacity) {
-        return ByteBuffer.allocate(capacity).order(ByteOrder.nativeOrder());
-    }
-
-    @NotNull
-    private static ByteBuffer wrapAsByteBuffer(byte[] array) {
-        return ByteBuffer.wrap(array).order(ByteOrder.nativeOrder());
     }
 
     @Test
@@ -1222,7 +1206,7 @@ public class CHMUseCasesTest {
                     .asReadOnlyBuffer();
 
             final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
-                    // Apparently, asReadOnlyBuffer cannot be used as keys because the backing array cannot be exposed;
+            // Apparently, asReadOnlyBuffer cannot be used as keys because the backing array cannot be exposed;
 
             final ByteBuffer value1 = ((ByteBuffer) ByteBuffer.allocateDirect(4)
                     .put(new byte[]{11, 11, 11, 11})
