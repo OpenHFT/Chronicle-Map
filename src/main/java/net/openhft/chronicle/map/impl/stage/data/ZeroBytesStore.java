@@ -159,11 +159,6 @@ public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     }
 
     @Override
-    public byte[] internalNumberBuffer() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void reserve(ReferenceOwner id) throws IllegalStateException {
     }
 
