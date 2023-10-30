@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import net.openhft.chronicle.bytes.internal.NoBytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.AbstractCloseable;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
 import net.openhft.chronicle.hash.impl.util.CleanerUtils;
@@ -104,6 +105,9 @@ public class MemoryLeaksTest {
 
     @Test(timeout = 10_000)
     public void testChronicleMapCollectedAndDirectMemoryReleased() throws IOException {
+        // check previous resources have been closed
+        AbstractCloseable.assertCloseablesClosed();
+
         assumeFalse(OS.isMacOSX());
         // This test is flaky in Linux and Mac OS apparently because some native memory from
         // running previous/concurrent tests is released during this test, that infers with
