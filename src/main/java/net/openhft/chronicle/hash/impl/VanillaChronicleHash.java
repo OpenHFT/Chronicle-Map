@@ -224,8 +224,6 @@ public abstract class VanillaChronicleHash<K,
 
         preShutdownAction = privateAPI.getPreShutdownAction();
         skipCloseOnExitHook = privateAPI.skipCloseOnExitHook();
-
-        disableThreadSafetyCheck(true);
     }
 
     public static IOException throwRecoveryOrReturnIOException(@NotNull final File file,
@@ -934,8 +932,7 @@ public abstract class VanillaChronicleHash<K,
         globalMutableState.addDataStoreSize(tierBulkSizeInBytes);
     }
 
-    // TODO: x.25 remove throws IOException
-    public void msync() throws IOException {
+    public void msync() {
         throwExceptionIfClosed();
 
         if (persisted()) {
@@ -1073,7 +1070,8 @@ public abstract class VanillaChronicleHash<K,
      * @see net.openhft.chronicle.bytes.MappedFile#acquireByteStore(ReferenceOwner, long, BytesStore, MappedBytesStoreFactory)
      */
     private BytesStore map(long mapSize, final long mappingOffsetInFile) throws IOException {
-        mapSize = pageAlign(mapSize);
+        int pageSize = (int) OS.mapAlignment();
+        mapSize = pageAlign(mapSize, pageSize);
         final long minFileSize = mappingOffsetInFile + mapSize;
         final FileChannel fileChannel = raf.getChannel();
         if (fileChannel.size() < minFileSize) {
@@ -1094,7 +1092,7 @@ public abstract class VanillaChronicleHash<K,
                 fallocate(mappingOffsetInFile, minFileSize - mappingOffsetInFile);
             }
         }
-        final long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize);
+        final long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize, pageSize);
         resources.addMemoryResource(address, mapSize);
         return BytesStore.wrap(address, mapSize);
     }

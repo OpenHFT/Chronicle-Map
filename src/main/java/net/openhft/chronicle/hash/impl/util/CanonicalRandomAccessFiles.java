@@ -16,9 +16,9 @@
 
 package net.openhft.chronicle.hash.impl.util;
 
-import net.openhft.chronicle.core.CleaningRandomAccessFile;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.CleaningRandomAccessFile;
 import net.openhft.chronicle.hash.ChronicleFileLockException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -736,8 +736,8 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public void doCloseInputKeyBytes() {
             if (!(this.inputKeyBytesInit()))
                 return ;
-            
-            inputKeyBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+
+            inputKeyBytes.bytesStore(BytesStore.empty(), 0, 0);
             inputKeyBytesUsed = false;
         }
 
@@ -822,7 +822,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                 return ;
             
             this.closeInputKeyBytesDependants();
-            inputKeyBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+            inputKeyBytes.bytesStore(BytesStore.empty(), 0, 0);
             inputKeyBytesUsed = false;
         }
 
@@ -1215,8 +1215,8 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public void doCloseWrappedValueBytes() {
             if (!(this.wrappedValueBytesInit()))
                 return ;
-            
-            wrappedValueBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+
+            wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
             wrappedValueBytesUsed = false;
         }
 
@@ -1351,7 +1351,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                 return ;
             
             this.closeWrappedValueBytesDependants();
-            wrappedValueBytes.bytesStore(NoBytesStore.NO_BYTES_STORE, 0, 0);
+            wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
             wrappedValueBytesUsed = false;
         }
 

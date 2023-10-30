@@ -17,7 +17,6 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.collect.Lists;
-import net.openhft.chronicle.bytes.NoBytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.values.IntValue;
@@ -92,11 +91,6 @@ public class MemoryLeaksTest {
     }
 
     @Before
-    public void initNoBytesStore() {
-        Assert.assertNotEquals(0, NoBytesStore.NO_PAGE);
-    }
-
-    @Before
     public void resetSerializerCount() {
         System.err.println("This test is expect to print 'ChronicleMap ... is not closed manually, cleaned up from Cleaner'");
         serializerCount.set(0);
@@ -120,8 +114,11 @@ public class MemoryLeaksTest {
         // the purpose of the test is to find maps which are not closed properly.
         ChronicleMap<IntValue, String> map = getMap();
         long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
-        assertEquals(expectedNativeMemory, nativeMemoryUsed());
-        tryCloseFromContext(map);
+        try {
+            assertEquals(expectedNativeMemory, nativeMemoryUsed());
+        } finally {
+            tryCloseFromContext(map);
+        }
         WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(map);
         Assert.assertNotNull(ref.get());
         //noinspection UnusedAssignment

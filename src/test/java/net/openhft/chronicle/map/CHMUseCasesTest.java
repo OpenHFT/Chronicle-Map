@@ -1207,7 +1207,7 @@ public class CHMUseCasesTest {
                     .asReadOnlyBuffer();
 
             final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
-                    // Apparently, asReadOnlyBuffer cannot be used as keys because the backing array cannot be exposed;
+            // Apparently, asReadOnlyBuffer cannot be used as keys because the backing array cannot be exposed;
 
             final ByteBuffer value1 = ((ByteBuffer) ByteBuffer.allocateDirect(4)
                     .put(new byte[]{11, 11, 11, 11})

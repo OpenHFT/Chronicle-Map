@@ -26,8 +26,6 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-import static net.openhft.chronicle.bytes.NoBytesStore.NO_BYTES_STORE;
-
 @Staged
 public class InputKeyBytesData<K> extends AbstractData<K> {
 
@@ -66,7 +64,7 @@ public class InputKeyBytesData<K> extends AbstractData<K> {
     }
 
     void closeInputKeyBytes() {
-        inputKeyBytes.bytesStore(NO_BYTES_STORE, 0, 0);
+        inputKeyBytes.bytesStore(BytesStore.empty(), 0, 0);
         inputKeyBytesUsed = false;
     }
 
