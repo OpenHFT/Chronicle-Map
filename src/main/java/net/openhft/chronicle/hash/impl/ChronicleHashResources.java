@@ -17,7 +17,6 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.Throwables;
@@ -66,10 +65,9 @@ public abstract class ChronicleHashResources implements Runnable {
         if (closed())
             return 0L;
         long totalMemory = 0L;
-        int pageSize = OS.defaultOsPageSize();
         //noinspection ForLoopReplaceableByForEach -- allocation-free looping
         for (int i = 0; i < memoryResources.size(); i++) {
-            totalMemory += OS.pageAlign(memoryResources.get(i).size, pageSize);
+            totalMemory += memoryResources.get(i).size;
         }
         return totalMemory;
     }

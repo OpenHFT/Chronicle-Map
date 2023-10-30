@@ -124,8 +124,11 @@ public class MemoryLeaksTest {
         // the purpose of the test is to find maps which are not closed properly.
         ChronicleMap<IntValue, String> map = getMap();
         long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
-        assertEquals(expectedNativeMemory, nativeMemoryUsed());
-        tryCloseFromContext(map);
+        try {
+            assertEquals(expectedNativeMemory, nativeMemoryUsed());
+        } finally {
+            tryCloseFromContext(map);
+        }
         WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(map);
         Assert.assertNotNull(ref.get());
         //noinspection UnusedAssignment
