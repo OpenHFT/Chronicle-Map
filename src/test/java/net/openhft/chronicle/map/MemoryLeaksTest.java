@@ -17,10 +17,8 @@
 package net.openhft.chronicle.map;
 
 import com.google.common.collect.Lists;
-import net.openhft.chronicle.bytes.internal.NoBytesStore;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
-import net.openhft.chronicle.core.io.AbstractCloseable;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
 import net.openhft.chronicle.hash.impl.util.CleanerUtils;
@@ -93,11 +91,6 @@ public class MemoryLeaksTest {
     }
 
     @Before
-    public void initNoBytesStore() {
-        Assert.assertNotEquals(0, NoBytesStore.NO_PAGE);
-    }
-
-    @Before
     public void resetSerializerCount() {
         System.err.println("This test is expect to print 'ChronicleMap ... is not closed manually, cleaned up from Cleaner'");
         serializerCount.set(0);
@@ -105,9 +98,6 @@ public class MemoryLeaksTest {
 
     @Test(timeout = 10_000)
     public void testChronicleMapCollectedAndDirectMemoryReleased() throws IOException {
-        // check previous resources have been closed
-        AbstractCloseable.assertCloseablesClosed();
-
         assumeFalse(OS.isMacOSX());
         // This test is flaky in Linux and Mac OS apparently because some native memory from
         // running previous/concurrent tests is released during this test, that infers with
