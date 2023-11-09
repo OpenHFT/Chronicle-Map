@@ -1,38 +1,21 @@
 package net.openhft.chronicle.map.issue;
 
-import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import net.openhft.chronicle.testframework.process.JavaProcessBuilder;
-import org.junit.Test;
+import org.junit.jupiter.api.RepeatedTest;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.Assert.fail;
 
 public class ParallelStartupTest {
-    @Test
+
+    @RepeatedTest(5)
     public void test() throws InterruptedException {
-        assumeFalse(OS.isWindows());//TODO: unstable on Windows
-
-        Process processOne = JavaProcessBuilder.create(ParallelStartupTest.class).start();
-        Process processTwo = JavaProcessBuilder.create(ParallelStartupTest.class).start();
-
-        processTwo.waitFor();
-        processOne.waitFor();
-
-        JavaProcessBuilder.printProcessOutput("ParallelStartupTest", processOne);
-        JavaProcessBuilder.printProcessOutput("ParallelStartupTest", processTwo);
-
-        assertEquals("Process terminated with error", 0, processTwo.exitValue());
-        assertEquals("Process terminated with error", 0, processOne.exitValue());
-    }
-
-    public static void main(String[] args) throws InterruptedException {
         try {
             final File file = IOTools.createTempFile("issue342");
             Thread[] thread = new Thread[16];
@@ -67,7 +50,8 @@ public class ParallelStartupTest {
             assertEquals(thread.length, succ.get());
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(1);
+            fail();
         }
     }
+
 }
