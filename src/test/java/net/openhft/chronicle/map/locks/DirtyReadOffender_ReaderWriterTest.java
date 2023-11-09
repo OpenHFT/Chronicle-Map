@@ -2,7 +2,6 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +16,7 @@ public class DirtyReadOffender_ReaderWriterTest {
         assumeFalse(OS.isLinux());
     }
 
-    @Test
+    @Test(timeout = 60_000)
     public void main() {
         try {
             long sleepT = Long.parseLong("8");
