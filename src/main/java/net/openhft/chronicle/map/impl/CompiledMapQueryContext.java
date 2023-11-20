@@ -1508,7 +1508,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public boolean tryLock() {
+        public synchronized boolean tryLock() {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             switch (CompiledMapQueryContext.this.localLockState()) {
                 case UNLOCKED :
@@ -1566,7 +1566,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public boolean tryLock(long time, @NotNull
+        public synchronized boolean tryLock(long time, @NotNull
         TimeUnit unit) throws InterruptedException {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
@@ -1628,13 +1628,13 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public boolean isHeldByCurrentThread() {
+        public synchronized boolean isHeldByCurrentThread() {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             return CompiledMapQueryContext.this.localLockState().write;
         }
 
         @Override
-        public void lockInterruptibly() throws InterruptedException {
+        public synchronized void lockInterruptibly() throws InterruptedException {
             CompiledMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
                 throw new InterruptedException();
@@ -1655,7 +1655,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
                                 throw CompiledMapQueryContext.this.debugContextsAndLocksGuarded(e);
                             }
                         }
-                    } 
+                    }
                     CompiledMapQueryContext.this.incrementWriteGuarded();
                     CompiledMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
                     return ;
@@ -1737,7 +1737,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         @Override
-        public boolean isHeld() {
+        public synchronized boolean isHeld() {
             return CompiledMapQueryContext.this.m != null &&
                     CompiledMapQueryContext.this.localLockState != null &&
                     CompiledMapQueryContext.this.localLockState != UNLOCKED;

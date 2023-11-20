@@ -48,14 +48,14 @@ public abstract class ChronicleHashResources implements Runnable {
     private volatile int state = OPEN;
     private List<MemoryResource> memoryResources = new ArrayList<>();
     private List<Closeable> closeables = new ArrayList<>(1);
-    private List<WeakReference<ContextHolder>> contexts = new ArrayList<>();
+    private volatile List<WeakReference<ContextHolder>> contexts = new ArrayList<>();
     /**
      * Identity String of the ChronicleHash, for which this ChronicleHashResources is created.
      * ChronicleHash couldn't be directly referenced, because {@code ChronicleHashResources} is a
      * hunk for {@link sun.misc.Cleaner}, and it would prevent the chronicleHash from ever becoming
      * unreachable.
      */
-    private String chronicleHashIdentityString;
+    private volatile String chronicleHashIdentityString;
 
     List<WeakReference<ContextHolder>> contexts() {
         return contexts;
@@ -181,7 +181,7 @@ public abstract class ChronicleHashResources implements Runnable {
         return null;
     }
 
-    public final boolean releaseManually() {
+    public synchronized final boolean releaseManually() {
         if (state == COMPLETELY_CLOSED)
             return false;
 
