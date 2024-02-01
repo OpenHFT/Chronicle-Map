@@ -158,18 +158,8 @@ to Chronicle Map header memory corruption.
 
 `.recoverPersistedTo()` is harmless if the previous process accessing the Chronicle Map terminated
 normally; however this is a computationally expensive procedure that should generally be avoided.
-
-Chronicle Map creation and recovery could be conveniently merged using a single call, `.createOrRecoverPersistedTo(persistenceFile, sameLibraryVersion)` in `ChronicleMapBuilder`. This acts like `createPersistedTo(persistenceFile)` if the persistence file doesn't yet exist, and like
-`recoverPersistedTo(persistenceFile, sameLibraryVersion)`, if the file already exists. For example:
-
-[source,java]
-----
-ChronicleMap<CharSequence, PostalCodeRange> cityPostalCodes = ChronicleMap
-    .of(CharSequence.class, PostalCodeRange.class)
-    .averageKey("Amsterdam")
-    .entries(50_000)
-    .createOrRecoverPersistedTo(cityPostalCodesFile, false);
-----
+Only call this method if the Map is actually corrupted, and not as part of normal usage. If it is called
+concurrently it can silently corrupt the Map.
 
 If the Chronicle Map is configured to store entry checksums along with entries, then the recovery procedure checks that the checksum is correct for each entry.
 
@@ -278,7 +268,7 @@ There are three pairs of serialization interfaces. Only one of them should be ch
  See [Custom `CharSequence` encoding](#custom-charsequence-encoding)
  section for some non-trivial example of implementing these methods. See also https://github.com/OpenHFT/Chronicle-Wire#using-wire[Wire tutorial].
 
- 9. Don't forget to initialize transient/cache/state fileds of the instance in the end of
+ 9. Don't forget to initialize transient/cache/state fields of the instance in the end of
  `readMarshallable()` implementation. This is needed, because fefore calling `readMarshallable()`,
  Wire framework creates a serializer instance by means of `Unsafe.allocateInstance()` rather than
  calling any constructor.
