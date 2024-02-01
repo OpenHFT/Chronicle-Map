@@ -572,7 +572,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see #createOrRecoverPersistedTo(File, boolean)
      * @see #recoverPersistedTo(File, boolean)
      * @see #createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
+     * @deprecated to be removed in x.26. Use createPersistedTo to open the Map or recoverPersistedTo in case it has become corrupted
      */
+    @Deprecated(/* to be removed in x.26 */)
     H createOrRecoverPersistedTo(File file) throws IOException;
 
     /**
@@ -611,7 +613,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see #createPersistedTo(File)
      * @see #recoverPersistedTo(File, boolean)
      * @see #createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
+     * @deprecated to be removed in x.26. Use createPersistedTo to open the Map or recoverPersistedTo in case it has become corrupted
      */
+    @Deprecated(/* to be removed in x.26 */)
     H createOrRecoverPersistedTo(File file, boolean sameLibraryVersion) throws IOException;
 
     /**
@@ -650,8 +654,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @throws ChronicleHashRecoveryFailedException if recovery is impossible
      * @see #createOrRecoverPersistedTo(File, boolean)
      * @see #recoverPersistedTo(File, boolean)
+     * @deprecated to be removed in x.26. Use createPersistedTo to open the Map or recoverPersistedTo in case it has become corrupted
      */
-    @Beta
+    @Deprecated(/* to be removed in x.26 */)
     H createOrRecoverPersistedTo(
             File file, boolean sameLibraryVersion,
             ChronicleHashCorruption.Listener corruptionListener) throws IOException;
