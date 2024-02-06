@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
         implements DataAccess<ByteBuffer> {
@@ -85,7 +86,9 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
     @Override
     public Data<ByteBuffer> getData(@NotNull ByteBuffer instance) {
         bb = instance;
+        ByteOrder originalOrder = instance.order();
         bytesStore = BytesStore.follow(instance);
+        instance.order(originalOrder);
         return this;
     }
 
