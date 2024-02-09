@@ -33,7 +33,7 @@ public class ArrayTest {
                 .entries(1_000)
                 .averageValue(new double[150])
                 .createPersistedTo(file);
-        double a[] = {2D};
+        double[] a = {2D};
         writeMap.put(1L, a);
 
         //read
@@ -41,7 +41,7 @@ public class ArrayTest {
                 ChronicleMapBuilder.of(Long.class, double[].class)
                         .averageValue(new double[150])
                         .createPersistedTo(file);
-        double b[] = readMap.get(1L);
+        double[] b = readMap.get(1L);
     }
 
     // don't use Long[] as it uses ~3.5x the memory of a long[]
@@ -53,7 +53,7 @@ public class ArrayTest {
                 .entries(1_000)
                 .averageValue(new long[150])
                 .createPersistedTo(file);
-        long a[] = {2};
+        long[] a = {2};
         writeMap.put(1L, a);
 
         //read
@@ -61,6 +61,6 @@ public class ArrayTest {
                 ChronicleMapBuilder.of(Long.class, long[].class)
                         .averageValue(new long[150])
                         .createPersistedTo(file);
-        long b[] = readMap.get(1L);
+        long[] b = readMap.get(1L);
     }
 }

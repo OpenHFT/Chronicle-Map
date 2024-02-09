@@ -1,7 +1,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.Jvm;
-import net.openhft.chronicle.map.example.StringArrayExample;
+import net.openhft.chronicle.map.example.StringArrayExampleTest;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -22,8 +22,8 @@ public class BloatFactorTest {
 
         File cmap = File.createTempFile("chron", "cmap");
 
-        try (ChronicleMap<Integer, StringArrayExample.CharSequenceArray> map = ChronicleMapBuilder
-                .of(Integer.class, StringArrayExample.CharSequenceArray.class)
+        try (ChronicleMap<Integer, StringArrayExampleTest.CharSequenceArray> map = ChronicleMapBuilder
+                .of(Integer.class, StringArrayExampleTest.CharSequenceArray.class)
                 .entries(100).maxBloatFactor(EXPECTED_MAX_BLOAT_FACTOR)
                 .createOrRecoverPersistedTo(cmap)) {
 
@@ -34,8 +34,8 @@ public class BloatFactorTest {
 
         // if the file already exists  it will reuse the existing settings, set above
 
-        try (ChronicleMap<Integer, StringArrayExample.CharSequenceArray> map = ChronicleMapBuilder
-                .of(Integer.class, StringArrayExample.CharSequenceArray.class)
+        try (ChronicleMap<Integer, StringArrayExampleTest.CharSequenceArray> map = ChronicleMapBuilder
+                .of(Integer.class, StringArrayExampleTest.CharSequenceArray.class)
                 .createOrRecoverPersistedTo(cmap)) {
 
             double maxBloatFactor = Jvm.getValue(map, "maxBloatFactor");

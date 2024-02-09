@@ -25,7 +25,7 @@ public class LataTest {
     private static int run = 100;
     private static int currentRun = 0;
 
-    public static void main(String args[]) throws Exception {
+    public static void main(String[] args) throws Exception {
         long startTime = 0;
         long endTime = 0;
 

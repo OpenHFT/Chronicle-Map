@@ -10,7 +10,7 @@ import org.junit.Test;
 /**
  * an example of using a chronicle map with a string array like structure
  */
-public class StringArrayExample {
+public class StringArrayExampleTest {
 
     private final CharSequenceArray charSequenceArray = Values.newHeapInstance(CharSequenceArray.class);
 
