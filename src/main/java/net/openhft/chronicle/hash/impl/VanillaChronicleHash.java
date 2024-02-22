@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.impl;
 
+import java.nio.file.Files;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
@@ -1099,17 +1100,15 @@ public abstract class VanillaChronicleHash<K,
 
     private void fallocate(long mappingOffsetInFile, long length) throws IOException {
         FileSystem fileSystem = file.toPath().getFileSystem();
+        FileStore fileStore = Files.getFileStore(file.toPath());
+        long unallocatedSpace = fileStore.getUnallocatedSpace();
 
-        long maxSize = 0;
-        for (FileStore fileStore : fileSystem.getFileStores()) {
-            long unallocatedSpace = fileStore.getUnallocatedSpace();
-            if (unallocatedSpace > length * 11 / 10) {
-                PosixFallocate.fallocate(raf.getFD(), mappingOffsetInFile, length);
-                return;
-            }
-            maxSize = Math.max(maxSize, unallocatedSpace);
+        if (unallocatedSpace > length * 11 / 10) {
+            PosixFallocate.fallocate(raf.getFD(), mappingOffsetInFile, length);
+            return;
         }
-        throw new IOException("Not enough space to fallocate " + (length >> 20) + " MiB to " + fileSystem.getRootDirectories().iterator().next() + " unallocated was " + (maxSize >> 20) + " MiB");
+
+        throw new IOException("Not enough space to fallocate " + (length >> 20) + " MiB to " + fileSystem.getRootDirectories().iterator().next() + " unallocated was " + (unallocatedSpace >> 20) + " MiB");
     }
 
     private long bulkOffset(final int bulkIndex) {
