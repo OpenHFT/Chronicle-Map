@@ -28,7 +28,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
-                <version>3.25.0</version>
+                <version>3.25.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -120,24 +120,19 @@
             <artifactId>jna-platform</artifactId>
         </dependency>
 
-        <!-- optional dependencies -->
-
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.codehaus.jettison</groupId>
             <artifactId>jettison</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <dependency>
             <groupId>org.ops4j.pax.url</groupId>
             <artifactId>pax-url-aether</artifactId>
-            <optional>true</optional>
         </dependency>
 
         <!-- test dependencies -->
