@@ -2583,6 +2583,12 @@ public class CHMUseCasesTest {
         }
     }
 
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testActualChunksPerSegmentTier() {
+        ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
+    }
+
     enum TypeOfMap {SIMPLE, SIMPLE_PERSISTED}
 
     interface I1 {
