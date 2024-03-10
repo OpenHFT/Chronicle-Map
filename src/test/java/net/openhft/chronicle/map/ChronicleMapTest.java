@@ -1881,6 +1881,11 @@ public class ChronicleMapTest {
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalAlignment() {
+	ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13);
+    }
+
     interface BMSUper {
 
     }
