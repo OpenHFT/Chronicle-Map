@@ -53,4 +53,14 @@ public class Issue60Test {
             //System.out.println("map " + map);
         }
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void maxBloatFactorShouldBeLessThan1000() {
+	ChronicleMapBuilder.of(String.class, String.class).maxBloatFactor(1000.01);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalMaxBloatFactor() {
+	ChronicleMapBuilder.of(Object.class, Object.class).maxBloatFactor(0.0);
+    }
 }

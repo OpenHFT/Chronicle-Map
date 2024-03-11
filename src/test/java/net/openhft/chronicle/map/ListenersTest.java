@@ -175,6 +175,16 @@ public class ListenersTest {
         assertEquals(2, c.get());
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testRemoveTwice() {
+	ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class).entries(100).create();
+	map.put(1, 1);
+	Iterator<Map.Entry<Integer, Integer>> it = map.entrySet().iterator();
+	it.next();
+	it.remove();
+	it.remove();
+    }
+
     static class CountingEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
         AtomicInteger removeCount = new AtomicInteger();
         AtomicInteger insertCount = new AtomicInteger();

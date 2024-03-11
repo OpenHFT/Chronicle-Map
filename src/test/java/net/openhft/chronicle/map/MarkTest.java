@@ -82,4 +82,9 @@ public class MarkTest {
             db.delete();
         }
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNegativeEntriesPerSegment() {
+	ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
+    }
 }
