@@ -675,6 +675,16 @@ public class CHMUseCasesTest {
         }
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testNegativeActualChunkSize() {
+	ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testActualChunksPerSegmentTier() {
+	ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
+    }
+
     @Test
     public void testAcquireUsingWithIntValueKeyStringBuilderValue() throws IOException {
 
