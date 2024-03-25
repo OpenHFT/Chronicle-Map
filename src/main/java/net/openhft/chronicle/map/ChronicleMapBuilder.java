@@ -1589,28 +1589,6 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     @Override
-    public ChronicleMap<K, V> createOrRecoverPersistedTo(@NotNull final File file) throws IOException {
-        return createOrRecoverPersistedTo(file, true);
-    }
-
-    @Override
-    public ChronicleMap<K, V> createOrRecoverPersistedTo(@NotNull final File file, final boolean sameLibraryVersion)
-            throws IOException {
-        return createOrRecoverPersistedTo(file, sameLibraryVersion, DEFAULT_CHRONICLE_MAP_CORRUPTION_LISTENER);
-    }
-
-    @Override
-    public ChronicleMap<K, V> createOrRecoverPersistedTo(@NotNull final File file,
-                                                         final boolean sameLibraryVersion,
-                                                         @Nullable final ChronicleHashCorruption.Listener corruptionListener) throws IOException {
-        if (file.exists()) {
-            return recoverPersistedTo(file, sameLibraryVersion, corruptionListener);
-        } else {
-            return createPersistedTo(file);
-        }
-    }
-
-    @Override
     public ChronicleMap<K, V> recoverPersistedTo(@NotNull final File file, final boolean sameBuilderConfigAndLibraryVersion) throws IOException {
         return recoverPersistedTo(file, sameBuilderConfigAndLibraryVersion,
                 DEFAULT_CHRONICLE_MAP_CORRUPTION_LISTENER);

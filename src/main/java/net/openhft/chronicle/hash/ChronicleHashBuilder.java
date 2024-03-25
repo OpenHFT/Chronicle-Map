@@ -534,132 +534,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * @see ChronicleHash#file()
      * @see ChronicleHash#close()
      * @see #create()
-     * @see #createOrRecoverPersistedTo(File, boolean)
      * @see #recoverPersistedTo(File, boolean)
      */
     H createPersistedTo(File file) throws IOException;
-
-    /**
-     * Recovers and opens the hash container, persisted to the specified file, or creates a new one
-     * from this builder, if the file doesn't exist yet, and maps its off-heap memory to the file.
-     * This method is equivalent to {@link #createOrRecoverPersistedTo(File, boolean)
-     * createOrRecoverPersistedTo(file, true)}.
-     * <p>
-     * <p><b>This method couldn't be used, if the Chronicle Map was created using an older version
-     * of the Chronicle Map library, and then {@code createOrRecoverPersistedTo()} is called with
-     * a newer version of the Chronicle Map library.</b> In this case, {@link
-     * #createOrRecoverPersistedTo(File, boolean) createOrRecoverPersistedTo(file, false)} should
-     * be used.
-     * <p>
-     * <em>WARNING:</em> Make sure this instance is the only one that accesses the
-     * provided {@code file} during recovery across all JVMs/threads/processes or else
-     * the behavior is unspecified including the possibility that the Map file gets
-     * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
-     * <p>
-     * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
-     * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
-     * the user is responsible for ensuring absolute exclusivity.
-     *
-     * @param file the persistence file for existing of future hash container
-     * @return a {@code ChronicleHash} instance, mapped to the given instance
-     * @throws NullPointerException                 if the given file is null
-     * @throws IOException                          if any IO error occurs on reading data from the file, or related to
-     *                                              off-heap memory allocation or file mapping, or establishing replication connections. Probably
-     *                                              the file is corrupted on OS level, and should be recovered on that level first, before
-     *                                              calling this procedure.
-     * @throws ChronicleHashRecoveryFailedException if recovery is impossible
-     * @see #createPersistedTo(File)
-     * @see #createOrRecoverPersistedTo(File, boolean)
-     * @see #recoverPersistedTo(File, boolean)
-     * @see #createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
-     * @deprecated to be removed in x.26. Use createPersistedTo to open the Map or recoverPersistedTo in case it has become corrupted
-     */
-    @Deprecated(/* to be removed in x.26 */)
-    H createOrRecoverPersistedTo(File file) throws IOException;
-
-    /**
-     * Recovers and opens the hash container, persisted to the specified file, or creates a new one
-     * from this builder, if the file doesn't exist yet, and maps its off-heap memory to the file.
-     * In other words, this methods behaves like {@link #createPersistedTo(File)}, if the given
-     * file doesn't exist, and {@link #recoverPersistedTo(File, boolean)
-     * recoverPersistedTo(file, sameLibraryVersion)}, if the file exists.
-     * <p>
-     * <p>The difference between this method and {@link #createOrRecoverPersistedTo(File, boolean,
-     * ChronicleHashCorruption.Listener)} is that this method just logs the encountered corruptions,
-     * instead of passing them to the specified corruption listener.
-     * <p>
-     * <em>WARNING:</em> Make sure this instance is the only one that accesses the
-     * provided {@code file} during recovery across all JVMs/threads/processes or else
-     * the behavior is unspecified including the possibility that the Map file gets
-     * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
-     * <p>
-     * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
-     * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
-     * the user is responsible for ensuring absolute exclusivity.
-     *
-     * @param file               the persistence file for existing of future hash container
-     * @param sameLibraryVersion if this builder is configured with the same configurations, as the
-     *                           builder, which created the Chronicle Map in the given file initially, and <b>the same version
-     *                           of the Chronicle Map library was used</b>. In this case, the header of the file is overridden
-     *                           (with presumably the same configurations), protecting from {@link
-     *                           ChronicleHashRecoveryFailedException}, if the header is corrupted.
-     * @return a {@code ChronicleHash} instance, mapped to the given instance
-     * @throws NullPointerException                 if the given file is null
-     * @throws IOException                          if any IO error occurs on reading data from the file, or related to
-     *                                              off-heap memory allocation or file mapping, or establishing replication connections. Probably
-     *                                              the file is corrupted on OS level, and should be recovered on that level first, before
-     *                                              calling this procedure.
-     * @throws ChronicleHashRecoveryFailedException if recovery is impossible
-     * @see #createPersistedTo(File)
-     * @see #recoverPersistedTo(File, boolean)
-     * @see #createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
-     * @deprecated to be removed in x.26. Use createPersistedTo to open the Map or recoverPersistedTo in case it has become corrupted
-     */
-    @Deprecated(/* to be removed in x.26 */)
-    H createOrRecoverPersistedTo(File file, boolean sameLibraryVersion) throws IOException;
-
-    /**
-     * Recovers and opens the hash container, persisted to the specified file, or creates a new one
-     * from this builder, if the file doesn't exist yet, and maps its off-heap memory to the file.
-     * In other words, this methods behaves like {@link #createPersistedTo(File)}, if the given
-     * file doesn't exist, and {@link
-     * #recoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
-     * recoverPersistedTo(file, sameLibraryVersion, corruptionListener)}, if the file exists.
-     * <p>
-     * <p>If this procedure encounters corruptions, it fixes them (<i>recovers</i> from them) and
-     * notifies the provided corruption listener with the details about the corruption. See the
-     * documentation for {@link ChronicleHashCorruption} for more information.
-     * <p>
-     * <em>WARNING:</em> Make sure this instance is the only one that accesses the
-     * provided {@code file} during recovery across all JVMs/threads/processes or else
-     * the behavior is unspecified including the possibility that the Map file gets
-     * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
-     * <p>
-     * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
-     * However, these efforts may not be applicable for all platforms and/or situations. Ultimately,
-     * the user is responsible for ensuring absolute exclusivity.
-     *
-     * @param file               the persistence file for existing of future hash container
-     * @param sameLibraryVersion if this builder is configured with the same configurations, as the
-     *                           builder, which created the Chronicle Map in the given file initially, and <b>the same version
-     *                           of the Chronicle Map library was used</b>. In this case, the header of the file is overridden
-     *                           (with presumably the same configurations), protecting from {@link
-     *                           ChronicleHashRecoveryFailedException}, if the header is corrupted.
-     * @return a {@code ChronicleHash} instance, mapped to the given instance
-     * @throws NullPointerException                 if the given file or corruptionListener is null
-     * @throws IOException                          if any IO error occurs on reading data from the file, or related to
-     *                                              off-heap memory allocation or file mapping, or establishing replication connections. Probably
-     *                                              the file is corrupted on OS level, and should be recovered on that level first, before
-     *                                              calling this procedure.
-     * @throws ChronicleHashRecoveryFailedException if recovery is impossible
-     * @see #createOrRecoverPersistedTo(File, boolean)
-     * @see #recoverPersistedTo(File, boolean)
-     * @deprecated to be removed in x.26. Use createPersistedTo to open the Map or recoverPersistedTo in case it has become corrupted
-     */
-    @Deprecated(/* to be removed in x.26 */)
-    H createOrRecoverPersistedTo(
-            File file, boolean sameLibraryVersion,
-            ChronicleHashCorruption.Listener corruptionListener) throws IOException;
 
     /**
      * <i>Recovers</i> and opens the hash container, persisted to the specified file. This method
@@ -670,8 +547,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * the already mentioned consequences, might lead to data corruption, i. e. presence of entries
      * which were never put into the Chronicle Hash).
      * <p>
-     * <p>This method, unlike {@link #createPersistedTo(File)} or {@link
-     * #createOrRecoverPersistedTo(File, boolean)} methods, expects that the given file already
+     * <p>This method, unlike {@link #createPersistedTo(File)} method, expects that the given file already
      * exists.
      * <p>
      * <p>"Recovery" of the hash container is changing the memory of the data structure so that
@@ -726,7 +602,6 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *                                              the file is corrupted on OS level, and should be recovered on that level first, before
      *                                              calling this procedure.
      * @throws ChronicleHashRecoveryFailedException if recovery is impossible
-     * @see #createOrRecoverPersistedTo(File, boolean)
      * @see #createPersistedTo(File)
      * @see #recoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
      */
@@ -741,8 +616,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * the already mentioned consequences, might lead to data corruption, i. e. presence of entries
      * which were never put into the Chronicle Hash).
      * <p>
-     * <p>This method, unlike {@link #createPersistedTo(File)} or {@link
-     * #createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)} methods,
+     * <p>This method, unlike {@link #createPersistedTo(File)} method,
      * expects that the given file already exists.
      * <p>
      * <p>"Recovery" of the hash container is changing the memory of the data structure so that
@@ -789,7 +663,6 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *                                              calling this procedure.
      * @throws ChronicleHashRecoveryFailedException if recovery is impossible
      * @see #recoverPersistedTo(File, boolean)
-     * @see #createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
      * @see #createPersistedTo(File)
      */
     @Beta
