@@ -18,7 +18,7 @@ public class Issue354Test {
             final ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder.of(LongValue.class, LongValue.class)
                     .entries(5);
 
-            try (ChronicleMap<LongValue, LongValue> map = builder.createOrRecoverPersistedTo(file)) {
+            try (ChronicleMap<LongValue, LongValue> map = builder.createPersistedTo(file)) {
 
             }
 

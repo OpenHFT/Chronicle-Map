@@ -290,6 +290,7 @@ public class JSR166TestCase {
     /**
      * Find missing try { ... } finally { joinPool(e); }
      */
+    @SuppressWarnings("deprecation")
     void checkForkJoinPoolThreadLeaks() throws InterruptedException {
         Thread[] survivors = new Thread[5];
         int count = Thread.enumerate(survivors);

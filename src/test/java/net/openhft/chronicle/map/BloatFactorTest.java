@@ -25,7 +25,7 @@ public class BloatFactorTest {
         try (ChronicleMap<Integer, StringArrayExampleTest.CharSequenceArray> map = ChronicleMapBuilder
                 .of(Integer.class, StringArrayExampleTest.CharSequenceArray.class)
                 .entries(100).maxBloatFactor(EXPECTED_MAX_BLOAT_FACTOR)
-                .createOrRecoverPersistedTo(cmap)) {
+                .createPersistedTo(cmap)) {
 
             double maxBloatFactor = Jvm.getValue(map, "maxBloatFactor");
             Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
@@ -36,7 +36,7 @@ public class BloatFactorTest {
 
         try (ChronicleMap<Integer, StringArrayExampleTest.CharSequenceArray> map = ChronicleMapBuilder
                 .of(Integer.class, StringArrayExampleTest.CharSequenceArray.class)
-                .createOrRecoverPersistedTo(cmap)) {
+                .createPersistedTo(cmap)) {
 
             double maxBloatFactor = Jvm.getValue(map, "maxBloatFactor");
             Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
