@@ -35,7 +35,7 @@ public class AutoResizeTest {
                 .of(String.class, String.class)
                 .averageKeySize(10).averageValueSize(10)
                 .entries(100).actualSegments(10).maxBloatFactor(10).replication((byte) 1)
-                .createOrRecoverPersistedTo(cmap)) {
+                .createPersistedTo(cmap)) {
 
             int actual = map.remainingAutoResizes();
             Assert.assertNotEquals(0, actual);
@@ -45,7 +45,7 @@ public class AutoResizeTest {
 
         try (ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
-                .createOrRecoverPersistedTo(cmap)) {
+                .createPersistedTo(cmap)) {
             int actual = map.remainingAutoResizes();
             Assert.assertNotEquals(0, actual);
         }

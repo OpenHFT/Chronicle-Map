@@ -22,7 +22,7 @@ public class ForEachSegmentTest {
                 .actualSegments(1);
         File tmp = new File(OS.TMP, "stressTest-" + Time.uniqueId());
         tmp.deleteOnExit();
-        try (ChronicleMap<Integer, MyDto> map = builder.createOrRecoverPersistedTo(tmp)) {
+        try (ChronicleMap<Integer, MyDto> map = builder.createPersistedTo(tmp)) {
             map.put(1, new MyDto());
             try (MapSegmentContext<Integer, MyDto, ?> context = map.segmentContext(0)) {
                 context.forEachSegmentEntryWhile(e -> {
@@ -41,7 +41,7 @@ public class ForEachSegmentTest {
                 .actualSegments(1);
         File tmp = new File(OS.TMP, "stressTest-" + Time.uniqueId());
         Thread t = null;
-        try (ChronicleMap<Integer, MyDto> map = builder.createOrRecoverPersistedTo(tmp)) {
+        try (ChronicleMap<Integer, MyDto> map = builder.createPersistedTo(tmp)) {
             try {
                 t = new Thread(() -> {
                     try {
