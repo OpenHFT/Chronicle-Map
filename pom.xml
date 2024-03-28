@@ -252,22 +252,6 @@
         </resources>
 
         <plugins>
-            <!-- The parent POM defines this plugin and activates it in a profile. Unfortunately this plugin will generate
-            code at @NotNull call-sites that throws IllegalArgumentException rather than NullPointerException. This will
-            break GuavaTest. Chronicle have raised this issue before with the maintainers of the plugin. See:
-            https://github.com/osundblad/intellij-annotations-instrumenter-maven-plugin/issues/53
-            -->
-            <plugin>
-                <groupId>se.eris</groupId>
-                <artifactId>notnull-instrumenter-maven-plugin</artifactId>
-                <version>1.1.1</version>
-                <configuration>
-                    <notNull>
-                        <!-- Not ideal but this was the easiest way to effectively disable this plugin -->
-                        <param>Ignore</param>
-                    </notNull>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>net.openhft</groupId>
                 <artifactId>binary-compatibility-enforcer-plugin</artifactId>
