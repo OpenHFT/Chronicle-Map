@@ -76,7 +76,7 @@ public class ChronicleMapSanityCheckTest {
 
             producerExecutor.scheduleAtFixedRate(() -> {
 
-                Thread.currentThread().setName("Producer " + Thread.currentThread().getId());
+                Thread.currentThread().setName("Producer " + Jvm.currentThreadId());
                 Random r = new Random();
 
                 System.out.println("Before PRODUCING size is " + map.size());
