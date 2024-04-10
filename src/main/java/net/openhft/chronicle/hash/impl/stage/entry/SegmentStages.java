@@ -71,7 +71,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
     /**
      * See the ChMap Ops spec, considerations of nested same-thread concurrent contexts.
      * Once context enters the segment, and observes concurrent same-thread context,
-     * it sets nestedContextsLockedOnSameSegment = <code>true</code> for itself and that concurrent context.
+     * it sets nestedContextsLockedOnSameSegment = {@code true} for itself and that concurrent context.
      * This flag is not dropped on exit of one of these contexts, because between calls of
      * this context, nested one could be initialized, does some changes that break our thread-local
      * assumptions _and exit_, that is why on exit concurrent context should remain "dirty".

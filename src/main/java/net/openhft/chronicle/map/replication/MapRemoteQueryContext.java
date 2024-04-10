@@ -45,7 +45,7 @@ public interface MapRemoteQueryContext<K, V, R> extends MapQueryContext<K, V, R>
      * ChronicleMapBuilder#valueSizeMarshaller(SizeMarshaller) the configured value size
      * marshaller}.
      * <p>
-     * <p>The returned value doesn't have object form (i. e. it's {@link Data#get()} and {@link
+     * The returned value doesn't have object form (i. e. it's {@link Data#get()} and {@link
      * Data#getUsing(Object)} methods throw {@code UnsupportedOperationException}), it has only
      * bytes form, of all zero bytes.
      *

@@ -33,11 +33,11 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * Marshaller of {@code Map<K, V>}. Uses {@link HashMap} (hence default key objects' equality and
  * {@code hashCode()} as the map implementation to deserialize into.
  * <p>
- * <p>This marshaller supports multimap emulation on top of Chronicle Map, that is possible but
+ * This marshaller supports multimap emulation on top of Chronicle Map, that is possible but
  * inefficient. See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Features.adoc#chronicle-map-is-not">the
  * README section</a>.
  * <p>
- * <p>Look for pre-defined key and value marshallers in the
+ * Look for pre-defined key and value marshallers in the
  * net.openhft.chronicle.hash.serialization.impl package. This package is not included into
  * Javadocs, but present in Chronicle Map distribution. If there are no existing marshallers for
  * your {@code Map} key or value types, define {@link BytesReader} and {@link BytesWriter} yourself.

@@ -110,7 +110,7 @@ public class ChronicleStampedLock extends StampedLock {
          *  If *any* Writer interacted with the offHeapLock,
          *  since event=tryOptimisticRead(),
          *  then FAIL the validate() invoke.
-         *
+         * <p>
          *  Upon FAILURE, the thread on tryOptimisticRead() must apply
          *  its PESSIMISTIC policy (Thread
          *  has endured a DIRTY_READ.)

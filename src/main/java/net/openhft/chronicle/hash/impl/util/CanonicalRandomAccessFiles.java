@@ -170,7 +170,7 @@ public final class CanonicalRandomAccessFiles {
      * If USE_LOCKING is false, provides synchronization only within local JVM.
      *
      * @param fileIOAction Closure to run, can throw {@link IOException}s.
-     * @return <code>true</code> if the lock was successfully acquired and IO action was executed, <code>false</code> otherwise.
+     * @return {@code true} if the lock was successfully acquired and IO action was executed, {@code false} otherwise.
      */
     public static boolean tryRunExclusively(@NotNull final File canonicalFile,
                                             @NotNull final FileChannel fileChannel,

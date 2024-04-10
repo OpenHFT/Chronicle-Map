@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * see {@link MapRemoteOperations}.</li>
  * </ul>
  * <p>
- * <p>By default {@link #remove}, {@link #insert} and {@link #replaceValue} return {@code null},
+ * By default {@link #remove}, {@link #insert} and {@link #replaceValue} return {@code null},
  * but subclasses could return something more sensible, to be used in higher-level SPI interfaces,
  * namely {@link MapMethods} and {@link MapRemoteOperations}. For example, in bidirectional map
  * implementation (i. e. a map that preserves the uniqueness of its values as well as that of
@@ -40,15 +40,15 @@ import org.jetbrains.annotations.NotNull;
  * type could be used to indicate if we were successful to lock both maps before performing
  * the update: <pre><code>
  * enum DualLockSuccess {SUCCESS, FAIL}
- * <p>
+ *
  * class{@code BiMapEntryOperations<K, V>}
  *         implements{@code MapEntryOperations<K, V, DualLockSuccess>} {
  *    {@code ChronicleMap<V, K>} reverse;
- * <p>
+ *
  *     public void{@code setReverse(ChronicleMap<V, K>} reverse) {
  *         this.reverse = reverse;
  *     }
- * <p>
+ *
  *    {@literal @}Override
  *     public DualLockSuccess{@literal remove(@}NotNull{@code MapEntry<K, V>} entry) {
  *         try{@code (ExternalMapQueryContext<V, K, ?>} rq = reverse.queryContext(entry.value())) {
@@ -69,10 +69,10 @@ import org.jetbrains.annotations.NotNull;
  *             }
  *         }
  *     }
- * <p>
+ *
  *     // ... other methods
  * }
- * <p>
+ *
  * class{@code BiMapMethods<K, V>} implements{@code MapMethods<K, V, DualLockSuccess>} {
  *    {@literal @}Override
  *     public void{@code remove(MapQueryContext<K, V, DualLockSuccess>} q,
@@ -91,7 +91,7 @@ import org.jetbrains.annotations.NotNull;
  *             }
  *         }
  *     }
- * <p>
+ *
  *     // ... other methods
  * }</code></pre>
  *
@@ -139,7 +139,7 @@ public interface MapEntryOperations<K, V, R> {
 
     /**
      * Inserts the new entry into the map, of {@link MapAbsentEntry#absentKey() the key} from
-     * the given insertion context (<code>absentEntry</code>) and the given {@code value}.
+     * the given insertion context ({@code absentEntry}) and the given {@code value}.
      *
      * @return result of operation, understandable by higher-level SPIs, e. g. custom
      * {@link MapMethods} implementation

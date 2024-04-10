@@ -37,10 +37,10 @@ public interface ReplicableEntry {
      * The identifier, associated with this entry. Originally, and by default, this identifier means
      * the identifier of the {@code ChronicleHash} node on which this entry was updated last.
      * <p>
-     * <p>When the entry is replicated, this identifier comes to remote nodes as {@link
+     * When the entry is replicated, this identifier comes to remote nodes as {@link
      * RemoteOperationContext#remoteIdentifier()}.
      * <p>
-     * <p>On {@code ChronicleHash} local operations with entries, like {@link ChronicleMap#put(
+     * On {@code ChronicleHash} local operations with entries, like {@link ChronicleMap#put(
      *Object, Object)}, this identifier is overwritten to the own {@code ChronicleHash} {@link
      * Replica#identifier()}. On remote operations, proxied through {@link MapRemoteOperations} or
      * {@link SetRemoteOperations}, you are free to overwrite this identifier to any value, using
@@ -53,7 +53,7 @@ public interface ReplicableEntry {
     /**
      * The timestamp of the last update to this entry.
      * <p>
-     * <p>When the entry is replicated, this timestamp comes to remote nodes as {@link
+     * When the entry is replicated, this timestamp comes to remote nodes as {@link
      * RemoteOperationContext#remoteTimestamp()}.
      *
      * @return the timestamp of the last update to this entry

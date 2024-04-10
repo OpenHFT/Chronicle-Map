@@ -24,7 +24,7 @@ import java.io.File;
  * Information about a corruption, encountered in a persisted Chronicle Map during <a
  * href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#recovery">recovery</a>.
  * <p>
- * <p>Recovery procedure doesn't guarantee accuracy of the corruption events. Only two things are
+ * Recovery procedure doesn't guarantee accuracy of the corruption events. Only two things are
  * guaranteed:
  * <ol>
  * <li>if {@link Listener} didn't receive any corruption events, the recovered Chronicle Map
@@ -34,17 +34,16 @@ import java.io.File;
  * corrupted.</li>
  * </ol>
  * <p>
- * <p>{@code ChronicleHashCorruption} objects, passed to {@link Listener}, shouldn't be saved and
+ * {@code ChronicleHashCorruption} objects, passed to {@link Listener}, shouldn't be saved and
  * used outside of the {@link Listener#onCorruption(ChronicleHashCorruption)} method body, because
  * {@code ChronicleHashCorruption} objects could be reused during the recovery procedure.
  * <p>
- * <p>During a recovery procedure, <i>{@link Listener#onCorruption(ChronicleHashCorruption)} might
+ * During a recovery procedure, <i>{@link Listener#onCorruption(ChronicleHashCorruption)} might
  * be called concurrently from multiple threads.</i> If the implementation of this method calls some
  * methods on some objects, that are not safe for concurrent use from multiple threads, the
  * implementation must care about synchronization itself.
  *
  * @see ChronicleHashBuilder#recoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
- * @see ChronicleHashBuilder#createOrRecoverPersistedTo(File, boolean, ChronicleHashCorruption.Listener)
  */
 @Beta
 public interface ChronicleHashCorruption {

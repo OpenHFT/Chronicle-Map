@@ -25,7 +25,6 @@ import java.util.Arrays;
  * This example shows that the OS resizes the usage of a CHM as needed.  It is not as critical to worry about this.
  * <p>
  * System memory: 7.7 GB, Extents of map: 2199.0 GB, disk used: 13MB, addressRange: 7d380b7bd000-7f380c000000
- * </p>
  */
 public class OSResizesMain {
     public static void main(String[] args) throws IOException, InterruptedException {

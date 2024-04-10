@@ -90,7 +90,7 @@ public class PoissonDistribution {
      * #inverseCumulativeProbability(double, double)}. It assumes {@code 0 < p < 1} and
      * that the inverse cumulative probability lies in the bracket {@code
      * (lower, upper]}. The implementation does simple bisection to find the
-     * smallest {@code p}-quantile <code>inf{x in Z | P(X<=x) >= p}</code>.
+     * smallest {@code p}-quantile {@code inf{x in Z | P(X<=x) >= p}}.
      *
      * @param p     the cumulative probability
      * @param lower a value satisfying {@code cumulativeProbability(lower) < p}

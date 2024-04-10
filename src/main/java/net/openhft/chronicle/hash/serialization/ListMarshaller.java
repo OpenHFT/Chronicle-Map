@@ -31,11 +31,11 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * Marshaller of {@code List<T>}. Uses {@link ArrayList} as the list implementation to deserialize
  * into.
  * <p>
- * <p>This marshaller supports multimap emulation on top of Chronicle Map, that is possible but
+ * This marshaller supports multimap emulation on top of Chronicle Map, that is possible but
  * inefficient. See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Features.adoc#chronicle-map-is-not">the
  * README section</a>.
  * <p>
- * <p>Usage: <pre>{@code
+ * Usage: <pre>{@code
  * ChronicleMap<String, List<Integer>> regNumbers = ChronicleMap
  *     .of(String.class, (Class<List<Integer>>) (Class) List.class)
  *     .averageKey("John Smith")
@@ -45,7 +45,7 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  *     .create();
  * }</pre>
  * <p>
- * <p>Look for pre-defined element marshallers in the net.openhft.chronicle.hash.serialization.impl package.
+ * Look for pre-defined element marshallers in the net.openhft.chronicle.hash.serialization.impl package.
  * This package is not included into Javadocs, but present in Chronicle Map distribution. If there are no existing
  * marshallers for your {@code List} element type, define {@link BytesReader} and {@link BytesWriter} yourself.
  *
@@ -63,7 +63,7 @@ public final class ListMarshaller<T>
     /**
      * Constructs a {@code ListMarshaller} with the given list elements' serializers.
      * <p>
-     * <p>Use static factory {@link #of(BytesReader, BytesWriter)} instead of this constructor
+     * Use static factory {@link #of(BytesReader, BytesWriter)} instead of this constructor
      * directly.
      *
      * @param elementReader list elements' reader

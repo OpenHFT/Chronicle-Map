@@ -32,7 +32,7 @@ import java.nio.ByteBuffer;
  * shouldn't be serialized, and allows to avoid extra data copying. Accessed bytes should be later
  * readable by some {@link BytesReader}.
  * <p>
- * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_DataAccess.adoc">{@link
+ * Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_DataAccess.adoc">{@link
  * DataAccess} and {@code SizedReader}</a> and
  * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#custom-serialization-checklist">custom
  * serialization checklist</a> sections in the Chronicle Map tutorial for more information on this

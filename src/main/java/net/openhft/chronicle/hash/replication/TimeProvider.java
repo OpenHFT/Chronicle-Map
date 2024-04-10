@@ -47,11 +47,11 @@ public final class TimeProvider {
     /**
      * Returns a non-decreasing number, assumed to be used as a "timestamp".
      * <p>
-     * <p>Approximate system time interval between two calls of this method is retrievable via
+     * Approximate system time interval between two calls of this method is retrievable via
      * {@link #systemTimeIntervalBetween(long, long, TimeUnit)}, applied to the returned values
      * from those {@code currentTime()} calls.
      * <p>
-     * <p>Safe and scalable for concurrent use from multiple threads.
+     * Safe and scalable for concurrent use from multiple threads.
      *
      * @return the current timestamp
      */

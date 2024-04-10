@@ -87,7 +87,7 @@ public abstract class Chaining extends ChainingInterface {
      * dead and collected by the GC, while any thread, from which the ChronicleMap was accessed
      * (hence a thread local context created), is alive.
      * <p>
-     * <p>The chain of strong references:
+     * The chain of strong references:
      * 1) Thread ->
      * 2) ThreadLocalMap ->
      * 3) Entry with ThreadLocal {@link net.openhft.chronicle.map.VanillaChronicleMap#cxt} as weak
@@ -97,7 +97,7 @@ public abstract class Chaining extends ChainingInterface {
      * 5) ThreadLocal {@link net.openhft.chronicle.map.VanillaChronicleMap#cxt} (a strong reference
      * this time! note that this ThreadLocal is an instance field of VanillaChronicleMap)
      * <p>
-     * <p>So in order to break this chain at step 4), contexts store references to their owner
+     * So in order to break this chain at step 4), contexts store references to their owner
      * ChronicleMaps only when contexts are used.
      */
     public abstract void initMap(VanillaChronicleMap map);

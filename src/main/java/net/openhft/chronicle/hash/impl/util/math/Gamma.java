@@ -22,7 +22,6 @@ package net.openhft.chronicle.hash.impl.util.math;
  * <p>
  * This is a utility class that provides computation methods related to the
  * &Gamma; (Gamma) family of functions.
- * </p>
  * <p>
  * Implementation of {@link #invGamma1pm1(double)} and
  * {@link #logGamma1p(double)} is based on the algorithms described in
@@ -43,7 +42,6 @@ package net.openhft.chronicle.hash.impl.util.math;
  * indicates that unless otherwise stated in the code, all FORTRAN functions in
  * this library are license free. Since no such notice appears in the code these
  * functions can safely be ported to Commons-Math.
- * </p>
  */
 class Gamma {
 
@@ -275,13 +273,11 @@ class Gamma {
     /**
      * <p>
      * Returns the value of log&nbsp;&Gamma;(x) for x&nbsp;&gt;&nbsp;0.
-     * </p>
-     * <p>
+         * <p>
      * For x &le; 8, the implementation is based on the double precision
      * implementation in the <em>NSWC Library of Mathematics Subroutines</em>,
      * {@code DGAMLN}. For x &gt; 8, the implementation is based on
-     * </p>
-     * <ul>
+         * <ul>
      * <li><a href="http://mathworld.wolfram.com/GammaFunction.html">Gamma
      * Function</a>, equation (28).</li>
      * <li><a href="http://mathworld.wolfram.com/LanczosApproximation.html">
@@ -461,8 +457,7 @@ class Gamma {
      * * exp(-x - g - 0.5) * lanczos(x)},
      * </center>
      * where {@code g} is the Lanczos constant.
-     * </p>
-     *
+         *
      * @param x Argument.
      * @return The Lanczos approximation.
      * @see <a href="http://mathworld.wolfram.com/LanczosApproximation.html">Lanczos Approximation</a>

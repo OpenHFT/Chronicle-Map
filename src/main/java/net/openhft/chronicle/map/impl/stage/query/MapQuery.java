@@ -63,9 +63,6 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
     KeySearch<K> ks;
     @StageRef
     InputKeyBytesData<K> inputKeyBytesData;
-    /**
-     * Same as {@link #inputKeyDataAccessInitialized}
-     */
     @Stage("InputValueDataAccess")
     private boolean inputValueDataAccessInitialized = false;
 

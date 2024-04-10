@@ -32,7 +32,7 @@ import net.openhft.chronicle.wire.Marshallable;
  * blocks of data. Constantly-sized don't require to store the size actually, the corresponding
  * {@link #constant} {@code SizeMarshaller} consumes 0 bytes.
  * <p>
- * <p>Some {@code SizeMarshaller} implementations couldn't store the whole {@code long} range, for
+ * Some {@code SizeMarshaller} implementations couldn't store the whole {@code long} range, for
  * example each {@link #constant} {@code SizeMarshaller} is able to "store" only a single specific
  * value (it's constant size). If the marshaller is fed with the size it is not able store, it could
  * throw an {@code IllegalArgumentException}.

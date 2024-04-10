@@ -50,7 +50,7 @@ class DirtyReadOffenderTest implements Runnable {
             /**
              *  ben.cotton@rutgers.edu  ... anticipate Chronicle (www.OpenHFT.net)
              *  providing a j.u.c.l.StampedLock API for off-heap enthusiasts
-             *
+             * <p>
              *  START
              *
              */
@@ -98,7 +98,7 @@ class DirtyReadOffenderTest implements Runnable {
             }
             /**
              *  ben.cotton@rutgers.edu
-             *
+             * <p>
              *  END
              *
              */

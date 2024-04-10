@@ -30,24 +30,24 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
 /**
  * SPI strategy of performing remote calls and apply replication events for {@link ChronicleMap}.
  * <p>
- * <p>Example: Grow-only set values CRDT: <pre><code>
- * class GrowOnlySetValuedMapEntryOperations&lt;K, E&gt;
- *         implements MapEntryOperations&lt;K, Set&lt;E&gt;, Void&gt; {
+ * Example: Grow-only set values CRDT: <pre>{@code
+ * class GrowOnlySetValuedMapEntryOperations<K, E>
+ *         implements MapEntryOperations<K, Set<E>, Void> {
  *     &#064;Override
- *     public Void remove(@NotNull MapEntry&lt;K, Set&lt;E&gt;&gt; entry) {
+ *     public Void remove(@NotNull MapEntry<K, Set<E>> entry) {
  *         throw new UnsupportedOperationException("Map with grow-only set values " +
  *                 "doesn't support map value removals");
  *     }
  * }
- * <p>
- * class GrowOnlySetValuedMapRemoteOperations&lt;K, E&gt;
- *         implements MapRemoteOperations&lt;K, Set&lt;E&gt;, Void&gt; {
+ *
+ * class GrowOnlySetValuedMapRemoteOperations<K, E>
+ *         implements MapRemoteOperations<K, Set<E>, Void> {
  *     &#064;Override
- *     public void put(MapRemoteQueryContext&lt;K, Set&lt;E&gt;, Void&gt; q,
- *                     Data&lt;Set&lt;E&gt;, ?&gt; newValue) {
- *         MapReplicableEntry&lt;K, Set&lt;E&gt;&gt; entry = q.entry();
+ *     public void put(MapRemoteQueryContext<K, Set<E>, Void> q,
+ *                     Data<Set<E>, ?> newValue) {
+ *         MapReplicableEntry<K, Set<E>> entry = q.entry();
  *         if (entry != null) {
- *             Set&lt;E&gt; merged = new HashSet&lt;&gt;(entry.value().get());
+ *             Set<E> merged = new HashSet<>(entry.value().get());
  *             merged.addAll(newValue.get());
  *             q.replaceValue(entry, q.wrapValueAsData(merged));
  *         } else {
@@ -55,12 +55,12 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
  *             q.entry().updateOrigin(q.remoteIdentifier(), q.remoteTimestamp());
  *         }
  *     }
- * <p>
+ *
  *     &#064;Override
- *     public void remove(MapRemoteQueryContext&lt;K, Set&lt;E&gt;, Void&gt; q) {
+ *     public void remove(MapRemoteQueryContext<K, Set<E>, Void> q) {
  *         throw new UnsupportedOperationException();
  *     }
- * }</code></pre>
+ * }}</pre>
  *
  * @param <K> the map key type
  * @param <V> the map value type

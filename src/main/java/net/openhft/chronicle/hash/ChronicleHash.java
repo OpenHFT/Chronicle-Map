@@ -58,7 +58,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * concrete {@code ChronicleHash} subinterfaces, {@link ChronicleMap} and {@link ChronicleSet}, has to follow {@code Map.toString()} and {@code Set.toString()} contracts respectively, making it not always useful (or even impossible to use, if this {@code ChronicleHash} contains a lot of
      * entries) for the purposes listed above.
      * <p>
-     * <p>This method return a string of the form:<br><br>
+     * This method return a string of the form:<br><br>
      * [ChronicleMap|ChronicleSet]{name={@link #name()}, file={@link #file()}, identityHashCode={@link System#identityHashCode
      * System.identityHashCode(thisChronicleHash)}}
      * <br><br>
@@ -81,7 +81,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * Returns the amount of off-heap memory (in bytes), allocated by this {@code ChronicleHash} or shared with with other ChronicleHashes, persisting
      * to the same {@link #file()}.
      * <p>
-     * <p>After {@link #close()} this method returns 0.
+     * After {@link #close()} this method returns 0.
      *
      * @return the amount of off-heap memory, used by this {@code ChronicleHash} (in bytes)
      */
@@ -104,7 +104,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      *     // ... do something
      * }}</pre>
      * <p>
-     * <p>See documentation to {@link HashQueryContext} interface and methods in {@link MapMethods}
+     * See documentation to {@link HashQueryContext} interface and methods in {@link MapMethods}
      * interface for examples of using contexts. Also see <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#working-with-an-entry-within-a-context">
      * Working with an entry within a context</a> section in the Chronicle Map tutorial.
      *
@@ -123,7 +123,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * #queryContext(Object)}, but accepts {@code Data} instead of object key. This method is useful, when you already have {@code Data}, calling this
      * method instead of {@link #queryContext(Object)} might help to avoid unnecessary deserialization.
      * <p>
-     * <p>See documentation to {@link HashQueryContext} interface and methods in {@link MapMethods}
+     * See documentation to {@link HashQueryContext} interface and methods in {@link MapMethods}
      * interface for examples of using contexts. Also see <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#working-with-an-entry-within-a-context">
      * Working with an entry within a context</a> section in the Chronicle Map tutorial.
      *
@@ -164,10 +164,10 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * Checks the given predicate on each entry in this {@code ChronicleHash} until all entries have been processed or the predicate returns {@code
      * false} for some entry, or throws an {@code Exception}. Exceptions thrown by the predicate are relayed to the caller.
      * <p>
-     * <p>The order in which the entries will be processed is unspecified. It might differ from
+     * The order in which the entries will be processed is unspecified. It might differ from
      * the order of iteration via {@code Iterator} returned by any method of this {@code ChronicleHash} or it's collection view.
      * <p>
-     * <p>If the {@code ChronicleHash} is empty, this method returns {@code true} immediately.
+     * If the {@code ChronicleHash} is empty, this method returns {@code true} immediately.
      *
      * @param predicate the predicate to be checked for each entry
      * @return {@code true} if the predicate returned {@code true} for all entries of the {@code ChronicleHash}, {@code false} if it returned {@code
@@ -179,7 +179,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * Performs the given action for each entry in this {@code ChronicleHash} until all entries have been processed or the action throws an {@code
      * Exception}. Exceptions thrown by the action are relayed to the caller.
      * <p>
-     * <p>The order in which the entries will be processed is unspecified. It might differ from
+     * The order in which the entries will be processed is unspecified. It might differ from
      * the order of iteration via {@code Iterator} returned by any method of this {@code ChronicleHash} or it's collection view.
      *
      * @param action the action to be performed for each entry
@@ -192,10 +192,10 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * won't be actually freed on operating system level. I. e. this method call doesn't affect other {@link ChronicleMap} or {@link ChronicleSet}
      * instances mapping the same data.
      * <p>
-     * <p>If you won't call this method, memory would be held at least until next garbage
+     * If you won't call this method, memory would be held at least until next garbage
      * collection. This could be a problem if, for example, you target rare garbage collections, but load and drop {@code ChronicleHash}es regularly.
      * <p>
-     * <p>After this method call, all methods, querying the {@code ChronicleHash}'s entries, {@link
+     * After this method call, all methods, querying the {@code ChronicleHash}'s entries, {@link
      * #longSize()} and {@code size()}), throw {@link ChronicleHashClosedException}. {@link #isOpen()} returns {@code false}, {@code close()} itself
      * returns immediately without effects (i. e. repetitive {@code close()}, even from concurrent threads, are safe).
      */

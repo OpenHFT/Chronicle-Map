@@ -33,11 +33,11 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  * Marshaller of {@code Set<T>}. Uses {@link HashSet} (hence default element objects' equality and
  * {@code hashCode()}) as the set implementation to deserialize into.
  * <p>
- * <p>This marshaller supports multimap emulation on top of Chronicle Map, that is possible but
+ * This marshaller supports multimap emulation on top of Chronicle Map, that is possible but
  * inefficient. See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Features.adoc#chronicle-map-is-not">the
  * README section</a>.
  * <p>
- * <p>Usage: <pre>{@code
+ * Usage: <pre>{@code
  * SetMarshaller<String> valueMarshaller = SetMarshaller.of(
  *     new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
  * ChronicleMap<String, Set<String>> map = ChronicleMap
@@ -49,7 +49,7 @@ import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNe
  *     .create();
  * }</pre>
  * <p>
- * <p>Look for pre-defined element marshallers in the
+ * Look for pre-defined element marshallers in the
  * net.openhft.chronicle.hash.serialization.impl package. This package is not included into
  * Javadocs, but present in Chronicle Map distribution. If there are no existing marshallers for
  * your {@code Set} element type, define {@link BytesReader} and {@link BytesWriter} yourself.
@@ -72,7 +72,7 @@ public final class SetMarshaller<T>
     /**
      * Constructs a {@code SetMarshaller} with the given set elements' serializers.
      * <p>
-     * <p>Use static factory {@link #of(BytesReader, BytesWriter)} instead of this constructor
+     * Use static factory {@link #of(BytesReader, BytesWriter)} instead of this constructor
      * directly.
      *
      * @param elementReader set elements' reader

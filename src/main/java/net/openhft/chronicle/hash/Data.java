@@ -37,11 +37,11 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAcce
  * Dual bytes/object access to keys or values (for {@link ChronicleMap}) and elements (for {@link
  * ChronicleSet}) throughout the Chronicle Map library.
  * <p>
- * <p>Bytes access: {@link #bytes()} + {@link #offset()} + {@link #size()}.
+ * Bytes access: {@link #bytes()} + {@link #offset()} + {@link #size()}.
  * <p>
- * <p>Object access: {@link #get()}.
+ * Object access: {@link #get()}.
  * <p>
- * <p>In most cases, each particular {@code Data} wraps either some object or some bytes. Object
+ * In most cases, each particular {@code Data} wraps either some object or some bytes. Object
  * is marshalled to bytes lazily on demand, and bytes are lazily deserialized to object,
  * accordingly.
  *
@@ -65,13 +65,13 @@ public interface Data<T> {
     /**
      * Returns the accessor object to the {@code Data}'s bytes.
      * <p>
-     * <p>If this {@code Data} wraps some bytes, this method just returns a reference to that bytes.
+     * If this {@code Data} wraps some bytes, this method just returns a reference to that bytes.
      * <p>
-     * <p>If this {@code Data} wraps an object, this method performs serialization internally and
+     * If this {@code Data} wraps an object, this method performs serialization internally and
      * returns a reference to the output buffer, caching the result for subsequent calls of this
      * method.
      * <p>
-     * <p>For safety, this interface returns read-only object, because it could expose bytes source
+     * For safety, this interface returns read-only object, because it could expose bytes source
      * that must be immutable, e. g. a `char[]` array behind a {@code String}. But in cases when the
      * {@code Data} instance wraps off-heap bytes, e. g. {@link MapEntry#value()}, it is allowed to
      * cast the object, returned from this method, to {@link BytesStore}, and write into the
@@ -109,7 +109,7 @@ public interface Data<T> {
      * Compares bytes of this {@code Data} to the given bytes {@code source}, starting from the
      * given offset.
      * <p>
-     * <p>Default implementation compares {@link #bytes()} of this {@code Data}, but custom
+     * Default implementation compares {@link #bytes()} of this {@code Data}, but custom
      * implementation may only check if {@linkplain #get() object} of this {@code Data} <i>would</i>
      * be serialized to the same bytes sequence, if this {@code Data} wraps an object and obtaining
      * {@link #bytes()} requires serialization internally.
@@ -127,7 +127,7 @@ public interface Data<T> {
      * Writes bytes of this {@code Data} to the given {@code target} from the given {@code
      * targetOffset}.
      * <p>
-     * <p>Default implementation copies {@link #bytes()} of this {@code Data} using standard IO
+     * Default implementation copies {@link #bytes()} of this {@code Data} using standard IO
      * methods of {@code RandomDataInput} and {@code RandomDataOutput}, but custom implementation
      * may write directly from {@linkplain #get() object}, if this {@code Data} is object-based and
      * obtaining {@link #bytes()} requires serialization internally. This allows to avoid double
@@ -143,9 +143,9 @@ public interface Data<T> {
     /**
      * Returns object view of this {@code Data}.
      * <p>
-     * <p>If this {@code Data} wraps some object, this method just returns that object.
+     * If this {@code Data} wraps some object, this method just returns that object.
      * <p>
-     * <p>If this {@code Data} wraps some bytes, this method performs deserialization internally
+     * If this {@code Data} wraps some bytes, this method performs deserialization internally
      * and returns the resulting on-heap object, caching it for subsequent calls of this method. The
      * returned object could be reused, therefore it is <i>generally disallowed</i> to use the
      * object, returned from this method, <i>outside</i> some context, or a block, synchronized with

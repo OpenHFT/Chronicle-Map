@@ -78,7 +78,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     }
 
     /**
-     * contains returns <code>true</code> for contained value
+     * contains returns {@code true} for contained value
      */
     @Test(timeout = 5000)
     public void testContains() throws IOException {
@@ -89,7 +89,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     }
 
     /**
-     * containsKey returns <code>true</code> for contained key
+     * containsKey returns {@code true} for contained key
      */
     @Test(timeout = 5000)
     public void testContainsKey() throws IOException {
@@ -100,7 +100,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     }
 
     /**
-     * containsValue returns <code>true</code> for held values
+     * containsValue returns {@code true} for held values
      */
     @Test(timeout = 5000)
     public void testContainsValue() throws IOException {
@@ -124,7 +124,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     }
 
     /**
-     * isEmpty is <code>true</code> of empty map and <code>false</code> for non-empty
+     * isEmpty is {@code true} of empty map and {@code false} for non-empty
      */
     @Test(timeout = 5000)
     public void testIsEmpty() throws IOException {

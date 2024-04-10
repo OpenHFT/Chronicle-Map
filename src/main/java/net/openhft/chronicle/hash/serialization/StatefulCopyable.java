@@ -27,7 +27,7 @@ import net.openhft.chronicle.set.ChronicleSet;
  * ChronicleMap} or {@link ChronicleSet} in builder, should implement the {@code StatefulCopyable}
  * interface.
  * <p>
- * <p>See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_Understanding.adoc">
+ * See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_Understanding.adoc">
  * Understanding {@code StatefulCopyable}</a> section in the Chronicle Map tutorial for more info
  * on how to implement and use this interface properly, and for examples.
  *
@@ -60,9 +60,9 @@ public interface StatefulCopyable<T extends StatefulCopyable<T>> {
      * serialized). So, {@code copy()} should be transitive, i. e. {@code marshaller.copy()} and
      * {@code marshaller.copy().copy()} should result to identical instances.
      * <p>
-     * <p>The state of the instance on which {@code copy()} is called shouldn't be changed.
+     * The state of the instance on which {@code copy()} is called shouldn't be changed.
      * <p>
-     * <p>If some marshaller is ought to implement {@code StatefulCopyable} interface (e. g.
+     * If some marshaller is ought to implement {@code StatefulCopyable} interface (e. g.
      * {@link DataAccess}) but is stateless actually, it could return {@code this} from this method.
      *
      * @return the copy if this marshaller with the same configuration, but independent state

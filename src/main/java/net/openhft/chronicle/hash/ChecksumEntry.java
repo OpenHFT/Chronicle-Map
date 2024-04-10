@@ -26,7 +26,7 @@ import net.openhft.chronicle.set.SetEntry;
  * no method that returns {@code ChecksumEntry}, {@link MapEntry} or {@link SetEntry} could be
  * <i>casted</i> to {@code ChecksumEntry} to access it's methods.
  * <p>
- * <p>See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#entry-checksums">Entry checksums</a>
+ * See <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#entry-checksums">Entry checksums</a>
  * section in the Chronicle Map tutorial for usage examples of this interface.
  */
 public interface ChecksumEntry {

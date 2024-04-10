@@ -42,7 +42,7 @@ public interface HashSegmentContext<K, E extends HashEntry<K>> extends HashConte
      * Checks the given predicate on each <i>present</i> entry in this segment until all entries have been processed or the predicate returns {@code
      * false} for some entry, or throws an {@code Exception}. Exceptions thrown by the predicate are relayed to the caller.
      * <p>
-     * <p>If this segment is empty (i. e. {@link #size()} call returns 0), this method returns
+     * If this segment is empty (i. e. {@link #size()} call returns 0), this method returns
      * {@code true} immediately.
      *
      * @param predicate the predicate to be checked for each entry in this segment

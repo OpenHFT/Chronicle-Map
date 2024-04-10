@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Context of {@link ChronicleHash} operations with <i>individual keys</i>.
  * <p>
- * <p>This context provides access to {@link InterProcessReadWriteUpdateLock}, governing access
+ * This context provides access to {@link InterProcessReadWriteUpdateLock}, governing access
  * to the entry. Your have no chance to perform any actions under race with other threads, because
  * all required locks are acquired automatically on each operation, you should deal with locks
  * manually in the following cases:
@@ -146,7 +146,7 @@ import org.jetbrains.annotations.Nullable;
  *     }
  * }}</pre>
  * <p>
- * <p>{@code HashQueryContext} is the base interface defining the structure, but it has no methods
+ * {@code HashQueryContext} is the base interface defining the structure, but it has no methods
  * to anything "interesting" with {@code entry()} or {@code absentEntry()}. Use {@link
  * MapQueryContext} or {@link SetQueryContext} interfaces, which provide access to {@link
  * MapEntryOperations} and {@link SetEntryOperations} respectively.
@@ -160,7 +160,7 @@ public interface HashQueryContext<K> extends HashContext<K>, SegmentLock {
      * Returns the index of the accessed segment, where the queried key is located (or to which
      * the key is going to be put).
      * <p>
-     * <p>This index might also be used as the {@code InterProcessReadWriteUpdateLock} identifier,
+     * This index might also be used as the {@code InterProcessReadWriteUpdateLock} identifier,
      * because {@code ChronicleHashes} has per-segment locks.
      */
     @Override

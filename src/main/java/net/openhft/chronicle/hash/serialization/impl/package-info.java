@@ -22,17 +22,17 @@
  * net.openhft.chronicle.map.ChronicleMapBuilder}. That is why these classes are put into the
  * separate package (this package) and excluded from the generated Javadocs, to reduce noise.
  * <p>
- * <p>The remaining 5% of cases when these classes might be useful in the user code -- overriding
+ * The remaining 5% of cases when these classes might be useful in the user code -- overriding
  * with different {@link
  * net.openhft.chronicle.hash.serialization.impl.InstanceCreatingMarshaller#createInstance()} logic,
  * when the default strategy (call of the default constructor) doesn't work.
  * <p>
- * <p>Another remaining 5% of cases: configuration of complex marshallers with sub-marshallers, see
+ * Another remaining 5% of cases: configuration of complex marshallers with sub-marshallers, see
  * {@link net.openhft.chronicle.hash.serialization.ListMarshaller}, {@link
  * net.openhft.chronicle.hash.serialization.SetMarshaller} and {@link
  * net.openhft.chronicle.hash.serialization.MapMarshaller} for some examples.
  * <p>
- * <p>Classes in this package are undocumented and not guaranteed to stay compatible between
+ * Classes in this package are undocumented and not guaranteed to stay compatible between
  * Chronicle Map versions; refer to the source code and use on your own risk.
  */
 package net.openhft.chronicle.hash.serialization.impl;

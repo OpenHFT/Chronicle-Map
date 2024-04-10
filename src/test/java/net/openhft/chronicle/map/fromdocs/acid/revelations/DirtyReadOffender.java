@@ -47,7 +47,7 @@ public class DirtyReadOffender {
             /**
              *  ben.cotton@rutgers.edu  ... anticipate Chronicle (www.OpenHFT.net)
              *  providing a j.u.c.l.StampedLock API for off-heap enthusiasts
-             *
+             * <p>
              *  START
              *
              */
@@ -95,7 +95,7 @@ public class DirtyReadOffender {
             }
             /**
              *  ben.cotton@rutgers.edu
-             *
+             * <p>
              *  END
              *
              */

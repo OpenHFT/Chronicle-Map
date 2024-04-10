@@ -29,8 +29,7 @@ import java.util.*;
  */
 
 /**
- * @test
- * @synopsis Times and checks basic map operations
+ * Times and checks basic map operations
  * <p>
  * When run with "s" second arg, this requires file "testwords", which
  * is best used with real words.  We can't check in this file, but you

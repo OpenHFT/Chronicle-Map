@@ -39,7 +39,7 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * Inserts the new entry into the map, of {@linkplain #absentKey() the key} and the given {@code
      * value}.
      * <p>
-     * <p>This method is the default implementation for {@link MapEntryOperations#insert(
+     * This method is the default implementation for {@link MapEntryOperations#insert(
      *MapAbsentEntry, Data)}, which might be customized over the default.
      *
      * @param value the value to insert into the map along with {@link #absentKey() the key}
@@ -54,7 +54,7 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * this context. This is primarily used in {@link ChronicleMap#acquireUsing} operation
      * implementation, i. e. {@link MapMethods#acquireUsing}.
      * <p>
-     * <p>This method if the default implementation for {@link
+     * This method if the default implementation for {@link
      * DefaultValueProvider#defaultValue(MapAbsentEntry)},
      * which might be customized over the default.
      *

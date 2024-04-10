@@ -22,13 +22,12 @@ package net.openhft.chronicle.hash.impl.util.math;
  * Provides a generic means to evaluate continued fractions.  Subclasses simply
  * provided the a and b coefficients to evaluate the continued fraction.
  * <p>
- * <p>
+ * 
  * References:
  * <ul>
  * <li><a href="http://mathworld.wolfram.com/ContinuedFraction.html">
  * Continued Fraction</a></li>
  * </ul>
- * </p>
  */
 abstract class ContinuedFraction {
 
@@ -66,8 +65,7 @@ abstract class ContinuedFraction {
      * </ul>
      * <b>Note:</b> the implementation uses the terms a<sub>i</sub> and b<sub>i</sub> as defined in
      * <a href="http://mathworld.wolfram.com/ContinuedFraction.html">Continued Fraction @ MathWorld</a>.
-     * </p>
-     *
+         *
      * @param x             the evaluation point.
      * @param epsilon       maximum error allowed.
      * @param maxIterations maximum number of convergents

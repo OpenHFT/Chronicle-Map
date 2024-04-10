@@ -53,7 +53,7 @@ public interface MapContext<K, V, R>
      * to some method accepting {@code Data}, for example, {@link MapEntryOperations#replaceValue(
      *MapEntry, Data)}, without allocating new objects (i. e. garbage) and {@code ThreadLocals}.
      * <p>
-     * <p>The returned {@code Data} object shouldn't outlive this {@code MapContext}.
+     * The returned {@code Data} object shouldn't outlive this {@code MapContext}.
      *
      * @param value the value object to wrap
      * @return the value as {@code Data}
@@ -65,7 +65,7 @@ public interface MapContext<K, V, R>
      * to some method accepting {@code Data}, for example, {@link MapEntryOperations#replaceValue(
      *MapEntry, Data)}, without allocating manual deserialization and {@code ThreadLocals}.
      * <p>
-     * <p>The returned {@code Data} object shouldn't outlive this {@code MapContext}.
+     * The returned {@code Data} object shouldn't outlive this {@code MapContext}.
      *
      * @param valueBytes the value bytes to wrap
      * @param offset     offset within the given valueBytes, the actual value bytes start from

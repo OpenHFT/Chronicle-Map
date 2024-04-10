@@ -20,10 +20,10 @@
  * Chronicle Map to store objects off-heap, and read them back from off-heap memory to on-heap
  * objects.
  * <p>
- * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#custom-serializers">Custom serializers
+ * Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#custom-serializers">Custom serializers
  * </a> section in the Chronicle Map tutorial for more information.
  * <p>
- * <p>Reading methods in the interfaces in this package could use {@link
+ * Reading methods in the interfaces in this package could use {@link
  * net.openhft.chronicle.bytes.StreamingDataInput} as the "input" parameter type and {@link
  * net.openhft.chronicle.bytes.StreamingDataOutput} as the "output" parameter type, but always use
  * just {@link net.openhft.chronicle.bytes.Bytes} and {@link net.openhft.chronicle.bytes.BytesStore

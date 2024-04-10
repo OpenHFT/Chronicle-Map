@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A context of a <i>present</i> entry in the {@code ChronicleHash}.
  * <p>
- * <p>This interface is not usable by itself; it merely defines the common base for {@link MapEntry}
+ * This interface is not usable by itself; it merely defines the common base for {@link MapEntry}
  * and {@link SetEntry}.
  *
  * @param <K> type of the key in {@code ChronicleHash}

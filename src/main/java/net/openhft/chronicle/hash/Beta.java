@@ -30,8 +30,7 @@ import static java.lang.annotation.ElementType.*;
  * compatibility guarantees. Note that the presence of this annotation implies nothing about the
  * quality or performance of the API in question, only the fact that it is not "API-frozen."
  * <p>
- * <p>This annotation is a copy of Guava's <a href="
- * https://google.github.io/guava/releases/19.0/api/docs/com/google/common/annotations/Beta.html">
+ * This annotation is a copy of Guava's <a href="https://google.github.io/guava/releases/19.0/api/docs/com/google/common/annotations/Beta.html">
  * {@code Beta}</a>.
  */
 @Retention(value = RetentionPolicy.CLASS)

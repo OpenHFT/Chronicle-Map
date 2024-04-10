@@ -33,7 +33,7 @@ import java.io.IOException;
  * {@code ChronicleSetBuilder} manages the whole set of {@link ChronicleSet} configurations, could
  * be used as a classic builder and/or factory.
  * <p>
- * <p>{@code ChronicleMapBuilder} is mutable, see a note in {@link
+ * {@code ChronicleMapBuilder} is mutable, see a note in {@link
  * ChronicleHashBuilder} interface documentation.
  *
  * @param <K> element type of the sets, created by this builder
@@ -117,14 +117,14 @@ public final class ChronicleSetBuilder<K>
     /**
      * {@inheritDoc}
      * <p>
-     * <p>Example: if keys in your set(s) are English words in {@link String} form, average English
+     * Example: if keys in your set(s) are English words in {@link String} form, average English
      * word length is 5.1, configure average key size of 6: <pre>{@code
      * ChronicleSet<String> uniqueWords = ChronicleSetBuilder.of(String.class)
      *     .entries(50000)
      *     .averageKeySize(6)
      *     .create();}</pre>
      * <p>
-     * <p>(Note that 6 is chosen as average key size in bytes despite strings in Java are UTF-16
+     * (Note that 6 is chosen as average key size in bytes despite strings in Java are UTF-16
      * encoded (and each character takes 2 bytes on-heap), because default off-heap {@link String}
      * encoding is UTF-8 in {@code ChronicleSet}.)
      *
@@ -147,7 +147,7 @@ public final class ChronicleSetBuilder<K>
     /**
      * {@inheritDoc}
      * <p>
-     * <p>For example, if your keys are Git commit hashes:<pre>{@code
+     * For example, if your keys are Git commit hashes:<pre>{@code
      * Set<byte[]> gitCommitsOfInterest = ChronicleSetBuilder.of(byte[].class)
      *     .constantKeySizeBySample(new byte[20])
      *     .create();}</pre>
@@ -273,7 +273,7 @@ public final class ChronicleSetBuilder<K>
      * Inject your SPI code around basic {@code ChronicleSet}'s operations with entries:
      * removing entries and inserting new entries.
      * <p>
-     * <p>This affects behaviour of ordinary set.add(), set.remove(), calls, as well as removes
+     * This affects behaviour of ordinary set.add(), set.remove(), calls, as well as removes
      * <i>during iterations</i>, updates during <i>remote calls</i> and
      * <i>internal replication operations</i>.
      */

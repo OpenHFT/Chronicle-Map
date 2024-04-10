@@ -694,19 +694,16 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
      * <p>
      * Once a change occurs to a map, map replication requires that these changes are picked up
      * by another thread, this class provides an iterator like interface to poll for such changes.
-     * </p>
-     * <p>
+         * <p>
      * In most cases the thread that adds data to the node is unlikely to be the same thread
      * that replicates the data over to the other nodes, so data will have to be marshaled between
      * the main thread storing data to the map, and the thread running the replication.
-     * </p>
-     * <p>
+         * <p>
      * One way to perform this marshalling, would be to pipe the data into a queue. However, This class
      * takes another approach. It uses a bit set, and marks bits which correspond to the indexes of
      * the entries that have changed. It then provides an iterator like interface to poll for such
      * changes.
-     * </p>
-     *
+         *
      * @author Rob Austin.
      */
     public final class ModificationIterator implements Replica.ModificationIterator {

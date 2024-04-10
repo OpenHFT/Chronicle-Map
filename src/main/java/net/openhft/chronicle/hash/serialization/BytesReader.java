@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * Deserializer of objects from bytes, pairing {@link BytesWriter}, without accepting additional
  * information about serialized objects.
  * <p>
- * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_Bytes.adoc">{@code
+ * Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_Bytes.adoc">{@code
  * BytesWriter} and {@code BytesReader}</a> and
  * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#custom-serialization-checklist">custom
  * serialization checklist</a> sections in the Chronicle Map tutorial for more information on this
@@ -48,7 +48,7 @@ public interface BytesReader<T> extends Marshallable {
      * created and returned. The given {@code using} object could be {@code null}, in this case this
      * method, of cause, should create a new object.
      * <p>
-     * <p>This method should increment the position in the given {@code Bytes}, i. e. consume the
+     * This method should increment the position in the given {@code Bytes}, i. e. consume the
      * read bytes. {@code in} bytes shouldn't be written.
      *
      * @param in    the {@code Bytes} to read the object from

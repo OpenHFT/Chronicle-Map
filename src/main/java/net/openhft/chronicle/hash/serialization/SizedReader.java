@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * of the serialized form isn't written in the beginning of the serialized form itself, but managed
  * by {@link ChronicleHash} implementation and passed to the reading methods.
  * <p>
- * <p>Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_DataAccess.adoc">{@code
+ * Read <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_DataAccess.adoc">{@code
  * SizedWriter} and {@code SizedReader}</a>,
  * <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial_DataAccess.adoc">{@link DataAccess}
  * and {@code SizedReader}</a> and
@@ -54,7 +54,7 @@ public interface SizedReader<T> extends Marshallable {
      * a new object should be created and returned. The given {@code using} object could be {@code
      * null}, in this case read() should always create a new object.
      * <p>
-     * <p>This method should increment the position in the given {@code Bytes} by the given {@code
+     * This method should increment the position in the given {@code Bytes} by the given {@code
      * size}.
      *
      * @param in    the {@code Bytes} to read the object from

@@ -36,25 +36,24 @@ import java.util.concurrent.ConcurrentMap;
  * {@code ChronicleMap} provides concurrent access to a <i>Chronicle Map key-value store</i> from a
  * JVM process.
  * <p>
- * <p>For information on <ul> <li>how to construct a {@code ChronicleMap}</li> <li>{@code
+ * For information on <ul> <li>how to construct a {@code ChronicleMap}</li> <li>{@code
  * ChronicleMap} flavors and properties</li> <li>available configurations</li> </ul> see {@link
  * ChronicleMapBuilder} documentation.
  * <p>
- * <p>Functionally this interface defines some methods supporting garbage-free off-heap programming:
+ * Functionally this interface defines some methods supporting garbage-free off-heap programming:
  * {@link #getUsing(Object, Object)}, {@link #acquireUsing(Object, Object)}.
  * <p>
- * <p>Roughly speaking, {@code ChronicleMap} compares keys and values by their binary serialized
+ * Roughly speaking, {@code ChronicleMap} compares keys and values by their binary serialized
  * form, that shouldn't necessary be the same equality relation as defined by built-in {@link
  * Object#equals(Object)} method, which is prescribed by general {@link Map} contract.
  * <p>
- * <p>Note that {@code ChronicleMap} extends {@link Closeable}, don't forget to {@linkplain #close()
+ * Note that {@code ChronicleMap} extends {@link Closeable}, don't forget to {@linkplain #close()
  * close} map when it is no longer needed.
  *
  * @param <K> the map key type
  * @param <V> the map value type
  * @see ChronicleMapBuilder#create()
  * @see ChronicleMapBuilder#createPersistedTo(File)
- * @see ChronicleMapBuilder#createOrRecoverPersistedTo(File, boolean)
  */
 public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
         ChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>,
@@ -77,7 +76,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * Returns the value to which the specified key is mapped, or {@code null} if this map contains
      * no mapping for the key.
      * <p>
-     * <p>If the value class allows reusing, consider {@link #getUsing(Object, Object)} method
+     * If the value class allows reusing, consider {@link #getUsing(Object, Object)} method
      * instead of this to reduce garbage creation. Read <a
      * href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#single-key-queries">the section about usage
      * patterns in the Chronicle Map 3 Tutorial</a> for more.
@@ -94,13 +93,13 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * Returns the value to which the specified key is mapped, read to the provided {@code value}
      * object, if possible, or returns {@code null}, if this map contains no mapping for the key.
      * <p>
-     * <p>If the specified key is present in the map, the value data is read to the provided {@code
+     * If the specified key is present in the map, the value data is read to the provided {@code
      * value} object via value reader's {@link SizedReader#read(net.openhft.chronicle.bytes.Bytes, long, Object)
      * read(StreamingDataInput, size, value)} method. If the value deserializer is able to reuse the
      * given {@code value} object, calling this method instead of {@link #get(Object)} could help to
      * reduce garbage creation.
      * <p>
-     * <p>The provided {@code value} object is allowed to be {@code null}, in this case {@code
+     * The provided {@code value} object is allowed to be {@code null}, in this case {@code
      * map.getUsing(key, null)} call is semantically equivalent to simple {@code map.get(key)}
      * call.
      *
@@ -117,17 +116,17 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     /**
      * Acquire a value for a key, creating if absent.
      * <p>
-     * <p>If the specified key is absent in the map, {@linkplain
+     * If the specified key is absent in the map, {@linkplain
      * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) default value provider} is
      * called. Then this object is put to this map for the specified key.
      * <p>
-     * <p>Then, either if the key was initially absent in the map or already present, the value is
+     * Then, either if the key was initially absent in the map or already present, the value is
      * deserialized just as during {@link #getUsing(Object, Object) getUsing(key, usingValue)} call,
      * passed the same {@code key} and {@code usingValue} as into this method call. This means, as
      * in {@link #getUsing}, {@code usingValue} could safely be {@code null}, in this case a new
      * value instance is created to deserialize the data.
      * <p>
-     * <p>In code, {@code acquireUsing} is specified as :
+     * In code, {@code acquireUsing} is specified as :
      * <pre>{@code
      * V acquireUsing(K key, V usingValue) {
      *     if (!containsKey(key))
@@ -135,16 +134,16 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      *     return getUsing(key, usingValue);
      * }}</pre>
      * <p>
-     * <p>
+     * 
      * <p>Where {@code defaultValue(key)} returns {@link
      * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) defaultValueProvider}.
      * <p>
-     * <p>If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
+     * If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
      * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of what
      * to do if the key is absent in the map. By default, value bytes are just zeroed out, no
      * default value, either provided for key or constant, is put for the absent key.
      * <p>
-     * <p>Unless value type is a Byteable or a value-type (e.g. {@link net.openhft.chronicle.core.values.LongValue}),
+     * Unless value type is a Byteable or a value-type (e.g. {@link net.openhft.chronicle.core.values.LongValue}),
      * it's strictly advised to set {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
      * defaultValueProvider} explicitly. The value may be deserialized from a non-initialized memory region,
      * potentially causing marshalling errors.
@@ -163,16 +162,16 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * This method is effectively equivalent to {@link #acquireUsing(Object, Object)} except for the
      * update lock management policy: {@link #acquireUsing(Object, Object)} releases the lock right away.
      * <p>
-     * <p>If the specified key is absent in the map, {@linkplain
+     * If the specified key is absent in the map, {@linkplain
      * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) default value provider} is
      * called. Then this object is put to this map for the specified key.
      * <p>
-     * <p>Unless value is a Byteable or a value-type (e.g. {@link net.openhft.chronicle.core.values.LongValue}),
+     * Unless value is a Byteable or a value-type (e.g. {@link net.openhft.chronicle.core.values.LongValue}),
      * it's strictly advised to set {@link ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider)
      * defaultValueProvider} explicitly. The value may be deserialized from a non-initialized memory region,
      * potentially causing marshalling errors.
      * <p>
-     * <p>Also, if value is not a Byteable or a value-type, changes on {@code usingValue} are
+     * Also, if value is not a Byteable or a value-type, changes on {@code usingValue} are
      * not propagated to the map memory right away. Updated {@code usingValue} is written to the map
      * when the control object is closed, before releasing the update lock.
      *
@@ -301,9 +300,9 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * The maximum number of times, the chronicle map is allowed to grow in size beyond
      * the configured number of entries.
      * <p>
-     * <p>The default maximum bloat factor factor is {@code 1.0} - i. e. "no bloat is expected".
+     * The default maximum bloat factor factor is {@code 1.0} - i. e. "no bloat is expected".
      * <p>
-     * <p>It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
+     * It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
      * almost certainly, you either should configure {@code ChronicleHash}es completely differently,
      * or this data store doesn't fit to your case.
      *

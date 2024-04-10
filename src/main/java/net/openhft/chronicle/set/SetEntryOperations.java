@@ -46,7 +46,7 @@ public interface SetEntryOperations<K, R> {
 
     /**
      * Inserts the new entry into the set, of {@link SetAbsentEntry#absentKey() the key} from
-     * the given insertion context (<code>absentEntry</code>).
+     * the given insertion context ({@code absentEntry}).
      *
      * @return result of operation, understandable by higher-level SPIs
      * @throws IllegalStateException if some locking/state conditions required to perform insertion

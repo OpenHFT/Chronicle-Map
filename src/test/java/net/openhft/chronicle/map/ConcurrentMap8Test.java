@@ -379,7 +379,7 @@ public class ConcurrentMap8Test extends JSR166TestCase {
     }
 
     *//**
-     * keyset.contains returns <code>true</code> for added elements
+     * keyset.contains returns {@code true} for added elements
      *//*
     @Test
     public void testContains() {
@@ -408,7 +408,7 @@ public class ConcurrentMap8Test extends JSR166TestCase {
     }
 
     *//**
-     * KeySet.containsAll returns <code>true</code> for collections with subset of elements
+     * KeySet.containsAll returns {@code true} for collections with subset of elements
      *//*
     @Test
     public void testContainsAll() {
@@ -422,7 +422,7 @@ public class ConcurrentMap8Test extends JSR166TestCase {
     }
 
     *//**
-     * KeySet.isEmpty is <code>true</code> when empty, else false
+     * KeySet.isEmpty is {@code true} when empty, else false
      *//*
     @Test
     public void testIsEmpty() {
