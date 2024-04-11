@@ -33,7 +33,7 @@ public final class IntegerDataAccess_3_13 extends AbstractData<Integer>
 
     // Cache fields
     private transient boolean bsInit;
-    private transient BytesStore bs;
+    private transient BytesStore<?, ?> bs;
 
     /**
      * State field

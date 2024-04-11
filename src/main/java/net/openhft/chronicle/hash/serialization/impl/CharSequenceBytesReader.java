@@ -41,7 +41,7 @@ public final class CharSequenceBytesReader implements BytesReader<CharSequence>,
 
     @NotNull
     @Override
-    public CharSequence read(Bytes in, @Nullable CharSequence using) {
+    public CharSequence read(Bytes<?> in, @Nullable CharSequence using) {
         StringBuilder usingSB;
         if (using instanceof StringBuilder) {
             usingSB = (StringBuilder) using;

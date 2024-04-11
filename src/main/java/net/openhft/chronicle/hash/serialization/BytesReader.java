@@ -56,5 +56,5 @@ public interface BytesReader<T> extends Marshallable {
      * @return the object read from the bytes, either reused or newly created
      */
     @NotNull
-    T read(Bytes in, @Nullable T using);
+    T read(Bytes<?> in, @Nullable T using);
 }

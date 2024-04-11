@@ -28,7 +28,7 @@ import net.openhft.sg.Staged;
 @Staged
 public class DummyValueZeroData<V> extends AbstractData<V> {
 
-    private final Bytes zeroBytes = ZeroBytesStore.INSTANCE.bytesForRead();
+    private final Bytes<Void> zeroBytes = ZeroBytesStore.INSTANCE.bytesForRead();
     @StageRef
     VanillaChronicleMapHolder<?, ?, ?> mh;
     @StageRef

@@ -63,5 +63,5 @@ public interface SizedReader<T> extends Marshallable {
      * @return the object read from the bytes, either reused or newly created
      */
     @NotNull
-    T read(Bytes in, long size, @Nullable T using);
+    T read(Bytes<?> in, long size, @Nullable T using);
 }

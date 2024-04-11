@@ -16,6 +16,7 @@
 
 package net.openhft.chronicle.hash.serialization.impl;
 
+import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.bytes.VanillaBytes;
@@ -35,18 +36,19 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
         implements DataAccess<ByteBuffer> {
 
     // Cache fields
-    private transient VanillaBytes<Void> bytes;
+    private transient VanillaBytes<ByteBuffer> bytes;
 
     // State fields
     private transient ByteBuffer bb;
-    private transient BytesStore bytesStore;
+    private transient BytesStore<?, ByteBuffer> bytesStore;
 
     public ByteBufferDataAccess() {
         initTransients();
     }
 
+    @SuppressWarnings({"rawtype", "unchecked"})
     private void initTransients() {
-        bytes = VanillaBytes.vanillaBytes();
+        bytes = (VanillaBytes) VanillaBytes.vanillaBytes();
     }
 
     @Override
@@ -77,7 +79,8 @@ public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
             using.position(0);
             using.limit(bb.remaining());
         }
-        bytes.bytesStore(bytesStore, bb.position(), bb.remaining());
+        BytesStore<?, ByteBuffer> bytesStore1 = bytesStore;
+        bytes.bytesStore(bytesStore1, bb.position(), bb.remaining());
         bytes.read(using);
         using.flip();
         return using;

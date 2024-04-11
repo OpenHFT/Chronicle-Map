@@ -60,7 +60,7 @@ public final class CharSequenceCustomEncodingBytesReader
 
     @NotNull
     @Override
-    public CharSequence read(Bytes in, @Nullable CharSequence using) {
+    public CharSequence read(Bytes<?> in, @Nullable CharSequence using) {
         long csLengthAsLong = in.readStopBit();
         if (csLengthAsLong > Integer.MAX_VALUE) {
             throw new IORuntimeException("cs len shouldn't be more than " + Integer.MAX_VALUE +

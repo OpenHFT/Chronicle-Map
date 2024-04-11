@@ -34,7 +34,7 @@ public class DummyData extends BytesInBinaryMarshallable {
     }
 
     @Override
-    public void readMarshallable(BytesIn bytes) throws IORuntimeException, BufferUnderflowException, IllegalStateException {
+    public void readMarshallable(BytesIn<?> bytes) throws IORuntimeException, BufferUnderflowException, IllegalStateException {
         timeNS = bytes.readLong();
         int len = bytes.readUnsignedShort();
         if (len == (short) -1) {
@@ -47,7 +47,7 @@ public class DummyData extends BytesInBinaryMarshallable {
     }
 
     @Override
-    public void writeMarshallable(BytesOut bytes) throws IllegalStateException, BufferOverflowException, BufferUnderflowException, ArithmeticException {
+    public void writeMarshallable(BytesOut<?> bytes) throws IllegalStateException, BufferOverflowException, BufferUnderflowException, ArithmeticException {
         bytes.writeLong(timeNS);
         if (data == null) {
             bytes.writeShort((short) -1);

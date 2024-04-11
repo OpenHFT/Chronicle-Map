@@ -138,7 +138,7 @@ public abstract class VanillaChronicleHash<K,
     protected int log2TiersInBulk;
     /////////////////////////////////////////////////
     // Bytes Store (essentially, the base address) and serialization-dependent offsets
-    protected transient BytesStore bs;
+    protected transient BytesStore<?, ?> bs;
     /////////////////////////////////////////////////
     // Precomputed offsets and sizes for fast Context init
     int segmentHeaderSize;
@@ -444,11 +444,11 @@ public abstract class VanillaChronicleHash<K,
 
     public final void createInMemoryStoreAndSegments(@NotNull final ChronicleHashResources resources) {
         this.resources = resources;
-        final BytesStore bytesStore = nativeBytesStoreWithFixedCapacity(sizeInBytesWithoutTiers());
+        final BytesStore<?, ?> bytesStore = nativeBytesStoreWithFixedCapacity(sizeInBytesWithoutTiers());
         createStoreAndSegments(bytesStore);
     }
 
-    private void createStoreAndSegments(@NotNull final BytesStore bytesStore) {
+    private void createStoreAndSegments(@NotNull final BytesStore<?, ?> bytesStore) {
         initBytesStoreAndHeadersViews(bytesStore);
         initOffsetsAndBulks();
     }
@@ -476,7 +476,7 @@ public abstract class VanillaChronicleHash<K,
         }
     }
 
-    private void initBytesStoreAndHeadersViews(@NotNull final BytesStore bytesStore) {
+    private void initBytesStoreAndHeadersViews(@NotNull final BytesStore<?, ?> bytesStore) {
         if (bytesStore.start() != 0) {
             throw new AssertionError("bytes store " + bytesStore + " starts from " +
                     bytesStore.start() + ", 0 expected");
@@ -983,7 +983,7 @@ public abstract class VanillaChronicleHash<K,
         return extraTierIndexToBaseAddr(tierIndexMinusOne);
     }
 
-    public BytesStore tierBytesStore(long tierIndex) {
+    public BytesStore<?, ?> tierBytesStore(long tierIndex) {
         throwExceptionIfClosed();
 
         final long tierIndexMinusOne = tierIndex - 1;
@@ -1062,7 +1062,7 @@ public abstract class VanillaChronicleHash<K,
         }
         // mapping by hand, because MappedFile/MappedBytesStore doesn't allow to create a BS
         // which starts not from the beginning of the file, but has start() of 0
-        final BytesStore extraStore = map(mapSize, mappingOffsetInFile);
+        final BytesStore<?, ?> extraStore = map(mapSize, mappingOffsetInFile);
         appendBulkData(firstBulkToMapIndex, upToBulkIndex, extraStore,
                 firstBulkToMapOffsetWithinMapping);
     }
@@ -1070,7 +1070,7 @@ public abstract class VanillaChronicleHash<K,
     /**
      * @see net.openhft.chronicle.bytes.MappedFile#acquireByteStore(ReferenceOwner, long, BytesStore, MappedBytesStoreFactory)
      */
-    private BytesStore map(long mapSize, final long mappingOffsetInFile) throws IOException {
+    private BytesStore<?, ?> map(long mapSize, final long mappingOffsetInFile) throws IOException {
         int pageSize = (int) OS.mapAlignment();
         mapSize = pageAlign(mapSize, pageSize);
         final long minFileSize = mappingOffsetInFile + mapSize;
@@ -1119,11 +1119,11 @@ public abstract class VanillaChronicleHash<K,
         final int firstBulkToAllocateIndex = tierBulkOffsets.size();
         final int bulksToAllocate = upToBulkIndex + 1 - firstBulkToAllocateIndex;
         final long allocationSize = bulksToAllocate * tierBulkSizeInBytes;
-        final BytesStore extraStore = nativeBytesStoreWithFixedCapacity(allocationSize);
+        final BytesStore<?, ?> extraStore = nativeBytesStoreWithFixedCapacity(allocationSize);
         appendBulkData(firstBulkToAllocateIndex, upToBulkIndex, extraStore, 0);
     }
 
-    private BytesStore nativeBytesStoreWithFixedCapacity(final long capacity) {
+    private BytesStore<?, ?> nativeBytesStoreWithFixedCapacity(final long capacity) {
         final long address = OS.memory().allocate(capacity);
         resources.addMemoryResource(address, capacity);
         return BytesStore.wrap(address, capacity);
@@ -1131,7 +1131,7 @@ public abstract class VanillaChronicleHash<K,
 
     private void appendBulkData(final int firstBulkToMapIndex,
                                 final int upToBulkIndex,
-                                final BytesStore extraStore,
+                                final BytesStore<?, ?> extraStore,
                                 long offsetWithinMapping) {
         final TierBulkData firstMappedBulkData = new TierBulkData(extraStore, offsetWithinMapping);
         tierBulkOffsets.add(firstMappedBulkData);
@@ -1160,10 +1160,10 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public static final class TierBulkData {
-        public final BytesStore bytesStore;
+        public final BytesStore<?, ?> bytesStore;
         public final long offset;
 
-        public TierBulkData(final BytesStore bytesStore, final long offset) {
+        public TierBulkData(final BytesStore<?, ?> bytesStore, final long offset) {
             this.bytesStore = bytesStore;
             this.offset = offset;
         }

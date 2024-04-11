@@ -72,5 +72,5 @@ public interface MapContext<K, V, R>
      * @param size       length of the value bytes sequence
      * @return the value bytes as {@code Data}
      */
-    Data<V> wrapValueBytesAsData(BytesStore valueBytes, long offset, long size);
+    Data<V> wrapValueBytesAsData(BytesStore<?, ?> valueBytes, long offset, long size);
 }

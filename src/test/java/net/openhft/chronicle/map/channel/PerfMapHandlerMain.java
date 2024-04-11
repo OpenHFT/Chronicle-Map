@@ -78,7 +78,7 @@ public class PerfMapHandlerMain implements JLBHTask {
     static final String URL = System.getProperty("url", "tcp://:1248");
     private static final PauserMode PAUSER_MODE = PauserMode.valueOf(System.getProperty("pauserMode", PauserMode.balanced.name()));
     private static final String PATH = System.getProperty("path", OS.isLinux() ? "/dev/shm" : OS.TMP);
-    final Bytes key = Bytes.allocateElasticDirect();
+    final Bytes<Void> key = Bytes.allocateElasticDirect();
     private DummyData data;
     private TimedPassMapServiceIn serviceIn;
     private MethodReader reader;
@@ -220,11 +220,11 @@ public class PerfMapHandlerMain implements JLBHTask {
     }
 
     interface PassMapServiceIn extends Closeable {
-        void put(Bytes key, DummyData value);
+        void put(Bytes<?> key, DummyData value);
 
-        void get(Bytes key);
+        void get(Bytes<?> key);
 
-        void remove(Bytes key);
+        void remove(Bytes<?> key);
 
         void goodbye();
     }
@@ -252,13 +252,13 @@ public class PerfMapHandlerMain implements JLBHTask {
         }
 
         @Override
-        public void put(Bytes key, DummyData value) {
+        public void put(Bytes<?> key, DummyData value) {
             map.put(key, value);
             reply.on(timeNS).status(true);
         }
 
         @Override
-        public void get(Bytes key) {
+        public void get(Bytes<?> key) {
             reply.on(timeNS).reply(map.getUsing(key, dataValue()));
         }
 
@@ -267,7 +267,7 @@ public class PerfMapHandlerMain implements JLBHTask {
         }
 
         @Override
-        public void remove(Bytes key) {
+        public void remove(Bytes<?> key) {
             reply.on(timeNS).status(map.remove(key, dataValue()));
         }
 

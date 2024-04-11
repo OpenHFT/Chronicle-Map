@@ -124,7 +124,7 @@ public interface SizeMarshaller extends Marshallable {
      *                                  {@code SizeMarshaller}
      * @see #readSize(Bytes)
      */
-    void writeSize(Bytes out, long sizeToWrite);
+    void writeSize(Bytes<?> out, long sizeToWrite);
 
     /**
      * Reads and returns a size from the input.
@@ -133,5 +133,5 @@ public interface SizeMarshaller extends Marshallable {
      * @return the read size
      * @see #writeSize(Bytes, long)
      */
-    long readSize(Bytes in);
+    long readSize(Bytes<?> in);
 }

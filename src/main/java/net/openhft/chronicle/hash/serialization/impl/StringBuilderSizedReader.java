@@ -31,7 +31,7 @@ public final class StringBuilderSizedReader
 
     @NotNull
     @Override
-    public StringBuilder read(Bytes in, long size, @Nullable StringBuilder using) {
+    public StringBuilder read(Bytes<?> in, long size, @Nullable StringBuilder using) {
         if (0 > size || size > Integer.MAX_VALUE)
             throw new IllegalStateException("positive int size expected, " + size + " given");
         int csLen = (int) size;

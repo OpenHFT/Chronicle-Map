@@ -296,7 +296,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
     @NotNull
     @Override
     public ExternalMapQueryContext<K, V, ?> queryContext(
-            BytesStore keyBytes, long offset, long size) {
+            BytesStore<?, ?> keyBytes, long offset, long size) {
         throw new UnsupportedOperationException();
     }
 

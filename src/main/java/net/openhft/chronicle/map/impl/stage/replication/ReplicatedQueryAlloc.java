@@ -79,7 +79,7 @@ public class ReplicatedQueryAlloc extends QueryAlloc {
             // Force recalculation of some properties as new slots may
             // have become available and there might be "holes"
             // created by removed entries.
-            ((CompiledReplicatedMapQueryContext) (Object) this).closeSearchKey();
+            ((CompiledReplicatedMapQueryContext<?, ?, ?>) (Object) this).closeSearchKey();
        }
 
         s.goToFirstTier();

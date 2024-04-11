@@ -44,7 +44,7 @@ public class BuildVersionTest {
                 .entries(1).create()) {
             expected.put(1, 1.0);
 
-            String version = ((VanillaChronicleMap) expected).persistedDataVersion();
+            String version = ((VanillaChronicleMap<?, ?, ?>) expected).persistedDataVersion();
             Assert.assertNotNull(BuildVersion.version(), version);
 
         }

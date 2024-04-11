@@ -62,7 +62,7 @@ public class Issue43Test {
         }
 
         @Override
-        public void write(Bytes bytes, @NotNull ValueWrapper vw) {
+        public void write(Bytes<?> bytes, @NotNull ValueWrapper vw) {
             bytes.writeInt(vw.values.length);
 
             for (int i = 0; i < vw.values.length; i++) {
@@ -72,7 +72,7 @@ public class Issue43Test {
 
         @NotNull
         @Override
-        public ValueWrapper read(Bytes in, ValueWrapper using) {
+        public ValueWrapper read(Bytes<?> in, ValueWrapper using) {
             throw new UnsupportedOperationException("Not supported yet.");
         }
 

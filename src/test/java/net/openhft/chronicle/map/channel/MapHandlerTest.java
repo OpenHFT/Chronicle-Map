@@ -58,10 +58,10 @@ public class MapHandlerTest {
             cc.toFile(ns + ".cm3").deleteOnExit();
             final PassMapServiceIn serviceIn = channel.methodWriter(PassMapServiceIn.class);
 
-            final Bytes one = Bytes.from("one");
-            final Bytes two = Bytes.from("two");
-            final Bytes three = Bytes.from("three");
-            final Bytes four = Bytes.from("four");
+            final Bytes<byte[]> one = Bytes.from("one");
+            final Bytes<byte[]> two = Bytes.from("two");
+            final Bytes<byte[]> three = Bytes.from("three");
+            final Bytes<byte[]> four = Bytes.from("four");
             serviceIn.put(one, new DTO("1"));
             serviceIn.put(two, new DTO("22"));
             serviceIn.put(three, new DTO("333"));
@@ -144,7 +144,7 @@ public class MapHandlerTest {
     }
 
     private ChronicleMap<Bytes<?>, DTO> createMap(ChronicleContext context, String namespace) throws IOException {
-        final MarshallableReaderWriter valueMarshaller = new MarshallableReaderWriter<>(DTO.class);
+        final MarshallableReaderWriter<DTO> valueMarshaller = new MarshallableReaderWriter<>(DTO.class);
         final File file = context == null ? new File(namespace + ".cm3") : context.toFile(namespace + ".cm3");
         final Class<Bytes<?>> keyClass = (Class) Bytes.class;
         return ChronicleMap.of(keyClass, DTO.class)
@@ -158,11 +158,11 @@ public class MapHandlerTest {
     }
 
     interface PassMapServiceIn extends Closeable {
-        void put(Bytes key, DTO value);
+        void put(Bytes<?> key, DTO value);
 
-        void get(Bytes key);
+        void get(Bytes<?> key);
 
-        void remove(Bytes key);
+        void remove(Bytes<?> key);
 
         void goodbye();
     }
@@ -188,13 +188,13 @@ public class MapHandlerTest {
         private transient DTO dataValue;
 
         @Override
-        public void put(Bytes key, DTO value) {
+        public void put(Bytes<?> key, DTO value) {
             map.put(key, value);
             reply.status(true);
         }
 
         @Override
-        public void get(Bytes key) {
+        public void get(Bytes<?> key) {
             reply.reply(map.getUsing(key, dataValue()));
         }
 
@@ -203,7 +203,7 @@ public class MapHandlerTest {
         }
 
         @Override
-        public void remove(Bytes key) {
+        public void remove(Bytes<?> key) {
             reply.status(map.remove(key, dataValue()));
         }
 

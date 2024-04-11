@@ -1100,13 +1100,13 @@ PRESENT, ALL;    }
 
         private long wrappedValueBytesSize;
 
-        private BytesStore wrappedValueBytesStore;
+        private BytesStore<?, ?> wrappedValueBytesStore;
 
         boolean wrappedValueBytesStoreInit() {
             return (wrappedValueBytesStore) != null;
         }
 
-        public void initWrappedValueBytesStore(BytesStore bytesStore, long offset, long size) {
+        public void initWrappedValueBytesStore(BytesStore<?, ?> bytesStore, long offset, long size) {
             boolean wasWrappedValueBytesStoreInit = this.wrappedValueBytesStoreInit();
             wrappedValueBytesStore = bytesStore;
             wrappedValueBytesOffset = offset;
@@ -1126,7 +1126,7 @@ PRESENT, ALL;    }
             return this.wrappedValueBytesOffset;
         }
 
-        public BytesStore wrappedValueBytesStore() {
+        public BytesStore<?, ?> wrappedValueBytesStore() {
             assert this.wrappedValueBytesStoreInit() : "WrappedValueBytesStore should be init";
             return this.wrappedValueBytesStore;
         }
@@ -1777,7 +1777,7 @@ PRESENT, ABSENT;    }
             long entry = hashLookup.readEntry(currentTierBaseAddr, hlPos);
             if (!(hashLookup.empty(entry))) {
                 this.readExistingEntry(hashLookup.value(entry));
-                Data key = this.key();
+                Data<K> key = this.key();
                 try (ExternalMapQueryContext<?, ?, ?> c = m.queryContext(key)) {
                     MapEntry<?, ?> entry2 = c.entry();
                     Data<?> key2 = ((MapEntry)(c)).key();
@@ -2227,7 +2227,7 @@ PRESENT, ABSENT;    }
     }
 
     @Override
-    public Data<V> wrapValueBytesAsData(BytesStore bytesStore, long offset, long size) {
+    public Data<V> wrapValueBytesAsData(BytesStore<?, ?> bytesStore, long offset, long size) {
         Objects.requireNonNull(bytesStore);
         this.checkOnEachPublicOperation();
         WrappedValueBytesData wrapped = this.wrappedValueBytesData;

@@ -34,7 +34,7 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
     private static final int BASE = LENGTH + 4;
 
     private final int capacity;
-    private BytesStore bs;
+    private BytesStore<?, ?> bs;
     private long offset;
 
     public DoubleArray(int capacity) {
@@ -51,7 +51,7 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
     }
 
     @Override
-    public BytesStore bytesStore() {
+    public BytesStore<?, ?> bytesStore() {
         return bs;
     }
 

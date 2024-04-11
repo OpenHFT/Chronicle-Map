@@ -29,7 +29,7 @@ public class CommonMarshallableReaderWriter<V extends CommonMarshallable>
 
     @NotNull
     @Override
-    public V read(Bytes in, long size, @Nullable V using) {
+    public V read(Bytes<?> in, long size, @Nullable V using) {
         if (using == null)
             using = createInstance();
         if (using.usesSelfDescribingMessage()) {

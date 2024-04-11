@@ -52,12 +52,12 @@ public final class LongMarshaller
 
     @NotNull
     @Override
-    public Long read(Bytes in, @Nullable Long using) {
+    public Long read(Bytes<?> in, @Nullable Long using) {
         return in.readLong();
     }
 
     @Override
-    public void write(Bytes out, @NotNull Long toWrite) {
+    public void write(Bytes<?> out, @NotNull Long toWrite) {
         out.writeLong(toWrite);
     }
 

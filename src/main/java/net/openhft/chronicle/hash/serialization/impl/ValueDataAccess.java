@@ -78,7 +78,7 @@ public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T>
         nativeInstance.bytesStore(allocateBytesStoreForInstance(), 0, nativeInstance.maxSize());
     }
 
-    private BytesStore allocateBytesStoreForInstance() {
+    private BytesStore<?, ?> allocateBytesStoreForInstance() {
         long instanceSize = nativeInstance.maxSize();
         if (instanceSize > 0x7FFFFFF0) {
             return BytesStore.nativeStoreWithFixedCapacity(instanceSize);

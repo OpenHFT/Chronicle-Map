@@ -127,9 +127,10 @@ public abstract class MapQuery<K, V, R> extends HashQuery<K>
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public Data<K> getInputKeyBytesAsData(BytesStore bytesStore, long offset, long size) {
-        inputKeyBytesData.initInputKeyBytesStore(bytesStore, offset, size);
+    public Data<K> getInputKeyBytesAsData(BytesStore<?, ?> bytesStore, long offset, long size) {
+        inputKeyBytesData.initInputKeyBytesStore((BytesStore<?, Void>) bytesStore, offset, size);
         return inputKeyBytesData;
     }
 }

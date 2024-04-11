@@ -21,7 +21,7 @@ public class TypedMarshallableReaderWriter<V extends Marshallable>
 
     @NotNull
     @Override
-    public V read(Bytes in, long size, @Nullable V using) {
+    public V read(Bytes<?> in, long size, @Nullable V using) {
         BinaryWire wire = Wires.binaryWireForRead(in, in.readPosition(), size);
         return (V) wire.getValueIn().object(using, tClass());
     }

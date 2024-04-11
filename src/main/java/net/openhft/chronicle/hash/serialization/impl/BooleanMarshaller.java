@@ -50,12 +50,12 @@ public final class BooleanMarshaller
 
     @NotNull
     @Override
-    public Boolean read(Bytes in, @Nullable Boolean using) {
+    public Boolean read(Bytes<?> in, @Nullable Boolean using) {
         return in.readByte() != 0;
     }
 
     @Override
-    public void write(Bytes out, @NotNull Boolean toWrite) {
+    public void write(Bytes<?> out, @NotNull Boolean toWrite) {
         out.writeByte((byte) (toWrite ? 'Y' : 0));
     }
 

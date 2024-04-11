@@ -38,7 +38,7 @@ public final class CharSequenceArrayBytesMarshaller
     }
 
     @Override
-    public void write(Bytes out, @NotNull CharSequence[] toWrite) {
+    public void write(Bytes<?> out, @NotNull CharSequence[] toWrite) {
         // Note that the *array length*, not the *serialization size* is written in the beginning,
         // so BytesWriter + BytesReader is the most suitable pair of serialization interfaces
         // to implement for CharSequence[] type
@@ -52,7 +52,7 @@ public final class CharSequenceArrayBytesMarshaller
 
     @NotNull
     @Override
-    public CharSequence[] read(Bytes in, @Nullable CharSequence[] using) {
+    public CharSequence[] read(Bytes<?> in, @Nullable CharSequence[] using) {
         int len = in.readInt();
         if (using == null)
             using = new CharSequence[len];

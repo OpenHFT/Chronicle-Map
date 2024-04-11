@@ -19,7 +19,7 @@ public class MarshallableReaderWriter<V extends Marshallable>
 
     @NotNull
     @Override
-    public V read(Bytes in, long size, @Nullable V using) {
+    public V read(Bytes<?> in, long size, @Nullable V using) {
         if (using == null)
             using = createInstance();
 

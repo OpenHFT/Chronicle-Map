@@ -71,12 +71,12 @@ public final class StopBitSizeMarshaller
     }
 
     @Override
-    public void writeSize(Bytes out, long sizeToWrite) {
+    public void writeSize(Bytes<?> out, long sizeToWrite) {
         BytesUtil.writeStopBit(out, sizeToWrite);
     }
 
     @Override
-    public long readSize(Bytes in) {
+    public long readSize(Bytes<?> in) {
         return BytesUtil.readStopBit(in);
     }
 

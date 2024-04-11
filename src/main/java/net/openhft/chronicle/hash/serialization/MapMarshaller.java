@@ -85,7 +85,7 @@ public final class MapMarshaller<K, V> implements BytesReader<Map<K, V>>, BytesW
 
     @NotNull
     @Override
-    public Map<K, V> read(Bytes in, @Nullable Map<K, V> using) {
+    public Map<K, V> read(Bytes<?> in, @Nullable Map<K, V> using) {
         int size = in.readInt();
         if (using == null) {
             using = new HashMap<>(((int) (size / 0.75)));
@@ -109,7 +109,7 @@ public final class MapMarshaller<K, V> implements BytesReader<Map<K, V>>, BytesW
     }
 
     @Override
-    public void write(Bytes out, @NotNull Map<K, V> toWrite) {
+    public void write(Bytes<?> out, @NotNull Map<K, V> toWrite) {
         out.writeInt(toWrite.size());
         toWrite.forEach((k, v) -> {
             keyWriter.write(out, k);

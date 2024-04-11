@@ -48,7 +48,7 @@ public interface StatefulCopyable<T extends StatefulCopyable<T>> {
     static <T> T copyIfNeeded(T possiblyStatefulCopyable) {
         if (possiblyStatefulCopyable instanceof StatefulCopyable) {
             //noinspection unchecked
-            return (T) ((StatefulCopyable) possiblyStatefulCopyable).copy();
+            return (T) ((StatefulCopyable<?>) possiblyStatefulCopyable).copy();
         }
         return possiblyStatefulCopyable;
     }

@@ -93,7 +93,7 @@ public class MapChannel<VALUE, REPLY> extends SimpleCloseable implements Chronic
     }
 
     @Override
-    public <T> @NotNull T methodWriter(@NotNull Class<T> tClass, Class... additional) {
+    public <T> @NotNull T methodWriter(@NotNull Class<T> tClass, Class<?>... additional) {
         // if the class doesn't match it throws a ClassCastException'
         return (T) mapService;
     }

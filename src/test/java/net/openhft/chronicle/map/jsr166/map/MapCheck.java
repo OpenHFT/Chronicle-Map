@@ -42,7 +42,7 @@ public class MapCheck {
     static final LoopHelpers.SimpleRandom srng = new LoopHelpers.SimpleRandom();
     static final Random rng = new Random(3152688);
     static TestTimer timer = new TestTimer();
-    static Class eclass;
+    static Class<?> eclass;
     static volatile int checkSum;
     static int counter = 0;
 

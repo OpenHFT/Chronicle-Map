@@ -39,7 +39,7 @@ public class BytesAsSizedReader<T>
 
     @NotNull
     @Override
-    public T read(Bytes in, long size, @Nullable T using) {
+    public T read(Bytes<?> in, long size, @Nullable T using) {
         return reader.read(in, using);
     }
 

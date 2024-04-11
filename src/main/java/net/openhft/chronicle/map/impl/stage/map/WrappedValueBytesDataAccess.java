@@ -34,7 +34,7 @@ public abstract class WrappedValueBytesDataAccess<K, V, R> implements MapContext
     WrappedValueBytesData<V> wrappedValueBytesData;
 
     @Override
-    public Data<V> wrapValueBytesAsData(BytesStore bytesStore, long offset, long size) {
+    public Data<V> wrapValueBytesAsData(BytesStore<?, ?> bytesStore, long offset, long size) {
         Objects.requireNonNull(bytesStore);
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         WrappedValueBytesData<V> wrapped = this.wrappedValueBytesData;

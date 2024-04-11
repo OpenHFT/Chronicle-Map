@@ -35,7 +35,7 @@ public class MovingAverageCompact extends BytesInBinaryMarshallable {
     }
 
     @Override
-    public void readMarshallable(BytesIn in) throws IllegalStateException {
+    public void readMarshallable(BytesIn<?> in) throws IllegalStateException {
         movingAverage = in.readDouble();
         high = in.readDouble();
         low = in.readDouble();
@@ -43,7 +43,7 @@ public class MovingAverageCompact extends BytesInBinaryMarshallable {
     }
 
     @Override
-    public void writeMarshallable(BytesOut out) {
+    public void writeMarshallable(BytesOut<?> out) {
         out.writeDouble(movingAverage);
         out.writeDouble(high);
         out.writeDouble(low);

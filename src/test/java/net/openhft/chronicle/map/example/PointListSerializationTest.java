@@ -61,7 +61,7 @@ public class PointListSerializationTest {
         }
 
         @Override
-        public void write(Bytes out, @NotNull A toWrite) {
+        public void write(Bytes<?> out, @NotNull A toWrite) {
             out.writeUtf8(toWrite.str_);
             if (toWrite.list_ != null) {
                 int size = toWrite.list_.size();
@@ -76,7 +76,7 @@ public class PointListSerializationTest {
 
         @NotNull
         @Override
-        public A read(Bytes in, A using) {
+        public A read(Bytes<?> in, A using) {
             if (using == null)
                 using = new A();
             using.str_ = in.readUtf8();
@@ -87,7 +87,7 @@ public class PointListSerializationTest {
                 } else {
                     using.list_.clear();
                     if (using.list_ instanceof ArrayList)
-                        ((ArrayList) using.list_).ensureCapacity(size);
+                        ((ArrayList<?>) using.list_).ensureCapacity(size);
                 }
                 for (int i = 0; i < size; i++) {
                     B b = new B();
@@ -117,12 +117,12 @@ public class PointListSerializationTest {
         String str_;
 
         @Override
-        public void readMarshallable(BytesIn in) {
+        public void readMarshallable(BytesIn<?> in) {
             str_ = in.readUtf8();
         }
 
         @Override
-        public void writeMarshallable(BytesOut out) {
+        public void writeMarshallable(BytesOut<?> out) {
             out.writeUtf8(str_);
         }
     }
