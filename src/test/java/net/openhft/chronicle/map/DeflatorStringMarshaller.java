@@ -57,7 +57,7 @@ public final class DeflatorStringMarshaller implements BytesReader<CharSequence>
     }
 
     @Override
-    public void write(Bytes out, @NotNull CharSequence s) {
+    public void write(Bytes<?> out, @NotNull CharSequence s) {
         if (s == null) {
             out.writeStopBit(NULL_LENGTH);
             return;
@@ -86,7 +86,7 @@ public final class DeflatorStringMarshaller implements BytesReader<CharSequence>
 
     @NotNull
     @Override
-    public CharSequence read(Bytes bytes, @Nullable CharSequence ignored) {
+    public CharSequence read(Bytes<?> bytes, @Nullable CharSequence ignored) {
         long size = bytes.readStopBit();
         if (size == NULL_LENGTH)
             return null;

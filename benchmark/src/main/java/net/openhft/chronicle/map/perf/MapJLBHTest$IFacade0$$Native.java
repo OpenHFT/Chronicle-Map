@@ -8,7 +8,7 @@ public class MapJLBHTest$IFacade0$$Native implements MapJLBHTest.IFacade0, Copya
 
     private final MapJLBHTest$IFacadeSon$$Native sonOtherCachedValue = new MapJLBHTest$IFacadeSon$$Native();
 
-    private BytesStore bs;
+    private BytesStore<?, ?> bs;
 
     private long offset;
 
@@ -613,7 +613,7 @@ public class MapJLBHTest$IFacade0$$Native implements MapJLBHTest.IFacade0, Copya
     }
 
     @Override
-    public void bytesStore(BytesStore bytesStore, long offset, long length) {
+    public void bytesStore(BytesStore<?, ?> bytesStore, long offset, long length) {
         if (length != maxSize()) {
             throw new IllegalArgumentException("Constant size is 500, given length is " + length);
         }
@@ -624,7 +624,7 @@ public class MapJLBHTest$IFacade0$$Native implements MapJLBHTest.IFacade0, Copya
     }
 
     @Override
-    public BytesStore bytesStore() {
+    public BytesStore<?, ?> bytesStore() {
         return bs;
     }
 

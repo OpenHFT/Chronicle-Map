@@ -134,14 +134,14 @@ public class Issue58 {
         }
 
         @Override
-        public void write(Bytes bytes, @NotNull UUID uuid) {
+        public void write(Bytes<?> bytes, @NotNull UUID uuid) {
             bytes.writeLong(uuid.getMostSignificantBits());
             bytes.writeLong(uuid.getLeastSignificantBits());
         }
 
         @NotNull
         @Override
-        public UUID read(Bytes bytes, @Nullable UUID using) {
+        public UUID read(Bytes<?> bytes, @Nullable UUID using) {
             return new UUID(bytes.readLong(), bytes.readLong());
         }
 

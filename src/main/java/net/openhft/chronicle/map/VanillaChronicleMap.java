@@ -570,7 +570,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @NotNull
     @Override
-    public ExternalMapQueryContext<K, V, ?> queryContext(@NotNull final BytesStore keyBytes,
+    public ExternalMapQueryContext<K, V, ?> queryContext(@NotNull final BytesStore<?, ?> keyBytes,
                                                          final long offset,
                                                          final long size) {
         final QueryContextInterface<K, V, R> c = mapContext();

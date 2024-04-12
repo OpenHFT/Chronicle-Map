@@ -52,12 +52,12 @@ public final class IntegerMarshaller
 
     @NotNull
     @Override
-    public Integer read(Bytes in, @Nullable Integer using) {
+    public Integer read(Bytes<?> in, @Nullable Integer using) {
         return in.readInt();
     }
 
     @Override
-    public void write(Bytes out, @NotNull Integer toWrite) {
+    public void write(Bytes<?> out, @NotNull Integer toWrite) {
         out.writeInt(toWrite);
     }
 

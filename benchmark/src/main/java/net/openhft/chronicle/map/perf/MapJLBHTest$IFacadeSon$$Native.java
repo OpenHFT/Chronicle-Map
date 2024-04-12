@@ -6,7 +6,7 @@ import net.openhft.chronicle.values.Copyable;
 public class MapJLBHTest$IFacadeSon$$Native implements MapJLBHTest.IFacadeSon, Copyable<MapJLBHTest.IFacadeSon>, BytesMarshallable, Byteable {
     private final StringBuilder _value23Builder = new StringBuilder(10);
 
-    private BytesStore bs;
+    private BytesStore<?, ?> bs;
 
     private long offset;
 
@@ -826,7 +826,7 @@ public class MapJLBHTest$IFacadeSon$$Native implements MapJLBHTest.IFacadeSon, C
     }
 
     @Override
-    public void bytesStore(BytesStore bytesStore, long offset, long length) {
+    public void bytesStore(BytesStore<?, ?> bytesStore, long offset, long length) {
         if (length != maxSize()) {
             throw new IllegalArgumentException("Constant size is 141, given length is " + length);
         }
@@ -837,7 +837,7 @@ public class MapJLBHTest$IFacadeSon$$Native implements MapJLBHTest.IFacadeSon, C
     }
 
     @Override
-    public BytesStore bytesStore() {
+    public BytesStore<?, ?> bytesStore() {
         return bs;
     }
 

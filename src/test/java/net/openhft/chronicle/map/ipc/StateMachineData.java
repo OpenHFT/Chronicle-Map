@@ -26,7 +26,7 @@ import java.nio.channels.FileLock;
  *
  */
 public class StateMachineData implements Byteable {
-    private BytesStore bs;
+    private BytesStore<?, ?> bs;
     private long offset;
 
     /**
@@ -142,7 +142,7 @@ public class StateMachineData implements Byteable {
     // *************************************************************************
 
     @Override
-    public void bytesStore(BytesStore bytes, long offset, long size) {
+    public void bytesStore(BytesStore<?, ?> bytes, long offset, long size) {
         if (size != 16)
             throw new IllegalArgumentException();
         this.bs = bytes;
@@ -150,7 +150,7 @@ public class StateMachineData implements Byteable {
     }
 
     @Override
-    public BytesStore bytesStore() {
+    public BytesStore<?, ?> bytesStore() {
         return this.bs;
     }
 

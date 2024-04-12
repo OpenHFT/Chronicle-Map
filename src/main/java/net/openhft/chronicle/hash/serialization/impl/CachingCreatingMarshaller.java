@@ -30,7 +30,7 @@ public abstract class CachingCreatingMarshaller<V>
     protected abstract void writeToWire(Wire wire, @NotNull V toWrite);
 
     @Override
-    public void write(Bytes out, long size, @NotNull V toWrite) {
+    public void write(Bytes<?> out, long size, @NotNull V toWrite) {
         if (LAST_TL.get() == toWrite) {
             Wire wire = WIRE_TL.get();
             if (wire.bytes().readRemaining() == size) {

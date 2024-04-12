@@ -59,7 +59,7 @@ public final class ConstantSizeMarshaller implements SizeMarshaller {
     }
 
     @Override
-    public void writeSize(Bytes out, long sizeToWrite) {
+    public void writeSize(Bytes<?> out, long sizeToWrite) {
         if (sizeToWrite != constantSize) {
             throw new IllegalArgumentException(
                     "sizeToWrite: " + sizeToWrite + ", constant size should be: " + constantSize);
@@ -68,7 +68,7 @@ public final class ConstantSizeMarshaller implements SizeMarshaller {
     }
 
     @Override
-    public long readSize(Bytes in) {
+    public long readSize(Bytes<?> in) {
         return constantSize;
     }
 

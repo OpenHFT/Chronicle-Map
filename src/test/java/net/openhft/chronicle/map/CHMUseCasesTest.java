@@ -100,7 +100,7 @@ interface IData extends BytesMarshallable {
         }
 
         @Override
-        public void readMarshallable(@NotNull BytesIn in) throws IllegalStateException {
+        public void readMarshallable(@NotNull BytesIn<?> in) throws IllegalStateException {
             long magic = in.readLong();
             if (magic != MAGIC)
                 throw new AssertionError("Start " + Long.toHexString(magic));
@@ -112,7 +112,7 @@ interface IData extends BytesMarshallable {
         }
 
         @Override
-        public void writeMarshallable(@NotNull BytesOut out) {
+        public void writeMarshallable(@NotNull BytesOut<?> out) {
             out.writeLong(MAGIC);
             out.writeUtf8(text);
             out.writeInt(number);
@@ -403,7 +403,7 @@ public class CHMUseCasesTest {
     @Test
     public void bondExample() throws IOException {
 
-        ChronicleMapBuilder builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
+        ChronicleMapBuilder<String, BondVOInterface> builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
                 .entries(1)
                 .averageKeySize(10);
 
@@ -887,7 +887,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<Integer, Integer> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             Integer key1;
             Integer key2;
             Integer value1;
@@ -986,7 +986,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<Double, Double> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             map.put(1.0, 11.0);
             assertEquals((Double) 11.0, map.get(1.0));
 
@@ -1276,7 +1276,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, IntValue> map = newInstance(builder)) {
             // this may change due to alignment
 //            assertEquals(8, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             IntValue value1 = Values.newHeapInstance(IntValue.class);
@@ -1379,7 +1379,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             UnsignedIntValue key1 = Values.newHeapInstance(UnsignedIntValue.class);
             UnsignedIntValue value1 = Values.newHeapInstance(UnsignedIntValue.class);
 
@@ -1604,7 +1604,7 @@ public class CHMUseCasesTest {
 
             // this may change due to alignment
             // assertEquals(8, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             UnsignedShortValue value1 = Values.newHeapInstance(UnsignedShortValue.class);
@@ -1706,7 +1706,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, CharValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             CharValue value1 = Values.newHeapInstance(CharValue.class);
@@ -1808,7 +1808,7 @@ public class CHMUseCasesTest {
             // TODO should be 5, but shorter fields based on range doesn't seem to be implemented
             // on data value generation level yet
             //assertEquals(8, entrySize(map)); this may change due to alignmented
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             IntValue key2 = Values.newHeapInstance(IntValue.class);
@@ -1910,7 +1910,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, BooleanValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             IntValue key2 = Values.newHeapInstance(IntValue.class);
@@ -2012,7 +2012,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<FloatValue, FloatValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             FloatValue key1 = Values.newHeapInstance(FloatValue.class);
             FloatValue key2 = Values.newHeapInstance(FloatValue.class);
@@ -2117,7 +2117,7 @@ public class CHMUseCasesTest {
             // this may change due to alignment
             //assertEquals(16, entrySize(map));
 
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             DoubleValue key1 = Values.newHeapInstance(DoubleValue.class);
             DoubleValue key2 = Values.newHeapInstance(DoubleValue.class);
@@ -2223,7 +2223,7 @@ public class CHMUseCasesTest {
 
             // this may change due to alignment
             // assertEquals(16, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             LongValue key1 = Values.newHeapInstance(LongValue.class);
             LongValue key2 = Values.newHeapInstance(LongValue.class);

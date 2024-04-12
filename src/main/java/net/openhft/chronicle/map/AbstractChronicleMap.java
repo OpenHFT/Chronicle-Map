@@ -182,7 +182,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
         if (!(o instanceof Map))
             return false;
         Map<?, ?> m = (Map<?, ?>) o;
-        if ((m instanceof ChronicleMap ? ((ChronicleMap) m).longSize() : m.size()) != longSize())
+        if ((m instanceof ChronicleMap ? ((ChronicleMap<?, ?>) m).longSize() : m.size()) != longSize())
             return false;
 
         try {

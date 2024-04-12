@@ -47,7 +47,7 @@ public final class PointListSizedMarshaller
     }
 
     @Override
-    public void write(Bytes out, long size, @NotNull List<Point> toWrite) {
+    public void write(Bytes<?> out, long size, @NotNull List<Point> toWrite) {
         toWrite.forEach(point -> {
             out.writeDouble(point.x);
             out.writeDouble(point.y);

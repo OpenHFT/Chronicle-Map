@@ -50,5 +50,5 @@ public interface BytesWriter<T> extends Marshallable {
      * @param out     the {@code Bytes} to write the given object to
      * @param toWrite the object to serialize
      */
-    void write(Bytes out, @NotNull T toWrite);
+    void write(Bytes<?> out, @NotNull T toWrite);
 }

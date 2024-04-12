@@ -107,7 +107,7 @@ public final class ListMarshaller<T>
 
     @NotNull
     @Override
-    public List<T> read(Bytes in, @Nullable List<T> using) {
+    public List<T> read(Bytes<?> in, @Nullable List<T> using) {
         int size = in.readInt();
         if (using == null) {
             using = new ArrayList<>(size);
@@ -128,7 +128,7 @@ public final class ListMarshaller<T>
     }
 
     @Override
-    public void write(Bytes out, @NotNull List<T> toWrite) {
+    public void write(Bytes<?> out, @NotNull List<T> toWrite) {
         out.writeInt(toWrite.size());
         // indexed loop to avoid garbage creation
         //noinspection ForLoopReplaceableByForEach

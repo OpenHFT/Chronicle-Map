@@ -455,14 +455,14 @@ public class ProcessInstanceLimiter implements Runnable {
                         VanillaReadWriteWithWaitsLockingStrategy.instance(),
                         checkedBytesStoreAccess(),
                         ((Byteable) data).bytesStore(),
-                        ((Byteable) data).offset());
+                        ((Byteable<?, ?>) data).offset());
     }
 
     private void unlock(Data data) {
         try {
             VanillaReadWriteWithWaitsLockingStrategy.instance()
                     .writeUnlock(checkedBytesStoreAccess(),
-                            ((Byteable) data).bytesStore(), ((Byteable) data).offset());
+                            ((Byteable) data).bytesStore(), ((Byteable<?, ?>) data).offset());
         } catch (IllegalMonitorStateException e) {
             //odd, but we'll be unlocked either way
             System.out.println("Unexpected state: " + e);

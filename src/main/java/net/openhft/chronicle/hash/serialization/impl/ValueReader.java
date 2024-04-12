@@ -77,7 +77,7 @@ public class ValueReader<T>
 
     @NotNull
     @Override
-    public T read(@NotNull Bytes in, long size, @Nullable T using) {
+    public T read(@NotNull Bytes<?> in, long size, @Nullable T using) {
         if (size != nativeReference.maxSize())
             throw new IllegalArgumentException();
         return read(in, using);
@@ -85,7 +85,7 @@ public class ValueReader<T>
 
     @NotNull
     @Override
-    public T read(Bytes in, @Nullable T using) {
+    public T read(Bytes<?> in, @Nullable T using) {
         if (using != null && using.getClass() == nativeClass) {
             ((Byteable) using).bytesStore(in.bytesStore(), in.readPosition(),
                     nativeReference.maxSize());

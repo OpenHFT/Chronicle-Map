@@ -51,7 +51,7 @@ public class StringBytesReader implements BytesReader<String>, StatefulCopyable<
 
     @NotNull
     @Override
-    public String read(Bytes in, @Nullable String using) {
+    public String read(Bytes<?> in, @Nullable String using) {
         if (in.readUtf8(sb)) {
             return sb.toString();
         } else {

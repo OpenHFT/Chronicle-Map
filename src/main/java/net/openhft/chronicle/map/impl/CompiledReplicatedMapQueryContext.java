@@ -751,13 +751,13 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         private long inputKeyBytesSize;
 
-        private BytesStore inputKeyBytesStore = null;
+        private BytesStore<?, ?> inputKeyBytesStore = null;
 
         public boolean inputKeyBytesStoreInit() {
             return (this.inputKeyBytesStore) != null;
         }
 
-        public void initInputKeyBytesStore(BytesStore bytesStore, long offset, long size) {
+        public void initInputKeyBytesStore(BytesStore<?, ?> bytesStore, long offset, long size) {
             boolean wasInputKeyBytesStoreInit = this.inputKeyBytesStoreInit();
             inputKeyBytesStore = bytesStore;
             inputKeyBytesOffset = offset;
@@ -777,7 +777,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             return this.inputKeyBytesOffset;
         }
 
-        public BytesStore inputKeyBytesStore() {
+        public BytesStore<?, ?> inputKeyBytesStore() {
             assert this.inputKeyBytesStoreInit() : "InputKeyBytesStore should be init";
             return this.inputKeyBytesStore;
         }
@@ -1277,13 +1277,13 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         private long wrappedValueBytesSize;
 
-        private BytesStore wrappedValueBytesStore;
+        private BytesStore<?, ?> wrappedValueBytesStore;
 
         boolean wrappedValueBytesStoreInit() {
             return (wrappedValueBytesStore) != null;
         }
 
-        public void initWrappedValueBytesStore(BytesStore bytesStore, long offset, long size) {
+        public void initWrappedValueBytesStore(BytesStore<?, ?> bytesStore, long offset, long size) {
             boolean wasWrappedValueBytesStoreInit = this.wrappedValueBytesStoreInit();
             wrappedValueBytesStore = bytesStore;
             wrappedValueBytesOffset = offset;
@@ -1303,7 +1303,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             return this.wrappedValueBytesOffset;
         }
 
-        public BytesStore wrappedValueBytesStore() {
+        public BytesStore<?, ?> wrappedValueBytesStore() {
             assert this.wrappedValueBytesStoreInit() : "WrappedValueBytesStore should be init";
             return this.wrappedValueBytesStore;
         }
@@ -2610,7 +2610,7 @@ PRESENT, ABSENT;    }
     }
 
     @Override
-    public Data<K> getInputKeyBytesAsData(BytesStore bytesStore, long offset, long size) {
+    public Data<K> getInputKeyBytesAsData(BytesStore<?, ?> bytesStore, long offset, long size) {
         this.inputKeyBytesData.initInputKeyBytesStore(bytesStore, offset, size);
         return this.inputKeyBytesData;
     }
@@ -3772,7 +3772,7 @@ PRESENT, ABSENT;    }
         long firstAttemptedTierBaseAddr = this.tierBaseAddr();
         boolean cleanedFirstAttemptedTier = forcedOldDeletedEntriesCleanup(prevPos);
         if (cleanedFirstAttemptedTier) {
-            ((CompiledReplicatedMapQueryContext)((Object)(this))).closeSearchKey();
+            ((CompiledReplicatedMapQueryContext<?, ?, ?>)((Object)(this))).closeSearchKey();
         } 
         this.goToFirstTier();
         while (true) {
@@ -4506,7 +4506,7 @@ PRESENT, ABSENT;    }
     }
 
     @Override
-    public Data<V> wrapValueBytesAsData(BytesStore bytesStore, long offset, long size) {
+    public Data<V> wrapValueBytesAsData(BytesStore<?, ?> bytesStore, long offset, long size) {
         Objects.requireNonNull(bytesStore);
         this.checkOnEachPublicOperation();
         WrappedValueBytesData wrapped = this.wrappedValueBytesData;

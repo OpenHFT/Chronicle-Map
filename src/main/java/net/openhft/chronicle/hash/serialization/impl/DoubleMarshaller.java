@@ -52,12 +52,12 @@ public final class DoubleMarshaller
 
     @NotNull
     @Override
-    public Double read(Bytes in, @Nullable Double using) {
+    public Double read(Bytes<?> in, @Nullable Double using) {
         return in.readDouble();
     }
 
     @Override
-    public void write(Bytes out, @NotNull Double toWrite) {
+    public void write(Bytes<?> out, @NotNull Double toWrite) {
         out.writeDouble(toWrite);
     }
 

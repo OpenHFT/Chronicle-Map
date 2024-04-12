@@ -38,7 +38,7 @@ abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extend
     /**
      * Cache field
      */
-    private transient Bytes bytes;
+    private transient Bytes<?> bytes;
 
     AbstractCharSequenceUtf8DataAccess(long bytesCapacity) {
         initTransients(bytesCapacity);

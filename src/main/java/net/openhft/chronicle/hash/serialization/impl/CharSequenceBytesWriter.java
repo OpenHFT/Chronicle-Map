@@ -40,7 +40,7 @@ public final class CharSequenceBytesWriter
     }
 
     @Override
-    public void write(Bytes out, @NotNull CharSequence toWrite) {
+    public void write(Bytes<?> out, @NotNull CharSequence toWrite) {
         requireNonNull(toWrite);
         out.writeUtf8(toWrite);
     }

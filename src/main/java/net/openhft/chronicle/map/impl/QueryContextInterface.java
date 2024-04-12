@@ -28,7 +28,7 @@ public interface QueryContextInterface<K, V, R> extends ExternalMapQueryContext<
 
     void initInputKey(Data<K> inputKey);
 
-    Data<K> getInputKeyBytesAsData(BytesStore bytesStore, long offset, long size);
+    Data<K> getInputKeyBytesAsData(BytesStore<?, ?> bytesStore, long offset, long size);
 
     DataAccess<K> inputKeyDataAccess();
 

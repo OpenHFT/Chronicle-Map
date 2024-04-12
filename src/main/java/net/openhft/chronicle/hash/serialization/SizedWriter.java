@@ -70,5 +70,5 @@ public interface SizedWriter<T> extends Marshallable {
      * @param toWrite the object to serialize
      * @see SizedReader#read(Bytes, long, Object)
      */
-    void write(Bytes out, long size, @NotNull T toWrite);
+    void write(Bytes<?> out, long size, @NotNull T toWrite);
 }

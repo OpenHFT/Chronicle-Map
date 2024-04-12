@@ -106,7 +106,7 @@ public class ChronicleMapImportExportTest {
         ChronicleMapBuilder<String, Map> builder = ChronicleMapBuilder
                 .of(String.class, Map.class)
                 .averageKeySize("hello".length()).averageValueSize(100).entries(1000);
-        try (ChronicleMap expected = builder.create()) {
+        try (ChronicleMap<String, Map> expected = builder.create()) {
             HashMap<String, Map> data = new HashMap<>();
             HashMap<String, String> data2 = new HashMap<>();
             data2.put("nested", "map");

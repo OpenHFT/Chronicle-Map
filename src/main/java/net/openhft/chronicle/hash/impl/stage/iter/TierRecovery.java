@@ -194,7 +194,7 @@ public class TierRecovery {
             long entry = hashLookup.readEntry(currentTierBaseAddr, hlPos);
             if (!hashLookup.empty(entry)) {
                 e.readExistingEntry(hashLookup.value(entry));
-                Data key = e.key();
+                Data<?> key = e.key();
                 try (ExternalMapQueryContext<?, ?, ?> c = m.queryContext(key)) {
                     MapEntry<?, ?> entry2 = c.entry();
                     Data<?> key2 = ((MapEntry) c).key();

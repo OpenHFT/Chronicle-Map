@@ -7,7 +7,7 @@ import net.openhft.chronicle.hash.serialization.SizedWriter;
 
 public class BytesSizedMarshaller implements SizedReader<Bytes<?>>, SizedWriter<Bytes<?>> {
     @Override
-    public Bytes<?> read(Bytes in, long size, Bytes<?> using) {
+    public Bytes<?> read(Bytes<?> in, long size, Bytes<?> using) {
         final int size0 = Maths.toInt32(size);
         if (using == null)
             using = Bytes.allocateElasticOnHeap(size0);
@@ -22,7 +22,7 @@ public class BytesSizedMarshaller implements SizedReader<Bytes<?>>, SizedWriter<
     }
 
     @Override
-    public void write(Bytes out, long size, Bytes<?> toWrite) {
+    public void write(Bytes<?> out, long size, Bytes<?> toWrite) {
         out.write(toWrite, toWrite.readPosition(), size);
     }
 }

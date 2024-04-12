@@ -35,13 +35,13 @@ public class ExternalizableReader<T extends Externalizable> extends InstanceCrea
 
     @NotNull
     @Override
-    public T read(@NotNull Bytes in, long size, @Nullable T using) {
+    public T read(@NotNull Bytes<?> in, long size, @Nullable T using) {
         return read(in, using);
     }
 
     @NotNull
     @Override
-    public T read(Bytes in, @Nullable T using) {
+    public T read(Bytes<?> in, @Nullable T using) {
         if (using == null)
             using = createInstance();
         try {

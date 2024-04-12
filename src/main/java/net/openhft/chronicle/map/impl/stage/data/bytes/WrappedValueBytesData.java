@@ -30,14 +30,14 @@ import net.openhft.sg.Staged;
 public class WrappedValueBytesData<V> extends AbstractData<V> {
 
     @Stage("WrappedValueBytes")
-    private final VanillaBytes wrappedValueBytes = VanillaBytes.vanillaBytes();
+    private final VanillaBytes<Void> wrappedValueBytes = VanillaBytes.vanillaBytes();
     @StageRef
     ValueBytesInterop<V> vi;
     @StageRef
     CheckOnEachPublicOperation checkOnEachPublicOperation;
     private WrappedValueBytesData<V> next;
     @Stage("WrappedValueBytesStore")
-    private BytesStore wrappedValueBytesStore;
+    private BytesStore<?, ?> wrappedValueBytesStore;
     @Stage("WrappedValueBytesStore")
     private long wrappedValueBytesOffset;
     @Stage("WrappedValueBytesStore")
@@ -70,7 +70,7 @@ public class WrappedValueBytesData<V> extends AbstractData<V> {
         return wrappedValueBytesStore != null;
     }
 
-    public void initWrappedValueBytesStore(BytesStore bytesStore, long offset, long size) {
+    public void initWrappedValueBytesStore(BytesStore<?, ?> bytesStore, long offset, long size) {
         wrappedValueBytesStore = bytesStore;
         wrappedValueBytesOffset = offset;
         wrappedValueBytesSize = size;

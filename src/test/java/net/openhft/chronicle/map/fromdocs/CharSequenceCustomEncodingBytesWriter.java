@@ -67,7 +67,7 @@ public final class CharSequenceCustomEncodingBytesWriter
     }
 
     @Override
-    public void write(Bytes out, @NotNull CharSequence cs) {
+    public void write(Bytes<?> out, @NotNull CharSequence cs) {
         // Write the actual cs length for accurate StringBuilder.ensureCapacity() while reading
         out.writeStopBit(cs.length());
         long encodedSizePos = out.writePosition();
@@ -122,7 +122,7 @@ public final class CharSequenceCustomEncodingBytesWriter
         out.writeInt(encodedSizePos, (int) (out.writePosition() - encodedSizePos - 4));
     }
 
-    private void writeOutputBuffer(Bytes out) {
+    private void writeOutputBuffer(Bytes<?> out) {
         int remaining = outputBuffer.remaining();
         out.write(out.writePosition(), outputBuffer, 0, remaining);
         out.writeSkip(remaining);

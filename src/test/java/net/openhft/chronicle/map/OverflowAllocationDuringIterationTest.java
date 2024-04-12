@@ -53,7 +53,7 @@ public class OverflowAllocationDuringIterationTest {
                         }
                     }
                 } finally {
-                    ((VanillaChronicleMap) map).verifyTierCountersAreaData();
+                    ((VanillaChronicleMap<?, ?, ?>) map).verifyTierCountersAreaData();
                 }
             }
         }

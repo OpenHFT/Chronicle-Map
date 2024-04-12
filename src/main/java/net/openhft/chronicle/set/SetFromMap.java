@@ -196,7 +196,7 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
 
     @NotNull
     @Override
-    public ExternalSetQueryContext<E, ?> queryContext(BytesStore keyBytes, long offset, long size) {
+    public ExternalSetQueryContext<E, ?> queryContext(BytesStore<?, ?> keyBytes, long offset, long size) {
         //noinspection unchecked
         return (ExternalSetQueryContext<E, ?>) m.queryContext(keyBytes, offset, size);
     }

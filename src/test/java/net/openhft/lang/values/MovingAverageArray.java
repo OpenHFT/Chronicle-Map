@@ -35,7 +35,7 @@ public class MovingAverageArray extends BytesInBinaryMarshallable implements Dyn
     private final List<MovingAverageCompact> values = new ArrayList<>();
 
     @Override
-    public void readMarshallable(BytesIn bytes) throws IORuntimeException {
+    public void readMarshallable(BytesIn<?> bytes) throws IORuntimeException {
         int len = Maths.toUInt31(bytes.readStopBit());
         values.clear();
         for (int i = 0; i < len; i++) {
@@ -49,7 +49,7 @@ public class MovingAverageArray extends BytesInBinaryMarshallable implements Dyn
     }
 
     @Override
-    public void writeMarshallable(BytesOut bytes) {
+    public void writeMarshallable(BytesOut<?> bytes) {
         bytes.writeStopBit(values.size());
         for (int i = 0; i < values.size(); i++)
             values.get(i).writeMarshallable(bytes);

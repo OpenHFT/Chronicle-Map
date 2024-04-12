@@ -121,7 +121,7 @@ public final class SetMarshaller<T>
 
     @NotNull
     @Override
-    public Set<T> read(Bytes in, @Nullable Set<T> using) {
+    public Set<T> read(Bytes<?> in, @Nullable Set<T> using) {
         int size = in.readInt();
         if (using == null) {
             using = new HashSet<>((int) (size / 0.75));
@@ -140,7 +140,7 @@ public final class SetMarshaller<T>
     }
 
     @Override
-    public void write(Bytes out, @NotNull Set<T> toWrite) {
+    public void write(Bytes<?> out, @NotNull Set<T> toWrite) {
         out.writeInt(toWrite.size());
         toWrite.forEach(e -> elementWriter.write(out, e));
     }
