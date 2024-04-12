@@ -44,8 +44,8 @@ import java.util.concurrent.locks.Lock;
  * <p>
  * {@code InterProcessLock} supports interruption of lock acquisition (in {@link
  * #lockInterruptibly()} and {@link #tryLock(long, TimeUnit)} methods).
+ * Note: The Inter-process lock is unfair.
  *
- * @implNote Inter-process lock is unfair.
  * @see InterProcessReadWriteUpdateLock
  */
 public interface InterProcessLock extends Lock {
@@ -116,11 +116,8 @@ public interface InterProcessLock extends Lock {
      * with the value {@code true}.
      * If the lock is not available then this method will return
      * immediately with the value {@code false}.
-     *
-     * @return {@code true} if the lock was acquired and {@code false} otherwise
-     * @throws IllegalMonitorStateException if this method call observes illegal lock state, or some
-     *                                      lock limitations reached (e. g. maximum read lock holders)
-     * @apiNote Example usage: <pre>{@code
+     * <p>
+     * Example usage: <pre>{@code
      * try (ExternalMapQueryContext<K, V, ?> q = map.queryContext(key)) {
      *     if (q.updateLock().tryLock()) {
      *         // highly-probable branch
@@ -143,6 +140,10 @@ public interface InterProcessLock extends Lock {
      *         }
      *     }
      * }}</pre>
+     *
+     * @return {@code true} if the lock was acquired and {@code false} otherwise
+     * @throws IllegalMonitorStateException if this method call observes illegal lock state, or some
+     *                                      lock limitations reached (e. g. maximum read lock holders)
      */
     @Override
     boolean tryLock();

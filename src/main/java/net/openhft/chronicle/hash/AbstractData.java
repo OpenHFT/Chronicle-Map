@@ -32,9 +32,7 @@ public abstract class AbstractData<T> implements Data<T> {
 
     /**
      * Computes value's hash code by applying a hash function to {@code Data}'s <i>bytes</i>
-     * representation.
-     *
-     * @implNote delegates to {@link #dataHashCode()}.
+     * representation. Delegates to {@link #dataHashCode()}.
      */
     @Override
     public int hashCode() {
@@ -43,8 +41,7 @@ public abstract class AbstractData<T> implements Data<T> {
 
     /**
      * Compares {@code Data}s' <i>bytes</i> representations.
-     *
-     * @implNote delegates to {@link #dataEquals(Object)}.
+     * Delegates to {@link #dataEquals(Object)}.
      */
     @Override
     public boolean equals(Object obj) {
@@ -55,8 +52,7 @@ public abstract class AbstractData<T> implements Data<T> {
      * Delegates to {@code Data}'s <i>object</i> {@code toString()}. If deserialization fails with
      * exception (e. g. if data bytes are corrupted, and represent not a valid serialized form of
      * an object), traces the data's bytes and the exception.
-     *
-     * @implNote delegates to {@link #dataToString()}.
+     * Delegates to {@link #dataToString()}.
      */
     @Override
     public String toString() {

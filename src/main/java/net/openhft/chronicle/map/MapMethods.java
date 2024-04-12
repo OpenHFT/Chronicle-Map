@@ -35,8 +35,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#containsKey(Object)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * return q.entry() != null;
      * }</pre>
      */
@@ -47,8 +46,7 @@ public interface MapMethods<K, V, R> {
     /**
      * Backing {@link ChronicleMap#get}, {@link ChronicleMap#getUsing} and
      * {@link ChronicleMap#getOrDefault} methods.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * MapEntry<K, V> entry = q.entry();
      * if (entry != null)
      *     returnValue.returnValue(entry.value());
@@ -60,8 +58,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#put(Object, Object)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * // We cannot read the previous value under read lock, because then we will need
      * // to release the read lock -> acquire write lock, the value might be updated in
      * // between, that will break ConcurrentMap.put() atomicity guarantee. So, we acquire
@@ -92,8 +89,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#putIfAbsent(Object, Object)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * if (q.readLock().tryLock()) {
      *     MapEntry<K, V> entry = q.entry();
      *     if (entry != null) {
@@ -123,8 +119,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#acquireUsing(Object, Object)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * if (q.readLock().tryLock()) {
      *     MapEntry<K, V> entry = q.entry();
      *     if (entry != null) {
@@ -162,8 +157,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#computeIfAbsent(Object, Function)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * if (q.readLock().tryLock()) {
      *     MapEntry<K, V> entry = q.entry();
      *     if (entry != null) {
@@ -201,8 +195,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#remove(Object)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * // We cannot read the previous value under read lock, because then we will need
      * // to release the read lock -> acquire write lock, the value might be updated in
      * // between, that will break ConcurrentMap.remove() atomicity guarantee. So, we acquire
@@ -229,9 +222,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#remove(Object, Object)} method.
-     *
-     * @return if the entry was removed
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * // remove(key, value) should find the entry & remove most of the time,
      * // so don't try to check key presence and value equivalence under read lock first,
      * // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -243,6 +234,8 @@ public interface MapMethods<K, V, R> {
      * } else {
      *     return false;
      * }}</pre>
+     *
+     * @return if the entry was removed
      */
     default boolean remove(MapQueryContext<K, V, R> q, Data<V> value) {
         // remove(key, value) should find the entry & remove most of the time,
@@ -260,8 +253,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#replace(Object, Object)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * // replace(key, value) should find the key & put the value most of the time,
      * // so don't try to check key presence under read lock first,
      * // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -287,9 +279,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#replace(Object, Object, Object)} method.
-     *
-     * @return if the entry was replaced
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * // replace(key, old, new) should find the entry & put new value most of the time,
      * // so don't try to check key presence and value equivalence under read lock first,
      * // as in putIfAbsent()/acquireUsing(), start with update lock:
@@ -301,6 +291,8 @@ public interface MapMethods<K, V, R> {
      * } else {
      *     return false;
      * }}</pre>
+     *
+     * @return if the entry was replaced
      */
     default boolean replace(MapQueryContext<K, V, R> q,
                             Data<V> oldValue, Data<V> newValue) {
@@ -319,8 +311,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#compute(Object, BiFunction)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * q.updateLock().lock();
      * MapEntry<K, V> entry = q.entry();
      * V oldValue = entry != null ? entry.value().get() : null;
@@ -396,8 +387,7 @@ public interface MapMethods<K, V, R> {
 
     /**
      * Backing {@link ChronicleMap#merge(Object, Object, BiFunction)} method.
-     *
-     * @implNote the default implementation is equivalent to <pre>{@code
+     * Note: the default implementation is equivalent to <pre>{@code
      * q.updateLock().lock();
      * Data<V, ?> newValueData;
      * MapEntry<K, V> entry = q.entry();

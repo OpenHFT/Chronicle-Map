@@ -104,6 +104,8 @@ public interface MapEntryOperations<K, V, R> {
 
     /**
      * Removes the given entry from the map.
+     * Note: default implementation calls {@link MapEntry#doRemove()} on the given entry
+     * and returns {@code null}.
      *
      * @param entry the entry to remove
      * @return result of operation, understandable by higher-level SPIs, e. g. custom
@@ -111,8 +113,6 @@ public interface MapEntryOperations<K, V, R> {
      * @throws IllegalStateException if some locking/state conditions required to perform remove
      *                               operation are not met
      * @throws RuntimeException      if removal was unconditionally unsuccessful due to any reason
-     * @implNote default implementation calls {@link MapEntry#doRemove()} on the given entry
-     * and returns {@code null}.
      */
     default R remove(@NotNull MapEntry<K, V> entry) {
         entry.doRemove();
@@ -121,6 +121,8 @@ public interface MapEntryOperations<K, V, R> {
 
     /**
      * Replaces the given entry's value with the new one.
+     * Note: default implementation calls {@link MapEntry#doReplaceValue(Data)
+     * entry.doReplaceValue(newValue)} and returns {@code null}.
      *
      * @param entry the entry to replace the value in
      * @return result of operation, understandable by higher-level SPIs, e. g. custom
@@ -129,8 +131,6 @@ public interface MapEntryOperations<K, V, R> {
      *                               operation are not met
      * @throws RuntimeException      if value replacement was unconditionally unsuccessful due
      *                               to any reason
-     * @implNote default implementation calls {@link MapEntry#doReplaceValue(Data)
-     * entry.doReplaceValue(newValue)} and returns {@code null}.
      */
     default R replaceValue(@NotNull MapEntry<K, V> entry, Data<V> newValue) {
         entry.doReplaceValue(newValue);
@@ -140,14 +140,14 @@ public interface MapEntryOperations<K, V, R> {
     /**
      * Inserts the new entry into the map, of {@link MapAbsentEntry#absentKey() the key} from
      * the given insertion context ({@code absentEntry}) and the given {@code value}.
+     * Note: default implementation calls {@link MapAbsentEntry#doInsert(Data)
+     * absentEntry.doInsert(value)} and returns {@code null}.
      *
      * @return result of operation, understandable by higher-level SPIs, e. g. custom
      * {@link MapMethods} implementation
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      *                               operation are not met
      * @throws RuntimeException      if insertion was unconditionally unsuccessful due to any reason
-     * @implNote default implementation calls {@link MapAbsentEntry#doInsert(Data)
-     * absentEntry.doInsert(value)} and returns {@code null}.
      */
     default R insert(@NotNull MapAbsentEntry<K, V> absentEntry, Data<V> value) {
         absentEntry.doInsert(value);
