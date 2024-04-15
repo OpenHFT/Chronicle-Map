@@ -56,7 +56,7 @@ public final class PointListSizedMarshaller
 
     @NotNull
     @Override
-    public List<Point> read(@NotNull Bytes in, long size, List<Point> using) {
+    public List<Point> read(@NotNull Bytes<?> in, long size, List<Point> using) {
         if (size % ELEMENT_SIZE != 0) {
             throw new IORuntimeException("Bytes size should be a multiple of " + ELEMENT_SIZE +
                     ", " + size + " read");

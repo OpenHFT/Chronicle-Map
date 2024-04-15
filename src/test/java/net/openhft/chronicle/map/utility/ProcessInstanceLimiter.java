@@ -17,6 +17,7 @@
 package net.openhft.chronicle.map.utility;
 
 import net.openhft.affinity.Affinity;
+import net.openhft.chronicle.algo.bytes.Access;
 import net.openhft.chronicle.algo.locks.AcquisitionStrategies;
 import net.openhft.chronicle.algo.locks.ReadWriteLockingStrategy;
 import net.openhft.chronicle.algo.locks.TryAcquireOperations;
@@ -448,21 +449,25 @@ public class ProcessInstanceLimiter implements Runnable {
         return true;
     }
 
+    @SuppressWarnings("rawtypes")
     private boolean lock(Data data, int microsecondsToTry) {
         return AcquisitionStrategies
                 .<ReadWriteLockingStrategy>spinLoop(microsecondsToTry, TimeUnit.MICROSECONDS)
                 .acquire(TryAcquireOperations.writeLock(),
                         VanillaReadWriteWithWaitsLockingStrategy.instance(),
-                        checkedBytesStoreAccess(),
+                        (Access) checkedBytesStoreAccess(),
                         ((Byteable) data).bytesStore(),
-                        ((Byteable<?, ?>) data).offset());
+                        ((Byteable) data).offset());
     }
 
+    @SuppressWarnings("rawtypes")
     private void unlock(Data data) {
         try {
             VanillaReadWriteWithWaitsLockingStrategy.instance()
-                    .writeUnlock(checkedBytesStoreAccess(),
-                            ((Byteable) data).bytesStore(), ((Byteable<?, ?>) data).offset());
+                    .writeUnlock(
+                            (Access) checkedBytesStoreAccess(),
+                            ((Byteable) data).bytesStore(),
+                            ((Byteable) data).offset());
         } catch (IllegalMonitorStateException e) {
             //odd, but we'll be unlocked either way
             System.out.println("Unexpected state: " + e);

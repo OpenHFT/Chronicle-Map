@@ -142,7 +142,7 @@ public class StateMachineData implements Byteable {
     // *************************************************************************
 
     @Override
-    public void bytesStore(BytesStore<?, ?> bytes, long offset, long size) {
+    public void bytesStore(BytesStore bytes, long offset, long size) {
         if (size != 16)
             throw new IllegalArgumentException();
         this.bs = bytes;
