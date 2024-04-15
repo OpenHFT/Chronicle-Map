@@ -1791,7 +1791,7 @@ PRESENT, ABSENT;    }
     }
 
     public long allocReturnCode(int chunks) {
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         if (chunks > (h.maxChunksPerEntry)) {
             throw new IllegalArgumentException(((((((this.h().toIdentityString()) + ": Entry is too large: requires ") + chunks) + " chunks, ") + (h.maxChunksPerEntry)) + " is maximum."));
         } 
@@ -3108,7 +3108,7 @@ PRESENT, ABSENT;    }
     }
 
     public void nextTier() {
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         long nextTierIndex = nextTierIndex();
         if (nextTierIndex == 0) {
             Jvm.debug().on(getClass(), ((("Allocate tier for segment #  " + (segmentIndex())) + " tier ") + ((tier()) + 1)));
@@ -3183,7 +3183,7 @@ PRESENT, ABSENT;    }
 
     void initSegment() {
         boolean wasSegmentInit = this.segmentInit();
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         long segmentBaseAddr = this.tierBaseAddr();
         segmentBS.set(segmentBaseAddr, h.tierSize);
         segmentBytes.clear();

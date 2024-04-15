@@ -536,6 +536,7 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     @NotNull
     public QueryContextInterface<K, V, R> queryContext(final Object key) {
+        assert !(key instanceof Data);
         checkKey(key);
         final QueryContextInterface<K, V, R> c = mapContext();
         try {

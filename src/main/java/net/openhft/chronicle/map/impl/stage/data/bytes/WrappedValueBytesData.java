@@ -86,9 +86,10 @@ public class WrappedValueBytesData<V> extends AbstractData<V> {
         return wrappedValueBytesUsed;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     void initWrappedValueBytes() {
         wrappedValueBytes.bytesStore(
-                wrappedValueBytesStore, wrappedValueBytesOffset, wrappedValueBytesSize);
+                (BytesStore) wrappedValueBytesStore, wrappedValueBytesOffset, wrappedValueBytesSize);
         wrappedValueBytesUsed = true;
     }
 

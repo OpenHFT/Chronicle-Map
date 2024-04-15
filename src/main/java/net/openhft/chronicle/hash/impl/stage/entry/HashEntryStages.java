@@ -37,7 +37,7 @@ import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry {
 
     @StageRef
-    public VanillaChronicleHashHolder<?> hh;
+    public VanillaChronicleHashHolder<K> hh;
     @StageRef
     public SegmentStages s;
     @StageRef

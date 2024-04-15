@@ -195,7 +195,8 @@ public class TierRecovery {
             if (!hashLookup.empty(entry)) {
                 e.readExistingEntry(hashLookup.value(entry));
                 Data<?> key = e.key();
-                try (ExternalMapQueryContext<?, ?, ?> c = m.queryContext(key)) {
+                // This (Data) cast is required to avoid calling queryContext(Object)
+                try (ExternalMapQueryContext<?, ?, ?> c = m.queryContext((Data) key)) {
                     MapEntry<?, ?> entry2 = c.entry();
                     Data<?> key2 = ((MapEntry) c).key();
                     long keyAddress = key.bytes().addressForRead(key.offset());

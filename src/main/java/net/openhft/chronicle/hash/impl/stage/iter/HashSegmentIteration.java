@@ -44,7 +44,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
     @StageRef
     HashEntryStages<K> e;
     @StageRef
-    VanillaChronicleHashHolder<?> hh;
+    VanillaChronicleHashHolder<K> hh;
 
     public boolean shouldTestEntry() {
         return true;

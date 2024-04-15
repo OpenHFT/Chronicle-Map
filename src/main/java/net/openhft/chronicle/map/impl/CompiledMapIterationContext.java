@@ -1514,7 +1514,7 @@ PRESENT, ABSENT;    }
     }
 
     public long allocReturnCode(int chunks) {
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         if (chunks > (h.maxChunksPerEntry)) {
             throw new IllegalArgumentException(((((((this.h().toIdentityString()) + ": Entry is too large: requires ") + chunks) + " chunks, ") + (h.maxChunksPerEntry)) + " is maximum."));
         } 
@@ -1560,7 +1560,7 @@ PRESENT, ABSENT;    }
     }
 
     private void _SegmentStages_nextTier() {
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         long nextTierIndex = nextTierIndex();
         if (nextTierIndex == 0) {
             Jvm.debug().on(getClass(), ((("Allocate tier for segment #  " + (segmentIndex())) + " tier ") + ((tier()) + 1)));
@@ -2556,7 +2556,7 @@ PRESENT, ABSENT;    }
     }
 
     private void shiftHashLookupEntries() {
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         CompactOffHeapLinearHashTable hl = h.hashLookup;
         long hlAddr = this.tierBaseAddr();
         long hlPos = 0;
@@ -2781,7 +2781,7 @@ PRESENT, ABSENT;    }
 
     void initSegment() {
         boolean wasSegmentInit = this.segmentInit();
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         long segmentBaseAddr = this.tierBaseAddr();
         segmentBS.set(segmentBaseAddr, h.tierSize);
         segmentBytes.clear();
@@ -3229,7 +3229,7 @@ PRESENT, ABSENT;    }
     }
 
     private int checkEntry(long searchKey, long entryPos, int segmentIndex, ChronicleHashCorruption.Listener corruptionListener, ChronicleHashCorruptionImpl corruption) {
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         if ((entryPos < 0) || (entryPos >= (h.actualChunksPerSegmentTier))) {
             ChronicleHashCorruptionImpl.report(corruptionListener, corruption, segmentIndex, () -> ChronicleHashCorruptionImpl.format("Entry pos is out of range: {}, should be 0-{}", entryPos, ((h.actualChunksPerSegmentTier) - 1)));
             return -1;
@@ -3290,7 +3290,7 @@ PRESENT, ABSENT;    }
 
     public void removeDuplicatesInSegment(ChronicleHashCorruption.Listener corruptionListener, ChronicleHashCorruptionImpl corruption) {
         long startHlPos = 0L;
-        VanillaChronicleMap<?, ?, ?> m = this.m();
+        VanillaChronicleMap<K, ?, ?> m = this.m();
         CompactOffHeapLinearHashTable hashLookup = m.hashLookup;
         long currentTierBaseAddr = this.tierBaseAddr();
         while (!(hashLookup.empty(hashLookup.readEntry(currentTierBaseAddr, startHlPos)))) {
@@ -3328,7 +3328,7 @@ PRESENT, ABSENT;    }
     }
 
     private void removeDuplicatesInSegments(ChronicleHashCorruption.Listener corruptionListener, ChronicleHashCorruptionImpl corruption) {
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         for (int segmentIndex = 0 ; segmentIndex < (h.actualSegments) ; segmentIndex++) {
             this.initSegmentIndex(segmentIndex);
             this.initSegmentTier();
@@ -3346,7 +3346,7 @@ PRESENT, ABSENT;    }
 
     public int recoverTier(int segmentIndex, ChronicleHashCorruption.Listener corruptionListener, ChronicleHashCorruptionImpl corruption) {
         this.freeList().clearAll();
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         CompactOffHeapLinearHashTable hl = h.hashLookup;
         long hlAddr = this.tierBaseAddr();
         long validEntries = 0;
@@ -3413,7 +3413,7 @@ PRESENT, ABSENT;    }
     @Override
     public void recoverSegments(ChronicleHashCorruption.Listener corruptionListener, ChronicleHashCorruptionImpl corruption) {
         throwExceptionIfClosed();
-        VanillaChronicleHash<?, ?, ?, ?> h = this.h();
+        VanillaChronicleHash<K, ?, ?, ?> h = this.h();
         for (int segmentIndex = 0 ; segmentIndex < (h.actualSegments) ; segmentIndex++) {
             this.initSegmentIndex(segmentIndex);
             resetSegmentLock(corruptionListener, corruption);
@@ -3966,7 +3966,7 @@ PRESENT, ABSENT;    }
         if (newValueSizeIsDifferent) {
             long newSizeOfEverythingBeforeValue = newSizeOfEverythingBeforeValue(newValue);
             long entryStartOffset = keySizeOffset();
-            VanillaChronicleMap<?, ?, ?> m = this.m();
+            VanillaChronicleMap<K, ?, ?> m = this.m();
             long newValueOffset = VanillaChronicleMap.alignAddr((entryStartOffset + newSizeOfEverythingBeforeValue), this.m().alignment);
             long newEntrySize = newEntrySize(newValue, entryStartOffset, newValueOffset);
             int newSizeInChunks = m.inChunks(newEntrySize);
@@ -3982,7 +3982,6 @@ PRESENT, ABSENT;    }
             } else if (newSizeInChunks < (entrySizeInChunks())) {
                 this.freeExtraGuarded(pos(), entrySizeInChunks(), newSizeInChunks);
             } 
-        } else {
         }
         this.innerWriteLock.lock();
         if (newValueSizeIsDifferent) {

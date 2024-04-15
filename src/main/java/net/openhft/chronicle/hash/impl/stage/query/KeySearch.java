@@ -42,7 +42,7 @@ public abstract class KeySearch<K> {
     @Stage("KeySearch")
     protected SearchState searchState = null;
     @StageRef
-    VanillaChronicleMapHolder<?, ?, ?> mh;
+    VanillaChronicleMapHolder<K, ?, ?> mh;
 
     public abstract boolean inputKeyInit();
 
