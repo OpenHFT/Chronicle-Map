@@ -55,11 +55,11 @@ class Precision {
      * Two float numbers are considered equal if there are {@code (maxUlps - 1)}
      * (or fewer) floating point numbers between them, i.e. two adjacent
      * floating point numbers are considered equal.
-         * <p>
+     * <p>
      * Adapted from <a
      * href="http://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/">
      * Bruce Dawson</a>
-         *
+     *
      * @param x       first value
      * @param y       second value
      * @param maxUlps {@code (maxUlps - 1)} is the number of floating point

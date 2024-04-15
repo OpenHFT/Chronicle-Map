@@ -65,7 +65,7 @@ abstract class ContinuedFraction {
      * </ul>
      * <b>Note:</b> the implementation uses the terms a<sub>i</sub> and b<sub>i</sub> as defined in
      * <a href="http://mathworld.wolfram.com/ContinuedFraction.html">Continued Fraction @ MathWorld</a>.
-         *
+     *
      * @param x             the evaluation point.
      * @param epsilon       maximum error allowed.
      * @param maxIterations maximum number of convergents
