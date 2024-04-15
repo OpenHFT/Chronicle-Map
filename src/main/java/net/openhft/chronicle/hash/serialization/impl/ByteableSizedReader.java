@@ -36,7 +36,7 @@ public class ByteableSizedReader<T extends Byteable> extends InstanceCreatingMar
 
     @NotNull
     @Override
-    public final T read(@NotNull Bytes in, long size, @Nullable T using) {
+    public final T read(@NotNull Bytes<?> in, long size, @Nullable T using) {
         if (using == null)
             using = createInstance();
         using.bytesStore(in.bytesStore(), in.readPosition(), size);
