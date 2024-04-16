@@ -26,6 +26,28 @@ license, please contact mailto:sales@chronicle.software.
 [caption="", link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
 image::https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[]
 
+Chronicle Map depends on other Chronicle libraries and it is Chronicle's recommendation to use the
+https://chronicle.software/monorepo-versus-bill-of-materials-shaping-your-project/[chronicle-bom]
+for versioning e.g.
+
+``` xml
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>net.openhft</groupId>
+            <artifactId>chronicle-bom</artifactId>
+            <version><!--replace with the latest version--></version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+```
+
+Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-bom%22[Latest Version Number].
+
+Alternatively, Chronicle Map can be included directly:
+
 ``` xml
 <dependency>
   <groupId>net.openhft</groupId>
@@ -38,7 +60,7 @@ Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.open
 
 == Maven Snapshot Download
 If you want to try out the latest pre-release code, you can download the snapshot artifact manually
-from https://oss.sonatype.org/content/repositories/snapshots/net/openhft/chronicle-map/.
+from https://s01.oss.sonatype.org/content/repositories/snapshots/net/openhft/chronicle-map/.
 
 A better way, is to add the following to your `setting.xml` file to allow Maven to download snapshots:
 
@@ -46,7 +68,7 @@ A better way, is to add the following to your `setting.xml` file to allow Maven 
 <repository>
     <id>Snapshot Repository</id>
     <name>Snapshot Repository</name>
-    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
     <snapshots>
         <enabled>true</enabled>
     </snapshots>

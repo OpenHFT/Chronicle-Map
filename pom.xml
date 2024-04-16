@@ -560,51 +560,6 @@
         </profile>
     </profiles>
 
-    <repositories>
-        <repository>
-            <id>chronicle-enterprise-snapshots</id>
-            <name>Snapshot Repository</name>
-            <url>
-                https://nexus.chronicle.software/content/repositories/snapshots
-            </url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>chronicle-enterprise-release</id>
-            <url>
-                https://nexus.chronicle.software/content/repositories/releases
-            </url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-        </repository>
-
-        <repository>
-            <id>central</id>
-            <name>Central Repository</name>
-            <url>https://repo.maven.apache.org/maven2</url>
-            <layout>default</layout>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
-            <id>Snapshot Repository</id>
-            <name>Snapshot Repository</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-                <updatePolicy>never</updatePolicy>
-            </releases>
-        </repository>
-    </repositories>
-
     <scm>
         <url>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</url>
         <connection>scm:git:git@github.com:OpenHFT/Chronicle-Map.git</connection>
