@@ -154,7 +154,7 @@ interface IBean {
  * This test enumerates common use cases for keys and values.
  */
 @RunWith(value = Parameterized.class)
-@SuppressWarnings({"rawtypes", "unchecked", "try"})
+@SuppressWarnings({"rawtypes", "unchecked", "try", "serial"})
 public class CHMUseCasesTest {
 
     private final TypeOfMap typeOfMap;
