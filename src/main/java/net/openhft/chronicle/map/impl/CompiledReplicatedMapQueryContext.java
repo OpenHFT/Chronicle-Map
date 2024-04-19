@@ -46,6 +46,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 /**
  * Generated code
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterface implements AutoCloseable , ChecksumEntry , HashEntry<K> , SegmentLock , Alloc , KeyHashCode , LocksInterface , RemoteOperationContext<K> , ReplicableEntry , ExternalMapQueryContext<K, V, R> , MapContext<K, V, R> , MapEntry<K, V> , Replica.QueryContext<K, V> , QueryContextInterface<K, V, R> , ReplicatedChronicleMapHolder<K, V, R> , Absent<K, V> , MapAndSetContext<K, V, R> , MapRemoteQueryContext<K, V, R> , MapReplicableEntry<K, V> , ExternalSetQueryContext<K, R> , SetContext<K, R> , SetEntry<K> , SetRemoteQueryContext<K, R> , SetReplicableEntry<K> {
     public boolean readZeroGuarded() {
         if (!(this.locksInit()))
@@ -1733,7 +1734,9 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     CompiledReplicatedMapQueryContext.this.decrementUpdateGuarded();
                     CompiledReplicatedMapQueryContext.this.incrementWriteGuarded();
                     CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                    break;
                 case WRITE_LOCKED :
+                    break;
             }
         }
 
@@ -1792,7 +1795,9 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     CompiledReplicatedMapQueryContext.this.decrementUpdateGuarded();
                     CompiledReplicatedMapQueryContext.this.incrementWriteGuarded();
                     CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
+                    break;
                 case WRITE_LOCKED :
+                    break;
             }
         }
 

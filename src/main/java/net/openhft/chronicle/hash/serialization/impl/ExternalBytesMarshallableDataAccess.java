@@ -32,6 +32,7 @@ import java.lang.reflect.Type;
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T>
         implements DataAccess<T>, Data<T> {
 

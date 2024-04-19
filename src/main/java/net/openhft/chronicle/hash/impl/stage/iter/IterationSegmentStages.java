@@ -25,6 +25,7 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class IterationSegmentStages extends SegmentStages {
 
     @StageRef

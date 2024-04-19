@@ -27,7 +27,7 @@ import java.io.IOException;
 public class BooleanValuesTest {
 
     /**
-     * see issue http://stackoverflow.com/questions/26219313/strange-npe-from-chronicle-map-toy-code
+     * see issue <a href="http://stackoverflow.com/questions/26219313/strange-npe-from-chronicle-map-toy-code">here</a>
      */
     @Test
     public void testTestBooleanValues() throws IOException, InterruptedException {

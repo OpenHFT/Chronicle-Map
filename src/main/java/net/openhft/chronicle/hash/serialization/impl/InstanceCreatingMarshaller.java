@@ -34,6 +34,7 @@ import java.lang.reflect.Type;
  *
  * @param <T> the type of objects deserialized
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
 
     private Type tClass;

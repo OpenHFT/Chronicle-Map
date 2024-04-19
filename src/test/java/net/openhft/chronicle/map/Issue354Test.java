@@ -6,6 +6,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import static org.junit.Assert.assertNotNull;
+
 public class Issue354Test {
 
     @Test
@@ -19,7 +21,7 @@ public class Issue354Test {
                     .entries(5);
 
             try (ChronicleMap<LongValue, LongValue> map = builder.createPersistedTo(file)) {
-
+                assertNotNull(map);
             }
 
         } finally {

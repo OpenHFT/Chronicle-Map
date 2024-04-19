@@ -20,6 +20,7 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 final class DefaultSpi implements MapMethods, MapEntryOperations, MapRemoteOperations,
         DefaultValueProvider {
     static final DefaultSpi DEFAULT_SPI = new DefaultSpi();

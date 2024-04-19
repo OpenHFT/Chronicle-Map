@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.io.*;
 
+@SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class DatasetTrackerIssue61Test {
 
     @Test

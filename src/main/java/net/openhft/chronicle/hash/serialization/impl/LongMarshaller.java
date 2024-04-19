@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * deprecated in favor of {@link LongDataAccess}. As reader and element writer for {@link
  * ListMarshaller} and similar composite marshallers, {@code LongMarshaller} is not deprecated.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class LongMarshaller
         implements SizedReader<Long>, BytesReader<Long>,
         SizedWriter<Long>, BytesWriter<Long>, EnumMarshallable<LongMarshaller> {

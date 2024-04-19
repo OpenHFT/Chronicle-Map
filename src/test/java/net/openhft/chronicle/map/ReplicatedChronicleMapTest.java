@@ -33,6 +33,7 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd. Then modified by the Open HFT team.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<Integer, CharSequence> newShmIntString() {
         ChronicleMapBuilder<Integer, CharSequence> builder = ChronicleMap
@@ -132,9 +133,9 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    /**
-     * Inserted elements that are subclasses of the same Comparable
-     * class are found.
+    /*
+      Inserted elements that are subclasses of the same Comparable
+      class are found.
      */
    /* @Test public void testComparableFamily() throws IOException {
         ChronicleMap<BI, Boolean> m =
@@ -148,10 +149,10 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }*/
 
-    /**
-     * TODO :     fix test
-     * Elements of classes with erased generic type parameters based
-     * on Comparable can be inserted and found.
+    /*
+      TODO :     fix test
+      Elements of classes with erased generic type parameters based
+      on Comparable can be inserted and found.
      */
    /* @Test public void testGenericComparable() throws IOException {
         ChronicleMap<Object, Boolean> m =
@@ -173,10 +174,10 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
     }
 */
 
-    /**
-     * Elements of non-comparable classes equal to those of classes
-     * with erased generic type parameters based on Comparable can be
-     * inserted and found.
+    /*
+      Elements of non-comparable classes equal to those of classes
+      with erased generic type parameters based on Comparable can be
+      inserted and found.
      */
   /*  @Test public void testGenericComparable2() throws IOException {
         ChronicleMap<Object, Boolean> m =
@@ -264,9 +265,9 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    /**
-     * TODO : enumeration returns an enumeration containing the correct
-     * elements
+    /*
+      TODO : enumeration returns an enumeration containing the correct
+      elements
      */
   /*  @Test public void testEnumeration() throws IOException {
         ChronicleMap map = map5();
@@ -311,8 +312,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    /**
-     * TODO : keys returns an enumeration containing all the keys from the map
+    /*
+      TODO : keys returns an enumeration containing all the keys from the map
      */
    /* @Test public void testKeys() throws IOException {
         ChronicleMap map = map5();
@@ -551,8 +552,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
 
     // Exception tests
 
-    /**
-     * TODO : Cannot create with negative capacity
+    /*
+      TODO : Cannot create with negative capacity
      */
    /* @Test public void testConstructor1() {
         try {
@@ -562,8 +563,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }*/
 
-    /**
-     * TODO : Cannot create with negative concurrency level
+    /*
+      TODO : Cannot create with negative concurrency level
      */
     /*@Test public void testConstructor2() {
         try {
@@ -573,8 +574,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }*/
 
-    /**
-     * TODO :Cannot create with only negative capacity
+    /*
+      TODO :Cannot create with only negative capacity
      */
    /* @Test public void testConstructor3() {
         try {
@@ -608,8 +609,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    /**
-     * containsValue(null) throws NPE
+    /*
+      containsValue(null) throws NPE
      */
 /*    @Test public void testContainsValue_NullPointerException() throws IOException {
         try {
@@ -620,8 +621,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }*/
 
-    /**
-     * todo  : contains(null) throws NPE
+    /*
+      todo  : contains(null) throws NPE
      */
 /*
     @Test public void testContains_NullPointerException() throws IOException {
@@ -802,8 +803,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    /**
-     * A deserialized map equals original
+    /*
+      A deserialized map equals original
      */
   /*  @Test public void testSerialization()   {
         Map x = map5();
@@ -815,8 +816,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
         assertEquals(y, x);
     }*/
 
-    /**
-     * TODO : SetValue of an EntrySet entry sets value in the map.
+    /*
+      TODO : SetValue of an EntrySet entry sets value in the map.
      */
     /*@Test public void testSetValueWriteThrough() {
         // Adapted from a bug report by Eric Zoerner

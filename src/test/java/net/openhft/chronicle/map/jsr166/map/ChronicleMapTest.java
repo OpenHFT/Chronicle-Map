@@ -36,6 +36,7 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
+@SuppressWarnings({"rawtypes", "unchecked", "try"})
 public class ChronicleMapTest extends JSR166TestCase {
 
     static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {

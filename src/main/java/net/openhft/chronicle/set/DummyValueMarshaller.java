@@ -24,6 +24,7 @@ import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 final class DummyValueMarshaller implements DataAccess<DummyValue>, SizedReader<DummyValue>,
         EnumMarshallable<DummyValueMarshaller> {
     public static final DummyValueMarshaller INSTANCE = new DummyValueMarshaller();

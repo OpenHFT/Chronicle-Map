@@ -28,6 +28,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class ValueReader<T>
         implements SizedReader<T>, BytesReader<T>, StatefulCopyable<ValueReader<T>> {
 

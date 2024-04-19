@@ -47,6 +47,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.TIER_COUNTERS_AREA_SIZE;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Segment")

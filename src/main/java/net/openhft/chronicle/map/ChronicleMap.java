@@ -135,7 +135,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * }}</pre>
      * <p>
      * 
-     * <p>Where {@code defaultValue(key)} returns {@link
+     * Where {@code defaultValue(key)} returns {@link
      * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) defaultValueProvider}.
      * <p>
      * If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link

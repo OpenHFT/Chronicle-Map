@@ -26,6 +26,8 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+import static org.junit.Assert.assertNotNull;
+
 public class Issue229Test {
 
     private File mapFile;
@@ -48,6 +50,7 @@ public class Issue229Test {
                 .of(Long.class, Long.class)
                 .entries(10)
                 .createPersistedTo(mapFile)) {
+            assertNotNull(readMap);
 
 // It shall not be possible to recover since the
             // file is open by the readMap
@@ -55,7 +58,7 @@ public class Issue229Test {
                     .of(Long.class, Long.class)
                     .entries(10)
                     .recoverPersistedTo(mapFile, true)) {
-
+                assertNotNull(recoverMap);
             }
         }
     }

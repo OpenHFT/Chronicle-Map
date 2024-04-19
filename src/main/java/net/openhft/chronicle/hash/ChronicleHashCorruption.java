@@ -79,7 +79,7 @@ public interface ChronicleHashCorruption {
          * Called when <a href="https://github.com/OpenHFT/Chronicle-Map/blob/ea/docs/CM_Tutorial.adoc#recovery">recovery</a>
          * procedure encounters a corruption of a persisted Chronicle Map.
          * <p>
-         * <p>During a recovery procedure, <i>this method might be called concurrently from multiple
+         * During a recovery procedure, <i>this method might be called concurrently from multiple
          * threads.</i> If the implementation of this method calls some methods on some objects,
          * that are not safe for concurrent use from multiple threads, the implementation must
          * care about synchronization itself.

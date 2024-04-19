@@ -29,6 +29,7 @@ import java.nio.charset.*;
 /**
  * Created by Rob Austin
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class ByteBufferConverter implements Converter {
 
     private final Charset charset = Charset.forName("ISO-8859-1");

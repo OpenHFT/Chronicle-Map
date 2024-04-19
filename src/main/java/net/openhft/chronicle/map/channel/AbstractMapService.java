@@ -4,8 +4,8 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.map.ChronicleMap;
 
 /**
- * @param <VALUE>
- * @param <REPLY>
+ * @param <VALUE> the type of the value in the map
+ * @param <REPLY> the type of the reply
  */
 public abstract class AbstractMapService<VALUE, REPLY> implements MapService<VALUE, REPLY> {
     protected transient ChronicleMap<Bytes<?>, VALUE> map;

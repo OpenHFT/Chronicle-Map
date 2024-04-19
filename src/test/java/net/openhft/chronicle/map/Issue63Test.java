@@ -39,6 +39,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Issue63Test {
 
     // Right now no corresponding "knownUsers" object

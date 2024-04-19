@@ -13,8 +13,8 @@ public class DirtyReadIntolerant {
             String isoLevel = args[0];
             long sleepMock = Long.parseLong(args[1]);
             long holdTime = Long.parseLong(args[2]);
-            /**
-             *  ben.cotton@rutgers.edu   START
+            /*
+               ben.cotton@rutgers.edu   START
              */
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
@@ -56,7 +56,7 @@ public class DirtyReadIntolerant {
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadIntolerant calling chm.get('369604101').getCoupon()"
                 );
-                bond = (BondVOInterface) chm.get("369604101");
+                bond = chm.get("369604101");
                 coupon = bond.getCoupon();
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
@@ -82,8 +82,8 @@ public class DirtyReadIntolerant {
                 );
 
             }
-            /**
-             *  ben.cotton@rutgers.edu   END
+            /*
+               ben.cotton@rutgers.edu   END
              */
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

@@ -15,6 +15,7 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.*;
 
 // From https://github.com/OpenHFT/Chronicle-Map/issues/183
+@SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class SerializableTest {
     @Test
     public void test1() {

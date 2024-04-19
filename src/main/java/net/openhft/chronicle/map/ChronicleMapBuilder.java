@@ -139,6 +139,7 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  * @see ChronicleMap
  * @see ChronicleSetBuilder
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class ChronicleMapBuilder<K, V> implements
         ChronicleHashBuilder<K, ChronicleMap<K, V>,
                 ChronicleMapBuilder<K, V>> {

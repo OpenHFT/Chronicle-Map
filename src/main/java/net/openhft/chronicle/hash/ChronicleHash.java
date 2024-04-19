@@ -33,6 +33,7 @@ import java.util.function.Predicate;
 /**
  * Common base interface for {@link ChronicleMap} and {@link ChronicleSet}.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         EQC extends ExternalHashQueryContext<K>> extends MapClosable {
     /**

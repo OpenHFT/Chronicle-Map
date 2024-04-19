@@ -22,6 +22,7 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class InputKeyHashCode implements KeyHashCode {
 
     @StageRef

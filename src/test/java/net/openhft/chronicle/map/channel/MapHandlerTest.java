@@ -20,9 +20,9 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class MapHandlerTest {
     @Test
     public void passThroughMapFF() throws IOException {
@@ -55,6 +55,7 @@ public class MapHandlerTest {
         try (ChronicleContext cc = ChronicleContext.newContext("tcp://:65301").buffered(serverBuffered);
              ChronicleMap<Bytes<?>, DTO> map = createMap(cc, ns);
              ChronicleChannel channel = cc.newChannelSupplier(mapHandler).buffered(clientBuffered).get()) {
+            assertNotNull(map);
             cc.toFile(ns + ".cm3").deleteOnExit();
             final PassMapServiceIn serviceIn = channel.methodWriter(PassMapServiceIn.class);
 

@@ -73,8 +73,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
     }
 
-    *//**
-     * Returns a new map from Integers 1-5 to Strings "A"-"E".
+    *//*
+      Returns a new map from Integers 1-5 to Strings "A"-"E".
      *//*
     private static ConcurrentMap map5() {
         ConcurrentMap map = newIntegerStringMap();
@@ -91,8 +91,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         return map;
     }
 
-    *//**
-     * Returns a new map from Integers 1-5 to Strings "A"-"E".
+    *//*
+      Returns a new map from Integers 1-5 to Strings "A"-"E".
      *//*
     private static ConcurrentHashMap map5ConcurrentHashMap() {
         ConcurrentHashMap<Integer, String> map = new ConcurrentHashMap<Integer, String>(5);
@@ -139,8 +139,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         return longMap;
     }
 
-    *//**
-     * getOrDefault returns value if present, else default
+    *//*
+      getOrDefault returns value if present, else default
      *//*
     @Test
     public void testGetOrDefault() {
@@ -149,8 +149,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(map.getOrDefault(six, "Z"), "Z");
     }
 
-    *//**
-     * computeIfAbsent adds when the given key is not present
+    *//*
+      computeIfAbsent adds when the given key is not present
      *//*
     @Test
     public void testComputeIfAbsent() {
@@ -159,8 +159,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertTrue(map.containsKey(six));
     }
 
-    *//**
-     * computeIfAbsent does not replace if the key is already present
+    *//*
+      computeIfAbsent does not replace if the key is already present
      *//*
     @Test
     public void testComputeIfAbsent2() {
@@ -168,8 +168,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals("A", map.computeIfAbsent(one, (x) -> "Z"));
     }
 
-    *//**
-     * computeIfAbsent does not add if function returns null
+    *//*
+      computeIfAbsent does not add if function returns null
      *//*
     @Test
     public void testComputeIfAbsent3() {
@@ -178,8 +178,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(map.containsKey(six));
     }
 
-    *//**
-     * computeIfPresent does not replace if the key is already present
+    *//*
+      computeIfPresent does not replace if the key is already present
      *//*
     @Test
     public void testComputeIfPresent() {
@@ -188,8 +188,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(map.containsKey(six));
     }
 
-    *//**
-     * computeIfPresent adds when the given key is not present
+    *//*
+      computeIfPresent adds when the given key is not present
      *//*
     @Test
     public void testComputeIfPresent2() {
@@ -197,8 +197,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals("Z", map.computeIfPresent(one, (x, y) -> "Z"));
     }
 
-    *//**
-     * compute does not replace if the function returns null
+    *//*
+      compute does not replace if the function returns null
      *//*
     @Test
     public void testCompute() {
@@ -207,8 +207,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(map.containsKey(six));
     }
 
-    *//**
-     * compute adds when the given key is not present
+    *//*
+      compute adds when the given key is not present
      *//*
     @Test
     public void testCompute2() {
@@ -216,8 +216,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals("Z", map.compute(six, (x, y) -> "Z"));
     }
 
-    *//**
-     * compute replaces when the given key is present
+    *//*
+      compute replaces when the given key is present
      *//*
     @Test
     public void testCompute3() {
@@ -225,8 +225,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals("Z", map.compute(one, (x, y) -> "Z"));
     }
 
-    *//**
-     * compute removes when the given key is present and function returns null
+    *//*
+      compute removes when the given key is present and function returns null
      *//*
     @Test
     public void testCompute4() {
@@ -238,8 +238,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(map.containsKey(one));
     }
 
-    *//**
-     * merge adds when the given key is not present
+    *//*
+      merge adds when the given key is not present
      *//*
     @Test
     public void testMerge1() {
@@ -247,8 +247,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals("Y", map.merge(six, "Y", (x, y) -> "Z"));
     }
 
-    *//**
-     * merge replaces when the given key is present
+    *//*
+      merge replaces when the given key is present
      *//*
     @Test
     public void testMerge2() {
@@ -256,8 +256,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals("Z", map.merge(one, "Y", (x, y) -> "Z"));
     }
 
-    *//**
-     * merge removes when the given key is present and function returns null
+    *//*
+      merge removes when the given key is present and function returns null
      *//*
     @Test
     public void testMerge3() {
@@ -285,8 +285,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals("Z", map.get(five));
     }
 
-    *//**
-     * Default-constructed set is empty
+    *//*
+      Default-constructed set is empty
      *//*
     @Test
     public void testNewKeySet() {
@@ -294,8 +294,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertTrue(a.isEmpty());
     }
 
-    *//**
-     * keySet.addAll adds each element from the given collection
+    *//*
+      keySet.addAll adds each element from the given collection
      *//*
     @Test
     public void testAddAll() {
@@ -308,8 +308,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(6, full.size());
     }
 
-    *//**
-     * keySet.addAll adds each element from the given collection that did not already exist in the set
+    *//*
+      keySet.addAll adds each element from the given collection that did not already exist in the set
      *//*
     @Test
     public void testAddAll2() {
@@ -322,8 +322,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(5, full.size());
     }
 
-    *//**
-     * keySet.add will not add the element if it already exists in the set
+    *//*
+      keySet.add will not add the element if it already exists in the set
      *//*
     @Test
     public void testAdd2() {
@@ -332,8 +332,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(3, full.size());
     }
 
-    *//**
-     * keySet.add adds the element when it does not exist in the set
+    *//*
+      keySet.add adds the element when it does not exist in the set
      *//*
     @Test
     public void testAdd3() {
@@ -342,8 +342,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertTrue(full.contains(three));
     }
 
-    *//**
-     * keySet.add throws UnsupportedOperationException if no default mapped value
+    *//*
+      keySet.add throws UnsupportedOperationException if no default mapped value
      *//*
     @Test
     public void testAdd4() {
@@ -355,8 +355,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
     }
 
-    *//**
-     * keySet.add throws NullPointerException if the specified key is null
+    *//*
+      keySet.add throws NullPointerException if the specified key is null
      *//*
     @Test
     public void testAdd5() {
@@ -368,8 +368,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
     }
 
-    *//**
-     * keyset.clear removes all elements from the set
+    *//*
+      keyset.clear removes all elements from the set
      *//*
     @Test
     public void testClear() {
@@ -378,8 +378,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(0, full.size());
     }
 
-    *//**
-     * keyset.contains returns {@code true} for added elements
+    *//*
+      keyset.contains returns {@code true} for added elements
      *//*
     @Test
     public void testContains() {
@@ -388,8 +388,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(full.contains(five));
     }
 
-    *//**
-     * KeySets with equal elements are equal
+    *//*
+      KeySets with equal elements are equal
      *//*
     @Test
     public void testEquals() {
@@ -407,8 +407,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(a.hashCode(), b.hashCode());
     }
 
-    *//**
-     * KeySet.containsAll returns {@code true} for collections with subset of elements
+    *//*
+      KeySet.containsAll returns {@code true} for collections with subset of elements
      *//*
     @Test
     public void testContainsAll() {
@@ -421,8 +421,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(full.containsAll(v));
     }
 
-    *//**
-     * KeySet.isEmpty is {@code true} when empty, else false
+    *//*
+      KeySet.isEmpty is {@code true} when empty, else false
      *//*
     @Test
     public void testIsEmpty() {
@@ -432,8 +432,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(full.isEmpty());
     }
 
-    *//**
-     * KeySet.iterator() returns an iterator containing the elements of the set
+    *//*
+      KeySet.iterator() returns an iterator containing the elements of the set
      *//*
     @Test
     public void testIterator() {
@@ -465,8 +465,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         }
     }
 
-    *//**
-     * KeySet.iterator.remove removes current element
+    *//*
+      KeySet.iterator.remove removes current element
      *//*
     @Test
     public void testIteratorRemove() {
@@ -481,8 +481,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertFalse(it.hasNext());
     }
 
-    *//**
-     * KeySet.toString holds toString of elements
+    *//*
+      KeySet.toString holds toString of elements
      *//*
     @Test
     public void testToString() {
@@ -493,8 +493,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
             assertTrue(s.contains(String.valueOf(i)));
     }
 
-    *//**
-     * KeySet.removeAll removes all elements from the given collection
+    *//*
+      KeySet.removeAll removes all elements from the given collection
      *//*
     @Test
     public void testRemoveAll() {
@@ -506,8 +506,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(1, full.size());
     }
 
-    *//**
-     * KeySet.remove removes an element
+    *//*
+      KeySet.remove removes an element
      *//*
     @Test
     public void testRemove() {
@@ -517,8 +517,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(2, full.size());
     }
 
-    *//**
-     * keySet.size returns the number of elements
+    *//*
+      keySet.size returns the number of elements
      *//*
     @Test
     public void testSize() {
@@ -528,8 +528,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertEquals(0, empty.size());
     }
 
-    *//**
-     * KeySet.toArray() returns an Object array containing all elements from the set
+    *//*
+      KeySet.toArray() returns an Object array containing all elements from the set
      *//*
     @Test
     public void testToArray() {
@@ -548,8 +548,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertSame(Object[].class, full.toArray().getClass());
     }
 
-    *//**
-     * toArray(Integer array) returns an Integer array containing all elements from the set
+    *//*
+      toArray(Integer array) returns an Integer array containing all elements from the set
      *//*
     @Test
     public void testToArray2() {
@@ -585,8 +585,8 @@ public class ConcurrentMap8Test extends JSR166TestCase {
         assertTrue(Arrays.asList(elements).containsAll(Arrays.asList(full.toArray(a))));
     }
 
-    *//**
-     * A deserialized serialized set is equal
+    *//*
+      A deserialized serialized set is equal
      *//*
     @Test
     public void testSerialization()   {

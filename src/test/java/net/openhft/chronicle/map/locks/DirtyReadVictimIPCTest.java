@@ -64,8 +64,8 @@ public class DirtyReadVictimIPCTest {
 //                            "]"
 //            );
 
-            /**
-             *  ben.cotton@rutgers.edu   START
+            /*
+               ben.cotton@rutgers.edu   START
              */
 
             ChronicleMap<String, BondVOInterface> chm =
@@ -139,8 +139,8 @@ public class DirtyReadVictimIPCTest {
                 }
                 //offHeapLock.unlockWrite(writerStamp);
             }
-            /**
-             *  ben.cotton@rutgers.edu   END
+            /*
+               ben.cotton@rutgers.edu   END
              */
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -160,8 +160,8 @@ public class DirtyReadVictimIPCTest {
     public void mainOptimisticPositive() {
         System.out.println("\n*****   Optimistic (+) Test\n");
         try {
-            /**
-             *  ben.cotton@rutgers.edu   START
+            /*
+               ben.cotton@rutgers.edu   START
              */
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
@@ -191,7 +191,7 @@ public class DirtyReadVictimIPCTest {
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim calling chm.get('369604101').getCoupon()"
                 );
-                bond = (BondVOInterface) chm.get("369604101");
+                bond = chm.get("369604101");
                 coupon = bond.getCoupon();
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +

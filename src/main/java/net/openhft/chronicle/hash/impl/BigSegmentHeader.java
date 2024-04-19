@@ -30,6 +30,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static net.openhft.chronicle.assertions.AssertUtil.SKIP_ASSERTIONS;
 import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class BigSegmentHeader implements SegmentHeader {
     public static final BigSegmentHeader INSTANCE = new BigSegmentHeader();
     static final long LOCK_OFFSET = 0L;

@@ -55,12 +55,12 @@ public class DirtyReadOffender_ReaderWriterTest {
                             " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender awakening "
             );
-            /**
-             *  ben.cotton@rutgers.edu  ... anticipate Chronicle (www.OpenHFT.net)
-             *  providing a j.u.c.l.StampedLock API for off-heap enthusiasts
-             * <p>
-             *  START
-             *
+            /*
+               ben.cotton@rutgers.edu  ... anticipate Chronicle (www.OpenHFT.net)
+               providing a j.u.c.l.StampedLock API for off-heap enthusiasts
+              <p>
+               START
+
              */
             long stamp = 0;
             System.out.println(
@@ -119,11 +119,11 @@ public class DirtyReadOffender_ReaderWriterTest {
                                 "offHeapLock.unlockWrite(" + stamp + ");"
                 );
             }
-            /**
-             *  ben.cotton@rutgers.edu
-             * <p>
-             *  END
-             *
+            /*
+               ben.cotton@rutgers.edu
+              <p>
+               END
+
              */
             chm.close();
             offHeapLock.closeChronicle();

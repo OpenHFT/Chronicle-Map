@@ -11,6 +11,7 @@ import net.openhft.chronicle.wire.Wire;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class BytesMarshallableReaderWriter<V extends BytesMarshallable>
         extends CachingCreatingMarshaller<V> {
     private static final ThreadLocal<VanillaBytes> VANILLA_BYTES_TL = ThreadLocal.withInitial(VanillaBytes::vanillaBytes);

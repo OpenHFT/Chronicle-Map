@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * deprecated in favor of {@link DoubleDataAccess}. As reader and element writer for {@link
  * ListMarshaller} and similar composite marshallers, {@code DoubleMarshaller} is not deprecated.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class DoubleMarshaller
         implements SizedReader<Double>, BytesReader<Double>,
         SizedWriter<Double>, BytesWriter<Double>, EnumMarshallable<DoubleMarshaller> {

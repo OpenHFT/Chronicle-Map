@@ -33,6 +33,7 @@ import net.openhft.chronicle.set.ChronicleSet;
  *
  * @param <T> the type of marshaller, implementing this interface
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public interface StatefulCopyable<T extends StatefulCopyable<T>> {
 
     /**

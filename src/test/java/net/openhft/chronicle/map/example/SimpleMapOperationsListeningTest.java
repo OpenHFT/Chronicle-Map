@@ -26,6 +26,7 @@ import org.junit.Test;
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingDefaultValueProvider.simpleLoggingDefaultValueProvider;
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingMapEntryOperations.simpleLoggingMapEntryOperations;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class SimpleMapOperationsListeningTest {
 
     @Test

@@ -31,6 +31,7 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext<K>,
         MapRemoteQueryContext<K, V, R>, Replica.QueryContext<K, V> {
 

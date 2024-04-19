@@ -22,6 +22,7 @@ import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class CharSequenceConverter implements Converter {
 
     @Override

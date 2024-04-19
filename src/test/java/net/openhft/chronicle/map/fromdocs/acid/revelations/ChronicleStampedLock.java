@@ -21,6 +21,7 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
  * NOTE:  This impl only provides off-Heap capability for the tryXXXXX() family of
  * j.u.c.l.StampedLock methosds.
  */
+@SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class ChronicleStampedLock extends StampedLock {
 
     ChronicleMap<String, ChronicleStampedLockVOInterface> chm;  //custody of StampedLock semantics
@@ -106,7 +107,7 @@ public class ChronicleStampedLock extends StampedLock {
         offHeapLock = chm.get("Stamp ");
         lastWriterT = chm.get("LastWriterTime ");
         boolean ret = false;
-        /**
+        /*
          *  If *any* Writer interacted with the offHeapLock,
          *  since event=tryOptimisticRead(),
          *  then FAIL the validate() invoke.

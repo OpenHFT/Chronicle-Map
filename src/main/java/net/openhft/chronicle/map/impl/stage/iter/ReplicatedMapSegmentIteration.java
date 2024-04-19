@@ -36,6 +36,7 @@ import static net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIter
 import static net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration.EntriesToTest.PRESENT;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentIteration<K, V, R>
         implements ReplicatedIterationContext<K, V, R>, ReplicableEntry,
         ReplicatedHashSegmentContext<K, MapEntry<K, V>> {

@@ -200,11 +200,13 @@ public class EntryCountMapTest {
                              getSharedMap(minSize, segments, maxKeySize)) {
                     f = map.file();
                     testEntriesMaxSize0(segments, minSize, maxSize, seed, stride, map);
+                } catch (Throwable e) {
+                    // ignored
                 } finally {
                     if (f != null && f.exists())
                         f.delete();
-                    return null;
                 }
+                return null;
             }
         });
 

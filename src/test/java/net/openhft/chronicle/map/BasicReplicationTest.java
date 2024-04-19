@@ -35,6 +35,7 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class BasicReplicationTest {
 
     private static byte asByte(final int i) {

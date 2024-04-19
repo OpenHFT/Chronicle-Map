@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.io.ClosedIllegalStateException;
 /**
  * Thrown when a {@link ChronicleHash} is accessed after {@link ChronicleHash#close()}.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class ChronicleHashClosedException extends ClosedIllegalStateException {
     private static final long serialVersionUID = 0L;
 

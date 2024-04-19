@@ -36,7 +36,7 @@ class LoopHelpers {
 
     /**
      * generates 32 bit pseudo-random numbers.
-     * Adapted from http://www.snippets.org
+     * Adapted from <a href="http://www.snippets.org">...</a>
      */
     public static int compute1(int x) {
         int lo = 16807 * (x & 0xFFFF);

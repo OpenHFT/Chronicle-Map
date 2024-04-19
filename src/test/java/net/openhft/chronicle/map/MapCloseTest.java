@@ -27,6 +27,7 @@ import java.util.concurrent.Semaphore;
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
 import static net.openhft.chronicle.map.ChronicleMap.of;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class MapCloseTest {
 
     @Test

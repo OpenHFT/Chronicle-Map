@@ -37,6 +37,7 @@ import java.util.*;
  * linux "shuf" to randomize entries.
  */
 
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class MapCheck {
     static final String MISSING = "MISSING";
     static final LoopHelpers.SimpleRandom srng = new LoopHelpers.SimpleRandom();

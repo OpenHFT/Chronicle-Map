@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import static net.openhft.chronicle.hash.serialization.SizeMarshaller.constant;
 import static net.openhft.chronicle.hash.serialization.SizeMarshaller.stopBit;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class SerializationBuilder<T> implements Cloneable {
 
     public final Class<T> tClass;

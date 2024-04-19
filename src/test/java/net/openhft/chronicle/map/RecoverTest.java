@@ -164,6 +164,7 @@ public class RecoverTest {
                 .of(Integer.class, LongValue.class)
                 .entries(1)
                 .recoverPersistedTo(file, true, corruptionListener)) {
+            assertNotNull(ignore);
         }
         assertTrue(corruptionCounter.get() > 0);
     }

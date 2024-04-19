@@ -31,6 +31,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * These code fragments will appear in an article on OpenHFT. These tests to ensure that the examples compile
@@ -64,6 +65,7 @@ public class OpenJDKAndHashMapExamplesTest {
         BondVOInterface bondVO = Values.newNativeReference(BondVOInterface.class);
         try (net.openhft.chronicle.core.io.Closeable c =
                      chm.acquireContext("369604103", bondVO)) {
+            assertNotNull(c);
             bondVO.setIssueDate(parseYYYYMMDD("20130915"));
             bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
             bondVO.setCoupon(5.0 / 100); // 5.0%
@@ -102,6 +104,7 @@ public class OpenJDKAndHashMapExamplesTest {
         BondVOInterface bond = Values.newNativeReference(BondVOInterface.class);
         // lookup the key and give me a reference I can update in a thread safe way.
         try (Closeable c = chm.acquireContext("369604103", bond)) {
+            assertNotNull(c);
             // found a key and bond has been set
             // get directly without touching the rest of the record.
             long _matDate = bond.getMaturityDate();

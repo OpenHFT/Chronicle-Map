@@ -24,6 +24,7 @@ import net.openhft.chronicle.hash.serialization.SizedWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class BooleanMarshaller
         implements SizedReader<Boolean>, BytesReader<Boolean>,
         SizedWriter<Boolean>, BytesWriter<Boolean>, EnumMarshallable<BooleanMarshaller> {

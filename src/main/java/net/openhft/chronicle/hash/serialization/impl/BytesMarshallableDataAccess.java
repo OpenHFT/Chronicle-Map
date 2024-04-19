@@ -27,6 +27,7 @@ import java.lang.reflect.Type;
 
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class BytesMarshallableDataAccess<T extends BytesMarshallable>
         extends InstanceCreatingMarshaller<T> implements DataAccess<T>, Data<T> {
 

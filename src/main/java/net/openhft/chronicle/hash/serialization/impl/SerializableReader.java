@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class SerializableReader<T extends Serializable> implements SizedReader<T>, BytesReader<T> {
 
     @NotNull

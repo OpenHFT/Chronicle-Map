@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         implements MapEntry<K, V> {
 

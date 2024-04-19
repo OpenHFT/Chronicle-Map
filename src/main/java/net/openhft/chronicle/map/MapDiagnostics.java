@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import java.io.File;
 import java.io.IOException;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class MapDiagnostics {
 
     private MapDiagnostics() {

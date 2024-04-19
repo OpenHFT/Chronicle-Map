@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T> {
 
     /**

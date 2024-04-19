@@ -26,6 +26,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class CharSequenceSizedReader implements SizedReader<CharSequence>,
         StatefulCopyable<CharSequenceSizedReader>, ReadResolvable<CharSequenceSizedReader> {
 

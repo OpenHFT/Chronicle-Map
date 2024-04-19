@@ -58,7 +58,7 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
 
-@SuppressWarnings("JavadocReference")
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class VanillaChronicleMap<K, V, R>
         extends VanillaChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>, ExternalMapQueryContext<K, V, ?>>
         implements AbstractChronicleMap<K, V> {

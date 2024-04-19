@@ -47,6 +47,7 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedRandomDataInputAcce
  *
  * @param <T> type of the accessed objects
  */
+@SuppressWarnings("rawtypes")
 public interface Data<T> {
 
     /**

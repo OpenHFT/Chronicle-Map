@@ -34,6 +34,7 @@ import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry {
 
     @StageRef

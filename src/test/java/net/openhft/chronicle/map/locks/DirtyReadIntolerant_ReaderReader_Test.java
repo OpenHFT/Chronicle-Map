@@ -74,7 +74,7 @@ public class DirtyReadIntolerant_ReaderReader_Test {
                                 " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadIntolerant calling chm.get('369604101').getCoupon()"
                 );
-                bond = (BondVOInterface) chm.get("369604101");
+                bond = chm.get("369604101");
                 coupon = bond.getCoupon();
                 System.out.println(
                         "                             " +
@@ -104,8 +104,8 @@ public class DirtyReadIntolerant_ReaderReader_Test {
                 );
 
             }
-            /**
-             *  ben.cotton@rutgers.edu   END
+            /*
+               ben.cotton@rutgers.edu   END
              */
             System.out.println(
                     "                             " +

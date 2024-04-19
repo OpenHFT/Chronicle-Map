@@ -12,6 +12,7 @@ import net.openhft.chronicle.wire.channel.ChronicleContext;
 
 import java.io.IOException;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class MapHandler<VALUE, REPLY> extends AbstractHandler<MapHandler<VALUE, REPLY>> {
     protected MapService<VALUE, REPLY> mapService;
     private String mapName;
@@ -33,6 +34,7 @@ public class MapHandler<VALUE, REPLY> extends AbstractHandler<MapHandler<VALUE, 
             mapService.map(map);
             mapService.reply(REPLY);
             try (AffinityLock lock = context.affinityLock()) {
+                assert lock != null;
                 channel.eventHandlerAsRunnable(mapService).run();
             }
 

@@ -35,6 +35,7 @@ import java.util.Map;
 import static com.google.common.collect.testing.MapTestSuiteBuilder.using;
 import static com.google.common.collect.testing.features.MapFeature.*;
 
+@SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class GuavaTest extends TestCase {
 
     public static Test suite() {

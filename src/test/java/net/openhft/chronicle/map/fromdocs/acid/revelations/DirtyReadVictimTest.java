@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class DirtyReadVictimTest {
 
     @Before
@@ -55,7 +56,7 @@ public class DirtyReadVictimTest {
                         " ,,@t=" + System.currentTimeMillis() +
                                 " DirtyReadVictim calling chm.get('369604101').getCoupon()"
                 );
-                bond = (BondVOInterface) chm.get("369604101");
+                bond = chm.get("369604101");
                 coupon = bond.getCoupon();
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +

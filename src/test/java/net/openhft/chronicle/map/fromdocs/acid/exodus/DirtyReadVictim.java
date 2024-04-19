@@ -9,6 +9,7 @@ import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class DirtyReadVictim implements Runnable {
     private int isoLevel = ChronicleAcidIsolation.LOWEST_LATENCY;
     private ChronicleMap chm;
@@ -26,8 +27,8 @@ public class DirtyReadVictim implements Runnable {
         Scanner sc = new Scanner(System.in);
         try {
 
-/**
- *  ben.cotton@rutgers.edu   START
+/*
+   ben.cotton@rutgers.edu   START
  */
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
@@ -78,8 +79,8 @@ public class DirtyReadVictim implements Runnable {
                 }
             }
 
-            /**
-             *  ben.cotton@rutgers.edu   END
+            /*
+               ben.cotton@rutgers.edu   END
              */
 
             System.out.println(
