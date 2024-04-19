@@ -196,6 +196,7 @@ public class BigData {
     }
 }
 
+@SuppressWarnings("serial")
 class BigDataStuff implements Externalizable {
     long x;
     StringBuilder y = new StringBuilder();

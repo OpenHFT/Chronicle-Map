@@ -74,6 +74,7 @@ import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.*;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class VanillaChronicleHash<K,
         C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         ECQ extends ExternalHashQueryContext<K>> extends AbstractCloseable

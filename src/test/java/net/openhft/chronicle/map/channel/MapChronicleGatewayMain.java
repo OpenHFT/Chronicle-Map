@@ -11,7 +11,7 @@ public class MapChronicleGatewayMain extends ChronicleGatewayMain {
         super(url, socketRegistry, SystemContext.INSTANCE);
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String... args) throws IOException {
         ChronicleGatewayMain.main();
     }
 }

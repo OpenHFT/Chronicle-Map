@@ -21,6 +21,7 @@ import net.openhft.chronicle.map.VanillaChronicleMap;
 import java.util.List;
 import java.util.function.BiFunction;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ChainingInterface extends ThreadLocalState {
 
     public abstract List<ChainingInterface> getContextChain();

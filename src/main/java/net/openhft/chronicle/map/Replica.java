@@ -28,6 +28,7 @@ import java.util.ArrayList;
 /**
  * @author Rob Austin.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public interface Replica extends Closeable {
 
     /**

@@ -28,6 +28,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
+@SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class ConstantSizeBySampleTest {
 
     @Test
@@ -111,6 +112,11 @@ public class ConstantSizeBySampleTest {
         }
 
         @Override
+        public int hashCode() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public void writeExternal(ObjectOutput out) throws IOException {
             out.write(data);
         }
@@ -129,6 +135,11 @@ public class ConstantSizeBySampleTest {
             if (!(obj instanceof SerializableData))
                 return false;
             return Arrays.equals(((SerializableData) obj).data, data);
+        }
+
+        @Override
+        public int hashCode() {
+            throw new UnsupportedOperationException();
         }
     }
 

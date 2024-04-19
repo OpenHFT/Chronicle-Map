@@ -231,6 +231,7 @@ public final class CanonicalRandomAccessFiles {
             try {
                 if (USE_EXCLUSIVE_LOCKING) {
                     try (FileLock ignored = fileChannel.lock()) {
+                        assert ignored != null;
                         fileIOAction.fileIOAction();
                     }
                 } else {

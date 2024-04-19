@@ -33,6 +33,7 @@ import static net.openhft.chronicle.values.ValueModel.$$NATIVE;
 /**
  * @author Rob Austin.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 class AbstractChronicleMapConverter<K, V> implements Converter {
 
     private final Map<K, V> map;

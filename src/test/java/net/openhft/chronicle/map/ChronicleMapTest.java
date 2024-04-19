@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.*;
 @org.junit.Ignore("flaky test see - https://teamcity.chronicle.software/repository/download/OpenHFT_ReleaseJob_ReleaseByArtifact/643179:id/ReleaseAutomation/projects/chronicle-map-runTests-1642011539698.log")
-@SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
+@SuppressWarnings({"rawtypes", "unchecked", "ResultOfMethodCallIgnored", "try"})
 public class ChronicleMapTest {
 
     static final LongValue ONE = Values.newHeapInstance(LongValue.class);

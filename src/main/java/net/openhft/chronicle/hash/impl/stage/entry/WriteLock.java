@@ -82,6 +82,7 @@ public class WriteLock implements InterProcessLock {
                 s.decrementUpdate();
                 s.incrementWrite();
                 s.setLocalLockState(WRITE_LOCKED);
+                break;
             case WRITE_LOCKED:
                 // do nothing
         }
@@ -146,6 +147,7 @@ public class WriteLock implements InterProcessLock {
                 s.decrementUpdate();
                 s.incrementWrite();
                 s.setLocalLockState(WRITE_LOCKED);
+                break;
             case WRITE_LOCKED:
                 // do nothing
         }

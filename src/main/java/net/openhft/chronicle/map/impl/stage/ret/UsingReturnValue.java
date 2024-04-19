@@ -22,6 +22,7 @@ import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class UsingReturnValue<V> implements UsableReturnValue<V> {
 
     private V usingReturnValue = (V) USING_RETURN_VALUE_UNINIT;

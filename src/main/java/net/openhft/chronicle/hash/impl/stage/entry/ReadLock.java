@@ -29,6 +29,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.READ_LOCKED;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class ReadLock implements InterProcessLock {
 
     @StageRef

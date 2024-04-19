@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.hash.impl.util.Objects.requireNonNull;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
 
     // TODO quick and dirty. Think about how generic guava/koloboke equivalence interface could be

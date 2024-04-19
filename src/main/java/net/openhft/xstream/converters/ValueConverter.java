@@ -34,6 +34,7 @@ import java.util.NoSuchElementException;
 /**
  * @author Rob Austin.
  */
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class ValueConverter implements Converter {
 
     @Override

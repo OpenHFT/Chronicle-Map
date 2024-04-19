@@ -29,6 +29,7 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 import static net.openhft.chronicle.map.ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V>
         implements MapReplicableEntry<K, V> {
 

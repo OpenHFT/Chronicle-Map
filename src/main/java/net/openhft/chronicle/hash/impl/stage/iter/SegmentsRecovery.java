@@ -31,6 +31,7 @@ import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class SegmentsRecovery implements IterationContext {
 
     @StageRef

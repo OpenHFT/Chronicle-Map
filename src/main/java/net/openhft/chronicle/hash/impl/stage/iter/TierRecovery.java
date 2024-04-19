@@ -35,6 +35,7 @@ import net.openhft.sg.Staged;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.*;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class TierRecovery {
 
     @StageRef

@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class ByteBufferSizedReader
         implements SizedReader<ByteBuffer>, EnumMarshallable<ByteBufferSizedReader> {
     public static final ByteBufferSizedReader INSTANCE = new ByteBufferSizedReader();

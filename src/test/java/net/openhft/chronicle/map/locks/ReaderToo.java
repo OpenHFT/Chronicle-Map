@@ -13,8 +13,8 @@ class ReaderToo implements Runnable {
             String isoLevel = "READER_TOO";
             long sleepMock = Long.parseLong("0");
             long holdTime = Long.parseLong("20");
-            /**
-             *  ben.cotton@rutgers.edu   START
+            /*
+               ben.cotton@rutgers.edu   START
              */
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
@@ -90,8 +90,8 @@ class ReaderToo implements Runnable {
                 );
 
             }
-            /**
-             *  ben.cotton@rutgers.edu   END
+            /*
+               ben.cotton@rutgers.edu   END
              */
 
             System.out.println(

@@ -41,6 +41,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class DefaultValueTest {
 
     @Test

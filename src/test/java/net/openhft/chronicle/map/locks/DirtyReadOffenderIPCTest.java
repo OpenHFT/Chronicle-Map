@@ -49,12 +49,12 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                     "..... @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender awakening "
             );
-            /**
-             *  ben.cotton@rutgers.edu  ... anticipate Chronicle (www.OpenHFT.net)
-             *  providing a j.u.c.l.StampedLock API for off-heap enthusiasts
-             * <p>
-             *  START
-             *
+            /*
+               ben.cotton@rutgers.edu  ... anticipate Chronicle (www.OpenHFT.net)
+               providing a j.u.c.l.StampedLock API for off-heap enthusiasts
+              <p>
+               START
+
              */
             long stamp = 0;
             System.out.println(
@@ -98,11 +98,11 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                                 "offHeapLock.unlockWrite(" + stamp + ");"
                 );
             }
-            /**
-             *  ben.cotton@rutgers.edu
-             * <p>
-             *  END
-             *
+            /*
+               ben.cotton@rutgers.edu
+              <p>
+               END
+
              */
         } catch (Exception throwables) {
             throwables.printStackTrace();

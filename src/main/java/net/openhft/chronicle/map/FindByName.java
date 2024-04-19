@@ -24,6 +24,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author Rob Austin.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 interface FindByName {
 
     /**

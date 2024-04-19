@@ -21,6 +21,7 @@ import net.openhft.chronicle.core.Maths;
 import static net.openhft.chronicle.algo.MemoryUnit.BITS;
 import static net.openhft.chronicle.algo.MemoryUnit.BYTES;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class CompactOffHeapLinearHashTable {
     // to fit 64 bits per slot.
     public static final int MAX_TIER_CHUNKS = 1 << 30;

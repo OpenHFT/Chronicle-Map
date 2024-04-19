@@ -69,6 +69,7 @@ Percentile   run1         run2         run3         run4         run5      % Var
 worst:        8249.34       625.66       318.98        70.53        91.26        83.99
  */
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class PerfMapHandlerMain implements JLBHTask {
     static final int THROUGHPUT = Integer.getInteger("throughput", 100_000);
     static final int KEYS = Integer.getInteger("keys", THROUGHPUT);
@@ -161,6 +162,7 @@ public class PerfMapHandlerMain implements JLBHTask {
         });
         readerThread = new Thread(() -> {
             try (AffinityLock lock = AffinityLock.acquireLock()) {
+                assert lock != null;
                 while (!Thread.currentThread().isInterrupted()) {
                     reader.readOne();
                 }

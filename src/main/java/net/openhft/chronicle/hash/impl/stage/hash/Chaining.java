@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class Chaining extends ChainingInterface {
 
     public final List<ChainingInterface> contextChain;

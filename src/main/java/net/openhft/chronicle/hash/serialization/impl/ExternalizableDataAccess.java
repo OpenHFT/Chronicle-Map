@@ -30,6 +30,7 @@ import java.io.ObjectOutputStream;
 
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class ExternalizableDataAccess<T extends Externalizable> extends SerializableDataAccess<T> {
 
     /**

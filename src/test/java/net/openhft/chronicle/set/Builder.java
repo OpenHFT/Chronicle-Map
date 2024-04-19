@@ -26,6 +26,7 @@ import java.util.Map;
 /**
  * @author Rob Austin.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Builder {
 
     public static final int SIZE = 10_000;
@@ -46,6 +47,7 @@ public class Builder {
             file.setWritable(true);//just in case relative path was used.
             try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
                 //allows closing the file access on windows. forcing to close access. Only works for admin-access.
+                assert raf != null;
             }
         }
 

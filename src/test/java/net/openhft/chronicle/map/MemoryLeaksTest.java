@@ -19,6 +19,7 @@ package net.openhft.chronicle.map;
 import com.google.common.collect.Lists;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
 import net.openhft.chronicle.hash.impl.util.CleanerUtils;
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
 @RunWith(Parameterized.class)
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class MemoryLeaksTest {
 
     /**
@@ -171,7 +173,7 @@ public class MemoryLeaksTest {
                         expectedNativeMemory, nativeMemoryUsed());
             } finally {
                 tryCloseFromContext(map);
-                map.close();
+                Closeable.closeQuietly(map);
             }
 
             if (closeWithinContext) {

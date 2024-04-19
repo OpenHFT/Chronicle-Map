@@ -25,6 +25,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 import static net.openhft.chronicle.map.fromdocs.Point.of;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class PointSerializationTest {
 
     @Test

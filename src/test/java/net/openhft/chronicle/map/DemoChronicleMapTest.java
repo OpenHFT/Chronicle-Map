@@ -111,6 +111,7 @@ public class DemoChronicleMapTest {
 
                 try (net.openhft.chronicle.core.io.Closeable c =
                              map.acquireContext(key, value)) {
+                    assertNotNull(c);
                     value.setSymbol("IBM-" + i);
                     value.addAtomicOrderQty(1000);
                 }

@@ -30,6 +30,7 @@ import net.openhft.sg.Staged;
 import org.jetbrains.annotations.Nullable;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>
         implements MapRemoteQueryContext<K, V, R>, SetRemoteQueryContext<K, R>,
         ReplicableEntry, MapReplicableEntry<K, V>, SetReplicableEntry<K> {

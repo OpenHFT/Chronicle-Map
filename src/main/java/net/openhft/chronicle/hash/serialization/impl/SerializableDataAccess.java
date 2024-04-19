@@ -30,6 +30,7 @@ import java.io.*;
 
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class SerializableDataAccess<T extends Serializable> extends AbstractData<T>
         implements DataAccess<T> {
 

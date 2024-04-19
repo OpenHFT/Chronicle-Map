@@ -154,6 +154,7 @@ interface IBean {
  * This test enumerates common use cases for keys and values.
  */
 @RunWith(value = Parameterized.class)
+@SuppressWarnings({"rawtypes", "unchecked", "try"})
 public class CHMUseCasesTest {
 
     private final TypeOfMap typeOfMap;
@@ -1195,6 +1196,7 @@ public class CHMUseCasesTest {
         }
     }
 
+    @SuppressWarnings("cast")
     @Test
     public void testByteBufferDirectByteBufferMap()
             throws IOException {
@@ -1211,9 +1213,9 @@ public class CHMUseCasesTest {
             final ByteBuffer key1 = useOnHeapKey
                     ? ByteBuffer.wrap(new byte[]{1, 1, 1, 1})
 
-                    : ((ByteBuffer) ByteBuffer.allocateDirect(4)
+                    : ((ByteBuffer) (ByteBuffer.allocateDirect(4)
                     .put(new byte[]{1, 1, 1, 1})
-                    .flip())
+                    .flip()))
                     .asReadOnlyBuffer();
 
             final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
@@ -2634,6 +2636,7 @@ public class CHMUseCasesTest {
         int addValue(int addition);
     }
 
+    @SuppressWarnings("serial")
     static class PrefixStringFunction implements SerializableFunction<String, String> {
         private final String prefix;
 
@@ -2653,11 +2656,17 @@ public class CHMUseCasesTest {
         }
 
         @Override
+        public int hashCode() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
         public String toString() {
             return prefix;
         }
     }
 
+    @SuppressWarnings("serial")
     private static class StringPrefixUnaryOperator
             implements BiFunction<String, String, String>, Serializable {
 

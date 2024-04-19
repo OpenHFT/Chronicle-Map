@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Rob Austin.
  */
+@SuppressWarnings({"rawtypes", "unchecked", "try"})
 public class ChronicleMapImportExportTest {
 
     public static final String TMP = OS.getTarget();

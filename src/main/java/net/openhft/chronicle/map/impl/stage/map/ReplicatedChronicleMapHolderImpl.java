@@ -29,6 +29,7 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.Staged;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedChronicleMapHolderImpl<K, V, R>
         extends Chaining
         implements ReplicatedChronicleMapHolder<K, V, R> {

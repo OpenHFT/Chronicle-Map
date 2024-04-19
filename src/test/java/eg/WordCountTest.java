@@ -35,6 +35,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.reducing;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class WordCountTest {
 
@@ -72,6 +73,7 @@ public class WordCountTest {
 
             for (String word : words) {
                 try (Closeable ignored = map.acquireContext(word, v)) {
+                    assertNotNull(ignored);
                     v.addValue(1);
                 }
             }

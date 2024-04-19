@@ -28,6 +28,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class IntegerDataAccess_3_13 extends AbstractData<Integer>
         implements DataAccess<Integer>, Data<Integer> {
 

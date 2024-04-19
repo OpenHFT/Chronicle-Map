@@ -28,6 +28,7 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class LongDataAccess extends AbstractData<Long>
         implements DataAccess<Long>, Data<Long> {
 

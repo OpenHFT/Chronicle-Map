@@ -25,6 +25,7 @@ import java.util.Map;
 /**
  * @author Rob Austin.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class VanillaChronicleMapConverter<K, V> extends AbstractChronicleMapConverter<K, V> {
 
     public VanillaChronicleMapConverter(@NotNull Map<K, V> map) {

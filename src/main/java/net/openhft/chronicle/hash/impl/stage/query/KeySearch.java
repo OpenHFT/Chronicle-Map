@@ -30,6 +30,7 @@ import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class KeySearch<K> {
 
     @StageRef

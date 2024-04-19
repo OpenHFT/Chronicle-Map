@@ -25,6 +25,7 @@ import java.nio.channels.FileLock;
 /**
  *
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class StateMachineData implements Byteable {
     private BytesStore<?, ?> bs;
     private long offset;

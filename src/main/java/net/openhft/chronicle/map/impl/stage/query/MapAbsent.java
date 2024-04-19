@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
 @Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class MapAbsent<K, V> implements Absent<K, V> {
 
     @StageRef

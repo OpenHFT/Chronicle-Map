@@ -29,6 +29,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class NestedContextsTest {
 
     private static void verifyGraphConsistent(ChronicleMap<Integer, Set<Integer>> graph) {

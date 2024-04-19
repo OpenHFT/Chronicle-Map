@@ -40,6 +40,7 @@ import java.io.IOException;
  * @see ChronicleSet
  * @see ChronicleMapBuilder
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class ChronicleSetBuilder<K>
         implements ChronicleHashBuilder<K, ChronicleSet<K>, ChronicleSetBuilder<K>> {
 

@@ -30,6 +30,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class PortfolioValueTest {
     private static final boolean useIterator = true;
     private static final long nAssets = 10_000_000;

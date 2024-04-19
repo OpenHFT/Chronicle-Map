@@ -22,6 +22,7 @@ import static net.openhft.chronicle.assertions.AssertUtil.SKIP_ASSERTIONS;
 import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertAddress;
 import static net.openhft.chronicle.map.internal.InternalAssertUtil.assertPosition;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class IntCompactOffHeapLinearHashTable extends CompactOffHeapLinearHashTable {
 
     private static final long SCALE = 4L;

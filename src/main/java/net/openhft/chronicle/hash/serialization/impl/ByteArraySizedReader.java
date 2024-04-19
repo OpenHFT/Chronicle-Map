@@ -22,6 +22,7 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public final class ByteArraySizedReader
         implements SizedReader<byte[]>, EnumMarshallable<ByteArraySizedReader> {
 

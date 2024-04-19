@@ -23,6 +23,7 @@ import java.io.ObjectOutput;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("serial")
 public class SomeClass implements Externalizable {
 
     final List<String> hits = new ArrayList<>();

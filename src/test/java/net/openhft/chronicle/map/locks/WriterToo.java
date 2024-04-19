@@ -98,11 +98,11 @@ class WriterToo implements Runnable {
                                 "offHeapLock.unlockWrite(" + stamp + ");"
                 );
             }
-            /**
-             *  ben.cotton@rutgers.edu
-             * <p>
-             *  END
-             *
+            /*
+               ben.cotton@rutgers.edu
+              <p>
+               END
+
              */
             chm.close();
             offHeapLock.closeChronicle();
