@@ -132,7 +132,8 @@ Another example shows how to serialize `CharSequence`s using custom encoding (ra
 Writer:
 
 ```java
-import java.nio.CharBuffer;public final class CharSequenceCustomEncodingBytesWriter
+import java.nio.CharBuffer;
+public final class CharSequenceCustomEncodingBytesWriter
         implements BytesWriter<CharSequence>,
         StatefulCopyable<CharSequenceCustomEncodingBytesWriter> {
 
