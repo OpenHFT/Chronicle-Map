@@ -276,7 +276,6 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
-                    <forkMode>once</forkMode>
                 </configuration>
             </plugin>
 
