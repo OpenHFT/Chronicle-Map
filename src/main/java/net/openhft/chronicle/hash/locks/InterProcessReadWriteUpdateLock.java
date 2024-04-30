@@ -53,7 +53,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  * ExternalHashQueryContext} query, you shouldn't keep this peculiarity in mind, because {@link
  * ExternalHashQueryContext#close()} handles unlocking for you.
  * <p>
- * Any downgrades ("desaturations") are possible, but only update -> write upgrade is allowed.
+ * Any downgrades ("desaturations") are possible, but only update -&gt; write upgrade is allowed.
  * This is so to prevent dead locks: for example, imagine, that two threads came and acquired read
  * locks, and then both try to upgrade to write lock, blocking each other indefinitely.
  * <p>

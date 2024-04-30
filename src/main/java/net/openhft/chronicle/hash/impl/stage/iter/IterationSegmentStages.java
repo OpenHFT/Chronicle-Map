@@ -36,7 +36,7 @@ public abstract class IterationSegmentStages extends SegmentStages {
     HashLookupSearch hls;
 
     /**
-     * During iteration, nextTier() is called in doReplaceValue() -> relocation() -> alloc().
+     * During iteration, nextTier() is called in doReplaceValue() -&gt; relocation() -&gt; alloc().
      * When the entry is relocated to the next tier, an entry should be inserted into hash
      * lookup. To insert an entry into hashLookup, should 1) locate empty slot, see {@link
      * KeySearch#initKeySearch()}, and 2) know the part of the hash code to insert, we know

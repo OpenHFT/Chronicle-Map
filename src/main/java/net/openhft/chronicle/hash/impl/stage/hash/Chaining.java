@@ -89,12 +89,12 @@ public abstract class Chaining extends ChainingInterface {
      * (hence a thread local context created), is alive.
      * <p>
      * The chain of strong references:
-     * 1) Thread ->
-     * 2) ThreadLocalMap ->
+     * 1) Thread -&gt;
+     * 2) ThreadLocalMap -&gt;
      * 3) Entry with ThreadLocal {@link net.openhft.chronicle.map.VanillaChronicleMap#cxt} as weak
      * referent and a context (e. g. {@link net.openhft.chronicle.map.impl.CompiledMapQueryContext})
-     * as value (a simple field, not a weak reference!) ->
-     * 4) final reference to the owner {@link VanillaChronicleMap} ->
+     * as value (a simple field, not a weak reference!) -&gt;
+     * 4) final reference to the owner {@link VanillaChronicleMap} -&gt;
      * 5) ThreadLocal {@link net.openhft.chronicle.map.VanillaChronicleMap#cxt} (a strong reference
      * this time! note that this ThreadLocal is an instance field of VanillaChronicleMap)
      * <p>
