@@ -787,6 +787,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V getUsing(final K key, final V usingValue) {
+        Objects.requireNonNull(key);
         throwExceptionIfClosed();
 
         return defaultEntryOperationsAndMethods
@@ -803,7 +804,8 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
-    public V acquireUsing(@NotNull final K key, final V usingValue) {
+    public V acquireUsing(final K key, final V usingValue) {
+        Objects.requireNonNull(key);
         throwExceptionIfClosed();
 
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
@@ -818,7 +820,9 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
-    public V putIfAbsent(@NotNull final K key, final V value) {
+    public V putIfAbsent(final K key, final V value) {
+        Objects.requireNonNull(key);
+
         throwExceptionIfClosed();
 
         checkValue(value);
@@ -829,7 +833,8 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
-    public boolean remove(@NotNull final Object key, final Object value) {
+    public boolean remove(final Object key, final Object value) {
+        Objects.requireNonNull(key);
         throwExceptionIfClosed();
 
         if (value == null)
@@ -841,9 +846,10 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
-    public boolean replace(@NotNull final K key,
-                           @NotNull final V oldValue,
-                           @NotNull final V newValue) {
+    public boolean replace(final K key,
+                           final V oldValue,
+                           final V newValue) {
+        Objects.requireNonNull(key);
         throwExceptionIfClosed();
 
         checkValue(oldValue);
@@ -870,7 +876,8 @@ public class VanillaChronicleMap<K, V, R>
     }
 
     @Override
-    public V replace(@NotNull final K key, @NotNull final V value) {
+    public V replace(final K key, final V value) {
+        Objects.requireNonNull(key);
         throwExceptionIfClosed();
 
         checkValue(value);
@@ -891,6 +898,7 @@ public class VanillaChronicleMap<K, V, R>
 
     @Override
     public V put(final K key, final V value) {
+        Objects.requireNonNull(key);
         throwExceptionIfClosed();
 
         checkValue(value);

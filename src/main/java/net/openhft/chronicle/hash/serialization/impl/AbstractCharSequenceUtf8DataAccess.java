@@ -26,6 +26,8 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
 abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extends AbstractData<T>
@@ -49,8 +51,8 @@ abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extend
     }
 
     @Override
-    public Data<T> getData(@NotNull T cs) {
-        this.cs = cs;
+    public Data<T> getData(T cs) {
+        this.cs = Objects.requireNonNull(cs);
         bytes.clear();
         BytesUtil.appendUtf8(bytes, cs);
         return this;

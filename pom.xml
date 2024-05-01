@@ -225,13 +225,13 @@
             <artifactId>jsonassert</artifactId>
             <scope>test</scope>
         </dependency>
-
+<!--
         <dependency>
             <groupId>net.openhft</groupId>
             <artifactId>stage-compiler</artifactId>
             <version>1.11</version>
             <scope>provided</scope>
-        </dependency>
+        </dependency>-->
     </dependencies>
 
     <build>
