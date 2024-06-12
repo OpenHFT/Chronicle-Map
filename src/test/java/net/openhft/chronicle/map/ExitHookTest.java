@@ -19,7 +19,9 @@ package net.openhft.chronicle.map;
 import com.google.common.base.Preconditions;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.testframework.process.JavaProcessBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,6 +29,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
@@ -174,6 +177,36 @@ public class ExitHookTest {
         }
 
         waitForShutdownConfirmation(shutdownActionConfirmationFile, USER_SHUTDOWN_HOOK_EXECUTED, process);
+    }
+
+    @Test
+    public void testSerialization1() throws Exception {
+        File mapFile = folder.newFile();
+        ChronicleMap<Integer, Integer> expected = createMapBuilder()
+                .skipCloseOnExitHook(true)
+                .createPersistedTo(mapFile);
+        ChronicleMap<Integer, Integer> actual = createMapBuilder()
+                .createPersistedTo(mapFile);
+        Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
+        assertEquals(skipCloseOnExitHook.get(expected), skipCloseOnExitHook.get(actual));
+    }
+
+    @Test
+    public void testSerialization2() throws Exception {
+        File mapFile = folder.newFile();
+        ChronicleMap<Integer, Integer> expected = createMapBuilder()
+                .createPersistedTo(mapFile);
+        expected.close();
+        ChronicleMap<Integer, Integer> actual = createMapBuilder()
+                .createPersistedTo(mapFile);
+        Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
+        assertEquals(false, skipCloseOnExitHook.get(actual));
+    }
+
+    private static @NotNull Field getPrivateField(Class<?> aClass, String fieldName) throws NoSuchFieldException {
+        Field field = aClass.getDeclaredField(fieldName);
+        field.setAccessible(true);
+        return field;
     }
 
     private void waitForLockingConfirmation(File lockingConfirmationFile) throws IOException {

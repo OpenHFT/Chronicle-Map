@@ -16,7 +16,6 @@
 
 package net.openhft.chronicle.hash.impl;
 
-import java.nio.file.Files;
 import net.openhft.chronicle.algo.locks.*;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
@@ -56,6 +55,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.FileStore;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -99,7 +99,7 @@ public abstract class VanillaChronicleHash<K,
     private static final long GLOBAL_MUTABLE_STATE_LOCK_OFFSET = 0L;
     private static final long GLOBAL_MUTABLE_STATE_VALUE_OFFSET = 8L;
     private final Runnable preShutdownAction;
-    private final boolean skipCloseOnExitHook;
+    private boolean skipCloseOnExitHook;
     /////////////////////////////////////////////////
     // If the hash was created in the first place, or read from disk
     public transient boolean createdOrInMemory;
@@ -300,6 +300,7 @@ public abstract class VanillaChronicleHash<K,
         tierBulkInnerOffsetToTiers = wireIn.read("tierBulkInnerOffsetToTiers").int64();
         tiersInBulk = wireIn.read("tiersInBulk").int64();
         log2TiersInBulk = wireIn.read("log2TiersInBulk").int32();
+        skipCloseOnExitHook = wireIn.read("skipCloseOnExitHook").bool();
     }
 
     @Override
@@ -345,6 +346,7 @@ public abstract class VanillaChronicleHash<K,
         wireOut.write("tierBulkInnerOffsetToTiers").int64(tierBulkInnerOffsetToTiers);
         wireOut.write("tiersInBulk").int64(tiersInBulk);
         wireOut.write("log2TiersInBulk").int32(log2TiersInBulk);
+        wireOut.write("skipCloseOnExitHook").bool(skipCloseOnExitHook);
     }
 
     protected VanillaGlobalMutableState createGlobalMutableState() {

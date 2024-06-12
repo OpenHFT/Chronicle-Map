@@ -269,7 +269,7 @@ There are three pairs of serialization interfaces. Only one of them should be ch
  section for some non-trivial example of implementing these methods. See also https://github.com/OpenHFT/Chronicle-Wire#using-wire[Wire tutorial].
 
  9. Don't forget to initialize transient/cache/state fields of the instance in the end of
- `readMarshallable()` implementation. This is needed, because fefore calling `readMarshallable()`,
+`readMarshallable()` implementation. This is needed, because before calling `readMarshallable()`,
  Wire framework creates a serializer instance by means of `Unsafe.allocateInstance()` rather than
  calling any constructor.
 
