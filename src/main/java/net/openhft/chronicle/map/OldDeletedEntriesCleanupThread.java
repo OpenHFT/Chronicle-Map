@@ -114,8 +114,9 @@ class OldDeletedEntriesCleanupThread extends Thread
     public void run() {
         throwExceptionIfClosed();
 
-        if (System.currentTimeMillis() - startTime < 1_000)
-            return;
+        long runningTime = System.currentTimeMillis() - startTime;
+        if (runningTime < 1_000)
+            sleepMillis(1_000 - runningTime);
 
         while (!shutdown) {
             int nextSegmentIndex;

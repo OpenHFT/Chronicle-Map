@@ -69,6 +69,7 @@ public class MemoryLeaksTest {
         builder = ChronicleMap
                 .of(IntValue.class, String.class).constantKeySizeBySample(Values.newHeapInstance(IntValue.class))
                 .valueReaderAndDataAccess(new CountedStringReader(this), new StringUtf8DataAccess());
+        builder.cleanupRemovedEntries(false);
         if (replicated)
             builder.replication((byte) 1);
         builder.entries(1).averageValueSize(10);
