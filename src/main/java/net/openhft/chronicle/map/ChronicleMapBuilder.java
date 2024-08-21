@@ -213,6 +213,7 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean aligned64BitMemoryOperationsAtomic = OS.is64Bit();
     private ChecksumEntries checksumEntries = ChecksumEntries.IF_PERSISTED;
     private boolean putReturnsNull = false;
+    private boolean putIfAbsentUsingValue = false;
     private boolean removeReturnsNull = false;
     private boolean replicated;
     private boolean persisted;
@@ -1259,6 +1260,38 @@ public final class ChronicleMapBuilder<K, V> implements
 
     boolean putReturnsNull() {
         return putReturnsNull;
+    }
+
+    /**
+     * Configures if the maps created by this {@code ChronicleMapBuilder} should reuse the supplied value
+     * to return the previous mapped values on {@link ChronicleMap#putIfAbsent(Object, Object)
+     * ChornicleMap.putIfAbsent(key, value)} calls. <b>It is important to note that if a mapped value is present
+     * for the supplied key, the supplied value will be overridden. </b>
+     * <p>
+     * {@link Map#putIfAbsent(Object, Object) Map.putIfAbsent()} returns the previous value, functionality
+     * which is rarely used but fairly cheap for simple in-process, on-heap implementations like
+     * {@link HashMap}. But an off-heap collection has to create a new object and deserialize
+     * the data from off-heap memory. A collection hiding remote queries over the network should
+     * send the value back in addition to that. It's expensive for something you probably don't use.
+     * <p>
+     * This is a <a href="#jvm-configurations">JVM-level configuration</a>.
+     * <p>
+     * By default, {@code ChronicleMap} conforms the general {@code Map} contract and returns the
+     * previous mapped value on {@code putIfAbsent()} calls and does not change the supplied value.
+     *
+     * @param putIfAbsentUsingValue {@code true} if you want {@link ChronicleMap#putIfAbsent(Object, Object)
+     *                       ChronicleMap.putIfAbsent()} to not return the value that was replaced but
+     *                       instead return {@code null}
+     * @return this builder back
+     * @see #putReturnsNull(boolean)
+     */
+    public ChronicleMapBuilder<K, V> putIfAbsentUsingValue(final boolean putIfAbsentUsingValue) {
+        this.putIfAbsentUsingValue = putIfAbsentUsingValue;
+        return this;
+    }
+
+    boolean putIfAbsentUsingValue() {
+        return putIfAbsentUsingValue;
     }
 
     /**

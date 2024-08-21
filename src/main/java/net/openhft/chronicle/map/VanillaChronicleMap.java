@@ -85,6 +85,7 @@ public class VanillaChronicleMap<K, V, R>
     /////////////////////////////////////////////////
     // Behavior
     transient boolean putReturnsNull;
+    transient boolean putIfAbsentUsingValue;
     transient boolean removeReturnsNull;
     transient Set<Entry<K, V>> entrySet;
     transient ThreadLocal<ContextHolder> cxt;
@@ -171,6 +172,7 @@ public class VanillaChronicleMap<K, V, R>
     void initTransientsFromBuilder(@NotNull final ChronicleMapBuilder<K, V> builder) {
         name = builder.name();
         putReturnsNull = builder.putReturnsNull();
+        putIfAbsentUsingValue = builder.putIfAbsentUsingValue();
         removeReturnsNull = builder.removeReturnsNull();
         entryOperations = (MapEntryOperations<K, V, R>) builder.entryOperations;
         methods = (MapMethods<K, V, R>) builder.methods;
@@ -822,8 +824,16 @@ public class VanillaChronicleMap<K, V, R>
 
         checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
-            methods.putIfAbsent(q, q.inputValueDataAccess().getData(value), q.defaultReturnValue());
-            return q.defaultReturnValue().returnValue();
+
+            InstanceReturnValue<V> returnValue = null;
+            if (this.putIfAbsentUsingValue) {
+                q.usingReturnValue().initUsingReturnValue(value);
+                returnValue = q.usingReturnValue();
+            } else {
+                returnValue = q.defaultReturnValue();
+            }
+            methods.putIfAbsent(q, q.inputValueDataAccess().getData(value), returnValue);
+            return returnValue.returnValue();
         }
     }
 
