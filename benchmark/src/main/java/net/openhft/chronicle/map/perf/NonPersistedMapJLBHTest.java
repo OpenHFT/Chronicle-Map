@@ -24,6 +24,7 @@ import net.openhft.chronicle.jlbh.JLBH;
 import net.openhft.chronicle.jlbh.JLBHOptions;
 import net.openhft.chronicle.jlbh.JLBHTask;
 import net.openhft.chronicle.core.util.NanoSampler;
+import net.openhft.chronicle.jlbh.TeamCityHelper;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Array;
@@ -34,11 +35,12 @@ import java.io.File;
 
 public class NonPersistedMapJLBHTest implements JLBHTask {
     private static final int WARM_UP_ITERATIONS = 40_000;
+    private static final int ITERATIONS = 500_000;
     private ChronicleMap<Long, IFacade> read;
     private ChronicleMap<Long, IFacade> write;
     private NanoSampler readSampler;
     private NanoSampler writeSampler;
-    private NanoSampler e2eSampler;
+    private JLBH e2eSampler;
     private File mapFile = new File("perfmap/map.cm3");
     private long counter = -WARM_UP_ITERATIONS;
     private IFacade datum = Values.newNativeReference(IFacade.class);
@@ -47,7 +49,7 @@ public class NonPersistedMapJLBHTest implements JLBHTask {
         //Create the JLBH options you require for the benchmark
         JLBHOptions options = new JLBHOptions()
                 .warmUpIterations(WARM_UP_ITERATIONS)
-                .iterations(500_000)
+                .iterations(ITERATIONS)
                 .throughput(40_000)
                 .runs(3)
                 .recordOSJitter(false).accountForCoordinatedOmission(false)
@@ -97,6 +99,7 @@ public class NonPersistedMapJLBHTest implements JLBHTask {
     public void complete() {
         write.close();
         read.close();
+        TeamCityHelper.teamCityStatsLastRun(getClass().getSimpleName(), e2eSampler, ITERATIONS, System.out);
     }
 
     //IFacade (at the bottom) is the façade we need tested

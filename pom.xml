@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
 
@@ -7,7 +8,7 @@
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
         <version>1.27ea0</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <artifactId>chronicle-map</artifactId>
@@ -224,13 +225,6 @@
             <artifactId>jsonassert</artifactId>
             <scope>test</scope>
         </dependency>
-<!--
-        <dependency>
-            <groupId>net.openhft</groupId>
-            <artifactId>stage-compiler</artifactId>
-            <version>1.11</version>
-            <scope>provided</scope>
-        </dependency>-->
     </dependencies>
 
     <build>
@@ -346,7 +340,6 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-<!--                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>-->
                         </manifest>
                         <manifestEntries>
                             <X-Compile-Source-JDK>${maven.compiler.release}</X-Compile-Source-JDK>
@@ -354,7 +347,8 @@
                             <!--  See https://openjdk.java.net/jeps/261#Breaking-encapsulation-->
                             <!--Unfortunately, only works for the main jar which this is not likely to be-->
                             <Add-Opens>java.base/java.lang.reflect=ALL-UNNAMED</Add-Opens>
-                            <Add-Exports>java.base/jdk.internal.ref=ALL-UNNAMED java.base/sun.nio.ch=ALL-UNNAMED</Add-Exports>
+                            <Add-Exports>java.base/jdk.internal.ref=ALL-UNNAMED java.base/sun.nio.ch=ALL-UNNAMED
+                            </Add-Exports>
                             <Automatic-Module-Name>chronicle.map</Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
@@ -400,7 +394,8 @@
                             net.openhft.chronicle.hash.*
                         </Export-Package>
                         <Add-Opens>java.base/java.lang.reflect=ALL-UNNAMED</Add-Opens>
-                        <Add-Exports>java.base/jdk.internal.ref=ALL-UNNAMED java.base/sun.nio.ch=ALL-UNNAMED</Add-Exports>
+                        <Add-Exports>java.base/jdk.internal.ref=ALL-UNNAMED java.base/sun.nio.ch=ALL-UNNAMED
+                        </Add-Exports>
                         <Automatic-Module-Name>chronicle.map</Automatic-Module-Name>
                         <Implementation-Title>${project.name}</Implementation-Title>
                         <Implementation-Version>${project.version}</Implementation-Version>
@@ -524,6 +519,36 @@
                             <target>1.8</target>
                             <encoding>UTF-8</encoding>
                             <useIncrementalCompilation>false</useIncrementalCompilation>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>run-benchmarks</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-invoker-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <pom>benchmark/pom.xml</pom>
+                            <goals>clean,integration-test</goals>
+                            <profiles>
+                                <profile>run-benchmarks</profile>
+                            </profiles>
+                            <properties>
+                                <bytes.version>${project.version}</bytes.version>
+                                <skip.binary>true</skip.binary>
+                            </properties>
+                            <streamLogs>true</streamLogs>
                         </configuration>
                     </plugin>
                 </plugins>

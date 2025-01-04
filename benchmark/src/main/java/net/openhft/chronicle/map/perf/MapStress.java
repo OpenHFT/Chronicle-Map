@@ -15,8 +15,8 @@ public class MapStress {
     private static final File file = new File("./StressTested.cm3");
     private static final int N_WRITE_THREADS = 100;
     private static final int N_READ_THREADS = 20;
-    private ChronicleMap<String, Security> map = ChronicleMap.of(String.class, Security.class).averageKeySize(500).averageValueSize(500).entries(100_000).createOrRecoverPersistedTo(file);
-    private ChronicleMap<String, Security> readerMap = ChronicleMap.of(String.class, Security.class).averageKeySize(50).averageValueSize(500).entries(100_000).createOrRecoverPersistedTo(file);
+    private ChronicleMap<String, Security> map = ChronicleMap.of(String.class, Security.class).averageKeySize(500).averageValueSize(500).entries(100_000).createPersistedTo(file);
+    private ChronicleMap<String, Security> readerMap = ChronicleMap.of(String.class, Security.class).averageKeySize(50).averageValueSize(500).entries(100_000).createPersistedTo(file);
 
     private ExecutorService executor = Executors.newFixedThreadPool(N_WRITE_THREADS + N_READ_THREADS,
             new NamedThreadFactory("mapStress"));
@@ -30,6 +30,7 @@ public class MapStress {
         new MapStress().stress();
     }
 
+    @SuppressWarnings("rawtypes")
     public void stress() throws ExecutionException, InterruptedException {
         Security[] secs = new Security[5];
         secs[0] = new Security();
@@ -144,6 +145,7 @@ public class MapStress {
     }
 
     public static class Security implements Serializable {
+        private static final long serialVersionUID = 0L;
 
         String securityTicker;
         String securityType;

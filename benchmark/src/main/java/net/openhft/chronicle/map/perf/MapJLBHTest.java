@@ -26,6 +26,7 @@ import net.openhft.chronicle.core.util.NanoSampler;
 import net.openhft.chronicle.jlbh.JLBH;
 import net.openhft.chronicle.jlbh.JLBHOptions;
 import net.openhft.chronicle.jlbh.JLBHTask;
+import net.openhft.chronicle.jlbh.TeamCityHelper;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
@@ -57,15 +58,16 @@ import java.util.concurrent.TimeUnit;
  */
 public class MapJLBHTest implements JLBHTask {
     private static final int KEYS = Integer.getInteger("keys", 10_000_000);
+    private static final int ITERATIONS = Math.max(10_000_000, KEYS);
     private static final int WARM_UP_ITERATIONS = Math.max(100_000, KEYS / 2);
-    private static final String PATH = System.getProperty("path", OS.TMP);
+    private static final String PATH = System.getProperty("path", OS.getTarget());
     private static final int THROUGHPUT = Integer.getInteger("throughput", 1_000_000);
     private static final int THREADS = 6;
     private int count = 0;
     private ChronicleMap<Long, IFacade0> map;
     private NanoSampler readSampler;
     private NanoSampler writeSampler;
-    private NanoSampler e2eSampler;
+    private JLBH e2eSampler;
     private File mapFile = new File(PATH, "map" + System.nanoTime() + ".cm3");
     private ThreadLocal<Worker> workerTL = ThreadLocal.withInitial(Worker::new);
     private ExecutorService service = new ThreadPoolExecutor(THREADS, THREADS,
@@ -78,7 +80,7 @@ public class MapJLBHTest implements JLBHTask {
         //Create the JLBH options you require for the benchmark
         JLBHOptions options = new JLBHOptions()
                 .warmUpIterations(WARM_UP_ITERATIONS)
-                .iterations(Math.max(10_000_000, KEYS))
+                .iterations(ITERATIONS)
                 .throughput(THROUGHPUT)
                 .runs(5)
                 .recordOSJitter(false)
@@ -89,8 +91,9 @@ public class MapJLBHTest implements JLBHTask {
 
     @Override
     public void init(JLBH jlbh) {
-        IOTools.deleteDirWithFiles(mapFile.getParent(), 2);
-        mapFile.getParentFile().mkdirs();
+        if (mapFile.exists() && !mapFile.delete()) {
+            throw new AssertionError("Unable to delete " + mapFile);
+        }
         mapFile.deleteOnExit();
         readSampler = jlbh.addProbe("Read");
         writeSampler = jlbh.addProbe("Write");
@@ -124,6 +127,7 @@ public class MapJLBHTest implements JLBHTask {
     @Override
     public void complete() {
         map.close();
+        TeamCityHelper.teamCityStatsLastRun(getClass().getSimpleName(), e2eSampler, ITERATIONS, System.out);
     }
 
     interface IFacadeBase {
