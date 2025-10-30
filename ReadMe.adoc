@@ -7,7 +7,7 @@ Chronicle Software
 
 image:https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[caption="",link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
 image:https://javadoc.io/badge2/net.openhft/chronicle-map/javadoc.svg[link="https://www.javadoc.io/doc/net.openhft/chronicle-map/latest/index.html"]
-//image:https://javadoc-badge.appspot.com/net.openhft/chronicle-map.svg?label=javadoc[JavaDoc, link=https://www.javadoc.io/doc/net.openhft/chronicle-map]
+// image:https://javadoc-badge.appspot.com/net.openhft/chronicle-map.svg?label=javadoc[JavaDoc, link=https://www.javadoc.io/doc/net.openhft/chronicle-map]
 image:https://img.shields.io/github/license/OpenHFT/Chronicle-Map[GitHub]
 image:https://img.shields.io/badge/release%20notes-subscribe-brightgreen[link="https://chronicle.software/release-notes/"]
 image:https://sonarcloud.io/api/project_badges/measure?project=OpenHFT_Chronicle-Map&metric=alert_status[link="https://sonarcloud.io/dashboard?id=OpenHFT_Chronicle-Map"]
@@ -32,29 +32,37 @@ image::docs\images\Image1_.png[750,650]
 Chronicle Map is used in production around the
 world for:
 
-• **real-time trading systems**. Chronicle Map
+• *real-time trading systems*.
+Chronicle Map
 provides in-memory access speeds, and supports
-ultra-low garbage collection. Chronicle Map can support the most demanding of applications.
-• **highly concurrent systems**. Chronicle Map
+ultra-low garbage collection.
+Chronicle Map can support the most demanding of applications.
+• *highly concurrent systems*.
+Chronicle Map
 supports multiple readers and writers,
 distributed across multiple machines.
 
 === Why use Chronicle Map?
 Chronicle Map is:
 
-• **fast**. Millions of operations per second, with
-low and stable microsecond latencies for reads and writes. Write queries scale well up
-to the number of hardware execution threads in the server. Read queries never block each
+• *fast*.
+Millions of operations per second, with
+low and stable microsecond latencies for reads and writes.
+Write queries scale well up
+to the number of hardware execution threads in the server.
+Read queries never block each
 other.
-• **reliable**. Chronicle Software have a “chaos
+• *reliable*.
+Chronicle Software have a “chaos
 monkey” test which verifies Chronicle Map
 multi-master replication in the face of node
-and network failures. The map can optionally be persisted to disk.
-• **in production** at banks and hedge funds,
+and network failures.
+The map can optionally be persisted to disk.
+• *in production* at banks and hedge funds,
 globally.
-• **built using lessons learnt** from real-world
+• *built using lessons learnt* from real-world
 experience solving real-world problems.
-• **open source** (standard version), and in use at
+• *open source* (standard version), and in use at
 hundreds of sites around the world.
 
 === Our offering
@@ -73,7 +81,7 @@ The Chronicle Map documentation comprises:
 
 .Documentation
 |===
-|**Document**|**Purpose**
+|*Document*|*Purpose*
 |<<docs/CM_Features.adoc#,CM_Features>>
 |Features description.
 |<<docs/CM_Replication.adoc#,CM_Replication>>

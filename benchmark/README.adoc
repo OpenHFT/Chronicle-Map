@@ -6,7 +6,7 @@ Summary of results on a Ryzen 9 5950X with a Corsair MP600 driver
 == 1 million reads and 1 million writes each second of 500 byte messages
 
 .1 million keys
-```
+----
 -------------------------------- SUMMARY (Read) ------------------------------------------
 Percentile   run1         run2         run3         run4         run5      % Variation
 50.0:            0.21         0.18         0.19         0.18         0.19         3.57
@@ -32,10 +32,10 @@ Percentile   run1         run2         run3         run4         run5      % Var
 99.999:         72.06        10.83         7.77        66.94        10.19        83.55
 worst:        2166.78      2420.74      1767.42      1878.02      5955.58        61.24
 ------------------------------------------------------------------------------------------
-```
+----
 
 .10 millions keys
-```
+----
 -------------------------------- SUMMARY (Read) ------------------------------------------
 Percentile   run1         run2         run3         run4         run5      % Variation
 50.0:            0.23         0.22         0.21         0.21         0.23         5.96
@@ -62,10 +62,10 @@ Percentile   run1         run2         run3         run4         run5      % Var
 99.999:          8.94        14.48        11.06        21.79        96.64        83.77
 worst:        1669.12      1406.98      2338.82      4710.40      3248.13        61.02
 ------------------------------------------------------------------------------------------
-```
+----
 
 .100 million keys
-```
+----
 -------------------------------- SUMMARY (Read) ------------------------------------------
 Percentile   run1         run2         run3         run4         run5      % Variation
 50.0:            0.24         0.24         0.24         0.24         0.25         2.70
@@ -96,6 +96,6 @@ Percentile   run1         run2         run3         run4         run5      % Var
 99.9999:      1865.73      2281.47      2879.49      3182.59      2715.65        20.84
 worst:        8896.51      9191.42      9191.42    588251.14      8232.96        97.92
 ------------------------------------------------------------------------------------------
-```
+----
 
 NOTE: Running this dataset on a 64 GB machine had lower outliers when run without graphical interface to save some memory and contention.

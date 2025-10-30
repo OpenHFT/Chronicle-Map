@@ -1,7 +1,7 @@
 /*
- * Copyright 2012-2018 Chronicle Map Contributors
- * Copyright 2001-2015 The Apache Software Foundation
- * Copyright 2010-2012 CS Systèmes d'Information
+ * Copyright 2012-2025 chronicle.software
+ * Copyright 2001-2025 chronicle.software
+ * Copyright 2010-2025 chronicle.software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

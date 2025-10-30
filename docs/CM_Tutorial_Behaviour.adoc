@@ -12,22 +12,23 @@ toc::[]
 
 You could customize `ChronicleMap` behaviour on several levels:
 
- - `ChronicleMapBuilder.entryOperations()` define the "inner" listening level. All operations with
+* `ChronicleMapBuilder.entryOperations()` define the "inner" listening level. All operations with
  entries, either during ordinary map method calls, remote calls, replication or modifications during
  iteration over the map, operate using this configured SPI.
 
- - `ChronicleMapBuilder.mapMethods()` is the higher-level of listening for local calls of Map
- methods. Methods in the `MapMethods` interface correspond to `Map` interface methods with the same
+* `ChronicleMapBuilder.mapMethods()` is the higher-level of listening for local calls of Map
+methods.
+Methods in the `MapMethods` interface correspond to `Map` interface methods with the same
  names, and define their implementations for `ChronicleMap`.
 
- - `ChronicleMapBuilder.remoteOperations()` is for listening and customizing behaviour of remote
+* `ChronicleMapBuilder.remoteOperations()` is for listening and customizing behaviour of remote
  calls, and replication events.
 
 All executions around `ChronicleMap` go through all three tiers, or just the last two):
 
- 1. Query tier: `MapQueryContext` interface
- 2. Entry tier: `MapEntry` and `MapAbsentEntry` interfaces
- 3. Data tier: `Data` interface
+. Query tier: `MapQueryContext` interface
+. Entry tier: `MapEntry` and `MapAbsentEntry` interfaces
+. Data tier: `Data` interface
 
 `MapMethods` and `MapRemoteOperations` methods accept *query context*; SPI is above
 the Query tier.
@@ -36,22 +37,23 @@ the Query tier.
 
 When combined, interception SPI interfaces and the `ChronicleMap.queryContext()` API are powerful enough to:
 
- - Log all operations of some kind on `ChronicleMap` (for example, all remove, insert, or update operations).
- - Log some specific operations on `ChronicleMap` (for example, log only `acquireUsing()` calls, which has created a new entry).
- - Inhibit operations of some kind on the `ChronicleMap` instance.
- - Backup all changes to `ChronicleMap` to some alternative storage; for example, an SQL database.
- - Perform multi-Chronicle Map operations correctly in concurrent environment, by acquiring locks on
+* Log all operations of some kind on `ChronicleMap` (for example, all remove, insert, or update operations).
+* Log some specific operations on `ChronicleMap` (for example, log only `acquireUsing()` calls, which has created a new entry).
+* Inhibit operations of some kind on the `ChronicleMap` instance.
+* Backup all changes to `ChronicleMap` to some alternative storage; for example, an SQL database.
+* Perform multi-Chronicle Map operations correctly in concurrent environment, by acquiring locks on
  all ChronicleMaps, before updating them.
- - Perform multi-key operations on a single `ChronicleMap` correctly in a concurrent environment, by acquiring locks on all keys before updating the entries.
- - Define your own replication/reconciliation logic for distributed Chronicle Maps.
- - Dump statistics of the Chronicle Map instance; each segment's load, size in bytes of each
+* Perform multi-key operations on a single `ChronicleMap` correctly in a concurrent environment, by acquiring locks on all keys before updating the entries.
+* Define your own replication/reconciliation logic for distributed Chronicle Maps.
+* Dump statistics of the Chronicle Map instance; each segment's load, size in bytes of each
  entry, etc.
 
 == Example - Simple logging
 
 To log all modification operations on `ChronicleMap`:
 
-```java
+[source,java]
+----
 class SimpleLoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
 
     private static final SimpleLoggingMapEntryOperations INSTANCE =
@@ -84,11 +86,12 @@ class SimpleLoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, 
         return null;
     }
 }
-```
+----
 
 Usage:
 
-```java
+[source,java]
+----
 ChronicleMap<IntValue, IntValue> map = ChronicleMap
         .of(Integer.class, IntValue.class)
         .entries(100)
@@ -96,18 +99,20 @@ ChronicleMap<IntValue, IntValue> map = ChronicleMap
         .create();
 
 // do anything with the map
-```
+----
 
 == Example - BiMap
 
 Possible bi-directional map (that is, a map that preserves the uniqueness of its values, as well
 as that of its keys) implementation over Chronicle Maps.
 
-```java
+[source,java]
+----
 enum DualLockSuccess {SUCCESS, FAIL}
-```
+----
 
-```java
+[source,java]
+----
 class BiMapMethods<K, V> implements MapMethods<K, V, DualLockSuccess> {
     @Override
     public void remove(MapQueryContext<K, V, DualLockSuccess> q, ReturnValue<V> returnValue) {
@@ -228,9 +233,10 @@ class BiMapMethods<K, V> implements MapMethods<K, V, DualLockSuccess> {
         throw new UnsupportedOperationException();
     }
 }
-```
+----
 
-```java
+[source,java]
+----
 class BiMapEntryOperations<K, V> implements MapEntryOperations<K, V, DualLockSuccess> {
     ChronicleMap<V, K> reverse;
 
@@ -289,11 +295,12 @@ class BiMapEntryOperations<K, V> implements MapEntryOperations<K, V, DualLockSuc
         }
     }
 }
-```
+----
 
 Usage:
 
-```java
+[source,java]
+----
 BiMapEntryOperations<Integer, CharSequence> biMapOps1 = new BiMapEntryOperations<>();
 ChronicleMap<Integer, CharSequence> map1 = ChronicleMapBuilder
         .of(Integer.class, CharSequence.class)
@@ -321,11 +328,12 @@ biMapOps2.setReverse(map1);
 
 map1.put(1, "1");
 System.out.println(map2.get("1"));
-```
+----
 
 == Example - Monitor Chronicle Map Statistics
 
-```java
+[source,java]
+----
     public static <K, V> void printMapStats(ChronicleMap<K, V> map) {
         for (int i = 0; i < map.segments(); i++) {
             try (MapSegmentContext<K, V, ?> c = map.segmentContext(i)) {
@@ -335,7 +343,7 @@ System.out.println(map2.get("1"));
             }
         }
     }
-```
+----
 
 '''
 <<CM_Tutorial.adoc#,Back to Tutorial>>

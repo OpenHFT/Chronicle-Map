@@ -9,18 +9,22 @@ Neil Clifford
 toc::[]
 
 This pair of interfaces is configured using `ChronicleMapBuilder.keyMarshallers()` or
-`valueMarshallers()` for the key, or value type, of the map, respectively. Overloaded methods; those
-for [`BytesWriter` and `BytesReader`](#byteswriter-and-bytesreader) interfaces have the same names).
+`valueMarshallers()` for the key, or value type, of the map, respectively.
+Overloaded methods; those
+for xref:byteswriter-and-bytesreader[`BytesWriter` and `BytesReader`] interfaces have the same names).
 
 The main two methods to implement in `SizedWriter` interface are:
 
- - `long size(@NotNull T toWrite);` returns the number of bytes, which is written by the subsequent
+* `long size(@NotNull T toWrite);` returns the number of bytes, which is written by the subsequent
  `write()` method given the same `toWrite` instance of the serialized type.
- - `void write(Bytes out, long size, @NotNull T toWrite);` writes the given `toWrite` instance to
- the given `out` bytes sink. Additionally, `size` is provided, which is the value computed for the
- same `toWrite` instance by calling `size()` method. When `SizedWriter` is used internally,
+* `void write(Bytes out, long size, @NotNull T toWrite);` writes the given `toWrite` instance to
+the given `out` bytes sink.
+Additionally, `size` is provided, which is the value computed for the
+same `toWrite` instance by calling `size()` method.
+When `SizedWriter` is used internally,
  the `size()` method is always called before `write()`; caching logic in `SizedWriter` implementation
- may rely on this. This method should advance the  `writePosition()` of the given out `Bytes` exactly by
+may rely on this.
+This method should advance the  `writePosition()` of the given out `Bytes` exactly by
  the given `size` number of bytes.
 
 `SizedReader`'s `T read(Bytes in, long size, @Nullable T using);` method is similar to the
@@ -28,20 +32,22 @@ corresponding `read()` method in `BytesReader` interface, except that the size o
 
 This pair of interfaces is suitable, if:
 
- - The serialized form of the type effectively includes the size of the rest of the serialized form
+* The serialized form of the type effectively includes the size of the rest of the serialized form
  in the beginning.
 
- - The type is not a plain sequence of bytes; for example, `byte[]` or `ByteBuffer`. For `byte[]` or `ByteBuffer`, the <<CM_Tutorial_DataAccess#, `DataAccess` and `SizedReader`>> pair of interfaces is a much better
+* The type is not a plain sequence of bytes; for example, `byte[]` or `ByteBuffer`. For `byte[]` or `ByteBuffer`, the <<CM_Tutorial_DataAccess#, `DataAccess` and `SizedReader`>> pair of interfaces is a much better
  choice.
 
 Examples of such types include lists, and arrays of constant-sized elements.
 
 Compared to `BytesWriter` and `BytesReader`, this pair of interfaces allows the sharing of information
-about the serialized form, between serialization logic, and the Chronicle Map; this saves a few bytes by storing the serialization size only once, rather than twice. This pair of interfaces is not much more difficult to implement, but the gains are also not large.
+about the serialized form, between serialization logic, and the Chronicle Map; this saves a few bytes by storing the serialization size only once, rather than twice.
+This pair of interfaces is not much more difficult to implement, but the gains are also not large.
 
 Example: Serializing lists of simple `Point` structures:
 
-```java
+[source,java]
+----
 public final class Point {
 
     public static Point of(double x, double y) {
@@ -53,11 +59,12 @@ public final class Point {
 
     double x, y;
 }
-```
+----
 
 Serializer implementation:
 
-```java
+[source,java]
+----
 public final class PointListSizedMarshaller
         implements SizedReader<List<Point>>, SizedWriter<List<Point>>,
         ReadResolvable<PointListSizedMarshaller> {
@@ -132,11 +139,12 @@ public final class PointListSizedMarshaller
         return INSTANCE;
     }
 }
-```
+----
 
 Usage example:
 
-```java
+[source,java]
+----
 try (ChronicleMa p<String, List<Point>> objects = ChronicleMap
         .of(String.class, (Class<List<Point>>) (Class) List.class)
         .averageKey("range")
@@ -150,7 +158,7 @@ try (ChronicleMa p<String, List<Point>> objects = ChronicleMap
     Assert.assertEquals(2, objects.get("range").size());
     Assert.assertEquals(4, objects.get("square").size());
 }
-```
+----
 
 '''
 <<CM_Tutorial.adoc#Custom serializers,Back to Tutorial>>

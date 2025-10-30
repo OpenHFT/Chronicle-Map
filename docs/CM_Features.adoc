@@ -12,62 +12,66 @@ Chronicle Map is an in-memory, key-value store, designed for low-latency, and/or
 applications, such as trading and financial market applications.
 
 == Features
- - **Ultra low latency**: Chronicle Map targets median latency of both read and write queries of less
+* *Ultra low latency*: Chronicle Map targets median latency of both read and write queries of less
  than 1 microsecond in https://github.com/OpenHFT/Chronicle-Map/search?l=java&q=perf&type=Code[certain tests].
 
- - **High concurrency**: Write queries scale well up to the number of hardware execution threads in
- the server. Read queries never block each other.
- - **Persistence to disk** - (Optional)
- - **Replication** - (Optional, commercial functionality) - replication from one to N other servers across LAN/WAN
+* *High concurrency*: Write queries scale well up to the number of hardware execution threads in
+the server.
+Read queries never block each other.
+* *Persistence to disk* - (Optional)
+* *Replication* - (Optional, commercial functionality) - replication from one to N other servers across LAN/WAN
 
 == Unique features
- - Multiple processes can access a Chronicle Map concurrently. At the same time,
- the data store is *in-process* for each of the accessing processes. Out-of-process approach to IPC
+* Multiple processes can access a Chronicle Map concurrently. At the same time,
+the data store is _in-process_ for each of the accessing processes.
+Out-of-process approach to IPC
  is simply incompatible with Chronicle Map's median latency target of < 1 μs.
 
- - Replication
+* Replication
 
 NOTE: See <<CM_Replication.adoc#,Chronicle Map Replication>> for more information.
 
-**Chronicle Map** has two meanings:
+*Chronicle Map* has two meanings:
 
-- https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[language-agnostic data store (specification)].
+* https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[language-agnostic data store (specification)].
 
-- https://github.com/OpenHFT/Chronicle-Map/blob/master/src[implementation of this data store for the JVM (source)]. Currently, this is the only implementation.
+* https://github.com/OpenHFT/Chronicle-Map/blob/master/src[implementation of this data store for the JVM (source)]. Currently, this is the only implementation.
 
 === From the Java perspective
 `ChronicleMap` is a `ConcurrentMap` implementation which stores the
-entries *off-heap*, serializing/deserializing key and value objects to/from off-heap memory
-transparently. Chronicle Map supports:
+entries _off-heap_, serializing/deserializing key and value objects to/from off-heap memory
+transparently.
+Chronicle Map supports:
 
- - Key and value objects caching/reusing for making *zero allocations (garbage) on
+* Key and value objects caching/reusing for making *zero allocations (garbage) on
 queries*.
- - Flyweight values for eliminating serialization/deserialization cost and allowing direct
+* Flyweight values for eliminating serialization/deserialization cost and allowing direct
  read/write access to off-heap memory.
 
 === Primary Chronicle Map use cases
 
- - Replacing slower key-value stores, like `Redis` and `Memcached`, when used within a single server.
+* Replacing slower key-value stores, like `Redis` and `Memcached`, when used within a single server.
 
- - Replacing similar JVM-centric solutions, like `Coherence` and `Hazelcast`, for speed and/or certain Chronicle Map features which those solutions lack.
+* Replacing similar JVM-centric solutions, like `Coherence` and `Hazelcast`, for speed and/or certain Chronicle Map features which those solutions lack.
 
- - Moving parts of the application-state out of the Java heap for either:
- * Reducing the heap size, for reducing garbage collection pressure, or fitting 32 GB, for using `CompressedOops`.
- * Inter-process communication.
- * Persistence.
- * Replication across servers.
+* Moving parts of the application-state out of the Java heap for either:
+** Reducing the heap size, for reducing garbage collection pressure, or fitting 32 GB, for using `CompressedOops`.
+** Inter-process communication.
+** Persistence.
+** Replication across servers.
 
- - Drop-in `ConcurrentHashMap` replacement; Chronicle Map performs better in some cases.
+* Drop-in `ConcurrentHashMap` replacement; Chronicle Map performs better in some cases.
 
 === What guarantees does Chronicle Map provide in ACID terms?
 
- - **Atomicity** - single-key queries are atomic if Chronicle Map is properly configured, multi-key
+* *Atomicity* - single-key queries are atomic if Chronicle Map is properly configured, multi-key
  queries are not atomic.
- - **Consistency** - doesn't make sense for key-value stores
- - **Isolation** - yes; for both single- and multi-key queries.
- - **Durability** - no; Chronicle Map can be persisted to disk, but with no guarantee as to how frequently this
- happens. This is under the control of the OS. All data is guaranteed to be written to disk when the Map is closed.
- - **Clustering** and **replication** for Chronicle
+* *Consistency* - doesn't make sense for key-value stores
+* *Isolation* - yes; for both single- and multi-key queries.
+* *Durability* - no; Chronicle Map can be persisted to disk, but with no guarantee as to how frequently this
+happens.
+This is under the control of the OS. All data is guaranteed to be written to disk when the Map is closed.
+* *Clustering* and *replication* for Chronicle
  Map is provided by https://chronicle.software/queue-enterprise/[Chronicle Queue Enterprise].
 
 == What is the data structure of Chronicle Map?
@@ -75,19 +79,20 @@ Simply put, a Chronicle Map data store is a big chunk of shared memory (optional
 
 It is split into independent segments; each segment has:
 
- - an independent memory allocation for storing the entries
+* an independent memory allocation for storing the entries
 
- - a hash table for search
+* a hash table for search
 
- - a lock in shared memory (implemented via CAS loops) for managing concurrent access.
+* a lock in shared memory (implemented via CAS loops) for managing concurrent access.
 
 See https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[Chronicle Map data store design overview] for more information.
 
 == Chronicle Map is not
 
- - A document store. There are no secondary indexes.
- - A https://en.wikipedia.org/wiki/Multimap[multimap].
- Using a Chronicle Map collection as a multimap is technically possible, but often leads to problems. See http://stackoverflow.com/a/36486525/648955[StackOverflow answer] for details.
+* A document store. There are no secondary indexes.
+* A https://en.wikipedia.org/wiki/Multimap[multimap].
+Using a Chronicle Map collection as a multimap is technically possible, but often leads to problems.
+See http://stackoverflow.com/a/36486525/648955[StackOverflow answer] for details.
  Developing a proper multimap, using
  Chronicle Map's design principles is possible.
 
@@ -96,10 +101,10 @@ Please contact us at mailto:sales@chronicle.software[sales@chronicle.software] i
 
 == Chronicle Map does not support:
 
- - range queries.
- - iteration over the entries in alphabetical order.
- - sorting of keys.
- - LRU entry eviction.
+* range queries.
+* iteration over the entries in alphabetical order.
+* sorting of keys.
+* LRU entry eviction.
 
 == Features
 
@@ -127,9 +132,9 @@ Please contact us at mailto:sales@chronicle.software[sales@chronicle.software] i
 NOTE: For access to commercially available features please contact mailto:sales@chronicle.software[sales@chronicle.software].
 
 == Community support:
- - https://github.com/OpenHFT/Chronicle-Map/issues[Issues]
- - https://groups.google.com/forum/#!forum/chronicle-map[Chronicle Map mailing list]
- - http://stackoverflow.com/tags/chronicle-map[Stackoverflow]
+* https://github.com/OpenHFT/Chronicle-Map/issues[Issues]
+* https://groups.google.com/forum/#!forum/chronicle-map[Chronicle Map mailing list]
+* http://stackoverflow.com/tags/chronicle-map[Stackoverflow]
 
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>

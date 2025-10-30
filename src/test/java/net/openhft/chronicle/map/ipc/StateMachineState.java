@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 Chronicle Map Contributors
+ * Copyright 2012-2025 chronicle.software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package net.openhft.chronicle.map.ipc;
 
 /**
- *
  */
+
 public enum StateMachineState {
     UNKNOWN(-1),
     STATE_0(0),

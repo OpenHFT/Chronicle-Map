@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 Chronicle Map Contributors
+ * Copyright 2012-2025 chronicle.software
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 /**
- *
  */
+
 public class StateMachineTutorial {
     private static final Logger LOGGER = LoggerFactory.getLogger(StateMachineTutorial.class);
 

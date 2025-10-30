@@ -17,7 +17,8 @@ To run Chronicle Map, please ensure you have first installed:
 
 == License
 
-Chronicle Map is distributed under `LGPLv3`. If you want to obtain this software under a more permissive
+Chronicle Map is distributed under `LGPLv3`.
+If you want to obtain this software under a more permissive
 license, please contact mailto:sales@chronicle.software.
 
 == Maven Artifact Download
@@ -30,7 +31,8 @@ Chronicle Map depends on other Chronicle libraries and it is Chronicle's recomme
 https://chronicle.software/monorepo-versus-bill-of-materials-shaping-your-project/[chronicle-bom]
 for versioning e.g.
 
-``` xml
+[source,xml]
+----
 <dependencyManagement>
     <dependencies>
         <dependency>
@@ -42,19 +44,20 @@ for versioning e.g.
         </dependency>
     </dependencies>
 </dependencyManagement>
-```
+----
 
 Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-bom%22[Latest Version Number].
 
 Alternatively, Chronicle Map can be included directly:
 
-``` xml
+[source,xml]
+----
 <dependency>
   <groupId>net.openhft</groupId>
   <artifactId>chronicle-map</artifactId>
   <version><!--replace with the latest version--></version>
 </dependency>
-```
+----
 
 Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22[Latest Version Number].
 
@@ -64,7 +67,8 @@ from https://s01.oss.sonatype.org/content/repositories/snapshots/net/openhft/chr
 
 A better way, is to add the following to your `setting.xml` file to allow Maven to download snapshots:
 
-``` xml
+[source,xml]
+----
 <repository>
     <id>Snapshot Repository</id>
     <name>Snapshot Repository</name>
@@ -73,16 +77,17 @@ A better way, is to add the following to your `setting.xml` file to allow Maven 
         <enabled>true</enabled>
     </snapshots>
 </repository>
-```
+----
 You can define the snapshot version in your `pom.xml`; for example:
 
-```xml
+[source,xml]
+----
 <dependency>
   <groupId>net.openhft</groupId>
   <artifactId>chronicle-map</artifactId>
   <version><!--replace with the latest snapshot version--></version>
 </dependency>
-```
+----
 
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>

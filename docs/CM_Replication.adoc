@@ -9,10 +9,11 @@ Neil Clifford
 toc::[]
 
 == Enterprise Edition
-Chronicle Map Replication is part of Chronicle Queue Enterprise; which is commercially supported. Extended features include:
+Chronicle Map Replication is part of Chronicle Queue Enterprise; which is commercially supported.
+Extended features include:
 
-- *Replication* to ensure real-time backup of all your map data.
-- *Resilience* support for robust fail-over and disaster recovery environments.
+* *Replication* to ensure real-time backup of all your map data.
+* *Resilience* support for robust fail-over and disaster recovery environments.
 
 In addition, you will be fully supported by our technical experts.
 
@@ -23,11 +24,13 @@ For more information see https://chronicle.software/queue-enterprise/[Chronicle 
 Chronicle Queue Enterprise supports replication of Chronicle Maps over TCP/IP.
 
 == TCP Background
-TCP/IP is a reliable protocol. This means that, unless you have a network failure or hardware outage, the data is guaranteed to arrive.
+TCP/IP is a reliable protocol.
+This means that, unless you have a network failure or hardware outage, the data is guaranteed to arrive.
 
 == How Chronicle Map Replication works
 An underlying Chronicle Queue is used to persist changes to the Map, and this is replicated using Chronicle Queue Enterprise
-replication to one or more other Chronicle Maps. One underlying queue can be shared by multiple Maps, if required.
+replication to one or more other Chronicle Maps.
+One underlying queue can be shared by multiple Maps, if required.
 Replication never block Map gets or puts.
 
 Maps are configured either as a source or as a sink, with a source acting as the source of changes, and the sinks following.
@@ -39,7 +42,8 @@ The application can be notified when this process completes and the sink is up t
 
 A new node can easily be created by connecting to the cluster, and then the new sink Map will become hydrated from the cluster.
 
-The source can be changed. If, for example the master host or data centre is changed, and it typically takes only milliseconds to reconfigure the cluster with a new source, and restart replication.
+The source can be changed.
+If, for example the master host or data centre is changed, and it typically takes only milliseconds to reconfigure the cluster with a new source, and restart replication.
 
 '''
 <<CM_Features.adoc#,Back to Features>>
