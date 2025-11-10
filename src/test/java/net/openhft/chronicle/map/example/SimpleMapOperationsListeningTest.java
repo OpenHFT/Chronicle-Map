@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -58,7 +62,7 @@ public class SimpleMapOperationsListeningTest {
         private SimpleLoggingMapEntryOperations() {
         }
 
-        public static <K, V> MapEntryOperations<K, V, Void> simpleLoggingMapEntryOperations() {
+        static <K, V> MapEntryOperations<K, V, Void> simpleLoggingMapEntryOperations() {
             return SimpleLoggingMapEntryOperations.INSTANCE;
         }
 
@@ -92,7 +96,7 @@ public class SimpleMapOperationsListeningTest {
         private SimpleLoggingDefaultValueProvider() {
         }
 
-        public static <K, V> DefaultValueProvider<K, V> simpleLoggingDefaultValueProvider() {
+        static <K, V> DefaultValueProvider<K, V> simpleLoggingDefaultValueProvider() {
             return INSTANCE;
         }
 

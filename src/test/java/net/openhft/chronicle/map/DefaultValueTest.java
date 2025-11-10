@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -61,7 +65,7 @@ public class DefaultValueTest {
 
         private final V defaultValue;
 
-        public SimpleDefaultValueProvider(V defaultValue) {
+        SimpleDefaultValueProvider(V defaultValue) {
             this.defaultValue = defaultValue;
         }
 
@@ -72,7 +76,7 @@ public class DefaultValueTest {
     }
 
     private static class A implements BytesMarshallable {
-        public A(int x, String y) {
+        A(int x, String y) {
             this.x = x;
             this.y = y;
         }

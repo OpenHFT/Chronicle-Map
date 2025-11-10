@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 package net.openhft.chronicle.map.issue;
 
 
@@ -13,15 +17,15 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-public class PutIfAbsentNoGarbageTest {
+class PutIfAbsentNoGarbageTest {
 
-    static ChronicleMap<Long, LongValue> newShmLongLongValueUsing(int size, boolean putIfAbsentUsingValue) throws IOException {
+    private static ChronicleMap<Long, LongValue> newShmLongLongValueUsing(int size, boolean putIfAbsentUsingValue) throws IOException {
         return ChronicleMapBuilder.simpleMapOf(Long.class, LongValue.class)
                 .entries(size).putIfAbsentUsingValue(putIfAbsentUsingValue).create();
     }
 
     @Test
-    public void testPutIfAbsentUsingValue() throws IOException, Throwable {
+    void testPutIfAbsentUsingValue() throws IOException, Throwable {
         try (ChronicleMap<Long, LongValue> map = newShmLongLongValueUsing(10, true)) {
             Long k = 1L;
 
@@ -43,7 +47,7 @@ public class PutIfAbsentNoGarbageTest {
     }
 
     @Test
-    public void testPutIfAbsentDefault() throws IOException, Throwable {
+    void testPutIfAbsentDefault() throws IOException, Throwable {
         try (ChronicleMap<Long, LongValue> map = newShmLongLongValueUsing(10, false)) {
             Long k = 1L;
 

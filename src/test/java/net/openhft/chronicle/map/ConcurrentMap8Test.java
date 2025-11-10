@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -29,7 +33,7 @@ import net.openhft.chronicle.map.jsr166.JSR166TestCase;
 
 import java.util.concurrent.ConcurrentMap;
 
-public class ConcurrentMap8Test extends JSR166TestCase {
+class ConcurrentMap8Test extends JSR166TestCase {
 
     static final int SIZE = 10000;
     private static final double EPSILON = 1E-5;

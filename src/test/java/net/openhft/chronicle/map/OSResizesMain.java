@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -58,7 +62,7 @@ public class OSResizesMain {
         file.delete();
     }
 
-    static String run(String... cmd) throws IOException, InterruptedException {
+    private static String run(String... cmd) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
         Process p = pb.start();
@@ -76,7 +80,7 @@ public class OSResizesMain {
 }
 @SuppressWarnings("serial")
 class ByteArray implements Serializable {
-    final byte[] bytes;
+    private final byte[] bytes;
 
     ByteArray(byte[] bytes) {
         this.bytes = bytes;

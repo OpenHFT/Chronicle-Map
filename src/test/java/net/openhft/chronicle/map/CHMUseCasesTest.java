@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -183,7 +187,7 @@ public class CHMUseCasesTest {
         valueA.limit(valueA.capacity());
     }
 
-    public static <K, V> Map<K, V> mapOf(K k, V v, Object... keysAndValues) {
+    private static <K, V> Map<K, V> mapOf(K k, V v, Object... keysAndValues) {
         Map<K, V> ret = new LinkedHashMap<>();
         ret.put(k, v);
         for (int i = 0; i < keysAndValues.length - 1; i += 2) {
@@ -2639,7 +2643,7 @@ public class CHMUseCasesTest {
     static class PrefixStringFunction implements SerializableFunction<String, String> {
         private final String prefix;
 
-        public PrefixStringFunction(@NotNull String prefix) {
+        PrefixStringFunction(@NotNull String prefix) {
             this.prefix = prefix;
         }
 
@@ -2682,7 +2686,7 @@ public class CHMUseCasesTest {
     }
 
     private static class DataDataAccess extends BytesMarshallableDataAccess<IData.Data> {
-        public DataDataAccess() {
+        DataDataAccess() {
             super(IData.Data.class);
         }
 
@@ -2698,7 +2702,7 @@ public class CHMUseCasesTest {
     }
 
     private static class DataReader extends BytesMarshallableReader<IData.Data> {
-        public DataReader() {
+        DataReader() {
             super(IData.Data.class);
         }
 

@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -55,7 +59,7 @@ public class PointListSerializationTest {
 
     static final class AMarshaller implements BytesReader<A>, BytesWriter<A>,
             EnumMarshallable<AMarshaller> {
-        public static final AMarshaller INSTANCE = new AMarshaller();
+        static final AMarshaller INSTANCE = new AMarshaller();
 
         private AMarshaller() {
         }

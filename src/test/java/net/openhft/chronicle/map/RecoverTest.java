@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -44,9 +48,9 @@ import static org.junit.Assert.*;
 
 public class RecoverTest {
 
-    Logger LOG = LoggerFactory.getLogger(RecoverTest.class);
+    private Logger LOG = LoggerFactory.getLogger(RecoverTest.class);
 
-    ReplicatedChronicleMap<Integer, Integer, ?> map;
+    private ReplicatedChronicleMap<Integer, Integer, ?> map;
 
     @Ignore("HCOLL-422")
     @Test

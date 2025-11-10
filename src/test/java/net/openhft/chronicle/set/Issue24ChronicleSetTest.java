@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -33,7 +37,7 @@ import static com.samskivert.util.CollectionUtil.selectRandomSubset;
 
 public class Issue24ChronicleSetTest {
 
-    public static <K, H extends ChronicleHash<K, ?, ?, ?>, B extends ChronicleHashBuilder<K, H, B>>
+    private static <K, H extends ChronicleHash<K, ?, ?, ?>, B extends ChronicleHashBuilder<K, H, B>>
     H init(B builder, int entrySize, int averageKeySize) throws IOException {
 
         File file = File.createTempFile("stringSet", ".dat");
@@ -47,7 +51,7 @@ public class Issue24ChronicleSetTest {
         }
     }
 
-    public synchronized static <A> ChronicleSet<A> initSet(
+    private synchronized static <A> ChronicleSet<A> initSet(
             Class<A> entryClass, int entrySize, int averageKeySize)
             throws IOException {
         return init(ChronicleSetBuilder.of(entryClass), entrySize, averageKeySize);
@@ -70,10 +74,10 @@ public class Issue24ChronicleSetTest {
 
     }
 
-    public static class WorkerThread implements Runnable {
+    static class WorkerThread implements Runnable {
         private final ChronicleSet<String> set;
 
-        public WorkerThread(ChronicleSet<String> set) {
+        WorkerThread(ChronicleSet<String> set) {
             this.set = set;
         }
 

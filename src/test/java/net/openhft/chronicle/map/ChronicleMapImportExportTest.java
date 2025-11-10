@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -41,7 +45,7 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings({"rawtypes", "unchecked", "try"})
 public class ChronicleMapImportExportTest {
 
-    public static final String TMP = OS.getTarget();
+    private static final String TMP = OS.getTarget();
 
     @Test
     public void test() throws IOException, InterruptedException {

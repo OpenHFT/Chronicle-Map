@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 package net.openhft.chronicle.map.fromdocs.acid.genesis;
 
 import net.openhft.chronicle.map.ChronicleMap;
@@ -10,7 +14,7 @@ import java.util.concurrent.locks.StampedLock;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class DirtyReadVictim implements Runnable {
+class DirtyReadVictim implements Runnable {
     private int isoLevel = ChronicleAcidIsolation.LOWEST_LATENCY;
     private ChronicleMap chm;
     private StampedLock offHeapLock;

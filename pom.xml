@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
@@ -6,7 +11,7 @@
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
-        <version>1.27ea1</version>
+        <version>1.27ea2-SNAPSHOT</version>
         <relativePath />
     </parent>
 
@@ -18,8 +23,6 @@
     <packaging>bundle</packaging>
     <properties>
         <zero.cost.assertions>disabled</zero.cost.assertions>
-        <sonar.organization>openhft</sonar.organization>
-        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
 
     <dependencyManagement>
@@ -258,6 +261,16 @@
                             <referenceVersion>3.27ea0</referenceVersion>
                             <artifactsURI>https://teamcity.chronicle.software/repository/download</artifactsURI>
                             <binaryCompatibilityPercentageRequired>100.0</binaryCompatibilityPercentageRequired>
+                            <extraOptions>
+                                <!--This skips "internal" but checks "impl"-->
+                                <extraOption>
+                                    <name>-keep-internal</name>
+                                </extraOption>
+                                <extraOption>
+                                    <name>skip-internal-packages</name>
+                                    <value>.*internal.*</value>
+                                </extraOption>
+                            </extraOptions>
                         </configuration>
                     </execution>
                 </executions>
@@ -475,35 +488,7 @@
                 </file>
             </activation>
         </profile>
-        <profile>
-            <id>sonar</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.sonarsource.scanner.maven</groupId>
-                        <artifactId>sonar-maven-plugin</artifactId>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>prepare-agent</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>report</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+
         <profile>
             <!-- Note that CompiledXXXX.java files have been pre-compiled and added to src/main/java/net/openhft/chronicle/map/impl/ -->
             <id>enable_code_generation</id>

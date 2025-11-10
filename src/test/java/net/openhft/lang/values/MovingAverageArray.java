@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -30,7 +34,7 @@ import java.util.List;
 /**
  * Created by peter.lawrey on 23/04/2015.
  */
-public class MovingAverageArray extends BytesInBinaryMarshallable implements DynamicallySized {
+class MovingAverageArray extends BytesInBinaryMarshallable implements DynamicallySized {
     private final transient List<MovingAverageCompact> buffer = new ArrayList<>();
     private final List<MovingAverageCompact> values = new ArrayList<>();
 

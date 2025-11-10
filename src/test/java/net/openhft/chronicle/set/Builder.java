@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -32,7 +36,7 @@ public class Builder {
     public static final int SIZE = 10_000;
     // added to ensure uniqueness
     static int count;
-    static String WIN_OS = "WINDOWS";
+    private static String WIN_OS = "WINDOWS";
 
     public static File getPersistenceFile() throws IOException {
 

@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 package net.openhft.chronicle.map.issue;
 
 import net.openhft.chronicle.core.io.IOTools;
@@ -12,10 +16,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class ParallelStartupTest {
+class ParallelStartupTest {
 
     @RepeatedTest(5)
-    public void test() throws InterruptedException {
+    void test() throws InterruptedException {
         try {
             final File file = IOTools.createTempFile("issue342");
             Thread[] thread = new Thread[16];

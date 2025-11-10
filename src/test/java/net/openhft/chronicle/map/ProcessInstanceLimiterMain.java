@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -36,7 +40,7 @@ public class ProcessInstanceLimiterMain implements Runnable {
     private final Callback callback;
     private final Map<String, IntWrapper> localUpdates = new ConcurrentHashMap<String, IntWrapper>();
 
-    public ProcessInstanceLimiterMain(String sharedMapName, Callback callback) throws IOException {
+    private ProcessInstanceLimiterMain(String sharedMapName, Callback callback) throws IOException {
         this.sharedMapName = sharedMapName;
         this.callback = callback;
         ChronicleMapBuilder<String, Data> builder =
@@ -68,7 +72,7 @@ public class ProcessInstanceLimiterMain implements Runnable {
         Jvm.pause(60L * 1000L);
     }
 
-    public static void pause(long pause) {
+    private static void pause(long pause) {
         ProcessInstanceLimiter.pause(pause);
     }
 
@@ -99,7 +103,7 @@ public class ProcessInstanceLimiterMain implements Runnable {
         }
     }
 
-    public void startingProcessOfType(String processType) {
+    private void startingProcessOfType(String processType) {
         Data data = this.theSharedMap.get(processType);
         if (data == null) {
             this.callback.noDefinitionForProcessesOfType(processType);
@@ -120,11 +124,11 @@ public class ProcessInstanceLimiterMain implements Runnable {
         this.callback.tooManyProcessesOfType(processType);
     }
 
-    public void setMaxNumberOfProcessesOfType(String processType, int maxNumberOfProcessesAllowed) {
+    private void setMaxNumberOfProcessesOfType(String processType, int maxNumberOfProcessesAllowed) {
         this.theSharedMap.put(processType, new Data(processType, maxNumberOfProcessesAllowed));
     }
 
-    public interface Callback {
+    interface Callback {
         public void tooManyProcessesOfType(String processType);
 
         public void noDefinitionForProcessesOfType(String processType);
@@ -139,17 +143,17 @@ public class ProcessInstanceLimiterMain implements Runnable {
         int maxNumberOfProcessesAllowed;
         long[] time;
 
-        public Data(String processType, int maxNumberOfProcessesAllowed) {
+        Data(String processType, int maxNumberOfProcessesAllowed) {
             this.processType = processType;
             this.maxNumberOfProcessesAllowed = maxNumberOfProcessesAllowed;
             this.time = new long[maxNumberOfProcessesAllowed];
         }
     }
 
-    public static class IntWrapper {
+    static class IntWrapper {
         int intValue;
 
-        public IntWrapper(int intValue) {
+        IntWrapper(int intValue) {
             this.intValue = intValue;
         }
     }

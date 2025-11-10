@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -48,7 +52,7 @@ public class Issue43Test {
     private static class ValueWrapper {
         private final double[] values;
 
-        public ValueWrapper(double[] values) {
+        ValueWrapper(double[] values) {
             this.values = values;
         }
     }
@@ -56,7 +60,7 @@ public class Issue43Test {
     private static final class ArrayMarshaller
             implements BytesReader<ValueWrapper>, BytesWriter<ValueWrapper>,
             EnumMarshallable<ArrayMarshaller> {
-        public static final ArrayMarshaller INSTANCE = new ArrayMarshaller();
+        static final ArrayMarshaller INSTANCE = new ArrayMarshaller();
 
         private ArrayMarshaller() {
         }

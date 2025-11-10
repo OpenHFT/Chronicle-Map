@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -40,7 +44,7 @@ public class KeySegmentDistributionTest {
         keySegmentDistributionTest(1000, 5);
     }
 
-    public void keySegmentDistributionTest(int size, int segments) {
+    private void keySegmentDistributionTest(int size, int segments) {
         ChronicleMap<CharSequence, Integer> map = ChronicleMapBuilder
                 .of(CharSequence.class, Integer.class)
                 .actualSegments(segments)

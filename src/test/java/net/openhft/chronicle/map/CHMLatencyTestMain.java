@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -64,9 +68,9 @@ import static org.junit.Assert.assertNotNull;
  * </pre>
  */
 public class CHMLatencyTestMain {
-    static final int KEYS = 1000 * 1000;
-    static final int RUN_TIME = 30;
-    static final long START_TIME = System.currentTimeMillis();
+    private static final int KEYS = 1000 * 1000;
+    private static final int RUN_TIME = 30;
+    private static final long START_TIME = System.currentTimeMillis();
 
     // TODO test passes but is under development.
     public static void main(String... ignored) throws IOException {

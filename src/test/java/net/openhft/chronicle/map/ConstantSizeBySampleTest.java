@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -101,7 +105,7 @@ public class ConstantSizeBySampleTest {
     static final class ExternalizableData implements Externalizable {
         byte[] data = new byte[512 * 1024];
 
-        public ExternalizableData() {
+        ExternalizableData() {
         }
 
         @Override
@@ -145,7 +149,7 @@ public class ConstantSizeBySampleTest {
 
     private static final class ExternalizableDataDataAccess
             extends ExternalizableDataAccess<ExternalizableData> implements Serializable {
-        public ExternalizableDataDataAccess() {
+        ExternalizableDataDataAccess() {
             super(ExternalizableData.class);
         }
 
@@ -161,7 +165,7 @@ public class ConstantSizeBySampleTest {
     }
 
     private static final class ExternalizableDataReader extends ExternalizableReader<ExternalizableData> {
-        public ExternalizableDataReader() {
+        ExternalizableDataReader() {
             super(ExternalizableData.class);
         }
 

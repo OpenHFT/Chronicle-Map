@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 package net.openhft.chronicle.map.fromdocs.acid;
 
 //import net.openhft.affinity.AffinitySupport;
@@ -10,7 +14,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
+class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
 
     private ChronicleMap<String, Integer> transactionIsolationMap;
     private ChronicleMap<String, BondVOInterface> compositeChronicleMap; //hacked in, not generic
@@ -80,7 +84,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         return b;
     }
 
-    public ChronicleMap<String, Integer> getTransactionIsolationMap() {
+    private ChronicleMap<String, Integer> getTransactionIsolationMap() {
 
         return transactionIsolationMap;
     }
@@ -89,7 +93,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
         this.transactionIsolationMap = txMap;
     }
 
-    public ChronicleMap<String, BondVOInterface> getCompositeChronicleMap() {
+    private ChronicleMap<String, BondVOInterface> getCompositeChronicleMap() {
 
         return compositeChronicleMap;
     }

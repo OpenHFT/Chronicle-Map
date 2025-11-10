@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -32,8 +36,8 @@ import java.util.UUID;
 import static java.util.stream.Collectors.toMap;
 
 public class Issue58 {
-    File mapFile = new File("string-to-uuid.dat");
-    File reverseMapFile = new File("uuid-to-string.dat");
+    private File mapFile = new File("string-to-uuid.dat");
+    private File reverseMapFile = new File("uuid-to-string.dat");
 
     public static void main(String... args) {
         Map<String, UUID> map = new HashMap<>();
@@ -79,7 +83,7 @@ public class Issue58 {
         }
     }
 
-    public void test1(Map<String, UUID> data) throws IOException {
+    private void test1(Map<String, UUID> data) throws IOException {
         try (
                 ChronicleMap<String, UUID> map = ChronicleMap.of(String.class, UUID.class)
                         .averageKeySize(2)
@@ -101,7 +105,7 @@ public class Issue58 {
         }
     }
 
-    public void test2(Map<String, UUID> data) throws IOException {
+    private void test2(Map<String, UUID> data) throws IOException {
         try (
                 ChronicleMap<String, UUID> map = ChronicleMap.of(String.class, UUID.class)
                         .averageKeySize(2)
@@ -128,7 +132,7 @@ public class Issue58 {
 
     static final class UuidMarshaller
             implements BytesReader<UUID>, BytesWriter<UUID>, EnumMarshallable<UuidMarshaller> {
-        public static final UuidMarshaller INSTANCE = new UuidMarshaller();
+        static final UuidMarshaller INSTANCE = new UuidMarshaller();
 
         private UuidMarshaller() {
         }

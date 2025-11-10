@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -36,10 +40,10 @@ import java.util.function.Predicate;
  * @author Rob Austin.
  */
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
-public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
+class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
-    ChronicleMap<K, V> map1;
-    ChronicleMap<K, V> map2;
+    private ChronicleMap<K, V> map1;
+    private ChronicleMap<K, V> map2;
 
     public ReplicationCheckingMap(ChronicleMap map1, ChronicleMap map2) {
         this.map1 = map1;
@@ -83,7 +87,7 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
         );
     }
 
-    public <R> R check(Call instance) {
+    private <R> R check(Call instance) {
         R r1 = null;
         R r2 = null;
         for (int i = 0; i < 50; i++) {

@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -37,7 +41,7 @@ public class NestedContextsTest {
                 neighbours.forEach(neighbour -> assertTrue(graph.get(neighbour).contains(node))));
     }
 
-    public static boolean addEdge(
+    private static boolean addEdge(
             ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
         if (source == target)
             throw new IllegalArgumentException("loops are forbidden");
@@ -124,7 +128,7 @@ public class NestedContextsTest {
         tAbsentEntry.doInsert(tc.wrapValueAsData(tNeighbours));
     }
 
-    public static boolean removeEdge(
+    private static boolean removeEdge(
             ChronicleMap<Integer, Set<Integer>> graph, int source, int target) {
         ExternalMapQueryContext<Integer, Set<Integer>, ?> sourceC = graph.queryContext(source);
         ExternalMapQueryContext<Integer, Set<Integer>, ?> targetC = graph.queryContext(target);

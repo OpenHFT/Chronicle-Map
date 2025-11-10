@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -33,13 +37,13 @@ import java.util.concurrent.atomic.AtomicInteger;
  vm.dirty_writeback_centisecs = 3000
  */
 public class BigData {
-    final static long MAXSIZE = 1000 * 1000 * 1000L;
-    static final ChronicleMapBuilder<Long, BigDataStuff> builder =
+    private final static long MAXSIZE = 1000 * 1000 * 1000L;
+    private static final ChronicleMapBuilder<Long, BigDataStuff> builder =
             ChronicleMapBuilder.of(Long.class, BigDataStuff.class);
     //run 1st test with no map, and Highwatermark set to 0
     //then switch to Highwatermark set to MAXSIZE for subsequent test repeats
-    static AtomicInteger Highwatermark = new AtomicInteger((int) MAXSIZE);
-    static Map<Long, BigDataStuff> theMap;
+    private static AtomicInteger Highwatermark = new AtomicInteger((int) MAXSIZE);
+    private static Map<Long, BigDataStuff> theMap;
 
     //    static AtomicInteger Highwatermark = new AtomicInteger(0);
     static {
@@ -90,7 +94,7 @@ public class BigData {
         System.out.printf("End to end took %.1f%n", time / 1e3);
     }
 
-    public static void initialbuild() throws IOException, InterruptedException {
+    private static void initialbuild() throws IOException, InterruptedException {
         System.out.println("building an empty map");
         long start = System.currentTimeMillis();
         Thread t1 = new Thread("test 1") {
@@ -120,7 +124,7 @@ public class BigData {
         System.out.println("Time taken to insert all entries " + ((now - start) / 1000.0) + " seconds");
     }
 
-    public static void populate(int n) {
+    private static void populate(int n) {
         Affinity.setThreadId();
 
         long start = System.currentTimeMillis();
@@ -136,7 +140,7 @@ public class BigData {
         }
     }
 
-    public static void _test() {
+    private static void _test() {
         // improves logging of these threads.
         Affinity.setThreadId();
         try {
@@ -147,7 +151,7 @@ public class BigData {
         }
     }
 
-    public static void test() throws IOException {
+    private static void test() throws IOException {
         //do a sequence 1m of each of insert/read/update
         //inserts
         long LOOPCOUNT = 100 * 1000L;

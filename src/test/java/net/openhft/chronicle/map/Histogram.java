@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -20,13 +24,13 @@ package net.openhft.chronicle.map;
  * Created by peter.lawrey on 28/02/14.
  */
 public class Histogram {
-    static final String[] FRACTION_STR = "worst,99.99,99.9,99,90,50".split(",");
-    static final int[] FRACTIONS = {Integer.MAX_VALUE, 10000, 1000, 100, 10, 2};
-    static final int BITS_OF_ACCURACY = 5;
-    static final int MANTISSA = 52;
-    static final int BITS_TO_TRUNCATE = MANTISSA - BITS_OF_ACCURACY;
-    final int[] counters = new int[40 << BITS_OF_ACCURACY];
-    long count = 0;
+    private static final String[] FRACTION_STR = "worst,99.99,99.9,99,90,50".split(",");
+    private static final int[] FRACTIONS = {Integer.MAX_VALUE, 10000, 1000, 100, 10, 2};
+    private static final int BITS_OF_ACCURACY = 5;
+    private static final int MANTISSA = 52;
+    private static final int BITS_TO_TRUNCATE = MANTISSA - BITS_OF_ACCURACY;
+    private final int[] counters = new int[40 << BITS_OF_ACCURACY];
+    private long count = 0;
 
     public void sample(long value) {
         long rawValue = Double.doubleToRawLongBits(value) >> BITS_TO_TRUNCATE;

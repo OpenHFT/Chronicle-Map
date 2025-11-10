@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -28,7 +32,7 @@ import java.nio.channels.FileLock;
  * Created by peter.lawrey on 23/04/2015.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class DoubleArray implements Byteable, Copyable<DoubleArray>, DynamicallySized {
+class DoubleArray implements Byteable, Copyable<DoubleArray>, DynamicallySized {
     static boolean HACK = true;
     private static final int CAPACITY = 0; // assume a 32-bit size.
     private static final int LENGTH = CAPACITY + 4; // assume a 32-bit size.
@@ -80,7 +84,7 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
         return HACK && bs == null ? 6 * 8 : bs.readInt(LENGTH + offset);
     }
 
-    public int capacity() {
+    private int capacity() {
         return bs.readInt(CAPACITY + offset);
     }
 
@@ -89,14 +93,14 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
         return bs.readDouble(BASE + offset + index * 8L);
     }
 
-    public void setDataAt(int index, double d) {
+    private void setDataAt(int index, double d) {
         if (index < 0 || index >= capacity()) throw new ArrayIndexOutOfBoundsException();
         if (length() <= index)
             setLength(index + 1);
         bs.writeDouble(BASE + offset + index * 8L, d);
     }
 
-    public void setLength(int length) {
+    private void setLength(int length) {
         if (length < 0 || length >= capacity()) throw new IllegalArgumentException();
         bs.writeInt(LENGTH + offset, length);
     }

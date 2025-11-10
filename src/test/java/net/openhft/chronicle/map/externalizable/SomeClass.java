@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -24,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings("serial")
-public class SomeClass implements Externalizable {
+class SomeClass implements Externalizable {
 
     final List<String> hits = new ArrayList<>();
     private long id;

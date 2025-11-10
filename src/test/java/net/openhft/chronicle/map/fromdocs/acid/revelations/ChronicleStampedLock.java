@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 package net.openhft.chronicle.map.fromdocs.acid.revelations;
 
 import net.openhft.chronicle.core.values.LongValue;
@@ -22,12 +26,12 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
  * j.u.c.l.StampedLock methosds.
  */
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
-public class ChronicleStampedLock extends StampedLock {
+class ChronicleStampedLock extends StampedLock {
 
-    ChronicleMap<String, ChronicleStampedLockVOInterface> chm;  //custody of StampedLock semantics
-    ChronicleMap<String, LongValue> chmR;   //Chronicle AtomicLong re: Reader set custody
+    private ChronicleMap<String, ChronicleStampedLockVOInterface> chm;  //custody of StampedLock semantics
+    private ChronicleMap<String, LongValue> chmR;   //Chronicle AtomicLong re: Reader set custody
     ChronicleMap<String, LongValue> chmW;   //Chronicle AtomicLong re: Reader set custody
-    ChronicleStampedLockVOInterface offHeapLock =
+    private ChronicleStampedLockVOInterface offHeapLock =
             newNativeReference(
                     ChronicleStampedLockVOInterface.class
             );  //the off-heap ChronicleStampedLock
@@ -35,10 +39,10 @@ public class ChronicleStampedLock extends StampedLock {
             newNativeReference(
                     ChronicleStampedLockVOInterface.class
             );   //needed to facilitate validate(stamp)
-    LongValue readLockHolderCount = Values.newNativeReference(
+    private LongValue readLockHolderCount = Values.newNativeReference(
             LongValue.class
     ); //ReaderSet cardinality
-    LongValue writeLockHolderCount = Values.newNativeReference(
+    private LongValue writeLockHolderCount = Values.newNativeReference(
             LongValue.class
     ); //WriterSet cardinality
 
@@ -61,7 +65,7 @@ public class ChronicleStampedLock extends StampedLock {
         }
     }
 
-    static ChronicleMap<String, ChronicleStampedLockVOInterface> offHeapLock(String operand)
+    private static ChronicleMap<String, ChronicleStampedLockVOInterface> offHeapLock(String operand)
             throws IOException {
 
         return ChronicleMapBuilder.of(String.class, ChronicleStampedLockVOInterface.class)
@@ -74,7 +78,7 @@ public class ChronicleStampedLock extends StampedLock {
                 );
     }
 
-    static ChronicleMap<String, LongValue> offHeapLockReaderCount(String operand)
+    private static ChronicleMap<String, LongValue> offHeapLockReaderCount(String operand)
             throws IOException {
 
         return ChronicleMapBuilder.of(String.class, LongValue.class)

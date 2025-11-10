@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -23,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 class LoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
 
-    static final Logger LOG = LoggerFactory.getLogger(LoggingMapEntryOperations.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LoggingMapEntryOperations.class);
 
     @Override
     public Void replaceValue(@NotNull MapEntry<K, V> entry, Data<V> newValue) {

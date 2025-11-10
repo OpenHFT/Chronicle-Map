@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -21,7 +25,7 @@ import net.openhft.chronicle.core.Jvm;
 /**
  *
  */
-public class StateMachineProcessor implements Runnable {
+class StateMachineProcessor implements Runnable {
     private final StateMachineData smd;
     private final StateMachineState from;
     private final StateMachineState transition;
@@ -29,7 +33,7 @@ public class StateMachineProcessor implements Runnable {
 
     /**
      */
-    public StateMachineProcessor(final StateMachineData smd, StateMachineState from, StateMachineState transition, StateMachineState to) {
+    private StateMachineProcessor(final StateMachineData smd, StateMachineState from, StateMachineState transition, StateMachineState to) {
         this.smd = smd;
         this.from = from;
         this.transition = transition;

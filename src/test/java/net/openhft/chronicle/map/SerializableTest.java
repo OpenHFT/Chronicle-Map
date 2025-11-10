@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.serialization.impl.CommonMarshallableReaderWriter;
@@ -177,7 +181,7 @@ public class SerializableTest {
         final String x;
         transient boolean writeMarshallableWireOutCalled;
 
-        public Bar(String expected) {
+        Bar(String expected) {
             this.x = expected;
         }
 
@@ -201,7 +205,7 @@ public class SerializableTest {
         final String x;
         transient boolean writeMarshallableWireOutCalled;
 
-        public Bar2(String expected) {
+        Bar2(String expected) {
             this.x = expected;
         }
 

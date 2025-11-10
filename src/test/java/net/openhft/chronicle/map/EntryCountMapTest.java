@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -36,11 +40,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class EntryCountMapTest {
-    static final int ecmTests = Integer.getInteger("ecm.tests", 5);
-    double score = 0;
-    int scoreCount = 0;
+    private static final int ecmTests = Integer.getInteger("ecm.tests", 5);
+    private double score = 0;
+    private int scoreCount = 0;
 
-    static File getPersistenceFile() throws IOException {
+    private static File getPersistenceFile() throws IOException {
         File file = File.createTempFile("ecm-chm-test", ".deleteme");
         file.deleteOnExit();
         return file;
@@ -212,7 +216,7 @@ public class EntryCountMapTest {
 
     }
 
-    void testEntriesMaxSize(int segments, int minSize, int maxSize, int seed) throws IOException {
+    private void testEntriesMaxSize(int segments, int minSize, int maxSize, int seed) throws IOException {
         assert minSize <= maxSize;
         Random random = new Random(seed);
         int counter = minSize + random.nextInt(9999 + maxSize);
@@ -227,8 +231,8 @@ public class EntryCountMapTest {
         file.delete();
     }
 
-    void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,
-                             ChronicleMap<CharSequence, LongValue> map) {
+    private void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,
+                                     ChronicleMap<CharSequence, LongValue> map) {
         LongValue longValue = newNativeReference(LongValue.class);
         try {
             for (int j = 0; j < moreThanMaxSize(maxSize); j++) {

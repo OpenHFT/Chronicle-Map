@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -39,8 +43,8 @@ import static org.junit.Assert.assertNotNull;
 
 public class WordCountTest {
 
-    static String[] words;
-    static Map<CharSequence, Integer> expectedMap;
+    private static String[] words;
+    private static Map<CharSequence, Integer> expectedMap;
 
     static {
         // english version of war and peace ->  ascii

@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -131,11 +135,11 @@ class LoopHelpers {
         return b.toString();
     }
 
-    public static final class XorShift32Random {
+    static final class XorShift32Random {
         static final AtomicInteger seq = new AtomicInteger(8862213);
         int x = -1831433054;
 
-        public XorShift32Random(int seed) {
+        XorShift32Random(int seed) {
             x = seed;
         }
 
@@ -154,14 +158,14 @@ class LoopHelpers {
     /**
      * Multiplication-free RNG from Marsaglia "Xorshift RNGs" paper
      */
-    public static final class MarsagliaRandom {
+    static final class MarsagliaRandom {
         static final AtomicInteger seq = new AtomicInteger(3122688);
         int x;
         int y = 842502087;
         int z = -715159705;
         int w = 273326509;
 
-        public MarsagliaRandom(int seed) {
+        MarsagliaRandom(int seed) {
             x = seed;
         }
 
@@ -207,7 +211,7 @@ class LoopHelpers {
         }
     }
 
-    public static class BarrierTimer implements Runnable {
+    static class BarrierTimer implements Runnable {
         volatile boolean started;
         volatile long startTime;
         volatile long endTime;

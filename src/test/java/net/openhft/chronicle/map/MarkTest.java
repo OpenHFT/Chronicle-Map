@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -32,7 +36,7 @@ import static org.junit.Assert.assertTrue;
 
 public class MarkTest {
 
-    static int ENTRIES = 25_000_000;
+    private static int ENTRIES = 25_000_000;
 
     private static void test(
             Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>

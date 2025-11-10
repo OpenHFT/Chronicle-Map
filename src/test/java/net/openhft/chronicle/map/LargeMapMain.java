@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 package net.openhft.chronicle.map;
 
 import java.io.BufferedReader;
@@ -10,7 +14,9 @@ import java.util.Random;
 
 public class LargeMapMain {
     //    static int avgSize = 4096, maxSize = 40_000, entries= 500_000; // average ~= 4K
-    static int avgSize = 1024, maxSize = 8_000, entries = 1_000_000; // average ~= 1K
+    private static int avgSize = 1024;
+    private static int maxSize = 8_000;
+    private static int entries = 1_000_000; // average ~= 1K
 
     public static void main(String[] args) throws IOException {
         ChronicleMap<CharSequence, CharSequence> map = createMap(false);

@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -41,7 +45,7 @@ public class ExitHookTest {
 
     private static final int KEY = 1;
     private static final int JVM_STARTUP_WAIT_TIME_MS = 10_000;
-    public static final int CHILD_PROCESS_WAIT_TIME_MS = 500;
+    private static final int CHILD_PROCESS_WAIT_TIME_MS = 500;
 
     private static final String PRE_SHUTDOWN_ACTION_EXECUTED = "PRE_SHUTDOWN_ACTION_EXECUTED";
     private static final String USER_SHUTDOWN_HOOK_EXECUTED = "USER_SHUTDOWN_HOOK_EXECUTED";
@@ -119,7 +123,7 @@ public class ExitHookTest {
     }
 
     // http://stackoverflow.com/a/33171840/648955
-    public static long getPidOfProcess(Process p) {
+    private static long getPidOfProcess(Process p) {
         Number pid = Jvm.getValue(p, "pid");
         return pid.longValue();
     }

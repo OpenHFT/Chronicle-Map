@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -115,7 +119,7 @@ public class ProcessInstanceLimiter implements Runnable {
      *
      * @throws IOException - if the default shared file cannot be created
      */
-    public ProcessInstanceLimiter() throws IOException {
+    private ProcessInstanceLimiter() throws IOException {
         this(new DefaultCallback());
         ((DefaultCallback) this.getCallback()).setLimiter(this);
     }
@@ -128,7 +132,7 @@ public class ProcessInstanceLimiter implements Runnable {
      *                 callbacks
      * @throws IOException - if the default shared file cannot be created
      */
-    public ProcessInstanceLimiter(Callback callback) throws IOException {
+    private ProcessInstanceLimiter(Callback callback) throws IOException {
         this(DEFAULT_SHARED_MAP_DIRECTORY + System.getProperty("file.separator") + DEFAULT_SHARED_MAP_NAME, callback);
     }
 
@@ -142,7 +146,7 @@ public class ProcessInstanceLimiter implements Runnable {
      *                      callbacks
      * @throws IOException - if the default shared file cannot be created
      */
-    public ProcessInstanceLimiter(String sharedMapPath, Callback callback) throws IOException {
+    private ProcessInstanceLimiter(String sharedMapPath, Callback callback) throws IOException {
         this.sharedMapPath = sharedMapPath;
         this.callback = callback;
         ChronicleMapBuilder<String, Data> builder =
@@ -191,7 +195,7 @@ public class ProcessInstanceLimiter implements Runnable {
      * @return - the ProcessInstanceLimiter instance
      * @throws IOException - if the default shared file cannot be created
      */
-    public static ProcessInstanceLimiter limitTo(int numProcesses) throws IOException {
+    private static ProcessInstanceLimiter limitTo(int numProcesses) throws IOException {
         return limitTo(numProcesses, DEFAULT_PROCESS_NAME);
     }
 
@@ -212,7 +216,7 @@ public class ProcessInstanceLimiter implements Runnable {
      * @return - the ProcessInstanceLimiter instance
      * @throws IOException - if the default shared file cannot be created
      */
-    public static ProcessInstanceLimiter limitTo(int numProcesses, String processType) throws IOException {
+    private static ProcessInstanceLimiter limitTo(int numProcesses, String processType) throws IOException {
         ProcessInstanceLimiter limiter = new ProcessInstanceLimiter();
         limiter.setMaxNumberOfProcessesOfType(processType, numProcesses);
         limiter.startingProcessOfType(processType);
@@ -245,7 +249,7 @@ public class ProcessInstanceLimiter implements Runnable {
      * The instance of the Callback interface held by the instance, which will
      * receive callbacks
      */
-    public Callback getCallback() {
+    private Callback getCallback() {
         return this.callback;
     }
 
@@ -255,7 +259,7 @@ public class ProcessInstanceLimiter implements Runnable {
      * set, then this returns -1 (which is an invalid value, as it must be a
      * positive value)
      */
-    public int getMaxNumberOfProcessesAllowedFor(String processType) {
+    private int getMaxNumberOfProcessesAllowedFor(String processType) {
         Data data = this.starttimedata.get(processType);
         if (data == null) {
             return -1;
@@ -326,7 +330,7 @@ public class ProcessInstanceLimiter implements Runnable {
      * of the other callback interface methods will be called.
      *
      */
-    public void startingProcessOfType(String processType) {
+    private void startingProcessOfType(String processType) {
         Data data = this.timedata.get(processType);
         if (data == null) {
             this.callback.noDefinitionForProcessesOfType(processType);
@@ -390,7 +394,7 @@ public class ProcessInstanceLimiter implements Runnable {
      *                                    processes of this type that can run concurrently on the same
      *                                    machine
      */
-    public void setMaxNumberOfProcessesOfType(String processType, int maxNumberOfProcessesAllowed) {
+    private void setMaxNumberOfProcessesOfType(String processType, int maxNumberOfProcessesAllowed) {
         if (maxNumberOfProcessesAllowed <= 0) {
             throw new IllegalArgumentException("maxNumberOfProcessesAllowed must be a positive number, not " + maxNumberOfProcessesAllowed);
         }
@@ -578,14 +582,14 @@ public class ProcessInstanceLimiter implements Runnable {
             this.limiter = limiter;
         }
 
-        public DefaultCallback() {
+        DefaultCallback() {
         }
 
         public ProcessInstanceLimiter getLimiter() {
             return limiter;
         }
 
-        public void setLimiter(ProcessInstanceLimiter limiter) {
+        void setLimiter(ProcessInstanceLimiter limiter) {
             this.limiter = limiter;
         }
 

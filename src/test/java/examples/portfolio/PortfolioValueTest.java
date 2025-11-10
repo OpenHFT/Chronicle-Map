@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -77,7 +81,7 @@ public class PortfolioValueTest {
         System.out.println("Total Portfolio Value: " + total + " for " + cache.longSize() + ", computed in " + elapsedTime + " ms, using " + (useIterator ? "Iterator" : "Keys"));
     }
 
-    protected static double computeTotalUsingIterator(final ChronicleMap<LongValue, PortfolioAssetInterface> cache, int start, int end) {
+    private static double computeTotalUsingIterator(final ChronicleMap<LongValue, PortfolioAssetInterface> cache, int start, int end) {
         if (end > start) {
             final PortfolioAssetInterface asset = Values.newHeapInstance(PortfolioAssetInterface.class);
             PortfolioValueAccumulator accumulator = new PortfolioValueAccumulator(new MutableDouble(), asset);
@@ -91,7 +95,7 @@ public class PortfolioValueTest {
         return 0;
     }
 
-    protected static double computeTotalUsingKeys(final ChronicleMap<LongValue, PortfolioAssetInterface> cache, long start, long end) {
+    private static double computeTotalUsingKeys(final ChronicleMap<LongValue, PortfolioAssetInterface> cache, long start, long end) {
         final LongValue key = Values.newHeapInstance(LongValue.class);
         PortfolioAssetInterface asset = Values.newHeapInstance(PortfolioAssetInterface.class);
 

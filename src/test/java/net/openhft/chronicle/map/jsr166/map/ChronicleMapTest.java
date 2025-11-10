@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -39,13 +43,13 @@ import static org.junit.Assert.*;
 @SuppressWarnings({"rawtypes", "unchecked", "try"})
 public class ChronicleMapTest extends JSR166TestCase {
 
-    static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
+    private static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .averageValueSize(1)
                 .entries(size).create();
     }
 
-    static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) throws IOException {
+    private static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) throws IOException {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .averageKeySize(20).averageValueSize(20)
                 .entries(size).create();
@@ -640,13 +644,13 @@ public class ChronicleMapTest extends JSR166TestCase {
         }
     }
 
-    static class CI extends BI {
+    private static class CI extends BI {
         CI(int value) {
             super(value);
         }
     }
 
-    static class DI extends BI {
+    private static class DI extends BI {
         DI(int value) {
             super(value);
         }

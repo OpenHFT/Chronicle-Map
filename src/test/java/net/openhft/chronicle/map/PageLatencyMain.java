@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -20,9 +24,9 @@ package net.openhft.chronicle.map;
  * Created by peter.lawrey on 28/02/14.
  */
 public class PageLatencyMain {
-    public static final int PAGES = Integer.getInteger("pages", 1024 * 1024);
-    public static final int PAGES_SIZE = 512; // longs
-    public static volatile long b;
+    private static final int PAGES = Integer.getInteger("pages", 1024 * 1024);
+    private static final int PAGES_SIZE = 512; // longs
+    private static volatile long b;
 
     public static void main(String... ignored) {
         long[] bytes = new long[PAGES * PAGES_SIZE];

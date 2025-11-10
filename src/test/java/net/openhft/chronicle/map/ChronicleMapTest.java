@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -44,8 +48,8 @@ import static org.junit.Assert.*;
 @SuppressWarnings({"rawtypes", "unchecked", "ResultOfMethodCallIgnored", "try"})
 public class ChronicleMapTest {
 
-    static final LongValue ONE = Values.newHeapInstance(LongValue.class);
-    static long count = 0;
+    private static final LongValue ONE = Values.newHeapInstance(LongValue.class);
+    private static long count = 0;
 
     static {
         ONE.setValue(1);
@@ -53,7 +57,7 @@ public class ChronicleMapTest {
 
     private final StringBuilder sb = new StringBuilder();
 
-    static void assertKeySet(Set<Integer> keySet, int[] expectedKeys) {
+    private static void assertKeySet(Set<Integer> keySet, int[] expectedKeys) {
         Set<Integer> expectedSet = new HashSet<Integer>();
         for (int expectedKey : expectedKeys) {
             expectedSet.add(expectedKey);
@@ -62,7 +66,7 @@ public class ChronicleMapTest {
         assertEquals(expectedSet, keySet);
     }
 
-    static void assertValues(Collection<CharSequence> values, CharSequence[] expectedValues) {
+    private static void assertValues(Collection<CharSequence> values, CharSequence[] expectedValues) {
         List<String> expectedList = new ArrayList<String>();
         for (CharSequence expectedValue : expectedValues) {
             expectedList.add(expectedValue.toString());
@@ -78,7 +82,7 @@ public class ChronicleMapTest {
         assertEquals(expectedList, actualList);
     }
 
-    static void assertEntrySet(Set<Map.Entry<Integer, CharSequence>> entrySet, int[] expectedKeys, CharSequence[] expectedValues) {
+    private static void assertEntrySet(Set<Map.Entry<Integer, CharSequence>> entrySet, int[] expectedKeys, CharSequence[] expectedValues) {
         Set<Map.Entry<Integer, CharSequence>> expectedSet = new HashSet<Map.Entry<Integer, CharSequence>>();
         for (int i = 0; i < expectedKeys.length; i++) {
             expectedSet.add(new AbstractMap.SimpleEntry<>(expectedKeys[i],
@@ -92,7 +96,7 @@ public class ChronicleMapTest {
         assertEquals(expectedSet, entrySet);
     }
 
-    static void assertMap(Map<Integer, CharSequence> map, int[] expectedKeys, CharSequence[] expectedValues) {
+    private static void assertMap(Map<Integer, CharSequence> map, int[] expectedKeys, CharSequence[] expectedValues) {
         assertEquals(expectedKeys.length, map.size());
         for (int i = 0; i < expectedKeys.length; i++) {
             assertEquals("On position " + i,
@@ -100,7 +104,7 @@ public class ChronicleMapTest {
         }
     }
 
-    public static LongValue nativeLongValue() {
+    private static LongValue nativeLongValue() {
         return Values.newNativeReference(LongValue.class);
     }
 

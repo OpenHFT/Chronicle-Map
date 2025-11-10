@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -22,9 +26,9 @@ import org.apache.commons.lang3.mutable.MutableDouble;
 
 import java.util.function.Consumer;
 
-public final class PortfolioValueAccumulator implements Consumer<MapEntry<LongValue, PortfolioAssetInterface>> {
+final class PortfolioValueAccumulator implements Consumer<MapEntry<LongValue, PortfolioAssetInterface>> {
     final MutableDouble total;
-    final PortfolioAssetInterface asset;
+    private final PortfolioAssetInterface asset;
 
     public PortfolioValueAccumulator(MutableDouble total, PortfolioAssetInterface asset) {
         this.total = total;

@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -149,7 +153,7 @@ public class LargeEntriesTest {
         }
     }
 
-    void exerciseLargeStrings(ChronicleMap<String, String> map, int start, int finish, int entrySize) {
+    private void exerciseLargeStrings(ChronicleMap<String, String> map, int start, int finish, int entrySize) {
 /*
         final Thread thisThread = Thread.currentThread();
         Thread monitor = new Thread(new Runnable() {

@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -27,7 +31,7 @@ import static org.junit.Assert.assertSame;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class RecursiveRefereneChMapTest {
-    public static final String TMP = OS.getTarget();
+    private static final String TMP = OS.getTarget();
 
     @Test
     public void testRecursive() throws IOException {
@@ -46,7 +50,7 @@ public class RecursiveRefereneChMapTest {
     }
 
     @SuppressWarnings("serial")
-    public static class StupidCycle implements Serializable {
+    static class StupidCycle implements Serializable {
         int dummy;
         Object[] cycle = {this};
     }

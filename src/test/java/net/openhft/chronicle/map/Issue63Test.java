@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -186,7 +190,7 @@ public class Issue63Test {
         assertArrayEquals(exp2, xVectors2.get(key2), 0.0f);
     }
 
-    void testChronicleMap() throws IOException {
+    private void testChronicleMap() throws IOException {
         int num = 1_000_000;
         testChronicleMap(OS.getTarget(), num, num);
         ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -205,9 +209,9 @@ public class Issue63Test {
         }
     }
 
-    void testChronicleMap(String persistToDir,
-                          int numXIDs,
-                          int numYIDs) throws IOException {
+    private void testChronicleMap(String persistToDir,
+                                  int numXIDs,
+                                  int numYIDs) throws IOException {
 
         if (!Files.exists(Paths.get(persistToDir))) Files.createDirectory(Paths.get(persistToDir));
 
@@ -286,16 +290,16 @@ public class Issue63Test {
         }
     }
 
-    public void setUserVector(String id, float[] arr) {
+    private void setUserVector(String id, float[] arr) {
         putIntoMapAndRecentSet(xVectors, xRecentIDs, id, arr);
     }
 
-    public void setItemVector(String id, float[] arr) {
+    private void setItemVector(String id, float[] arr) {
         putIntoMapAndRecentSet(yVectors, yRecentIDs, id, arr);
     }
 
-    public void addKnownItems(ChronicleMap<CharSequence, List<CharSequence>> knownItems,
-                              String id, List<CharSequence> items) {
+    private void addKnownItems(ChronicleMap<CharSequence, List<CharSequence>> knownItems,
+                               String id, List<CharSequence> items) {
         try (ExternalMapQueryContext<CharSequence, List<CharSequence>, ?> c =
                      knownItems.queryContext(id)) {
             if (c.writeLock().tryLock(1, MINUTES)) {

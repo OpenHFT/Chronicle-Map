@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -255,7 +259,7 @@ public class BiMapTest {
     static class BiMapEntryOperations<K, V> implements MapEntryOperations<K, V, DualLockSuccess> {
         ChronicleMap<V, K> reverse;
 
-        public void setReverse(ChronicleMap<V, K> reverse) {
+        void setReverse(ChronicleMap<V, K> reverse) {
             this.reverse = reverse;
         }
 

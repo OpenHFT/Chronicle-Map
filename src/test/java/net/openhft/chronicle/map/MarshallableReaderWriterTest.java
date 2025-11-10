@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2016-2020 Chronicle Software
  *
@@ -57,7 +61,7 @@ public class MarshallableReaderWriterTest {
         }
     }
 
-    public static class MyOrder extends SelfDescribingMarshallable {
+    static class MyOrder extends SelfDescribingMarshallable {
         private String instrument;
         private String orderId;
 

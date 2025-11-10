@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -16,7 +20,7 @@
 
 package net.openhft.chronicle.map.fromdocs.pingpong_latency;
 
-public class PingPongLockLeft {
+class PingPongLockLeft {
 //    public static void main(String... ignored) throws IOException, InterruptedException {
 //        ChronicleMap<String, BondVOInterface> chm = PingPongCASLeft.acquireCHM();
 //

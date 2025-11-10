@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 package net.openhft.chronicle.map.fromdocs.acid.genesis;
 
 import net.openhft.affinity.Affinity;
@@ -34,7 +38,7 @@ public class DirtyReadTolerance<K, V> {
         (new Thread(victim)).start();
     }
 
-    static ChronicleMap<String, BondVOInterface> offHeap(String operand) throws IOException {
+    private static ChronicleMap<String, BondVOInterface> offHeap(String operand) throws IOException {
         // ensure thread ids are globally unique.
         Affinity.setThreadId();
         return ChronicleMapBuilder.of(String.class, BondVOInterface.class)

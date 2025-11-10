@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -26,7 +30,7 @@ import java.nio.channels.FileLock;
  *
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class StateMachineData implements Byteable {
+class StateMachineData implements Byteable {
     private BytesStore<?, ?> bs;
     private long offset;
 

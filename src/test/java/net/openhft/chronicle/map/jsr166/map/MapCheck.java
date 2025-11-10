@@ -1,3 +1,7 @@
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
 /*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
@@ -39,15 +43,15 @@ import java.util.*;
 
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class MapCheck {
-    static final String MISSING = "MISSING";
-    static final LoopHelpers.SimpleRandom srng = new LoopHelpers.SimpleRandom();
-    static final Random rng = new Random(3152688);
-    static TestTimer timer = new TestTimer();
-    static Class<?> eclass;
-    static volatile int checkSum;
+    private static final String MISSING = "MISSING";
+    private static final LoopHelpers.SimpleRandom srng = new LoopHelpers.SimpleRandom();
+    private static final Random rng = new Random(3152688);
+    private static TestTimer timer = new TestTimer();
+    private static Class<?> eclass;
+    private static volatile int checkSum;
     static int counter = 0;
 
-    static void reallyAssert(boolean b) {
+    private static void reallyAssert(boolean b) {
         if (!b) throw new Error("Failed Assertion");
     }
 
@@ -109,7 +113,7 @@ public class MapCheck {
             serTest(size);
     }
 
-    static Map newMap() {
+    private static Map newMap() {
         try {
             return ChronicleMapBuilder.of(Object.class, Object.class).create();
         } catch (Exception e) {
@@ -117,7 +121,7 @@ public class MapCheck {
         }
     }
 
-    static void closeMap(Map map) {
+    private static void closeMap(Map map) {
         if (map instanceof ChronicleMap) {
             ChronicleMap chm = (ChronicleMap) map;
             try {
@@ -128,7 +132,7 @@ public class MapCheck {
         }
     }
 
-    static void precheck(int n, Object[] key, Object[] abs) {
+    private static void precheck(int n, Object[] key, Object[] abs) {
         int ck = 0;
         Map s = newMap();
         for (int i = 0; i < n; i++) {
@@ -153,7 +157,7 @@ public class MapCheck {
         closeMap(s);
     }
 
-    static void checkNullKey() {
+    private static void checkNullKey() {
         Map m = newMap();
         Object x = (byte) 1;
         Object v;
@@ -173,7 +177,7 @@ public class MapCheck {
         closeMap(m);
     }
 
-    static void getTest(String nm, int n, Map s, Object[] key, int expect) {
+    private static void getTest(String nm, int n, Map s, Object[] key, int expect) {
         int sum = 0;
         timer.start(nm, n);
         for (int i = 0; i < n; i++) {
@@ -198,7 +202,7 @@ public class MapCheck {
         reallyAssert(sum == expect);
     }
 
-    static void remTest(String nm, int n, Map s, Object[] key, int expect) {
+    private static void remTest(String nm, int n, Map s, Object[] key, int expect) {
         int sum = 0;
         timer.start(nm, n);
         for (int i = 0; i < n; i++) {
@@ -209,7 +213,7 @@ public class MapCheck {
         checkSum += sum;
     }
 
-    static void clrTest(int n, Map s) {
+    private static void clrTest(int n, Map s) {
         String nm = "Remove Present         ";
         timer.start(nm, n);
         s.clear();
@@ -217,7 +221,7 @@ public class MapCheck {
         reallyAssert(s.isEmpty());
     }
 
-    static void putTest(String nm, int n, Map s, Object[] key, int expect) {
+    private static void putTest(String nm, int n, Map s, Object[] key, int expect) {
         int sum = 0;
         timer.start(nm, n);
         for (int i = 0; i < n; i++) {
@@ -230,7 +234,7 @@ public class MapCheck {
         checkSum += sum;
     }
 
-    static void keyTest(String nm, int n, Map s, Object[] key, int expect) {
+    private static void keyTest(String nm, int n, Map s, Object[] key, int expect) {
         int sum = 0;
         timer.start(nm, n);
         for (int i = 0; i < n; i++) {
@@ -242,7 +246,7 @@ public class MapCheck {
     }
 
     // version without timing for uncategorized tests
-    static void untimedKeyTest(String nm, int n, Map s, Object[] key, int expect) {
+    private static void untimedKeyTest(String nm, int n, Map s, Object[] key, int expect) {
         int sum = 0;
         for (int i = 0; i < n; i++) {
             if (s.containsKey(key[i])) ++sum;
@@ -251,7 +255,7 @@ public class MapCheck {
         checkSum += sum;
     }
 
-    static void remHalfTest(String nm, int n, Map s, Object[] key, int expect) {
+    private static void remHalfTest(String nm, int n, Map s, Object[] key, int expect) {
         int sum = 0;
         timer.start(nm, n / 2);
         for (int i = n - 2; i >= 0; i -= 2) {
@@ -272,7 +276,7 @@ public class MapCheck {
         checkSum += sum;
     }
 
-    static Object kitTest(Map s, int size) {
+    private static Object kitTest(Map s, int size) {
         Object last = null;
         int sum = 0;
         timer.start("Traverse key or value  ", size);
@@ -288,7 +292,7 @@ public class MapCheck {
         return last;
     }
 
-    static Object vitTest(Map s, int size) {
+    private static Object vitTest(Map s, int size) {
         Object last = null;
         int sum = 0;
         timer.start("Traverse key or value  ", size);
@@ -304,7 +308,7 @@ public class MapCheck {
         return last;
     }
 
-    static void eitTest(Map s, int size) {
+    private static void eitTest(Map s, int size) {
         int sum = 0;
         timer.start("Traverse entry         ", size);
         for (Iterator it = s.entrySet().iterator(); it.hasNext(); ) {
@@ -320,7 +324,7 @@ public class MapCheck {
         checkSum += sum;
     }
 
-    static void itRemTest(Map s, int size) {
+    private static void itRemTest(Map s, int size) {
         int sz = s.size();
         reallyAssert(sz == size);
         timer.start("Remove Present         ", size);
@@ -335,7 +339,7 @@ public class MapCheck {
         checkSum += sum;
     }
 
-    static void itHalfRemTest(Map s, int size) {
+    private static void itHalfRemTest(Map s, int size) {
         int sz = s.size();
         reallyAssert(sz == size);
         timer.start("Remove Present         ", size);
@@ -352,14 +356,14 @@ public class MapCheck {
         checkSum += sum;
     }
 
-    static void putAllTest(String nm, int n, Map src, Map dst) {
+    private static void putAllTest(String nm, int n, Map src, Map dst) {
         timer.start(nm, n);
         dst.putAll(src);
         timer.finish();
         reallyAssert(src.size() == dst.size());
     }
 
-    static void serTest(int size) throws IOException, ClassNotFoundException {
+    private static void serTest(int size) throws IOException, ClassNotFoundException {
         Map s = newMap();
         if (!(s instanceof Serializable))
             return;
@@ -390,7 +394,7 @@ public class MapCheck {
         closeMap(s);
     }
 
-    static void mainTest(Object[] key, Object[] absent) {
+    private static void mainTest(Object[] key, Object[] absent) {
         Map s = newMap();
         int size = key.length;
 
@@ -430,7 +434,7 @@ public class MapCheck {
         closeMap(s);
     }
 
-    static void twoMapTest1(Map s, Object[] key, Object[] absent) {
+    private static void twoMapTest1(Map s, Object[] key, Object[] absent) {
         int size = s.size();
         Map s2 = newMap();
         putAllTest("Add    Absent          ", size, s, s2);
@@ -446,7 +450,7 @@ public class MapCheck {
         closeMap(s2);
     }
 
-    static void twoMapTest2(Map s, Object[] key, Object[] absent) {
+    private static void twoMapTest2(Map s, Object[] key, Object[] absent) {
         int size = key.length;
 
         Map s2 = newMap();
@@ -545,7 +549,7 @@ public class MapCheck {
         reallyAssert(s.size() == size);
     }
 
-    static void initializeKeys(Object[] key, Object[] absent, int size) {
+    private static void initializeKeys(Object[] key, Object[] absent, int size) {
         // Object cannot be used as it cannot be serialized.
         if (eclass == Object.class || eclass == Integer.class) {
             initInts(key, absent, size);
@@ -559,7 +563,7 @@ public class MapCheck {
             throw new Error("unknown type");
     }
 
-    static void initInts(Object[] key, Object[] absent, int size) {
+    private static void initInts(Object[] key, Object[] absent, int size) {
         for (int i = 0; i < size; ++i)
             key[i] = Integer.valueOf(i);
         Map m = newMap();
@@ -575,7 +579,7 @@ public class MapCheck {
         closeMap(m);
     }
 
-    static void initFloats(Object[] key, Object[] absent, int size) {
+    private static void initFloats(Object[] key, Object[] absent, int size) {
         Map m = newMap();
         for (int i = 0; i < size; ++i) {
             float r = (float) i;
@@ -591,7 +595,7 @@ public class MapCheck {
         closeMap(m);
     }
 
-    static void initDoubles(Object[] key, Object[] absent, int size) {
+    private static void initDoubles(Object[] key, Object[] absent, int size) {
         Map m = newMap();
         for (int i = 0; i < size; ++i) {
             double r = (double) i;
@@ -609,7 +613,7 @@ public class MapCheck {
 
     // Use as many real words as possible, then use fake random words
 
-    static void initWords(int size, Object[] key, Object[] abs) {
+    private static void initWords(int size, Object[] key, Object[] abs) {
         String fileName = "testwords.txt";
         int ki = 0;
         int ai = 0;
@@ -646,7 +650,7 @@ public class MapCheck {
         }
     }
 
-    static void randomWords(Object[] ws, int origin, int size) {
+    private static void randomWords(Object[] ws, int origin, int size) {
         for (int i = origin; i < size; ++i) {
             int k = 0;
             int len = 2 + (srng.next() & 0xf);
@@ -666,7 +670,7 @@ public class MapCheck {
         }
     }
 
-    static void shuffle(Object[] keys) {
+    private static void shuffle(Object[] keys) {
         int size = keys.length;
         for (int i = size; i > 1; i--) {
             int r = rng.nextInt(i);
