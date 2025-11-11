@@ -46,7 +46,7 @@ long primaryChecksum = ((d ^ a1) * mul ^ ((d ^ a1) * mul >>> 47)) * mul;
 ```
 where the `keySize` is the key sequence length in bytes, `keyHashCode` is the key hash code, and
 the `payloadChecksum` is the payload checksum, computed on the previous step. The given procedure
-code is in [Java language](https://docs.oracle.com/javase/specs/jls/se8/html/index.html).
+code is in [Java language](https://docs.oracle.com/javase/specs/jls/se21/html/index.html).
 
 > The above procedure is actually the [CityHash](https://github.com/google/cityhash) and [FarmHash](
 > https://github.com/google/farmhash) algorithm for bytes sequences of lengths between 8 and 16 (

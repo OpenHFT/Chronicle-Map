@@ -1,7 +1,6 @@
-//
-// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
-//
-
+/*
+ * Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+ */
 package net.openhft.chronicle.map;
 
 import com.google.common.base.Preconditions;
@@ -106,7 +105,7 @@ public class ExitHookTest {
                 .entries(1);
     }
 
-    // http://stackoverflow.com/a/33171840/648955
+    // https://stackoverflow.com/a/33171840/648955
     private static long getPidOfProcess(Process p) {
         Number pid = Jvm.getValue(p, "pid");
         return pid.longValue();
@@ -227,7 +226,7 @@ public class ExitHookTest {
         }
     }
 
-    // http://stackoverflow.com/a/7835467/648955
+    // https://stackoverflow.com/a/7835467/648955
     @SuppressWarnings("deprecation")
     private void interruptProcess(long pidOfProcess) throws IOException {
         Runtime.getRuntime().exec("kill -SIGINT " + pidOfProcess);

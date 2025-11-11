@@ -87,7 +87,7 @@ See https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[Chronicle Map data
 
  - A document store. There are no secondary indexes.
  - A https://en.wikipedia.org/wiki/Multimap[multimap].
- Using a Chronicle Map collection as a multimap is technically possible, but often leads to problems. See http://stackoverflow.com/a/36486525/648955[StackOverflow answer] for details.
+ Using a Chronicle Map collection as a multimap is technically possible, but often leads to problems. See https://stackoverflow.com/a/36486525/648955[StackOverflow answer] for details.
  Developing a proper multimap, using
  Chronicle Map's design principles is possible.
 
@@ -129,7 +129,7 @@ NOTE: For access to commercially available features please contact mailto:sales@
 == Community support:
  - https://github.com/OpenHFT/Chronicle-Map/issues[Issues]
  - https://groups.google.com/forum/#!forum/chronicle-map[Chronicle Map mailing list]
- - http://stackoverflow.com/tags/chronicle-map[Stackoverflow]
+ - https://stackoverflow.com/tags/chronicle-map[Stackoverflow]
 
 '''
 <<../ReadMe.adoc#,Back to ReadMe>>

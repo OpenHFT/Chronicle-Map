@@ -1,7 +1,6 @@
-//
-// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
-//
-
+/*
+ * Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+ */
 /**
  * Contains interfaces for serializing objects between Java heap and {@link
  * net.openhft.chronicle.bytes.Bytes} or {@link net.openhft.chronicle.bytes.BytesStore}, used by

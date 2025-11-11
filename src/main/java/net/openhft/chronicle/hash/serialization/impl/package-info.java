@@ -1,7 +1,6 @@
-//
-// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
-//
-
+/*
+ * Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+ */
 /**
  * The package contains many classes, implementing interfaces from the parent {@code
  * net.openhft.chronicle.hash.serialization} package, and shouldn't be used in the user code (in 90%

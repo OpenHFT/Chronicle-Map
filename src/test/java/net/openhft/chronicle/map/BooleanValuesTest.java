@@ -1,7 +1,6 @@
-//
-// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
-//
-
+/*
+ * Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+ */
 package net.openhft.chronicle.map;
 
 import org.junit.Assert;
@@ -15,7 +14,7 @@ import java.io.IOException;
 public class BooleanValuesTest {
 
     /**
-     * see issue <a href="http://stackoverflow.com/questions/26219313/strange-npe-from-chronicle-map-toy-code">here</a>
+     * see issue <a href="https://stackoverflow.com/questions/26219313/strange-npe-from-chronicle-map-toy-code">here</a>
      */
     @Test
     public void testTestBooleanValues() throws IOException, InterruptedException {

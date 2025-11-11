@@ -296,9 +296,9 @@ There are three pairs of serialization interfaces. Only one of them should be ch
 
 `ChronicleMap` supports all operations from:
 
- - https://docs.oracle.com/javase/8/docs/api/java/util/Map.html[`Map`]  interfaces; `get()`, `put()`, etc, including
+ - https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/Map.html[`Map`]  interfaces; `get()`, `put()`, etc, including
 methods added in Java 8, like `compute()` and `merge()`, and
-  - https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`] interfaces;
+  - https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentMap.html[`ConcurrentMap`] interfaces;
 `putIfAbsent()`, `replace()`.
 
 All operations, including those which include "two-steps", for example, `compute()`, are correctly synchronized in terms of the `ConcurrentMap` interface. This means that you could use a `ChronicleMap` instance just like a `HashMap` or `ConcurrentHashMap`.
