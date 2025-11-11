@@ -1,7 +1,6 @@
 /*
- * Copyright (c) 2016-2020 chronicle.software
+ * Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
  */
-
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;

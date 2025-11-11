@@ -1,4 +1,11 @@
 /*
+ * Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+ */
+//
+// Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
+//
+
+/*
  * Copyright 2012-2018 Chronicle Map Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +20,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package net.openhft.chronicle.map.impl.stage.data;
 
 import net.openhft.chronicle.bytes.Bytes;
