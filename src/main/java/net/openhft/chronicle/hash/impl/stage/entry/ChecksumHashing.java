@@ -11,9 +11,9 @@ public enum ChecksumHashing {
      * Zero-allocation-hashing or Chronicle-Algorithms
      */
     public static long hash8To16Bytes(long len, long first8Bytes, long last8Bytes) {
-        long K2 = 0x9ae16a3b2f90404fL;
-        long mul = K2 + (len << 1);
-        long a = first8Bytes + K2;
+        long k2 = 0x9ae16a3b2f90404fL;
+        long mul = k2 + (len << 1);
+        long a = first8Bytes + k2;
         long c = ((last8Bytes >>> 37) | (last8Bytes << 27)) * mul + a;
         long d = (((a >>> 25) | (a << 39)) + last8Bytes) * mul;
         long a1 = (c ^ d) * mul ^ ((c ^ d) * mul >>> 47);

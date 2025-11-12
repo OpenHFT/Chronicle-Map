@@ -46,8 +46,7 @@ import net.openhft.sg.Staged;
 
         TierRecovery.class,
         SegmentsRecovery.class,
-}
-, nested = {
+}, nested = {
         ReadLock.class,
         UpdateLock.class,
         WriteLock.class,
@@ -59,7 +58,6 @@ import net.openhft.sg.Staged;
         WrappedValueBytesData.class,
 
         HashEntryChecksumStrategy.class,
-}
-)
+})
 public class MapIterationContext {
 }

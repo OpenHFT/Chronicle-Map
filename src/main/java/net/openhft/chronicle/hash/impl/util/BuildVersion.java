@@ -27,7 +27,7 @@ public final class BuildVersion {
     /**
      * @return version of ChronicleMap being used, or NULL if its not known
      */
-    public synchronized static String version() {
+    public static synchronized String version() {
 
         if (version != null) {
             return version;

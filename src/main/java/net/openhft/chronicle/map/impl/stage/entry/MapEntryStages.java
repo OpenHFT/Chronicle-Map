@@ -86,11 +86,11 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         // true, and avoid when it surely false (fresh value put, relocating put etc.)
         // TODO this optimization is now disabled, because it calls value.bytes() that forces double
         // data copy, if sizedReader/Writer configured for the value.
-//        RandomDataInput valueBytes = value.bytes();
-//        if (valueBytes instanceof NativeBytesStore &&
-//                valueBytes.address(value.offset()) == s.segmentBS.address(valueOffset)) {
-//            return;
-//        }
+        //        RandomDataInput valueBytes = value.bytes();
+        //        if (valueBytes instanceof NativeBytesStore &&
+        //                valueBytes.address(value.offset()) == s.segmentBS.address(valueOffset)) {
+        //            return;
+        //        }
         value.writeTo(s.segmentBS, valueOffset);
     }
 
@@ -144,22 +144,21 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
             // 2. this thread updates the size and the value
             // 3. concurrent reader reads the value
             // We MUST upgrade to exclusive lock
-        } else {
-            // TODO to turn the following block on, JLANG-46 is required. Also unclear what happens
-            // if the value is DataValue generated with 2, 4 or 8 distinct bytes, putting on-heap
-            // implementation of such value is also not atomic currently, however there is a way
-            // to make it atomic, we should identify such cases and make a single write:
-            // state = UNSAFE.getLong(onHeapValueObject, offsetToTheFirstField);
-            // bytes.writeLong(state);
-//            boolean newValueSizeIsPowerOf2 = ((newValueSize - 1L) & newValueSize) != 0;
-//            if (!newValueSizeIsPowerOf2 || newValueSize > 8L) {
-//                 if the new value size is 1, 2, 4, or 8, it is written not atomically only if
-//                 the user provided own marshaller and writes value byte-by-byte, that is very
-//                 unlikely. in this case the user should update acquire write lock before write
-//                 updates himself
-//                upgradeToWriteLock();
-//            }
         }
+        // TODO to turn the following block on, JLANG-46 is required. Also unclear what happens
+        // if the value is DataValue generated with 2, 4 or 8 distinct bytes, putting on-heap
+        // implementation of such value is also not atomic currently, however there is a way
+        // to make it atomic, we should identify such cases and make a single write:
+        // state = UNSAFE.getLong(onHeapValueObject, offsetToTheFirstField);
+        // bytes.writeLong(state);
+        //            boolean newValueSizeIsPowerOf2 = ((newValueSize - 1L) & newValueSize) != 0;
+        //            if (!newValueSizeIsPowerOf2 || newValueSize > 8L) {
+        //                 if the new value size is 1, 2, 4, or 8, it is written not atomically only if
+        //                 the user provided own marshaller and writes value byte-by-byte, that is very
+        //                 unlikely. in this case the user should update acquire write lock before write
+        //                 updates himself
+        //                upgradeToWriteLock();
+        //            }
         s.innerWriteLock.lock();
 
         if (newValueSizeIsDifferent) {
@@ -177,8 +176,8 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
     protected void relocation(Data<V> newValue, long newEntrySize) {
         // need to copy, because in initEntryAndKeyCopying(), in alloc(), nextTier() called ->
         // hashLookupPos cleared, as a dependant
-        long oldHashLookupPos = hlp.hashLookupPos;
-        long oldHashLookupAddr = s.tierBaseAddr;
+        final long oldHashLookupPos = hlp.hashLookupPos;
+        final long oldHashLookupAddr = s.tierBaseAddr;
 
         boolean tierHasChanged = allocatedChunks.initEntryAndKeyCopying(
                 newEntrySize, valueSizeOffset - keySizeOffset, pos, entrySizeInChunks);
