@@ -2,10 +2,7 @@
  * Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
  */
 package net.openhft.chronicle.map.issue;
-
-
 import net.openhft.chronicle.core.values.LongValue;
-import net.openhft.chronicle.core.values.StringValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
@@ -13,8 +10,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
-
 
 public class PutIfAbsentNoGarbageTest {
 
@@ -66,6 +61,4 @@ public class PutIfAbsentNoGarbageTest {
             Assertions.assertNotSame(v2, s, "should be same object");
         }
     }
-
-
 }

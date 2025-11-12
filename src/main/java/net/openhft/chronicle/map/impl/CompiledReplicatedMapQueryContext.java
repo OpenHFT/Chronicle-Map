@@ -54,70 +54,70 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public boolean readZeroGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return readZero();
     }
 
     public boolean reallocGuarded(long fromPos, int oldChunks, int newChunks) {
         if (!(this.segmentInit()))
             this.initSegment();
-        
+
         return realloc(fromPos, oldChunks, newChunks);
     }
 
     public boolean updateZeroGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return updateZero();
     }
 
     public boolean writeZeroGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return writeZero();
     }
 
     public int decrementUpdateGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return decrementUpdate();
     }
 
     public int decrementWriteGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return decrementWrite();
     }
 
     public RuntimeException debugContextsAndLocksGuarded(InterProcessDeadLockException e) {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return debugContextsAndLocks(e);
     }
 
     public long allocReturnCodeGuarded(int chunks) {
         if (!(this.segmentInit()))
             this.initSegment();
-        
+
         return allocReturnCode(chunks);
     }
 
     public Bytes segmentBytesForReadGuarded() {
         if (!(this.segmentInit()))
             this.initSegment();
-        
+
         return segmentBytesForRead();
     }
 
     public Bytes segmentBytesForWriteGuarded() {
         if (!(this.segmentInit()))
             this.initSegment();
-        
+
         return segmentBytesForWrite();
     }
 
@@ -172,10 +172,10 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public void doCloseDelayedUpdateChecksum() {
         if (!(this.delayedUpdateChecksumInit()))
             return ;
-        
+
         if (this.h().checksumEntries)
             this.hashEntryChecksumStrategy.computeAndStoreChecksum();
-        
+
         delayedUpdateChecksum = false;
     }
 
@@ -198,7 +198,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public void doCloseInputKeyDataAccess() {
         if (!(this.inputKeyDataAccessInit()))
             return ;
-        
+
         innerInputKeyDataAccess.uninit();
         inputKeyDataAccessInitialized = false;
     }
@@ -206,7 +206,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public void doCloseInputValueDataAccess() {
         if (!(this.inputValueDataAccessInit()))
             return ;
-        
+
         innerInputValueDataAccess.uninit();
         inputValueDataAccessInitialized = false;
     }
@@ -230,7 +230,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public void doCloseLocks() {
         if (!(this.locksInit()))
             return ;
-        
+
         if ((rootContextLockedOnThisSegment) == (this)) {
             closeRootLocks();
         } else {
@@ -268,7 +268,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public void doCloseSegment() {
         if (!(this.segmentInit()))
             return ;
-        
+
         entrySpaceOffset = 0;
     }
 
@@ -287,11 +287,11 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public void doCloseUsed() {
         if (!(this.usedInit()))
             return ;
-        
+
         used = false;
         if (firstContextLockedInThisThread)
             rootContextInThisThread.unlockContextLocally();
-        
+
     }
 
     public void doCloseValueSize() {
@@ -305,70 +305,70 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public void freeExtraGuarded(long pos, int oldChunks, int newChunks) {
         if (!(this.segmentInit()))
             this.initSegment();
-        
+
         freeExtra(pos, oldChunks, newChunks);
     }
 
     public void freeGuarded(long fromPos, int chunks) {
         if (!(this.segmentInit()))
             this.initSegment();
-        
+
         free(fromPos, chunks);
     }
 
     public void incrementModCountGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         incrementModCount();
     }
 
     public void incrementReadGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         incrementRead();
     }
 
     public void incrementUpdateGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         incrementUpdate();
     }
 
     public void incrementWriteGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         incrementWrite();
     }
 
     public void readUnlockAndDecrementCountGuarded() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         readUnlockAndDecrementCount();
     }
 
     public void setHashLookupPosGuarded(long hashLookupPos) {
         if (!(this.hashLookupPosInit()))
             this.initHashLookupPos();
-        
+
         setHashLookupPos(hashLookupPos);
     }
 
     public void setLocalLockStateGuarded(LocalLockState newState) {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         setLocalLockState(newState);
     }
 
     public void setSearchStateGuarded(CompiledReplicatedMapQueryContext.SearchState newSearchState) {
         if (!(this.keySearchInit()))
             this.initKeySearch();
-        
+
         setSearchState(newSearchState);
     }
 
@@ -572,7 +572,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public K cachedEntryKey() {
             if (!(this.cachedEntryKeyInit()))
                 this.initCachedEntryKey();
-            
+
             return this.cachedEntryKey;
         }
 
@@ -603,7 +603,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public void doCloseCachedEntryValue() {
             if (!(this.cachedEntryValueInit()))
                 return ;
-            
+
             cachedEntryValueRead = false;
         }
 
@@ -649,14 +649,14 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public V cachedEntryValue() {
             if (!(this.cachedEntryValueInit()))
                 this.initCachedEntryValue();
-            
+
             return this.cachedEntryValue;
         }
 
         public void closeCachedEntryValue() {
             if (!(this.cachedEntryValueInit()))
                 return ;
-            
+
             cachedEntryValueRead = false;
         }
 
@@ -768,7 +768,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             inputKeyBytesSize = size;
             if (wasInputKeyBytesStoreInit)
                 this.closeInputKeyBytesStoreDependants();
-            
+
         }
 
         public long inputKeyBytesSize() {
@@ -789,7 +789,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public void closeInputKeyBytesStore() {
             if (!(this.inputKeyBytesStoreInit()))
                 return ;
-            
+
             this.closeInputKeyBytesStoreDependants();
             this.inputKeyBytesStore = null;
         }
@@ -811,20 +811,20 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             inputKeyBytesUsed = true;
             if (wasInputKeyBytesInit)
                 this.closeInputKeyBytesDependants();
-            
+
         }
 
         public VanillaBytes inputKeyBytes() {
             if (!(this.inputKeyBytesInit()))
                 this.initInputKeyBytes();
-            
+
             return this.inputKeyBytes;
         }
 
         void closeInputKeyBytes() {
             if (!(this.inputKeyBytesInit()))
                 return ;
-            
+
             this.closeInputKeyBytesDependants();
             inputKeyBytes.bytesStore(BytesStore.empty(), 0, 0);
             inputKeyBytesUsed = false;
@@ -859,7 +859,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public K cachedInputKey() {
             if (!(this.cachedInputKeyInit()))
                 this.initCachedInputKey();
-            
+
             return this.cachedInputKey;
         }
 
@@ -910,7 +910,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             CompiledReplicatedMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
                 throw new InterruptedException();
-            
+
             if ((CompiledReplicatedMapQueryContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
                 if (((CompiledReplicatedMapQueryContext.this.readZeroGuarded()) && (CompiledReplicatedMapQueryContext.this.updateZeroGuarded())) && (CompiledReplicatedMapQueryContext.this.writeZeroGuarded())) {
                     try {
@@ -977,7 +977,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             CompiledReplicatedMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
                 throw new InterruptedException();
-            
+
             if ((CompiledReplicatedMapQueryContext.this.localLockState()) == (LocalLockState.UNLOCKED)) {
                 if ((((!(CompiledReplicatedMapQueryContext.this.readZeroGuarded())) || (!(CompiledReplicatedMapQueryContext.this.updateZeroGuarded()))) || (!(CompiledReplicatedMapQueryContext.this.writeZeroGuarded()))) || (CompiledReplicatedMapQueryContext.this.segmentHeader().tryReadLock(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress(), time, unit))) {
                     CompiledReplicatedMapQueryContext.this.incrementReadGuarded();
@@ -1053,14 +1053,14 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             CompiledReplicatedMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
                 throw new InterruptedException();
-            
+
             switch (CompiledReplicatedMapQueryContext.this.localLockState()) {
                 case UNLOCKED :
                     CompiledReplicatedMapQueryContext.this.checkIterationContextNotLockedInThisThread();
                     if ((CompiledReplicatedMapQueryContext.this.updateZeroGuarded()) && (CompiledReplicatedMapQueryContext.this.writeZeroGuarded())) {
                         if (!(CompiledReplicatedMapQueryContext.this.readZeroGuarded()))
                             throw forbiddenUpdateLockWhenOuterContextReadLocked();
-                        
+
                         if (CompiledReplicatedMapQueryContext.this.segmentHeader().tryUpdateLock(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress(), time, unit)) {
                             CompiledReplicatedMapQueryContext.this.incrementUpdateGuarded();
                             CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
@@ -1092,7 +1092,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     if ((CompiledReplicatedMapQueryContext.this.updateZeroGuarded()) && (CompiledReplicatedMapQueryContext.this.writeZeroGuarded())) {
                         if (!(CompiledReplicatedMapQueryContext.this.readZeroGuarded()))
                             throw forbiddenUpdateLockWhenOuterContextReadLocked();
-                        
+
                         if (CompiledReplicatedMapQueryContext.this.segmentHeader().tryUpdateLock(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress())) {
                             CompiledReplicatedMapQueryContext.this.incrementUpdateGuarded();
                             CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
@@ -1120,14 +1120,14 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             CompiledReplicatedMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
                 throw new InterruptedException();
-            
+
             switch (CompiledReplicatedMapQueryContext.this.localLockState()) {
                 case UNLOCKED :
                     CompiledReplicatedMapQueryContext.this.checkIterationContextNotLockedInThisThread();
                     if ((CompiledReplicatedMapQueryContext.this.updateZeroGuarded()) && (CompiledReplicatedMapQueryContext.this.writeZeroGuarded())) {
                         if (!(CompiledReplicatedMapQueryContext.this.readZeroGuarded()))
                             throw forbiddenUpdateLockWhenOuterContextReadLocked();
-                        
+
                         try {
                             CompiledReplicatedMapQueryContext.this.segmentHeader().updateLockInterruptibly(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress());
                         } catch (InterProcessDeadLockException e) {
@@ -1180,7 +1180,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     if ((CompiledReplicatedMapQueryContext.this.updateZeroGuarded()) && (CompiledReplicatedMapQueryContext.this.writeZeroGuarded())) {
                         if (!(CompiledReplicatedMapQueryContext.this.readZeroGuarded()))
                             throw forbiddenUpdateLockWhenOuterContextReadLocked();
-                        
+
                         try {
                             CompiledReplicatedMapQueryContext.this.segmentHeader().updateLock(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress());
                         } catch (InterProcessDeadLockException e) {
@@ -1213,7 +1213,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public void doCloseNext() {
             if (!(this.nextInit()))
                 return ;
-            
+
         }
 
         public void doCloseWrappedValueBytes() {
@@ -1227,11 +1227,11 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public void doCloseWrappedValueBytesStore() {
             if (!(this.wrappedValueBytesStoreInit()))
                 return ;
-            
+
             wrappedValueBytesStore = null;
             if ((next) != null)
                 next.closeWrappedValueBytesStore();
-            
+
         }
 
         public WrappedValueBytesData getUnusedWrappedValueBytesDataGuarded() {
@@ -1248,10 +1248,10 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public WrappedValueBytesData getUnusedWrappedValueBytesData() {
             if (!(wrappedValueBytesStoreInit()))
                 return this;
-            
+
             if ((next) == null)
                 next = new WrappedValueBytesData();
-            
+
             return next.getUnusedWrappedValueBytesData();
         }
 
@@ -1269,7 +1269,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         void closeNext() {
             if (!(this.nextInit()))
                 return ;
-            
+
             this.closeNextDependants();
         }
 
@@ -1294,7 +1294,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             wrappedValueBytesSize = size;
             if (wasWrappedValueBytesStoreInit)
                 this.closeWrappedValueBytesStoreDependants();
-            
+
         }
 
         public long wrappedValueBytesSize() {
@@ -1315,12 +1315,12 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         void closeWrappedValueBytesStore() {
             if (!(this.wrappedValueBytesStoreInit()))
                 return ;
-            
+
             this.closeWrappedValueBytesStoreDependants();
             wrappedValueBytesStore = null;
             if ((next()) != null)
                 next().closeWrappedValueBytesStore();
-            
+
         }
 
         public void closeWrappedValueBytesStoreDependants() {
@@ -1340,20 +1340,20 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             wrappedValueBytesUsed = true;
             if (wasWrappedValueBytesInit)
                 this.closeWrappedValueBytesDependants();
-            
+
         }
 
         public VanillaBytes wrappedValueBytes() {
             if (!(this.wrappedValueBytesInit()))
                 this.initWrappedValueBytes();
-            
+
             return this.wrappedValueBytes;
         }
 
         void closeWrappedValueBytes() {
             if (!(this.wrappedValueBytesInit()))
                 return ;
-            
+
             this.closeWrappedValueBytesDependants();
             wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
             wrappedValueBytesUsed = false;
@@ -1388,7 +1388,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public V cachedWrappedValue() {
             if (!(this.cachedWrappedValueInit()))
                 this.initCachedWrappedValue();
-            
+
             return this.cachedWrappedValue;
         }
 
@@ -1431,23 +1431,23 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public void doCloseValue() {
             if (!(this.valueInit()))
                 return ;
-            
+
             value = null;
             if ((next) != null)
                 next.closeValue();
-            
+
         }
 
         public void doCloseNext() {
             if (!(this.nextInit()))
                 return ;
-            
+
         }
 
         public void doCloseWrappedData() {
             if (!(this.wrappedDataInit()))
                 return ;
-            
+
             wrappedData = null;
             wrappedValueDataAccess.uninit();
         }
@@ -1470,10 +1470,10 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public WrappedValueInstanceDataHolder getUnusedWrappedValueHolder() {
             if (!(valueInit()))
                 return this;
-            
+
             if ((next) == null)
                 next = new WrappedValueInstanceDataHolder();
-            
+
             return next.getUnusedWrappedValueHolder();
         }
 
@@ -1491,7 +1491,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         void closeNext() {
             if (!(this.nextInit()))
                 return ;
-            
+
             this.closeNextDependants();
         }
 
@@ -1511,7 +1511,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             this.value = value;
             if (wasValueInit)
                 this.closeValueDependants();
-            
+
         }
 
         public V value() {
@@ -1522,12 +1522,12 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public void closeValue() {
             if (!(this.valueInit()))
                 return ;
-            
+
             this.closeValueDependants();
             value = null;
             if ((next()) != null)
                 next().closeValue();
-            
+
         }
 
         public void closeValueDependants() {
@@ -1547,14 +1547,14 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
         public Data<V> wrappedData() {
             if (!(this.wrappedDataInit()))
                 this.initWrappedData();
-            
+
             return this.wrappedData;
         }
 
         private void closeWrappedData() {
             if (!(this.wrappedDataInit()))
                 return ;
-            
+
             wrappedData = null;
             wrappedValueDataAccess.uninit();
         }
@@ -1589,7 +1589,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                         } else {
                             if (!(CompiledReplicatedMapQueryContext.this.readZeroGuarded()))
                                 throw forbiddenWriteLockWhenOuterContextReadLocked();
-                            
+
                             if (CompiledReplicatedMapQueryContext.this.segmentHeader().tryWriteLock(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress())) {
                                 CompiledReplicatedMapQueryContext.this.incrementWriteGuarded();
                                 CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
@@ -1635,7 +1635,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             CompiledReplicatedMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
                 throw new InterruptedException();
-            
+
             switch (CompiledReplicatedMapQueryContext.this.localLockState()) {
                 case UNLOCKED :
                     CompiledReplicatedMapQueryContext.this.checkIterationContextNotLockedInThisThread();
@@ -1651,7 +1651,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                         } else {
                             if (!(CompiledReplicatedMapQueryContext.this.readZeroGuarded()))
                                 throw forbiddenWriteLockWhenOuterContextReadLocked();
-                            
+
                             if (CompiledReplicatedMapQueryContext.this.segmentHeader().tryWriteLock(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress(), time, unit)) {
                                 CompiledReplicatedMapQueryContext.this.incrementWriteGuarded();
                                 CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
@@ -1702,7 +1702,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             CompiledReplicatedMapQueryContext.this.checkOnEachLockOperation();
             if (Thread.interrupted())
                 throw new InterruptedException();
-            
+
             switch (CompiledReplicatedMapQueryContext.this.localLockState()) {
                 case UNLOCKED :
                     CompiledReplicatedMapQueryContext.this.checkIterationContextNotLockedInThisThread();
@@ -1712,7 +1712,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                         } else {
                             if (!(CompiledReplicatedMapQueryContext.this.readZeroGuarded()))
                                 throw forbiddenWriteLockWhenOuterContextReadLocked();
-                            
+
                             try {
                                 CompiledReplicatedMapQueryContext.this.segmentHeader().writeLockInterruptibly(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress());
                             } catch (InterProcessDeadLockException e) {
@@ -1755,7 +1755,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     CompiledReplicatedMapQueryContext.this.closeDelayedUpdateChecksum();
                     if ((CompiledReplicatedMapQueryContext.this.decrementWriteGuarded()) == 0)
                         CompiledReplicatedMapQueryContext.this.segmentHeader().downgradeWriteToUpdateLock(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress());
-                    
+
                     CompiledReplicatedMapQueryContext.this.incrementUpdateGuarded();
                     CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
             }
@@ -1773,7 +1773,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                         } else {
                             if (!(CompiledReplicatedMapQueryContext.this.readZeroGuarded()))
                                 throw forbiddenWriteLockWhenOuterContextReadLocked();
-                            
+
                             try {
                                 CompiledReplicatedMapQueryContext.this.segmentHeader().writeLock(CompiledReplicatedMapQueryContext.this.segmentHeaderAddress());
                             } catch (InterProcessDeadLockException e) {
@@ -1861,10 +1861,10 @@ PRESENT, ABSENT;    }
         long ret = this.allocReturnCodeGuarded(chunks);
         if (prevPos >= 0)
             this.freeGuarded(prevPos, prevChunks);
-        
+
         if (ret >= 0)
             return ret;
-        
+
         int alreadyAttemptedTier = this.tier();
         this.goToFirstTier();
         while (true) {
@@ -1872,7 +1872,7 @@ PRESENT, ABSENT;    }
                 ret = this.allocReturnCodeGuarded(chunks);
                 if (ret >= 0)
                     return ret;
-                
+
             } 
             this.nextTier();
         }
@@ -1886,10 +1886,10 @@ PRESENT, ABSENT;    }
         long lowestPossiblyFreeChunk = lowestPossiblyFreeChunk();
         if ((lowestPossiblyFreeChunk + chunks) > (h.actualChunksPerSegmentTier))
             return -1;
-        
+
         if ((tierEntries()) >= (h.maxEntriesPerHashLookup))
             return -1;
-        
+
         assert lowestPossiblyFreeChunk < (h.actualChunksPerSegmentTier);
         long ret = freeList.setNextNContinuousClearBits(lowestPossiblyFreeChunk, chunks);
         if ((ret == (BitSetFrame.NOT_FOUND)) || ((ret + chunks) > (h.actualChunksPerSegmentTier))) {
@@ -1953,7 +1953,7 @@ PRESENT, ABSENT;    }
         freeList.clearRange(fromPos, (fromPos + chunks));
         if (fromPos < (lowestPossiblyFreeChunk()))
             lowestPossiblyFreeChunk(fromPos);
-        
+
     }
 
     public void freeExtra(long pos, int oldChunks, int newChunks) {
@@ -1961,7 +1961,7 @@ PRESENT, ABSENT;    }
         freeList.clearRange(from, (pos + oldChunks));
         if (from < (lowestPossiblyFreeChunk()))
             lowestPossiblyFreeChunk(from);
-        
+
     }
 
     public void incrementModCount() {
@@ -1988,7 +1988,7 @@ PRESENT, ABSENT;    }
                 if ((decrementRead()) == 0) {
                     if ((updateZero()) && (writeZero()))
                         segmentHeader().readUnlock(segmentHeaderAddress());
-                    
+
                 } 
                 return ;
             case UPDATE_LOCKED :
@@ -2027,7 +2027,7 @@ PRESENT, ABSENT;    }
         if (isLocked) {
             if (!goingToLock)
                 deregisterIterationContextLockedInThisThread();
-            
+
         } else if (goingToLock) {
             registerIterationContextLockedInThisThread();
         } 
@@ -2091,7 +2091,7 @@ PRESENT, ABSENT;    }
             checkNestedContextsQueryDifferentKeys(innermostContextOnThisSegment);
             if ((innermostContextOnThisSegment.nextNode()) == null)
                 break;
-            
+
             innermostContextOnThisSegment = innermostContextOnThisSegment.nextNode();
         }
         innermostContextOnThisSegment.setNextNode(this);
@@ -2103,7 +2103,7 @@ PRESENT, ABSENT;    }
             LocksInterface nextNode = prevContext.nextNode();
             if ((nextNode == (this)) || (nextNode == null))
                 break;
-            
+
             prevContext = nextNode;
         }
         verifyInnermostContext();
@@ -2126,15 +2126,15 @@ PRESENT, ABSENT;    }
             ReplicatedChronicleMap<K, V, R> map = CompiledReplicatedMapQueryContext.this.m();
             if ((!(e instanceof MapAbsentEntry)) || ((iterationContext.pos()) == (posToSkip)))
                 return ;
-            
+
             long currentTime = net.openhft.chronicle.hash.replication.TimeProvider.currentTime();
             if ((e.originTimestamp()) > currentTime)
                 return ;
-            
+
             long deleteTimeout = net.openhft.chronicle.hash.replication.TimeProvider.systemTimeIntervalBetween(e.originTimestamp(), currentTime, map.cleanupTimeoutUnit);
             if ((deleteTimeout <= (map.cleanupTimeout)) || (e.isChanged()))
                 return ;
-            
+
             e.doRemoveCompletely();
             (removedCompletely)++;
         }
@@ -2184,7 +2184,7 @@ PRESENT, ABSENT;    }
         if (tierHasChanged) {
             if (!(this.searchStateAbsent()))
                 throw new AssertionError();
-            
+
         } 
         initValue(newValue);
         freeExtraAllocatedChunks();
@@ -2195,7 +2195,7 @@ PRESENT, ABSENT;    }
         this.innerWriteLock.lock();
         if (tierHasChanged)
             hl.remove(oldHashLookupAddr, oldHashLookupPos);
-        
+
     }
 
     public final ReadLock innerReadLock;
@@ -2284,7 +2284,7 @@ PRESENT, ABSENT;    }
             this.usingReturnValue = usingReturnValue;
             if (wasUsingReturnValueInit)
                 this.closeUsingReturnValueDependants();
-            
+
         }
 
         public V usingReturnValue() {
@@ -2295,7 +2295,7 @@ PRESENT, ABSENT;    }
         public void closeUsingReturnValue() {
             if (!(this.usingReturnValueInit()))
                 return ;
-            
+
             this.closeUsingReturnValueDependants();
             this.usingReturnValue = ((V)(UsableReturnValue.USING_RETURN_VALUE_UNINIT));
         }
@@ -2651,7 +2651,7 @@ PRESENT, ABSENT;    }
     void closeInputKeyDataAccess() {
         if (!(this.inputKeyDataAccessInit()))
             return ;
-        
+
         innerInputKeyDataAccess.uninit();
         inputKeyDataAccessInitialized = false;
     }
@@ -2667,7 +2667,7 @@ PRESENT, ABSENT;    }
         this.keySize = keySize;
         if (wasKeySizeInit)
             this.closeKeySizeDependants();
-        
+
     }
 
     public long keySize() {
@@ -2678,7 +2678,7 @@ PRESENT, ABSENT;    }
     public void closeKeySize() {
         if (!(this.keySizeInit()))
             return ;
-        
+
         this.closeKeySizeDependants();
         this.keySize = -1;
     }
@@ -2702,7 +2702,7 @@ PRESENT, ABSENT;    }
     void closeInputValueDataAccess() {
         if (!(this.inputValueDataAccessInit()))
             return ;
-        
+
         innerInputValueDataAccess.uninit();
         inputValueDataAccessInitialized = false;
     }
@@ -2718,7 +2718,7 @@ PRESENT, ABSENT;    }
         this.inputKey = inputKey;
         if (wasInputKeyInit)
             this.closeInputKeyDependants();
-        
+
     }
 
     public Data<K> inputKey() {
@@ -2729,7 +2729,7 @@ PRESENT, ABSENT;    }
     public void closeInputKey() {
         if (!(this.inputKeyInit()))
             return ;
-        
+
         this.closeInputKeyDependants();
         this.inputKey = null;
     }
@@ -2764,20 +2764,20 @@ PRESENT, ABSENT;    }
         keyHash = this.inputKey().hash(LongHashFunction.xx_r39());
         if (wasKeyHashInit)
             this.closeKeyHashDependants();
-        
+
     }
 
     public long keyHash() {
         if (!(this.keyHashInit()))
             this.initKeyHash();
-        
+
         return this.keyHash;
     }
 
     public void closeKeyHash() {
         if (!(this.keyHashInit()))
             return ;
-        
+
         this.closeKeyHashDependants();
         this.keyHash = 0;
     }
@@ -2808,7 +2808,7 @@ PRESENT, ABSENT;    }
         segmentIndex = this.h().hashSplitting.segmentIndex(this.keyHashCode());
         if (wasSegmentIndexInit)
             this.closeSegmentIndexDependants();
-        
+
     }
 
     public void initSegmentIndex(int segmentIndex) {
@@ -2816,20 +2816,20 @@ PRESENT, ABSENT;    }
         this.segmentIndex = segmentIndex;
         if (wasSegmentIndexInit)
             this.closeSegmentIndexDependants();
-        
+
     }
 
     public int segmentIndex() {
         if (!(this.segmentIndexInit()))
             this.initSegmentIndex();
-        
+
         return this.segmentIndex;
     }
 
     public void closeSegmentIndex() {
         if (!(this.segmentIndexInit()))
             return ;
-        
+
         this.closeSegmentIndexDependants();
         this.segmentIndex = -1;
     }
@@ -2854,27 +2854,27 @@ PRESENT, ABSENT;    }
         segmentHeader = BigSegmentHeader.INSTANCE;
         if (wasSegmentHeaderInit)
             this.closeSegmentHeaderDependants();
-        
+
     }
 
     public long segmentHeaderAddress() {
         if (!(this.segmentHeaderInit()))
             this.initSegmentHeader();
-        
+
         return this.segmentHeaderAddress;
     }
 
     public SegmentHeader segmentHeader() {
         if (!(this.segmentHeaderInit()))
             this.initSegmentHeader();
-        
+
         return this.segmentHeader;
     }
 
     public void closeSegmentHeader() {
         if (!(this.segmentHeaderInit()))
             return ;
-        
+
         this.closeSegmentHeaderDependants();
         this.segmentHeader = null;
     }
@@ -2907,7 +2907,7 @@ PRESENT, ABSENT;    }
         tier = 0;
         if (wasSegmentTierInit)
             this.closeSegmentTierDependants();
-        
+
     }
 
     public void initSegmentTier(int tier, long tierIndex) {
@@ -2918,7 +2918,7 @@ PRESENT, ABSENT;    }
         this.tierBaseAddr = this.h().tierIndexToBaseAddr(tierIndex);
         if (wasSegmentTierInit)
             this.closeSegmentTierDependants();
-        
+
     }
 
     public void initSegmentTier(int tier, long tierIndex, long tierBaseAddr) {
@@ -2928,34 +2928,34 @@ PRESENT, ABSENT;    }
         this.tierBaseAddr = tierBaseAddr;
         if (wasSegmentTierInit)
             this.closeSegmentTierDependants();
-        
+
     }
 
     public int tier() {
         if (!(this.segmentTierInit()))
             this.initSegmentTier();
-        
+
         return this.tier;
     }
 
     public long tierBaseAddr() {
         if (!(this.segmentTierInit()))
             this.initSegmentTier();
-        
+
         return this.tierBaseAddr;
     }
 
     public long tierIndex() {
         if (!(this.segmentTierInit()))
             this.initSegmentTier();
-        
+
         return this.tierIndex;
     }
 
     public void closeSegmentTier() {
         if (!(this.segmentTierInit()))
             return ;
-        
+
         this.closeSegmentTierDependants();
         this.tier = -1;
     }
@@ -3148,27 +3148,27 @@ PRESENT, ABSENT;    }
         entrySpaceOffset = (freeListOffset + (h.tierFreeListOuterSize)) + (h.tierEntrySpaceInnerOffset);
         if (wasSegmentInit)
             this.closeSegmentDependants();
-        
+
     }
 
     public long entrySpaceOffset() {
         if (!(this.segmentInit()))
             this.initSegment();
-        
+
         return this.entrySpaceOffset;
     }
 
     public PointerBytesStore segmentBS() {
         if (!(this.segmentInit()))
             this.initSegment();
-        
+
         return this.segmentBS;
     }
 
     void closeSegment() {
         if (!(this.segmentInit()))
             return ;
-        
+
         this.closeSegmentDependants();
         entrySpaceOffset = 0;
     }
@@ -3239,7 +3239,7 @@ PRESENT, ABSENT;    }
         initSearchKey(hl().maskUnsetKey(this.h().hashSplitting.segmentHash(this.keyHashCode())));
         if (wasSearchKeyInit)
             this.closeSearchKeyDependants();
-        
+
     }
 
     public void initSearchKey(long searchKey) {
@@ -3248,27 +3248,27 @@ PRESENT, ABSENT;    }
         searchStartPos = hl().hlPos(searchKey);
         if (wasSearchKeyInit)
             this.closeSearchKeyDependants();
-        
+
     }
 
     public long searchKey() {
         if (!(this.searchKeyInit()))
             this.initSearchKey();
-        
+
         return this.searchKey;
     }
 
     public long searchStartPos() {
         if (!(this.searchKeyInit()))
             this.initSearchKey();
-        
+
         return this.searchStartPos;
     }
 
     public void closeSearchKey() {
         if (!(this.searchKeyInit()))
             return ;
-        
+
         this.closeSearchKeyDependants();
         this.searchKey = CompactOffHeapLinearHashTable.UNSET_KEY;
     }
@@ -3290,7 +3290,7 @@ PRESENT, ABSENT;    }
         this.pos = pos;
         if (wasPosInit)
             this.closePosDependants();
-        
+
     }
 
     public long pos() {
@@ -3301,7 +3301,7 @@ PRESENT, ABSENT;    }
     public void closePos() {
         if (!(this.posInit()))
             return ;
-        
+
         this.closePosDependants();
         this.pos = -1;
     }
@@ -3322,7 +3322,7 @@ PRESENT, ABSENT;    }
         keySizeOffset = (this.entrySpaceOffset()) + ((pos()) * (this.h().chunkSize));
         if (wasEntryOffsetInit)
             this.closeEntryOffsetDependants();
-        
+
     }
 
     public void initEntryOffset(long keySizeOffset) {
@@ -3330,20 +3330,20 @@ PRESENT, ABSENT;    }
         this.keySizeOffset = keySizeOffset;
         if (wasEntryOffsetInit)
             this.closeEntryOffsetDependants();
-        
+
     }
 
     public long keySizeOffset() {
         if (!(this.entryOffsetInit()))
             this.initEntryOffset();
-        
+
         return this.keySizeOffset;
     }
 
     public void closeEntryOffset() {
         if (!(this.entryOffsetInit()))
             return ;
-        
+
         this.closeEntryOffsetDependants();
         this.keySizeOffset = -1;
     }
@@ -3378,7 +3378,7 @@ PRESENT, ABSENT;    }
         this.keyOffset = keyOffset;
         if (wasKeyOffsetInit)
             this.closeKeyOffsetDependants();
-        
+
     }
 
     public long keyOffset() {
@@ -3389,7 +3389,7 @@ PRESENT, ABSENT;    }
     public void closeKeyOffset() {
         if (!(this.keyOffsetInit()))
             return ;
-        
+
         this.closeKeyOffsetDependants();
         this.keyOffset = -1;
     }
@@ -3430,20 +3430,20 @@ PRESENT, ABSENT;    }
         valueSizeOffset = countValueSizeOffset();
         if (wasValueSizeOffsetInit)
             this.closeValueSizeOffsetDependants();
-        
+
     }
 
     public long valueSizeOffset() {
         if (!(this.valueSizeOffsetInit()))
             this.initValueSizeOffset();
-        
+
         return this.valueSizeOffset;
     }
 
     public void closeValueSizeOffset() {
         if (!(this.valueSizeOffsetInit()))
             return ;
-        
+
         this.closeValueSizeOffsetDependants();
         this.valueSizeOffset = -1;
     }
@@ -3465,7 +3465,7 @@ PRESENT, ABSENT;    }
     public long replicationBytesOffset() {
         if (!(this.replicationStateInit()))
             this.initReplicationState();
-        
+
         return this.replicationBytesOffset;
     }
 
@@ -3572,7 +3572,7 @@ PRESENT, ABSENT;    }
         m = ((ReplicatedChronicleMap<K, V, R>)(map));
         if (wasMapInit)
             this.closeMapDependants();
-        
+
     }
 
     public ReplicatedChronicleMap<K, V, R> m() {
@@ -3583,7 +3583,7 @@ PRESENT, ABSENT;    }
     public void closeMap() {
         if (!(this.mapInit()))
             return ;
-        
+
         this.closeMapDependants();
         this.m = null;
     }
@@ -3621,7 +3621,7 @@ PRESENT, ABSENT;    }
         valueOffset = segmentBytes.readPosition();
         if (wasValueSizeInit)
             this.closeValueSizeDependants();
-        
+
     }
 
     void initValueSize(long valueSize) {
@@ -3635,31 +3635,31 @@ PRESENT, ABSENT;    }
         long skip = (VanillaChronicleMap.alignAddr(currentAddr, this.m().alignment)) - currentAddr;
         if (skip > 0)
             segmentBytes.writeSkip(skip);
-        
+
         valueOffset = segmentBytes.writePosition();
         if (wasValueSizeInit)
             this.closeValueSizeDependants();
-        
+
     }
 
     public long valueOffset() {
         if (!(this.valueSizeInit()))
             this.initValueSize();
-        
+
         return this.valueOffset;
     }
 
     public long valueSize() {
         if (!(this.valueSizeInit()))
             this.initValueSize();
-        
+
         return this.valueSize;
     }
 
     public void closeValueSize() {
         if (!(this.valueSizeInit()))
             return ;
-        
+
         this.closeValueSizeDependants();
         this.valueSize = -1;
     }
@@ -3715,7 +3715,7 @@ PRESENT, ABSENT;    }
     public int entrySizeInChunks() {
         if (!(this.entrySizeInChunksInit()))
             this.initEntrySizeInChunks();
-        
+
         return this.entrySizeInChunks;
     }
 
@@ -3730,7 +3730,7 @@ PRESENT, ABSENT;    }
     public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
         if ((!(this.m().constantlySizedEntry)) && (this.m().couldNotDetermineAlignmentBeforeAllocation))
             sizeOfEverythingBeforeValue += this.m().worstAlignment;
-        
+
         int alignment = this.m().alignment;
         return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize, alignment));
     }
@@ -3756,7 +3756,7 @@ PRESENT, ABSENT;    }
         ReplicatedChronicleMap<?, ?, ?> map = this.m();
         if (!(map.cleanupRemovedEntries))
             return false;
-        
+
         try (MapSegmentContext<?, ?, ?> sc = map.segmentContext(this.segmentIndex())) {
             cleanupAction.removedCompletely = 0;
             cleanupAction.posToSkip = prevPos;
@@ -3772,7 +3772,7 @@ PRESENT, ABSENT;    }
         if (ret >= 0) {
             if (prevPos >= 0)
                 this.freeGuarded(prevPos, prevChunks);
-            
+
             return ret;
         } 
         int firstAttemptedTier = this.tier();
@@ -3805,7 +3805,7 @@ PRESENT, ABSENT;    }
             } 
             if (visitingFirstAttemptedTier && (prevPos >= 0))
                 this.freeGuarded(prevPos, prevChunks);
-            
+
             this.nextTier();
         }
     }
@@ -3837,7 +3837,7 @@ PRESENT, ABSENT;    }
         this.dropChange();
         if (wasDeleted)
             this.tierDeleted(((this.tierDeleted()) - 1L));
-        
+
     }
 
     public void raiseChangeFor(byte remoteIdentifier) {
@@ -3892,7 +3892,7 @@ PRESENT, ABSENT;    }
         innerRemoteTimestamp = timestamp;
         if (identifier == 0)
             throw new IllegalStateException(((this.h().toIdentityString()) + ": identifier can\'t be 0"));
-        
+
         innerRemoteIdentifier = identifier;
         if (remoteNodeIdentifier == 0) {
             throw new IllegalStateException(((this.h().toIdentityString()) + ": remote node identifier can\'t be 0"));
@@ -3937,7 +3937,7 @@ PRESENT, ABSENT;    }
         this.used = true;
         if (wasUsedInit)
             this.closeUsedDependants();
-        
+
     }
 
     public boolean used() {
@@ -3949,12 +3949,12 @@ PRESENT, ABSENT;    }
     void closeUsed() {
         if (!(this.usedInit()))
             return ;
-        
+
         this.closeUsedDependants();
         used = false;
         if (firstContextLockedInThisThread)
             rootContextInThisThread.unlockContextLocally();
-        
+
     }
 
     public void closeUsedDependants() {
@@ -3988,18 +3988,18 @@ PRESENT, ABSENT;    }
         assert this.used();
         if ((segmentHeader()) == null)
             throw new AssertionError();
-        
+
         localLockState = LocalLockState.UNLOCKED;
         int indexOfThisContext = this.indexInContextChain;
         for (int i = indexOfThisContext - 1 ; i >= 0 ; i--) {
             if (tryFindInitLocksOfThisSegment(i))
                 return ;
-            
+
         }
         for (int i = indexOfThisContext + 1, size = this.contextChain.size() ; i < size ; i++) {
             if (tryFindInitLocksOfThisSegment(i))
                 return ;
-            
+
         }
         rootContextLockedOnThisSegment = this;
         nestedContextsLockedOnSameSegment = false;
@@ -4010,76 +4010,76 @@ PRESENT, ABSENT;    }
         totalWriteLockCount = 0;
         if (wasLocksInit)
             this.closeLocksDependants();
-        
+
     }
 
     public boolean nestedContextsLockedOnSameSegment() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.nestedContextsLockedOnSameSegment;
     }
 
     public int contextModCount() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.contextModCount;
     }
 
     public int latestSameThreadSegmentModCount() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.latestSameThreadSegmentModCount;
     }
 
     public int totalReadLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.totalReadLockCount;
     }
 
     public int totalUpdateLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.totalUpdateLockCount;
     }
 
     public int totalWriteLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.totalWriteLockCount;
     }
 
     public LocalLockState localLockState() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.localLockState;
     }
 
     public LocksInterface nextNode() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.nextNode;
     }
 
     public LocksInterface rootContextLockedOnThisSegment() {
         if (!(this.locksInit()))
             this.initLocks();
-        
+
         return this.rootContextLockedOnThisSegment;
     }
 
     void closeLocks() {
         if (!(this.locksInit()))
             return ;
-        
+
         this.closeLocksDependants();
         if ((rootContextLockedOnThisSegment) == (this)) {
             closeRootLocks();
@@ -4118,10 +4118,10 @@ PRESENT, ABSENT;    }
     public void closeDelayedUpdateChecksum() {
         if (!(this.delayedUpdateChecksumInit()))
             return ;
-        
+
         if (this.h().checksumEntries)
             this.hashEntryChecksumStrategy.computeAndStoreChecksum();
-        
+
         delayedUpdateChecksum = false;
     }
 
@@ -4159,12 +4159,12 @@ PRESENT, ABSENT;    }
         boolean wasHashLookupPosInit = this.hashLookupPosInit();
         if ((this.tier()) < 0)
             throw new AssertionError();
-        
+
         this.innerReadLock.lock();
         this.hashLookupPos = this.searchStartPos();
         if (wasHashLookupPosInit)
             this.closeHashLookupPosDependants();
-        
+
     }
 
     public void initHashLookupPos(long hashLookupPos) {
@@ -4172,20 +4172,20 @@ PRESENT, ABSENT;    }
         this.hashLookupPos = hashLookupPos;
         if (wasHashLookupPosInit)
             this.closeHashLookupPosDependants();
-        
+
     }
 
     public long hashLookupPos() {
         if (!(this.hashLookupPosInit()))
             this.initHashLookupPos();
-        
+
         return this.hashLookupPos;
     }
 
     public void closeHashLookupPos() {
         if (!(this.hashLookupPosInit()))
             return ;
-        
+
         this.closeHashLookupPosDependants();
         this.hashLookupPos = -1;
     }
@@ -4216,7 +4216,7 @@ PRESENT, ABSENT;    }
             pos = hl.step(pos);
             if (pos == (searchStartPos()))
                 break;
-            
+
             if ((hl.key(entry)) == (searchKey())) {
                 this.setHashLookupPosGuarded(pos);
                 return hl.value(entry);
@@ -4246,7 +4246,7 @@ PRESENT, ABSENT;    }
                 long keyOffset = segmentBytes.readPosition();
                 if (!(keyEquals(keySize, keyOffset)))
                     continue;
-                
+
                 this.found();
                 this.readFoundEntry(pos, keySizeOffset, keySize, keyOffset);
                 searchState = CompiledReplicatedMapQueryContext.SearchState.PRESENT;
@@ -4256,20 +4256,20 @@ PRESENT, ABSENT;    }
         searchState = CompiledReplicatedMapQueryContext.SearchState.ABSENT;
         if (wasKeySearchInit)
             this.closeKeySearchDependants();
-        
+
     }
 
     public CompiledReplicatedMapQueryContext.SearchState searchState() {
         if (!(this.keySearchInit()))
             this.initKeySearch();
-        
+
         return this.searchState;
     }
 
     public void closeKeySearch() {
         if (!(this.keySearchInit()))
             return ;
-        
+
         this.closeKeySearchDependants();
         this.searchState = null;
     }
@@ -4301,14 +4301,14 @@ PRESENT, ABSENT;    }
             } else {
                 if ((this.tier()) != 0)
                     this.initSegmentTier();
-                
+
             }
             if ((this.tierBaseAddr()) == firstTierBaseAddr)
                 break;
-            
+
             if (this.searchStatePresent())
                 return true;
-            
+
         }
         if (firstTier != 0) {
             this.initSegmentTier();
@@ -4341,7 +4341,7 @@ PRESENT, ABSENT;    }
     public CompiledReplicatedMapQueryContext.EntryPresence entryPresence() {
         if (!(this.presenceOfEntryInit()))
             this.initPresenceOfEntry();
-        
+
         return this.entryPresence;
     }
 
@@ -4366,7 +4366,7 @@ PRESENT, ABSENT;    }
         boolean keySearchReInit = !(this.keySearchInit());
         if (this.searchStatePresent())
             throw new AssertionError();
-        
+
         if (keySearchReInit) {
             this.readExistingEntry(entryPos);
         } 
@@ -4436,11 +4436,11 @@ PRESENT, ABSENT;    }
         this.checkOnEachPublicOperation();
         if (!(this.innerUpdateLock.isHeldByCurrentThread()))
             this.innerUpdateLock.lock();
-        
+
         if ((this.nestedContextsLockedOnSameSegment()) && ((this.rootContextLockedOnThisSegment().latestSameThreadSegmentModCount()) != (this.contextModCount()))) {
             if ((this.hashLookupPosInit()) && (this.searchStateAbsent()))
                 this.closeHashLookupPos();
-            
+
         } 
     }
 
@@ -4773,7 +4773,7 @@ PRESENT, ABSENT;    }
     public void doInsert() {
         if ((this.set()) == null)
             throw new IllegalStateException(((this.h().toIdentityString()) + ": Called SetAbsentEntry.doInsert() from Map context"));
-        
+
         doInsert(((Data<V>)(DummyValueData.INSTANCE)));
     }
 
@@ -4784,7 +4784,7 @@ PRESENT, ABSENT;    }
         if (entryPresent()) {
             if ((this.valueSize()) > (this.dummyValue.size()))
                 this.innerDefaultReplaceValue(this.dummyValue);
-            
+
             this.updatedReplicationStateOnPresentEntry();
             this.writeEntryDeleted();
             this.updateChange();

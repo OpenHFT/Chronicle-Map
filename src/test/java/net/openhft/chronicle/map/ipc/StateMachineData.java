@@ -25,10 +25,6 @@ public class StateMachineData implements Byteable {
         this.offset = -1;
     }
 
-    // *************************************************************************
-    //
-    // *************************************************************************
-
     /**
      */
     public boolean stateIn(StateMachineState... states) {
@@ -83,10 +79,6 @@ public class StateMachineData implements Byteable {
         }
     }
 
-    // *************************************************************************
-    //
-    // *************************************************************************
-
     /**
      */
     public int getStateData() {
@@ -124,10 +116,6 @@ public class StateMachineData implements Byteable {
 
         return true;
     }
-
-    // *************************************************************************
-    //
-    // *************************************************************************
 
     @Override
     public void bytesStore(BytesStore bytes, long offset, long size) {

@@ -17,10 +17,6 @@ import java.io.File;
 public class StateMachineTutorial {
     private static final Logger LOGGER = LoggerFactory.getLogger(StateMachineTutorial.class);
 
-    // *************************************************************************
-    //
-    // *************************************************************************
-
     public static void main(String[] args) {
         ChronicleMap<Integer, StateMachineData> map = null;
 

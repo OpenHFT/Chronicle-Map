@@ -13,22 +13,24 @@ This pair of interfaces is configured using `ChronicleMapBuilder.keyReaderAndDat
 
 The reader part, `SizedReader`, is the same as in <<CM_Tutorial_Sized.adoc#,`SizedWriter` and          `SizedReader`>> pair. `DataAccess` is an "advanced" interface to replace `SizedWriter`.
 
-The main method in `DataAccess` is `Data<T> getData(@NotNull T instance)`. It returns a `Data`
+The main method in `DataAccess` is `Data<T> getData(@NotNull T instance)`.
+It returns a `Data`
 accessor which is used to write a "serialized" form of the instance to off-heap memory. `Data.size()`
-on the returned `Data` object is used for the same purpose as the `SizedWriter.size()` method in
-the <<CM_Tutorial_Sized.adoc#,`SizedWriter` and          `SizedReader`>> pair interfaces. `Data.writeTo()`
+on the returned `Data` object is used for the same purpose as the `SizedWriter.size()` method in the <<CM_Tutorial_Sized.adoc#,`SizedWriter` and          `SizedReader`>> pair interfaces. `Data.writeTo()`
 is used instead of `SizedWriter.write()`.
 
-`DataAccess` assumes that the `Data` object, returned from the `getData()` method is cached in some way. That is why it also has an `uninit()` method to clear references to the serialized object after a query operation to a Chronicle Map is complete to prevent memory leaks. This, in turn, implies that the `DataAccess` implementation is stateful. Therefore,  `DataAccess` is made a sub-interface of
+`DataAccess` assumes that the `Data` object, returned from the `getData()` method is cached in some way.
+That is why it also has an `uninit()` method to clear references to the serialized object after a query operation to a Chronicle Map is complete to prevent memory leaks.
+This, in turn, implies that the `DataAccess` implementation is stateful.
+Therefore,  `DataAccess` is made a sub-interface of
 `StatefulCopyable` to force all `DataAccess` implementations to implement `StatefulCopyable` as well.
 
-See <<CM_Tutorial_Understanding.adoc#, Understanding `StatefulCopyable`>> for more information
-on this.
+See <<CM_Tutorial_Understanding.adoc#, Understanding `StatefulCopyable`>> for more information on this.
 
 If your `DataAccess` implementation is not actually stateful, it is free to return `this` from the  `StatefulCopyable.copy()` method.
 
-The `DataAccess` interface is primarily intended for "serializing" objects that are already sequences of bytes, and in fact do not require serialization; for example, `byte[]`, `ByteBuffer`, arrays of Java
-primitives. For such types of objects, `DataAccess` allows bypassing of the intermediate buffering, copying data directly from objects to Chronicle Map's off-heap memory.
+The `DataAccess` interface is primarily intended for "serializing" objects that are already sequences of bytes, and in fact do not require serialization; for example, `byte[]`, `ByteBuffer`, arrays of Java primitives.
+For such types of objects, `DataAccess` allows bypassing of the intermediate buffering, copying data directly from objects to Chronicle Map's off-heap memory.
 
 For example, look at the `DataAccess` implementation for `byte[]`:
 
@@ -117,13 +119,15 @@ public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAcc
 }
 ```
 
-The `getData()` method returns `this`, and the `DataAccess` implementation implements the `Data` interface as well. This is recommended practice, because it reduces the number of objects involved (hence pointer chasing), and keeps `DataAccess`, and `Data` logic together.
+The `getData()` method returns `this`, and the `DataAccess` implementation implements the `Data` interface as well.
+This is recommended practice, because it reduces the number of objects involved (hence pointer chasing), and keeps `DataAccess`, and `Data` logic together.
 
-The `Data` interface puts constraints on `equals()`, `hashCode()`, and `toString()` implementations. This is why `ByteArrayDataAccess` sub-classes `AbstractData`, and inherits proper implementations from it.
+The `Data` interface puts constraints on `equals()`, `hashCode()`, and `toString()` implementations.
+This is why `ByteArrayDataAccess` sub-classes `AbstractData`, and inherits proper implementations from it.
 A serializer strategy implementation can have `equals()`, `hashCode()`, and `toString()` from a very different domain, because those methods are never called on serializers inside Chronicle Map.
 
-The easiest way to implement `equals()`, `hashCode()`, and `toString()` is to extend the `AbstractData` class. If it is not possible (perhaps the `Data` implementation already extends some other class), do this
-by delegating to `dataEquals()`, `dataHashCode()`, and `dataToString()` default methods, provided in the `Data` interface.
+The easiest way to implement `equals()`, `hashCode()`, and `toString()` is to extend the `AbstractData` class.
+If it is not possible (perhaps the `Data` implementation already extends some other class), do this by delegating to `dataEquals()`, `dataHashCode()`, and `dataToString()` default methods, provided in the `Data` interface.
 
 Corresponding `SizedReader` for `byte[]`:
 
@@ -161,4 +165,5 @@ public final class ByteArraySizedReader
 NOTE: If you configure `byte[]` key, or value type, then this pair of serializers is used as the default.
 
 '''
+
 <<CM_Tutorial.adoc#,Back to Tutorial>>

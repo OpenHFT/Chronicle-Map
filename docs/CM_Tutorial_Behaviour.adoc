@@ -12,40 +12,34 @@ toc::[]
 
 You could customize `ChronicleMap` behaviour on several levels:
 
- - `ChronicleMapBuilder.entryOperations()` define the "inner" listening level. All operations with
- entries, either during ordinary map method calls, remote calls, replication or modifications during
- iteration over the map, operate using this configured SPI.
+- `ChronicleMapBuilder.entryOperations()` define the "inner" listening level.
+All operations with entries, either during ordinary map method calls, remote calls, replication or modifications during iteration over the map, operate using this configured SPI.
 
- - `ChronicleMapBuilder.mapMethods()` is the higher-level of listening for local calls of Map
- methods. Methods in the `MapMethods` interface correspond to `Map` interface methods with the same
- names, and define their implementations for `ChronicleMap`.
+- `ChronicleMapBuilder.mapMethods()` is the higher-level of listening for local calls of Map methods.
+Methods in the `MapMethods` interface correspond to `Map` interface methods with the same names, and define their implementations for `ChronicleMap`.
 
- - `ChronicleMapBuilder.remoteOperations()` is for listening and customizing behaviour of remote
- calls, and replication events.
+- `ChronicleMapBuilder.remoteOperations()` is for listening and customizing behaviour of remote calls, and replication events.
 
 All executions around `ChronicleMap` go through all three tiers, or just the last two):
 
- 1. Query tier: `MapQueryContext` interface
- 2. Entry tier: `MapEntry` and `MapAbsentEntry` interfaces
- 3. Data tier: `Data` interface
+1. Query tier: `MapQueryContext` interface
+2. Entry tier: `MapEntry` and `MapAbsentEntry` interfaces
+3. Data tier: `Data` interface
 
-`MapMethods` and `MapRemoteOperations` methods accept *query context*; SPI is above
-the Query tier.
+`MapMethods` and `MapRemoteOperations` methods accept *query context*; SPI is above the Query tier.
 
 `MapEntryOperations` methods accept `MapEntry` or `MapAbsentEntry`; SPI is between Query and Entry tiers.
 
 When combined, interception SPI interfaces and the `ChronicleMap.queryContext()` API are powerful enough to:
 
- - Log all operations of some kind on `ChronicleMap` (for example, all remove, insert, or update operations).
- - Log some specific operations on `ChronicleMap` (for example, log only `acquireUsing()` calls, which has created a new entry).
- - Inhibit operations of some kind on the `ChronicleMap` instance.
- - Backup all changes to `ChronicleMap` to some alternative storage; for example, an SQL database.
- - Perform multi-Chronicle Map operations correctly in concurrent environment, by acquiring locks on
- all ChronicleMaps, before updating them.
- - Perform multi-key operations on a single `ChronicleMap` correctly in a concurrent environment, by acquiring locks on all keys before updating the entries.
- - Define your own replication/reconciliation logic for distributed Chronicle Maps.
- - Dump statistics of the Chronicle Map instance; each segment's load, size in bytes of each
- entry, etc.
+- Log all operations of some kind on `ChronicleMap` (for example, all remove, insert, or update operations).
+- Log some specific operations on `ChronicleMap` (for example, log only `acquireUsing()` calls, which has created a new entry).
+- Inhibit operations of some kind on the `ChronicleMap` instance.
+- Backup all changes to `ChronicleMap` to some alternative storage; for example, an SQL database.
+- Perform multi-Chronicle Map operations correctly in concurrent environment, by acquiring locks on all ChronicleMaps, before updating them.
+- Perform multi-key operations on a single `ChronicleMap` correctly in a concurrent environment, by acquiring locks on all keys before updating the entries.
+- Define your own replication/reconciliation logic for distributed Chronicle Maps.
+- Dump statistics of the Chronicle Map instance; each segment's load, size in bytes of each entry, etc.
 
 == Example - Simple logging
 
@@ -100,8 +94,7 @@ ChronicleMap<IntValue, IntValue> map = ChronicleMap
 
 == Example - BiMap
 
-Possible bi-directional map (that is, a map that preserves the uniqueness of its values, as well
-as that of its keys) implementation over Chronicle Maps.
+Possible bi-directional map (that is, a map that preserves the uniqueness of its values, as well as that of its keys) implementation over Chronicle Maps.
 
 ```java
 enum DualLockSuccess {SUCCESS, FAIL}
@@ -338,5 +331,6 @@ System.out.println(map2.get("1"));
 ```
 
 '''
+
 <<CM_Tutorial.adoc#,Back to Tutorial>>
 

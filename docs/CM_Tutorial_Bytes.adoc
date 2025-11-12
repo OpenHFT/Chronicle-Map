@@ -11,21 +11,17 @@ toc::[]
 This pair of interfaces is configured using `ChronicleMapBuilder.keyMarshallers()` or
 `valueMarshallers()`, for the key, or value type of the map, respectively.
 
-These interfaces are the most suitable, where the size of the serialized form is not known in advance. The easiest way to compute the size of the serialized form of some object of the
-type, is performing serialization itself, and then looking at the number of written bytes.
+These interfaces are the most suitable, where the size of the serialized form is not known in advance.
+The easiest way to compute the size of the serialized form of some object of the type, is performing serialization itself, and then looking at the number of written bytes.
 
-This interface-pair is the least efficient, and the simplest to implement, so it should also be
-used when efficiency is not the top priority, or when gains of using other pairs of interfaces
-(which are more complicated to implement) are marginal.
+This interface-pair is the least efficient, and the simplest to implement, so it should also be used when efficiency is not the top priority, or when gains of using other pairs of interfaces (which are more complicated to implement) are marginal.
 
 Basically you should implement two serialization methods:
 
 - `void write(Bytes out, @NotNull T toWrite)` from `BytesWriter` interface, which writes the given
- `toWrite` instance of the serialized type to the given `out` bytes sink.
- - `T read(Bytes in, @Nullable T using)` from `BytesReader` interface, which reads the serialized
- object into the given `using` instance (if the serialized type is reusable, the `using` object is
- not `null`, and suitable for reusing for this particular serialized object), or a newly created
- instance. The returned object contains the serialized data; it may be identical, or not identical, to the passed `using` instance.
+`toWrite` instance of the serialized type to the given `out` bytes sink.
+- `T read(Bytes in, @Nullable T using)` from `BytesReader` interface, which reads the serialized object into the given `using` instance (if the serialized type is reusable, the `using` object is not `null`, and suitable for reusing for this particular serialized object), or a newly created instance.
+The returned object contains the serialized data; it may be identical, or not identical, to the passed `using` instance.
 
 For example, here is the implementation of `BytesWriter` and `BytesReader` for `CharSequence[]`
 value type (array of CharSequences):
@@ -104,25 +100,22 @@ try (ChronicleMap<String, CharSequence[]> map = ChronicleMap
 }
 ```
 
-The total size of serialization-form for a `CharSequence[]` array is 4 bytes for storing the
-array length, plus the sum of sizes of all CharSequences, in UTF-8 encoding. Computing this size
-without actual encoding has comparable computational cost with performing actual encoding. That
-makes `CharSequence[]` type to meet the second criteria (see above). This makes `BytesWriter` and
+The total size of serialization-form for a `CharSequence[]` array is 4 bytes for storing the array length, plus the sum of sizes of all CharSequences, in UTF-8 encoding.
+Computing this size without actual encoding has comparable computational cost with performing actual encoding.
+That makes `CharSequence[]` type to meet the second criteria (see above).
+This makes `BytesWriter` and
 `BytesReader` the most suitable pair of serialization interfaces to implement for the type.
 
-Note how `read()` implementation attempts to reuse, not only the array object, but also the elements,
-minimizing the amount of produced garbage. This is a recommended practice.
+Note how `read()` implementation attempts to reuse, not only the array object, but also the elements, minimizing the amount of produced garbage.
+This is a recommended practice.
 
 Some additional notes:
 
-- If the reader, or writer, interface implementation is not configurable, and doesn't have
- per-instance cache or state fields (it doesn't have instance fields at all), there is
- a convention to make such implementation classes `final`, give them a `private` constructor, and then
- expose a single `INSTANCE` constant; a sole instance of this implementation in the JVM.
-   - *Do not* make `marshaller` class `enum`, because there are some issues with `enum` serialization/deserialization.
-   - For such no-state implementations, do not forget to implement the `ReadResolvable` interface and return `INSTANCE`. Otherwise you have no guarantee that `INSTANCE` constant is the only alive instance of this implementation in the JVM.
- - If *both* the writer and reader interface implementations have no fields, it might be a good idea
- to merge them into a single type, in order to keep writing and reading logic together.
+- If the reader, or writer, interface implementation is not configurable, and doesn't have per-instance cache or state fields (it doesn't have instance fields at all), there is a convention to make such implementation classes `final`, give them a `private` constructor, and then expose a single `INSTANCE` constant; a sole instance of this implementation in the JVM.
+- *Do not* make `marshaller` class `enum`, because there are some issues with `enum` serialization/deserialization.
+- For such no-state implementations, do not forget to implement the `ReadResolvable` interface and return `INSTANCE`.
+Otherwise you have no guarantee that `INSTANCE` constant is the only alive instance of this implementation in the JVM.
+- If *both* the writer and reader interface implementations have no fields, it might be a good idea to merge them into a single type, in order to keep writing and reading logic together.
 
 [#custom-charsequence-encoding]
 === Custom `CharSequence` encoding
@@ -395,11 +388,11 @@ try (ChronicleMap<String, CharSequence> englishToChinese = ChronicleMap
 
 Some notes on this form of custom serialization:
 
-- Both `CharSequenceCustomEncodingBytesWriter` and `CharSequenceCustomEncodingBytesReader` have
- configurations (charset and input buffer size). They are implemented as normal classes rather
- than classes with `private` constructors and a single `INSTANCE`.
- - Both writer and reader classes have some "cache" fields; their contents are mutated during
- writing and reading. That is why they have to implement the `StatefulCopyable` interface.
+- Both `CharSequenceCustomEncodingBytesWriter` and `CharSequenceCustomEncodingBytesReader` have configurations (charset and input buffer size).
+They are implemented as normal classes rather than classes with `private` constructors and a single `INSTANCE`.
+- Both writer and reader classes have some "cache" fields; their contents are mutated during writing and reading.
+That is why they have to implement the `StatefulCopyable` interface.
 
 '''
+
 <<CM_Tutorial.adoc#,Back to Tutorial>>

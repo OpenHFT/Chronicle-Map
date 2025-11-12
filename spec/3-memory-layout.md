@@ -67,7 +67,7 @@ The global mutable state is 33 bytes long.
 
  See also the [extra tier bulk allocation](5-initialization.md#entra-tier-bulk-allocation)
  operation.
- 
+
  3. Bytes 11..15 - the index of the first *free* segment tier. An unsigned 40-bit value, stored
  in little-endian order. Extra segment tiers are allocated in bulks, so there is usually a chain
  of allocated, but unused yet segment tiers. This field points to the head of this chain, or has
@@ -80,15 +80,15 @@ The global mutable state is 33 bytes long.
  [`actualSegments`](3_1-header-fields.md#actualsegments) &minus; 1) has tier index `actualSegments`,
  the first tier of the first extra tier bulk has tier index `actualSegments` + 1, etc. Tier indexes
  are 1-counted, because value 0 has some special meaning.
- 
+
  4. Bytes 16..20 - the number of used extra segment tiers. An unsigned 40-bit value, stored in
  little-endian order.
- 
+
  5. Bytes 21..24 - the offset of the segment headers area from the beginning of the memory of this
  Chronicle Map store. An unsigned 32-bit value, stored in little-endian ordered. This field
  determines the size of [the 4th area of the general Chronicle Map structure](
  #segment-headers-alignment).
- 
+
  6. Bytes 25..32 - the Chronicle Map data store size, the offset to the end of the [main segments
  area](#main-segments area) or the last [extra tier bulk](#extra-tier-bulks). A non-negative 64-bit
  value, stored in little-endian order.
@@ -130,7 +130,7 @@ multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segment
  It is a 64-bit value, stored in the little-endian order. If the value of this field is 0, this
  means there is no chained segment tier in this segment yet after the first tier, in other words,
  the first tier is the only one in the chain for the current segment.
- 
+
  5. Bytes 24..31 - reserved for use by extensions.
 
 > The reference Java implementation: [`BigSegmentHeader`

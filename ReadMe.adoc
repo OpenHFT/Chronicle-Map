@@ -18,57 +18,51 @@ toc::[]
 
 == About
 
-Chronicle Map is a super-fast, in-memory, non-blocking, key-value store, designed for low-latency, and/or multi-process
-applications such as trading and financial market applications.
-See <<docs/CM_Features.adoc#,Features doc>> for more information.
+Chronicle Map is a super-fast, in-memory, non-blocking, key-value store, designed for low-latency, and/or multi-process applications such as trading and financial market applications.
+See link:docs/CM_Features.adoc[] for more information.
 
 The size of a Chronicle Map is not limited by memory (RAM), but rather by the available disk capacity.
 
 .Overview
-image::docs\images\Image1_.png[750,650]
-
+image::docs/images/Image1_.png[750,650]
 
 === Use cases
-Chronicle Map is used in production around the
-world for:
 
-• **real-time trading systems**. Chronicle Map
-provides in-memory access speeds, and supports
-ultra-low garbage collection. Chronicle Map can support the most demanding of applications.
-• **highly concurrent systems**. Chronicle Map
-supports multiple readers and writers,
-distributed across multiple machines.
+Chronicle Map is used in production around the world for:
+
+• **real-time trading systems**.
+Chronicle Map provides in-memory access speeds, and supports ultra-low garbage collection.
+Chronicle Map can support the most demanding of applications.
+• **highly concurrent systems**.
+Chronicle Map supports multiple readers and writers, distributed across multiple machines.
 
 === Why use Chronicle Map?
+
 Chronicle Map is:
 
-• **fast**. Millions of operations per second, with
-low and stable microsecond latencies for reads and writes. Write queries scale well up
-to the number of hardware execution threads in the server. Read queries never block each
-other.
-• **reliable**. Chronicle Software have a “chaos
-monkey” test which verifies Chronicle Map
-multi-master replication in the face of node
-and network failures. The map can optionally be persisted to disk.
-• **in production** at banks and hedge funds,
-globally.
-• **built using lessons learnt** from real-world
-experience solving real-world problems.
-• **open source** (standard version), and in use at
-hundreds of sites around the world.
+• **fast**.
+Millions of operations per second, with low and stable microsecond latencies for reads and writes.
+Write queries scale well up to the number of hardware execution threads in the server.
+Read queries never block each other.
+• **reliable**.
+Chronicle Software have a “chaos monkey” test which verifies Chronicle Map multi-master replication in the face of node and network failures.
+The map can optionally be persisted to disk.
+• **in production** at banks and hedge funds, globally.
+• **built using lessons learnt** from real-world experience solving real-world problems.
+• **open source** (standard version), and in use at hundreds of sites around the world.
 
 === Our offering
-Chronicle Software provides full support for
-Chronicle Map, consulting to help you make
-best use of the product, and can also deliver
-projects using a mix of our resources and
-your own.
+
+Chronicle Software provides full support for Chronicle Map, consulting to help you make best use of the product, and can also deliver projects using a mix of our resources and your own.
 
 === Replication
+
 See <<docs/CM_Replication.adoc#,Chronicle Map Replication>> for more information.
 
 '''
+
 == Documentation
+
 The Chronicle Map documentation comprises:
 
 .Documentation
@@ -93,4 +87,5 @@ The Chronicle Map documentation comprises:
 Linked documentation is contained in the `docs` folder.
 
 == Chronicle Software Release Notes
-https://chronicle.software/release-notes[Leave your e-mail] to get information about the latest releases and patches to stay up-to-date. 
+
+https://chronicle.software/release-notes[Leave your e-mail] to get information about the latest releases and patches to stay up-to-date.
