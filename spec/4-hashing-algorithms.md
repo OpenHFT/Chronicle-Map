@@ -6,9 +6,9 @@ the primary key hash code. Then the [`hashSplitting`](3_1-header-fields.md#hashs
 is applied, to determine the segment in which the key should be stored, and the part of the key hash
 code to be stored in a segment tier's hash lookup.
 
-> The reference Java implementation: [`XxHash_r39`](
-> https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/hashing/XxHash_r39.java).
-> Although the Java implementation class has `_r39` suffix, the xxHash algorithm is stable since r3
+> The reference Java implementation: [`XxHashR39`](
+> https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/hashing/XxHashR39.java).
+> Although the algorithm originated from the r39 release, the xxHash algorithm is stable since r3
 > and [won't change in the future](
 > https://github.com/Cyan4973/xxHash/issues/34#issuecomment-169176338). A different version of
 > the algorithm could have a different name.

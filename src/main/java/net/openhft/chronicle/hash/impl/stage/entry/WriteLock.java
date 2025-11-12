@@ -72,6 +72,10 @@ public class WriteLock implements InterProcessLock {
                 break;
             case WRITE_LOCKED:
                 // do nothing
+                return;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
     }
 
@@ -137,6 +141,10 @@ public class WriteLock implements InterProcessLock {
                 break;
             case WRITE_LOCKED:
                 // do nothing
+                return;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
     }
 
@@ -274,6 +282,10 @@ public class WriteLock implements InterProcessLock {
                     s.segmentHeader.downgradeWriteToUpdateLock(s.segmentHeaderAddress);
                 s.incrementUpdate();
                 s.setLocalLockState(UPDATE_LOCKED);
+                break;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
     }
 

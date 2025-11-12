@@ -51,27 +51,25 @@ import net.openhft.sg.Staged;
         ValueBytesInterop.class,
 
         QueryAlloc.class,
-}
-,
-        nested = {
-                ReadLock.class,
-                UpdateLock.class,
-                WriteLock.class,
+}, nested = {
+        ReadLock.class,
+        UpdateLock.class,
+        WriteLock.class,
 
-                EntryKeyBytesData.class,
-                EntryValueBytesData.class,
+        EntryKeyBytesData.class,
+        EntryValueBytesData.class,
 
-                InputKeyBytesData.class,
+        InputKeyBytesData.class,
 
-                WrappedValueInstanceDataHolder.class,
-                WrappedValueBytesData.class,
-                AcquireHandle.class,
-                DefaultReturnValue.class,
-                UsingReturnValue.class,
+        WrappedValueInstanceDataHolder.class,
+        WrappedValueBytesData.class,
+        AcquireHandle.class,
+        DefaultReturnValue.class,
+        UsingReturnValue.class,
 
-                HashEntryChecksumStrategy.class,
+        HashEntryChecksumStrategy.class,
 
-                DummyValueZeroData.class,
-        })
+        DummyValueZeroData.class,
+})
 public class MapQueryContext {
 }

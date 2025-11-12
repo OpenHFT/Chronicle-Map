@@ -43,6 +43,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
  * Generated code
  */
 @SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
+// CHECKSTYLE:OFF: GeneratedCode
 public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implements AutoCloseable , ChecksumEntry , HashEntry<K> , SegmentLock , Alloc , KeyHashCode , LocksInterface , ExternalMapQueryContext<K, V, R> , MapContext<K, V, R> , MapEntry<K, V> , QueryContextInterface<K, V, R> , VanillaChronicleMapHolder<K, V, R> , Absent<K, V> , MapAndSetContext<K, V, R> , ExternalSetQueryContext<K, R> , SetContext<K, R> , SetEntry<K> {
     public boolean readZeroGuarded() {
         if (!(this.locksInit()))
@@ -4292,3 +4293,4 @@ PRESENT, ABSENT;    }
         }
     }
 }
+// CHECKSTYLE:ON: GeneratedCode

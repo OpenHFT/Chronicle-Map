@@ -137,7 +137,7 @@ public abstract class HashSegmentIteration<K, E extends HashEntry<K>>
                         // if doReplaceValue() -> relocation() -> alloc() -> nextTier()
                         // was called, restore the tier we were iterating over
                         if (s.tier != currentTier) {
-                            s.initSegmentTier_WithBaseAddr(
+                            s.initSegmentTierWithBaseAddr(
                                     currentTier, currentTierBaseAddr, tierIndex);
                             // To cover shift deleted slot, at the next step forward.
                             // hash lookup entry is relocated to the next chained tier, and the

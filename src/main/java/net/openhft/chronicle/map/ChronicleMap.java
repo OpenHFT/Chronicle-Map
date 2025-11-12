@@ -164,8 +164,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      *
      * @param key the key whose associated value is to be returned
      * @param usingValue the object to read value data in, if present. Can be null
-     * @see #acquireUsing(Object, Object)
      * @return Lock control object that releases the update lock on close.
+     * @see #acquireUsing(Object, Object)
      */
     @NotNull
     net.openhft.chronicle.core.io.Closeable acquireContext(@NotNull K key, @NotNull V usingValue);
@@ -237,6 +237,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * @return the amount of free space in the map as a percentage. When the free space gets low ( around 5-25% ) the map will automatically expand. The
      * number of times it can automatically expand is based on the {@code net.openhft.chronicle.map.ChronicleMapBuilder#maxBloatFactor}. If the map
      * expands you will see an increase in the available free space. NOTE: It is not possible to expand the chronicle map manually.
+     *
      * @see net.openhft.chronicle.map.ChronicleMap#remainingAutoResizes as these operations are related.
      */
     default short percentageFreeSpace() {
@@ -245,6 +246,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
 
     /**
      * WARNING: This is a detailed however expensive operation which can take milliseconds
+     *
      * @return an array of how full each segment is
      */
     default SegmentStats[] segmentStats() {

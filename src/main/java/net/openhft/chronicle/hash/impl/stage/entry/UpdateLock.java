@@ -56,6 +56,10 @@ public class UpdateLock implements InterProcessLock {
             case UPDATE_LOCKED:
             case WRITE_LOCKED:
                 // do nothing
+                return;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
     }
 
@@ -103,6 +107,10 @@ public class UpdateLock implements InterProcessLock {
             case UPDATE_LOCKED:
             case WRITE_LOCKED:
                 // do nothing
+                return;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
     }
 
@@ -194,6 +202,10 @@ public class UpdateLock implements InterProcessLock {
                         s.segmentHeader.downgradeWriteToReadLock(s.segmentHeaderAddress);
                     }
                 }
+                break;
+            default:
+                throw new IllegalStateException(hh.h().toIdentityString() +
+                        ": unexpected localLockState=" + s.localLockState);
         }
         s.incrementRead();
         s.setLocalLockState(READ_LOCKED);

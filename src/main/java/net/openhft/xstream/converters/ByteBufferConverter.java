@@ -47,7 +47,7 @@ public class ByteBufferConverter implements Converter {
         buffer.capacity();
 
         int position = buffer.position();
-        int limit = buffer.limit();
+        final int limit = buffer.limit();
 
         buffer.clear();
 
@@ -78,7 +78,7 @@ public class ByteBufferConverter implements Converter {
         reader.moveUp();
 
         reader.moveDown();
-        int limit = (Integer) unmarshallingContext.convertAnother(null, int.class);
+        final int limit = (Integer) unmarshallingContext.convertAnother(null, int.class);
         reader.moveUp();
 
         reader.moveDown();
