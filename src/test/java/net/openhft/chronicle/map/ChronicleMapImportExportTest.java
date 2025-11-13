@@ -233,7 +233,7 @@ public class ChronicleMapImportExportTest {
                 Assert.assertEquals(expected, actual);
             }
         } finally {
-            // file.delete();
+            file.delete();
         }
     }
 

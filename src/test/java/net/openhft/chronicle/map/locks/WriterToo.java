@@ -61,6 +61,7 @@ class WriterToo implements Runnable {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = offHeapLock.writeLock()) == 0) {
+                Thread.yield();
             }
             System.out.println(
                     "WRITER TOO" +

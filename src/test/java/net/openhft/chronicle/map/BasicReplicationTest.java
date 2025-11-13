@@ -150,6 +150,8 @@ public class BasicReplicationTest {
                     for (IteratorAndDestinationMap<K, V> iteratorAndDestinationMap : destinationMaps) {
                         while (iteratorAndDestinationMap.modificationIterator.nextEntry(
                                 iteratorAndDestinationMap, sourceMap.identifier())) {
+                            // drain all pending entries
+                            continue;
                         }
                     }
 

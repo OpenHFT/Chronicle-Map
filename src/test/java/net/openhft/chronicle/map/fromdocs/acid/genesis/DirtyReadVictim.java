@@ -109,7 +109,7 @@ public class DirtyReadVictim implements Runnable {
         this.chm = craig;
     }
 
-    public void setStampedLock(StampedLock _sLock) {
-        this.offHeapLock = _sLock;
+    public void setStampedLock(StampedLock stampedLock) {
+        this.offHeapLock = stampedLock;
     }
 }

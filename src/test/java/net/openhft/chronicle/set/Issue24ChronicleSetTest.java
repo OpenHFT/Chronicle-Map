@@ -34,7 +34,7 @@ public class Issue24ChronicleSetTest {
         }
     }
 
-    public synchronized static <A> ChronicleSet<A> initSet(
+    public static synchronized <A> ChronicleSet<A> initSet(
             Class<A> entryClass, int entrySize, int averageKeySize)
             throws IOException {
         return init(ChronicleSetBuilder.of(entryClass), entrySize, averageKeySize);
@@ -51,7 +51,7 @@ public class Issue24ChronicleSetTest {
         }
         executor.shutdown();
         while (!executor.isTerminated()) {
-
+            Thread.yield();
         }
         System.out.println("Finished all threads");
 
