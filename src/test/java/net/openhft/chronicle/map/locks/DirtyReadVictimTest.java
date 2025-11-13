@@ -48,6 +48,7 @@ public class DirtyReadVictimTest {
                             "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
+                Thread.yield();
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -144,6 +145,7 @@ public class DirtyReadVictimTest {
                             + "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
+                Thread.yield();
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

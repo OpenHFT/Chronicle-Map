@@ -43,7 +43,7 @@ public class ChronicleMapSanityCheckTest {
                 Executors.newSingleThreadScheduledExecutor(
                         new NamedThreadFactory("consumer"));
 
-        int N = 1000;
+        int iterations = 1000;
 
         int producerPeriod = 100;
         TimeUnit producerTimeUnit = TimeUnit.MILLISECONDS;
@@ -55,8 +55,8 @@ public class ChronicleMapSanityCheckTest {
 
         try (ChronicleMap<String, DummyValue> map =
                      ChronicleMapBuilder.of(String.class, DummyValue.class)
-                             .averageKey("" + N).averageValue(DummyValue.DUMMY_VALUE)
-                             .entries(N)
+                             .averageKey("" + iterations).averageValue(DummyValue.DUMMY_VALUE)
+                             .entries(iterations)
                              .createPersistedTo(file)) {
 
             map.clear();
@@ -67,7 +67,7 @@ public class ChronicleMapSanityCheckTest {
                 Random r = new Random();
 
                 System.out.println("Before PRODUCING size is " + map.size());
-                for (int i = 0; i < N; i++) {
+                for (int i = 0; i < iterations; i++) {
                     LockSupport.parkNanos(r.nextInt(5));
                     map.put(String.valueOf(i), DummyValue.DUMMY_VALUE);
                 }

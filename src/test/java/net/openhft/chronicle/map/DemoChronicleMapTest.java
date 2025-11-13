@@ -124,11 +124,11 @@ public class DemoChronicleMapTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeIllegalAlignment() {
-	ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(-1);
+        ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNotPowerOfTwoIllegalAlignment() {
-	ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13);
+        ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13);
     }
 }

@@ -72,6 +72,6 @@ public class MarkTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeEntriesPerSegment() {
-	ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
+        ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
     }
 }

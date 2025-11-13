@@ -136,6 +136,7 @@ interface IBean {
 
     }
 }
+
 /**
  * This test enumerates common use cases for keys and values.
  */
@@ -664,12 +665,12 @@ public class CHMUseCasesTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeActualChunkSize() {
-	ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1);
+        ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testActualChunksPerSegmentTier() {
-	ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
+        ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
     }
 
     @Test
@@ -918,6 +919,7 @@ public class CHMUseCasesTest {
             try {
                 map.computeIfPresent(1, (k, s) -> s + 1);
             } catch (Exception todoMoreSpecificException) {
+                assertNotNull(todoMoreSpecificException);
             }
             mapChecks();
 
@@ -958,6 +960,7 @@ public class CHMUseCasesTest {
             try {
                 map.computeIfPresent(1L, (k, s) -> s + 1);
             } catch (Exception todoMoreSpecificException) {
+                assertNotNull(todoMoreSpecificException);
             }
 
             mapChecks();
@@ -995,6 +998,7 @@ public class CHMUseCasesTest {
                 map.computeIfPresent(1.0, (k, s) -> s + 1);
 
             } catch (Exception todoMoreSpecificException) {
+                assertNotNull(todoMoreSpecificException);
             }
         }
     }

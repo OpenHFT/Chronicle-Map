@@ -102,7 +102,7 @@ public class DirtyReadOffender implements Runnable {
         this.isoLevel = isoLevel;
     }
 
-    public void setStampedLock(StampedLock _sLock) {
-        this.offHeapLock = _sLock;
+    public void setStampedLock(StampedLock stampedLock) {
+        this.offHeapLock = stampedLock;
     }
 }

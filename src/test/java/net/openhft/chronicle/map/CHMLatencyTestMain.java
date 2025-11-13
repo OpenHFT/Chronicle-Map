@@ -89,8 +89,8 @@ public class CHMLatencyTestMain {
                     // the timed part
                     for (int i = 0; i < KEYS && u < RUN_TIME * rate; i += stride) {
                         // busy wait for next time.
-                        while (System.nanoTime() < next - 12) ;
-//                        monitor.sample = System.nanoTime();
+                        while (System.nanoTime() < next - 12)
+                            Thread.yield();
                         long start0 = next;
 
                         // start the update.

@@ -548,13 +548,13 @@ public class MapCheck {
 
     static void initInts(Object[] key, Object[] absent, int size) {
         for (int i = 0; i < size; ++i)
-            key[i] = Integer.valueOf(i);
+            key[i] = i;
         Map m = newMap();
         int k = 0;
         while (k < size) {
             int r = srng.next();
             if (r < 0 || r >= size) {
-                Integer ir = Integer.valueOf(r);
+                Integer ir = r;
                 if (m.put(ir, ir) == null)
                     absent[k++] = ir;
             }

@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.stream.Collectors.toSet;
 import static org.junit.Assert.*;
+
 @org.junit.Ignore("flaky test see - https://teamcity.chronicle.software/repository/download/OpenHFT_ReleaseJob_ReleaseByArtifact/643179:id/ReleaseAutomation/projects/chronicle-map-runTests-1642011539698.log")
 @SuppressWarnings({"rawtypes", "unchecked", "ResultOfMethodCallIgnored", "try"})
 public class ChronicleMapTest {
@@ -96,8 +97,8 @@ public class ChronicleMapTest {
     }
 
     static File getPersistenceFile() {
-        String TMP = OS.getTarget();
-        File file = new File(TMP + "/chm-test" + Time.uniqueId() + count++);
+        String tmpDir = OS.getTarget();
+        File file = new File(tmpDir + "/chm-test" + Time.uniqueId() + count++);
         file.deleteOnExit();
         return file;
     }
@@ -497,14 +498,14 @@ public class ChronicleMapTest {
     // TODO small GC on startup should be tidied up, [GC 9216K->1886K(31744K), 0.0036750 secs]
     // 10M users, updated 16 times. Throughput 33.0M ops/sec, VmPeak: 5373848 kB, VmRSS: 544252 kB
     // 50M users, updated 16 times. Throughput 31.2 M ops/sec, VmPeak: 9091804 kB, VmRSS: 3324732 kB
-    // 250M users, updated 16 times. Throughput 30.0 M ops/sec, VmPeak:	24807836 kB, VmRSS: 14329112 kB
+    // 250M users, updated 16 times. Throughput 30.0 M ops/sec, VmPeak: 24807836 kB, VmRSS: 14329112 kB
     // 1000M users, updated 16 times, Throughput 24.1 M ops/sec, VmPeak: 85312732 kB, VmRSS: 57165952 kB
     // 2500M users, updated 16 times, Throughput 23.5 M ops/sec, VmPeak: 189545308 kB, VmRSS: 126055868 kB
 
     // to ext4
     // 10M users, updated 16 times. Throughput 28.4 M ops/sec, VmPeak: 5438652 kB, VmRSS: 544624 kB
     // 50M users, updated 16 times. Throughput 28.2 M ops/sec, VmPeak: 9091804 kB, VmRSS: 9091804 kB
-    // 250M users, updated 16 times. Throughput 26.1 M ops/sec, VmPeak:	24807836 kB, VmRSS: 24807836 kB
+    // 250M users, updated 16 times. Throughput 26.1 M ops/sec, VmPeak: 24807836 kB, VmRSS: 24807836 kB
     // 1000M users, updated 16 times, Throughput 1.3 M ops/sec, TODO FIX this
 
     @Test
@@ -1762,7 +1763,7 @@ public class ChronicleMapTest {
 
             // this will add the entry
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("one", newEmptyString)) {
-                // do nothing
+                assertNotNull(c);
             }
         }
     }

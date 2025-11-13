@@ -21,10 +21,11 @@ import static org.junit.Assert.*;
  */
 public class LargeEntriesTest {
 
+    static final int ENTRIES = 250;
+    static final int ENTRY_SIZE = 100 * 1024;
+
     @Test
     public void testLargeStrings() throws ExecutionException, InterruptedException, IOException {
-        final int ENTRIES = 250;
-        final int ENTRY_SIZE = 100 * 1024;
 
         File file = File.createTempFile("largeEntries" + System.currentTimeMillis(), ".deleteme");
         file.deleteOnExit();
@@ -92,16 +93,16 @@ public class LargeEntriesTest {
         doLargeEntryPerf(3000, 1024 * 1024);
     }
 
-    private void doLargeEntryPerf(int ENTRIES, final int ENTRY_SIZE) throws IOException, InterruptedException, ExecutionException {
-        System.out.printf("Testing %,d entries of %,d KB%n", ENTRIES, ENTRY_SIZE / 1024);
+    private void doLargeEntryPerf(int entries, final int entrySize) throws IOException, InterruptedException, ExecutionException {
+        System.out.printf("Testing %,d entries of %,d KB%n", entries, entrySize / 1024);
         File file = File.createTempFile("largeEntries", ".deleteme");
         file.deleteOnExit();
         final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
 //                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
-                .entries(ENTRIES)
+                .entries(entries)
                 .averageKeySize(10)
-                .averageValueSize(ENTRY_SIZE)
+                .averageValueSize(entrySize)
                 .putReturnsNull(true)
                 .createPersistedTo(file);
         {
@@ -109,7 +110,7 @@ public class LargeEntriesTest {
             int threads = Runtime.getRuntime().availableProcessors();
             ExecutorService es = Executors.newFixedThreadPool(threads,
                     new NamedThreadFactory("test"));
-            final int block = ENTRIES / threads;
+            final int block = entries / threads;
             for (int i = 0; i < 3; i++) {
                 long start = System.currentTimeMillis();
                 List<Future<?>> futureList = new ArrayList<>();

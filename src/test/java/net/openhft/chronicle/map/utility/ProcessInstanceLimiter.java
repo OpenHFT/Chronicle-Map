@@ -387,13 +387,9 @@ public class ProcessInstanceLimiter implements Runnable {
         if (data.getMaxNumberOfProcessesAllowed() != maxNumberOfProcessesAllowed) {
             //it's either a new object, set to 0, or
             //another process set it to an invalid value
-            if (data.compareAndSwapMaxNumberOfProcessesAllowed(0, maxNumberOfProcessesAllowed)) {
-                //What we expected, everything's good
-            } else {
-                //something else set a value, if it's not 2 we've got a conflict
-                if (data.getMaxNumberOfProcessesAllowed() != maxNumberOfProcessesAllowed) {
-                    throw new IllegalArgumentException("The existing shared map already specifies that the maximum number of processes allowed is " + data.getMaxNumberOfProcessesAllowed() + " and changing that to " + maxNumberOfProcessesAllowed + " is not supported");
-                }
+            if (!data.compareAndSwapMaxNumberOfProcessesAllowed(0, maxNumberOfProcessesAllowed)
+                    && data.getMaxNumberOfProcessesAllowed() != maxNumberOfProcessesAllowed) {
+                throw new IllegalArgumentException("The existing shared map already specifies that the maximum number of processes allowed is " + data.getMaxNumberOfProcessesAllowed() + " and changing that to " + maxNumberOfProcessesAllowed + " is not supported");
             }
         }
         String name = processType + '#';

@@ -64,7 +64,8 @@ public class FileLockUtilTest {
             try {
                 CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
                 fail();
-            } catch (ChronicleFileLockException ignore) {
+            } catch (ChronicleFileLockException e) {
+                assertNotNull(e);
             }
             CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
         }
@@ -77,7 +78,8 @@ public class FileLockUtilTest {
             try {
                 CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
                 fail();
-            } catch (ChronicleFileLockException ignore) {
+            } catch (ChronicleFileLockException e) {
+                assertNotNull(e);
             }
             CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
         }
@@ -114,6 +116,7 @@ public class FileLockUtilTest {
                 fail();
             } catch (ChronicleFileLockException e) {
                 CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
+                assertNotNull(e);
             }
         }
     }

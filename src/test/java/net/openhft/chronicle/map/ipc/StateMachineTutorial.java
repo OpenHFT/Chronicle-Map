@@ -39,7 +39,7 @@ public class StateMachineTutorial {
                         smd.setState(StateMachineState.STATE_0, StateMachineState.STATE_1);
 
                         while (!smd.done()) {
-                            // busy wait
+                            Thread.yield();
                         }
 
                         long end = System.nanoTime();

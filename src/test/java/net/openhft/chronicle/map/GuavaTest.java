@@ -50,7 +50,7 @@ public class GuavaTest extends TestCase {
                 .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES);
     }
 
-    static abstract class TestGenerator
+    abstract static class TestGenerator
             implements TestMapGenerator<String, String> {
 
         abstract Map<String, String> newMap();

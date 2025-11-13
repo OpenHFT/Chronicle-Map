@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
 
 public class RecoverTest {
 
-    Logger LOG = LoggerFactory.getLogger(RecoverTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RecoverTest.class);
 
     ReplicatedChronicleMap<Integer, Integer, ?> map;
 
