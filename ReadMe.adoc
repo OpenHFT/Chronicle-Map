@@ -4,6 +4,8 @@ Chronicle Software
 :toc: macro
 :toclevels: 2
 :icons: font
+:lang: en-GB
+:source-highlighter: rouge
 
 image:https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[caption="",link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
 image:https://javadoc.io/badge2/net.openhft/chronicle-map/javadoc.svg[link="https://www.javadoc.io/doc/net.openhft/chronicle-map/latest/index.html"]
