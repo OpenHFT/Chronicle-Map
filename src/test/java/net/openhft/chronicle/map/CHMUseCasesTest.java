@@ -220,7 +220,9 @@ public class CHMUseCasesTest {
                 for (int i = 0; i < o1.length; i++) {
                     Assert.assertArrayEquals(o1[i], o2[i]);
                 }
-            } else throw new IllegalStateException("unsupported type");
+            } else {
+                throw new IllegalStateException("unsupported type");
+            }
 
         }
     }
