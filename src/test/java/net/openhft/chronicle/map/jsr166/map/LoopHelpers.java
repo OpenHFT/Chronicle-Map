@@ -204,8 +204,9 @@ class LoopHelpers {
             if (!started) {
                 started = true;
                 startTime = t;
-            } else
+            } else {
                 endTime = t;
+            }
         }
 
         public void clear() {
