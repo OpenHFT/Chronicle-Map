@@ -6,6 +6,9 @@ Neil Clifford
 :toc-placement: macro
 :icons: font
 
+:lang: en-GB
+:source-highlighter: rouge
+
 toc::[]
 
 This document describes the Chronicle Map tutorial supplied with the project.
