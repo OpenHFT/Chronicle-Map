@@ -329,8 +329,7 @@
                         <exclude>net/openhft/chronicle/set/DummyValueData.java</exclude>
                         <exclude>**/Compiled*.java</exclude>
                     </sourceFileExcludes>
-                    <failOnError>false</failOnError>
-                    <additionalOptions>-Xdoclint:none</additionalOptions>
+                    <failOnError>true</failOnError>
                 </configuration>
             </plugin>
 
@@ -511,6 +510,10 @@
         </profile>
         <profile>
             <id>quality</id>
+            <activation>
+                <!-- SpotBugs 4.x requires Java 11+; run the quality stack only on modern JDKs. -->
+                <jdk>[11,)</jdk>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
