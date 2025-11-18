@@ -32,7 +32,7 @@ public class StateMachineTutorial {
 
                     StateMachineState st = smd.getState();
                     if (st == StateMachineState.STATE_0) {
-                        long start = System.nanoTime();
+                        final long start = System.nanoTime();
 
                         //fire the first state change
                         smd.setStateData(0);

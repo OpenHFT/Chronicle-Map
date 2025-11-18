@@ -145,9 +145,9 @@ public class JSR166TestCase {
      * Returns a policy containing all the permissions we ever need.
      */
     public static Policy permissivePolicy() {
-        return new AdjustablePolicy
+        return new AdjustablePolicy(
                 // Permissions j.u.c. needs directly
-                (new RuntimePermission("modifyThread"),
+                new RuntimePermission("modifyThread"),
                         new RuntimePermission("getClassLoader"),
                         new RuntimePermission("setContextClassLoader"),
                         // Permissions needed to change permissions!

@@ -11,13 +11,12 @@ interface ChronicleStampedLockVOInterface {
     long getEntryLockState();
 
     void setEntryLockState(long entryLockState);
-//
-//    @Group(1)
-//    long getReaderCount();
-//
-//    void setReaderCount(long rc);  /* time in millis */
-//
-//    long addAtomicReaderCount(long toAdd);
-//
-
+    //
+    //    @Group(1)
+    //    long getReaderCount();
+    //
+    //    void setReaderCount(long rc);  /* time in millis */
+    //
+    //    long addAtomicReaderCount(long toAdd);
+    //
 }

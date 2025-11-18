@@ -39,11 +39,9 @@ public class MapCheck {
     }
 
     public static void main(String[] args) throws IOException, ClassNotFoundException {
-        int numTests = 20;
-        int size = 36864; // about midway of HashMap resize interval
-
-        if (args.length == 0)
+        if (args.length == 0) {
             System.out.println("Usage: MapCheck mapclass [int|float|string|object] [trials] [size] [serialtest]");
+        }
 
         if (args.length > 1) {
             String et = args[1].toLowerCase();
@@ -56,18 +54,31 @@ public class MapCheck {
             else if (et.startsWith("d"))
                 eclass = java.lang.Double.class;
         }
-        if (eclass == null)
+        if (eclass == null) {
             eclass = Integer.class;
+        }
 
-        if (args.length > 2)
+        int numTests = 20;
+        int size = 36864; // about midway of HashMap resize interval
+
+        if (args.length > 2) {
             numTests = Integer.parseInt(args[2]);
+        }
 
-        if (args.length > 3)
+        if (args.length > 3) {
             size = Integer.parseInt(args[3]);
+        }
 
         boolean doSerializeTest = args.length > 4;
 
-        while ((size & 3) != 0) ++size;
+        runTests(numTests, size, doSerializeTest);
+    }
+
+    private static void runTests(int numTests, int size, boolean doSerializeTest)
+            throws IOException, ClassNotFoundException {
+        while ((size & 3) != 0) {
+            ++size;
+        }
 
         System.out.print(" elements: " + eclass.getName());
         System.out.print(" trials: " + numTests);
@@ -92,8 +103,9 @@ public class MapCheck {
 
         checkNullKey();
 
-        if (doSerializeTest)
+        if (doSerializeTest) {
             serTest(size);
+        }
     }
 
     static Map newMap() {
@@ -392,7 +404,7 @@ public class MapCheck {
         reallyAssert(s.size() == size);
         untimedKeyTest("Access Present         ", size, s, key, size);
         keyTest("Search Absent          ", size, s, absent, 0);
-// No supported:        valTest(s, key);
+        // No supported:        valTest(s, key);
         remTest("Search Absent          ", size, s, absent, 0);
         reallyAssert(s.size() == size);
         remHalfTest("Remove Present         ", size, s, key, size / 2);
@@ -442,10 +454,10 @@ public class MapCheck {
 
         Object lastkey = kitTest(s2, size);
         Object hold = s2.get(lastkey);
-        int sum = 0;
 
         timer.start("Traverse entry         ", size * 12); // 12 until finish
 
+        int sum = 0;
         int sh1 = s.hashCode() - s2.hashCode();
         reallyAssert(sh1 == 0);
         boolean eq1 = s2.equals(s);

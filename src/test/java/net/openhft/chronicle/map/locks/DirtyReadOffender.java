@@ -31,7 +31,7 @@ public class DirtyReadOffender {
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender established chm "
             );
-            StampedLock offHeapLock = new ChronicleStampedLock(
+            final StampedLock offHeapLock = new ChronicleStampedLock(
                     args[3]
                             + "OPERAND_ChronicleStampedLock"
             );

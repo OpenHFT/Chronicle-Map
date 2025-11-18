@@ -157,7 +157,7 @@ class LoopHelpers {
         }
 
         public int next() {
-            int t = x ^ (x << 11);
+            final int t = x ^ (x << 11);
             x = y;
             y = z;
             z = w;

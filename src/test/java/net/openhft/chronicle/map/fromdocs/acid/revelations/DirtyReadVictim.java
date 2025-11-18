@@ -28,7 +28,6 @@ public class DirtyReadVictim {
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class); //mock'd
-            long stamp = 0;
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
                             " DirtyReadVictim ENTERING offHeapLock.tryOptimisticRead()"
@@ -44,6 +43,7 @@ public class DirtyReadVictim {
             );
 
             Thread.sleep(sleepMock * 1_000);
+            long stamp = 0;
             while ((stamp = offHeapLock.tryOptimisticRead()) < 0) {
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +

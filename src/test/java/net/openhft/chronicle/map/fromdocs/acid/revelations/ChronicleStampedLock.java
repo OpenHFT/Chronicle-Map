@@ -143,13 +143,11 @@ public class ChronicleStampedLock extends StampedLock {
 
     @Override
     public long tryWriteLock() {
-        long l = 0L;
-
         offHeapLock = chm.get("Stamp ");
         lastWriterT = chm.get("LastWriterTime ");
         writeLockHolderCount = chmW.get("WriterCount ");
 
-        l = offHeapLock.getEntryLockState();
+        long l = offHeapLock.getEntryLockState();
 
         if (l != 0L)
             return 0L;
@@ -259,11 +257,11 @@ public class ChronicleStampedLock extends StampedLock {
 
     @Override
     public long writeLock() {
-        long l = 0L;
-
         offHeapLock = chm.get("Stamp ");
         lastWriterT = chm.get("LastWriterTime ");
         writeLockHolderCount = chmW.get("WriterCount ");
+
+        long l = 0L;
 
         do {
             System.out.println(
@@ -441,13 +439,13 @@ public class ChronicleStampedLock extends StampedLock {
         );
     }
 
-//    @Override
-//    public boolean isWriteLocked() {
-//        if (this.getReadLockCount() < 0)
-//            return (Boolean.TRUE);
-//        else
-//            return (Boolean.FALSE);
-//    }
+    //    @Override
+    //    public boolean isWriteLocked() {
+    //        if (this.getReadLockCount() < 0)
+    //            return (Boolean.TRUE);
+    //        else
+    //            return (Boolean.FALSE);
+    //    }
 
     @Override
     public int getReadLockCount() {
