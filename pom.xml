@@ -330,7 +330,6 @@
                         <exclude>**/Compiled*.java</exclude>
                     </sourceFileExcludes>
                     <failOnError>true</failOnError>
-                    <additionalOptions>-Xdoclint:none</additionalOptions>
                 </configuration>
             </plugin>
 
