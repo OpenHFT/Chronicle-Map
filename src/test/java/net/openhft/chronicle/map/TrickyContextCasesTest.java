@@ -32,7 +32,7 @@ public class TrickyContextCasesTest {
         try (ExternalMapQueryContext<Integer, IntValue, ?> q = map.queryContext(1)) {
             q.writeLock().lock();
             // assume the value is 2
-            IntValue v2 = q.entry().value().get();
+            final IntValue v2 = q.entry().value().get();
             // this call should throw ISE, as accessing the key 1 in a nested context, but if not...
             map.remove(1);
             v.setValue(3);

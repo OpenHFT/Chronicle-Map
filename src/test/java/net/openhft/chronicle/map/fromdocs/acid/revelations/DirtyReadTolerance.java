@@ -30,10 +30,8 @@ public class DirtyReadTolerance<K, V> {
                 .entries(16)
                 .averageKeySize("123456789".length())
                 .createPersistedTo(
-                        new File(
-                                operand
-                                //  "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
-                        )
+                        //  "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"
+                        new File(operand)
                 );
         //.create();
     }

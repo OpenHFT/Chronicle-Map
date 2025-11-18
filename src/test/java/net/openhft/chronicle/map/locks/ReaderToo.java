@@ -26,7 +26,6 @@ class ReaderToo implements Runnable {
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class); //mock'd
-            long stamp = 0;
             System.out.println(
                     "READER_TOO " +
                             " ,,@t=" + System.currentTimeMillis() +
@@ -43,6 +42,7 @@ class ReaderToo implements Runnable {
                             " DirtyReadIntolerant sleeping " + sleepMock + " seconds"
             );
             Thread.sleep(sleepMock * 1_000);
+            long stamp = 0;
             while ((stamp = offHeapLock.tryReadLock()) < 0) {
                 Thread.yield();
             }

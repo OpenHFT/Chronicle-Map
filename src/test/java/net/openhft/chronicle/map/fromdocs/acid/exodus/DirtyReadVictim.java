@@ -30,9 +30,9 @@ public class DirtyReadVictim implements Runnable {
         Scanner sc = new Scanner(System.in);
         try {
 
-/*
-   ben.cotton@rutgers.edu   START
- */
+            /*
+               ben.cotton@rutgers.edu   START
+             */
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;

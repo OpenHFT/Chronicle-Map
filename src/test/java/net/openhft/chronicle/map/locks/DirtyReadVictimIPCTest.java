@@ -38,33 +38,33 @@ public class DirtyReadVictimIPCTest {
     public void mainOptimisticNegative() throws IOException {
         try {
             System.out.println("\n*****   Optimistic (-) Test\n");
-//            ProcessBuilder pb = new ProcessBuilder(
-//                    "/usr/bin/mkdir -p "+
-//                    " C:\\Users\\buddy\\dev\\shm\\ "
-//            );
-
-//            Process p = pb.start();
-//            Scanner scan = new Scanner(p.getInputStream());
-//            while (scan.hasNext()) {
-//                System.out.println(
-//                        " ,,@t=" +
-//                                System.currentTimeMillis() +
-//                                " DirtyReadVictimTest CALLING [" +
-//                                scan.next() +
-//                                "]"
-//                );
-//            }
-//            Thread.sleep(1_000);
-//            p.destroyForcibly();
-//            System.out.println(
-//                    " ,,@t=" +
-//                            System.currentTimeMillis() +
-//                            " DirtyReadVictimTest called [\n" +
-//                            "mkdir -p " +
-//                            " C:\\Users\\buddy\\dev\\shm\\ " +
-//                            "\n" +
-//                            "]"
-//            );
+            //            ProcessBuilder pb = new ProcessBuilder(
+            //                    "/usr/bin/mkdir -p "+
+            //                    " C:\\Users\\buddy\\dev\\shm\\ "
+            //            );
+            //
+            //            Process p = pb.start();
+            //            Scanner scan = new Scanner(p.getInputStream());
+            //            while (scan.hasNext()) {
+            //                System.out.println(
+            //                        " ,,@t=" +
+            //                                System.currentTimeMillis() +
+            //                                " DirtyReadVictimTest CALLING [" +
+            //                                scan.next() +
+            //                                "]"
+            //                );
+            //            }
+            //            Thread.sleep(1_000);
+            //            p.destroyForcibly();
+            //            System.out.println(
+            //                    " ,,@t=" +
+            //                            System.currentTimeMillis() +
+            //                            " DirtyReadVictimTest called [\n" +
+            //                            "mkdir -p " +
+            //                            " C:\\Users\\buddy\\dev\\shm\\ " +
+            //                            "\n" +
+            //                            "]"
+            //            );
 
             /*
                ben.cotton@rutgers.edu   START

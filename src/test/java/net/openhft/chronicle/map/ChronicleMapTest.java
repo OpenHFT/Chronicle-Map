@@ -640,9 +640,9 @@ public class ChronicleMapTest {
             try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence.class,
                             LongValue.class)
                     .entries((long) entries)
-//                    .minSegments(1)
+                    //                    .minSegments(1)
                     .averageKeySize(10)
-//                    .entryAndValueOffsetAlignment(8)
+                    //                    .entryAndValueOffsetAlignment(8)
                     .create()) {
                 LongValue value1 = Values.newNativeReference(LongValue.class);
                 LongValue value21 = Values.newNativeReference(LongValue.class);
@@ -824,7 +824,7 @@ public class ChronicleMapTest {
     public void testAcquirePerf256()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
-//        int runs = Integer.getInteger("runs", 10);
+        //        int runs = Integer.getInteger("runs", 10);
         int procs = 1; // Runtime.getRuntime().availableProcessors();
         int threads = procs * 3;
         for (int runs : new int[]{1, /*10, 250, 500, 1000, 2500*/}) {
@@ -844,8 +844,8 @@ public class ChronicleMapTest {
                             .averageKeySize(14)
                             .averageValueSize(value0.length() + 4);
 
-//                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
-//                    tmpFile.deleteOnExit();
+                    //                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
+                    //                    tmpFile.deleteOnExit();
                     //createPersistedTo(tmpFile);
                     try (final ChronicleMap<CharSequence, CharSequence> map = builder.create()) {
 
@@ -904,7 +904,7 @@ public class ChronicleMapTest {
     public void testAcquirePerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
-//        int runs = Integer.getInteger("runs", 10);
+        //        int runs = Integer.getInteger("runs", 10);
         int procs = 1; // Runtime.getRuntime().availableProcessors();
         int threads = procs * 3;
         ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
@@ -925,8 +925,8 @@ public class ChronicleMapTest {
                             .averageKeySize(14)
                             .averageValueSize(value0.length() + 4);
 
-//                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
-//                    tmpFile.deleteOnExit();
+                    //                    File tmpFile = File.createTempFile("testAcquirePerf", ".deleteme");
+                    //                    tmpFile.deleteOnExit();
                     try (final ChronicleMap<CharSequence, CharSequence> map =
                                  builder.create()) {
 
@@ -995,7 +995,7 @@ public class ChronicleMapTest {
     @Ignore("Performance test")
     public void testAcquireLockedPerf()
             throws IOException, InterruptedException, ExecutionException {
-//        int runs = Integer.getInteger("runs", 10);
+        //        int runs = Integer.getInteger("runs", 10);
         int procs = Runtime.getRuntime().availableProcessors();
         if (procs > 8) procs--;
         int threads = procs * 3;
@@ -1093,13 +1093,13 @@ public class ChronicleMapTest {
     public void testAcquireLockedLLPerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
-//        int runs = Integer.getInteger("runs", 10);
+        //        int runs = Integer.getInteger("runs", 10);
         int procs = Runtime.getRuntime().availableProcessors();
         int threads = procs * 3; // runs > 100 ? procs / 2 : procs;
         ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
         for (int runs : new int[]{10, 50, 100, 250, 500, 1000, 2500}) {
-// JAVA 8 produces more garbage than previous versions for internal work.
-//            System.gc();
+            // JAVA 8 produces more garbage than previous versions for internal work.
+            //            System.gc();
             final long entries = runs * 1000 * 1000L;
             ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder
                     .of(LongValue.class, LongValue.class)
@@ -1174,7 +1174,7 @@ public class ChronicleMapTest {
             final int independence = Math.min(procs, runs > 500 ? 8 : 4);
             for (int j = 0; j < count; j++) {
                 final ConcurrentMap<String, AtomicInteger> map = new ConcurrentHashMap<String, AtomicInteger>((int) (entries * 5 / 4), 1.0f, 1024);
-                long start = System.currentTimeMillis();
+                final long start = System.currentTimeMillis();
                 ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
                 for (int i = 0; i < threads; i++) {
                     final int t = i;
@@ -1242,7 +1242,7 @@ public class ChronicleMapTest {
                     key.append("user:").append(i);
                     value.setLength(0);
                     value.append("value:").append(i);
-//                System.out.println(key);
+                    //                System.out.println(key);
                     assertNull(map.getUsing(key, value));
                     assertNull(map.put(key, value));
                     assertNotNull(map.getUsing(key, value2));
@@ -1257,9 +1257,9 @@ public class ChronicleMapTest {
     @Test
     public void mapRemoveReflectedInViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3);) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             map.remove(2);
             assertMap(map, new int[]{1, 3}, new CharSequence[]{"1", "3"});
@@ -1275,9 +1275,9 @@ public class ChronicleMapTest {
     @Test
     public void mapPutReflectedInViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             map.put(4, "4");
             assertMap(map, new int[]{4, 2, 3, 1}, new CharSequence[]{"4", "2", "3", "1"});
@@ -1293,9 +1293,9 @@ public class ChronicleMapTest {
     @Test
     public void entrySetRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             entrySet.remove(new AbstractMap.SimpleEntry<Integer, CharSequence>(2, "2"));
             assertMap(map, new int[]{1, 3}, new CharSequence[]{"1", "3"});
@@ -1308,9 +1308,9 @@ public class ChronicleMapTest {
     @Test
     public void keySetRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             keySet.remove(2);
             assertMap(map, new int[]{1, 3}, new CharSequence[]{"1", "3"});
@@ -1325,9 +1325,9 @@ public class ChronicleMapTest {
     @Test
     public void valuesRemoveReflectedInMap() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             values.removeIf("2"::contentEquals);
             assertMap(map, new int[]{1, 3}, new CharSequence[]{"1", "3"});
@@ -1341,10 +1341,10 @@ public class ChronicleMapTest {
     @Test
     public void entrySetIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Map<Integer, CharSequence> refMap = new HashMap<>(map);
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Map<Integer, CharSequence> refMap = new HashMap<>(map);
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             Iterator<Map.Entry<Integer, CharSequence>> entryIterator = entrySet.iterator();
             entryIterator.next();
@@ -1362,10 +1362,10 @@ public class ChronicleMapTest {
     @Test
     public void keySetIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Map<Integer, CharSequence> refMap = new HashMap<>(map);
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Map<Integer, CharSequence> refMap = new HashMap<>(map);
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             Iterator<Integer> keyIterator = keySet.iterator();
             keyIterator.next();
@@ -1384,12 +1384,12 @@ public class ChronicleMapTest {
     @Test
     public void valuesIteratorRemoveReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            HashBiMap<Integer, CharSequence> refMap = HashBiMap.create();
+            final HashBiMap<Integer, CharSequence> refMap = HashBiMap.create();
             map.forEach((k, v) -> refMap.put(k, v.toString()));
 
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             Iterator<CharSequence> valueIterator = values.iterator();
             valueIterator.next();
@@ -1411,9 +1411,9 @@ public class ChronicleMapTest {
     @Test
     public void entrySetRemoveAllReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             entrySet.removeAll(
                     Arrays.asList(
@@ -1432,9 +1432,9 @@ public class ChronicleMapTest {
     @Test
     public void keySetRemoveAllReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             keySet.removeAll(Arrays.asList(1, 2));
             assertMap(map, new int[]{3}, new CharSequence[]{"3"});
@@ -1448,9 +1448,9 @@ public class ChronicleMapTest {
     @Test
     public void valuesRemoveAllReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             values.removeIf(e -> "1".contentEquals(e) || "2".contentEquals(e));
             assertMap(map, new int[]{3}, new CharSequence[]{"3"});
@@ -1464,9 +1464,9 @@ public class ChronicleMapTest {
     @Test
     public void entrySetRetainAllReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             entrySet.removeIf(e ->
                     !(e.getKey().equals(1) && "1".contentEquals(e.getValue())) &&
@@ -1482,9 +1482,9 @@ public class ChronicleMapTest {
     @Test
     public void keySetRetainAllReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             keySet.retainAll(Arrays.asList(1, 2));
             assertMap(map, new int[]{2, 1}, new CharSequence[]{"2", "1"});
@@ -1498,9 +1498,9 @@ public class ChronicleMapTest {
     @Test
     public void valuesRetainAllReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             values.removeIf(v -> !"1".contentEquals(v) && !"2".contentEquals(v));
             assertMap(map, new int[]{2, 1}, new CharSequence[]{"2", "1"});
@@ -1514,9 +1514,9 @@ public class ChronicleMapTest {
     @Test
     public void entrySetClearReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             entrySet.clear();
             org.junit.Assert.assertTrue(map.isEmpty());
@@ -1530,9 +1530,9 @@ public class ChronicleMapTest {
     @Test
     public void keySetClearReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             keySet.clear();
             org.junit.Assert.assertTrue(map.isEmpty());
@@ -1546,9 +1546,9 @@ public class ChronicleMapTest {
     @Test
     public void valuesClearReflectedInMapAndOtherViews() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(3)) {
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             values.clear();
             org.junit.Assert.assertTrue(map.isEmpty());
@@ -1629,9 +1629,9 @@ public class ChronicleMapTest {
         try (ChronicleMap<Integer, CharSequence> map = getViewTestMap(0)) {
 
             map.put(1, "A");
-            Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
-            Set<Integer> keySet = map.keySet();
-            Collection<CharSequence> values = map.values();
+            final Set<Map.Entry<Integer, CharSequence>> entrySet = map.entrySet();
+            final Set<Integer> keySet = map.keySet();
+            final Collection<CharSequence> values = map.values();
 
             assertMap(map, new int[]{1}, new CharSequence[]{"A"});
             assertEntrySet(entrySet, new int[]{1}, new CharSequence[]{"A"});

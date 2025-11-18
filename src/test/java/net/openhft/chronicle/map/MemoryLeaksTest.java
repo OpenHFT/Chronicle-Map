@@ -98,8 +98,8 @@ public class MemoryLeaksTest {
         System.gc();
         Jvm.pause(100);
 
-        long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
-        int serializersBeforeMap = serializerCount.get();
+        final long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
+        final int serializersBeforeMap = serializerCount.get();
         // the purpose of the test is to find maps which are not closed properly.
         ChronicleMap<IntValue, String> map = getMap();
         long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();

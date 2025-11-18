@@ -40,7 +40,7 @@ public class PingPongAddLeft {
         long[] timings = new long[runs];
         for (int j = 0; j < 100; j++) {
             for (int i = 0; i < runs; i++) {
-                long startTime = System.nanoTime();
+                final long startTime = System.nanoTime();
                 bond1.addAtomicCoupon(add);
                 bond2.addAtomicCoupon(add);
                 bond3.addAtomicCoupon(add);

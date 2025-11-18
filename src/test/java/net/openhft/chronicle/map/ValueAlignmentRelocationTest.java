@@ -92,7 +92,7 @@ public class ValueAlignmentRelocationTest {
                     map.put(new byte[]{(byte) i}, new byte[]{(byte) i});
                     map.put(("Hello" + i).getBytes(), "world".getBytes());
                 }
-//                System.out.println("firstKeySize=" + firstKeySize + ",second key=" + secondKeySize);
+                //                System.out.println("firstKeySize=" + firstKeySize + ",second key=" + secondKeySize);
                 Assert.assertEquals(Arrays.toString(map.get(firstKey)), Arrays.toString(thirdValue));
                 Assert.assertTrue(Arrays.equals(map.get(firstKey), thirdValue));
             }
@@ -127,8 +127,8 @@ public class ValueAlignmentRelocationTest {
                     byte[] letterA = "a".getBytes(ISO_8859_1);
                     String expected = "abcdefghijklmnopqrstuvwxyz".substring(0, j);
                     byte[] longer = expected.getBytes(ISO_8859_1);
-                    byte[] hello = "Hello".getBytes(ISO_8859_1);
-                    byte[] world = "world".getBytes(ISO_8859_1);
+                    final byte[] hello = "Hello".getBytes(ISO_8859_1);
+                    final byte[] world = "world".getBytes(ISO_8859_1);
 
                     map.put(prefix, shorter);
                     map.put(letterH, letterA);

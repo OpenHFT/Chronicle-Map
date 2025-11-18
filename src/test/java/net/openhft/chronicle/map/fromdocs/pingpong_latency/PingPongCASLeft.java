@@ -58,7 +58,7 @@ public class PingPongCASLeft {
         long[] timings = new long[runs];
         for (int j = 0; j < 10; j++) {
             for (int i = 0; i < runs; i++) {
-                long start = System.nanoTime(); //
+                final long start = System.nanoTime(); //
                 while (!bond1.compareAndSwapCoupon(coupon, coupon2)) ;
                 while (!bond2.compareAndSwapCoupon(coupon, coupon2)) ;
                 while (!bond3.compareAndSwapCoupon(coupon, coupon2)) ;

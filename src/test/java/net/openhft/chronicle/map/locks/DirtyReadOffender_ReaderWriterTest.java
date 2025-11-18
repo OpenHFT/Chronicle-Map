@@ -22,7 +22,7 @@ public class DirtyReadOffender_ReaderWriterTest {
     @Test(timeout = 60_000)
     public void main() {
         try {
-            long sleepT = Long.parseLong("8");
+            final long sleepT = Long.parseLong("8");
             long holdTime = Long.parseLong("20");
 
             Thread tooThread = new Thread(new ReaderToo());

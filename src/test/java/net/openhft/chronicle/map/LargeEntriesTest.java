@@ -31,7 +31,7 @@ public class LargeEntriesTest {
         file.deleteOnExit();
         try (final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
-//                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
+                //                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
                 .actualSegments(1) // to force an error.
                 .entries(ENTRIES)
                 .averageKeySize(10)
@@ -71,16 +71,16 @@ public class LargeEntriesTest {
     }
 
     private void warmUpCompression(int entrySize) {
-//        String value = generateValue(entrySize);
-//        DirectBytes bytes = DirectStore.allocate(entrySize / 6).bytes();
-//        for (int i = 0; i < 5; i++) {
-//             warmup to compression.
-//            bytes.clear();
-//            SnappyStringMarshaller.INSTANCE.write(bytes, value);
-//            bytes.flip();
-//            SnappyStringMarshaller.INSTANCE.read(bytes);
-//        }
-//        bytes.release();
+        //        String value = generateValue(entrySize);
+        //        DirectBytes bytes = DirectStore.allocate(entrySize / 6).bytes();
+        //        for (int i = 0; i < 5; i++) {
+        //             warmup to compression.
+        //            bytes.clear();
+        //            SnappyStringMarshaller.INSTANCE.write(bytes, value);
+        //            bytes.flip();
+        //            SnappyStringMarshaller.INSTANCE.read(bytes);
+        //        }
+        //        bytes.release();
     }
 
     @Test
@@ -99,14 +99,14 @@ public class LargeEntriesTest {
         file.deleteOnExit();
         final ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
-//                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
+                //                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
                 .entries(entries)
                 .averageKeySize(10)
                 .averageValueSize(entrySize)
                 .putReturnsNull(true)
                 .createPersistedTo(file);
         {
-//            warmUpCompression(ENTRY_SIZE);
+            //            warmUpCompression(ENTRY_SIZE);
             int threads = Runtime.getRuntime().availableProcessors();
             ExecutorService es = Executors.newFixedThreadPool(threads,
                     new NamedThreadFactory("test"));
@@ -138,7 +138,7 @@ public class LargeEntriesTest {
     }
 
     void exerciseLargeStrings(ChronicleMap<String, String> map, int start, int finish, int entrySize) {
-/*
+        /*
         final Thread thisThread = Thread.currentThread();
         Thread monitor = new Thread(new Runnable() {
             @Override
@@ -159,7 +159,7 @@ public class LargeEntriesTest {
             }
         });
         monitor.start();
-*/
+        */
         String value = generateValue(entrySize);
 
         for (int i = start; i < finish; i++) {
@@ -173,10 +173,10 @@ public class LargeEntriesTest {
             assertNotNull(key, object);
             assertEquals(key, entrySize, object.length());
         }
-//        monitor.interrupt();
+        //        monitor.interrupt();
 
         for (int i = start; i < finish; i++) {
-//            System.out.println(i);
+            //            System.out.println(i);
             String key = "key-" + i;
 
             String object = map.get(key);

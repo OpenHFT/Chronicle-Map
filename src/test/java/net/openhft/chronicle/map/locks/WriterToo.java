@@ -14,7 +14,7 @@ class WriterToo implements Runnable {
     @Override
     public void run() {
         try {
-            long sleepT = 0;
+            final long sleepT = 0;
             long holdTime = 20;
 
             ChronicleMap<String, BondVOInterface> chm =

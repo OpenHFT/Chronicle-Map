@@ -63,11 +63,11 @@ public final class CharSequenceCustomEncodingBytesReader
             sb = new StringBuilder(csLength);
         }
 
-        int remainingBytes = in.readInt();
         charsetDecoder.reset();
         inputBuffer.clear();
         outputBuffer.clear();
         boolean endOfInput = false;
+        int remainingBytes = in.readInt();
         // this loop inspired by the CharsetDecoder.decode(ByteBuffer) implementation
         while (true) {
             if (!endOfInput) {
