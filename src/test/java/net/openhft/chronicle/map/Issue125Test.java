@@ -19,7 +19,7 @@ public class Issue125Test {
         final File cacheRoot = new File(OS.getTarget() + "/test-" + Time.uniqueId() + ".cm3");
         ChronicleMapBuilder<byte[], byte[]> shaToNodeBuilder =
                 ChronicleMapBuilder.of(byte[].class, byte[].class)
-//                        .name("bytes-to-bytes")
+                        // .name("bytes-to-bytes")
                         .entries(1000000).
                         averageKeySize(20).
                         averageValueSize(30);

@@ -17,7 +17,7 @@ public enum StateMachineState {
     STATE_3(30),
     STATE_3_WORKING(31);
 
-    private int state;
+    private final int state;
 
     /**
      * c-tor

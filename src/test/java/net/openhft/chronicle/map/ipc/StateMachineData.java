@@ -141,12 +141,12 @@ public class StateMachineData implements Byteable {
     }
 
     @Override
-    public FileLock lock(boolean shared) throws IOException {
+    public FileLock lock(boolean shared) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public FileLock tryLock(boolean shared) throws IOException {
+    public FileLock tryLock(boolean shared) {
         throw new UnsupportedOperationException();
     }
 }

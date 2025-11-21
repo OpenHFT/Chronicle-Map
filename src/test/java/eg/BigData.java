@@ -20,12 +20,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  vm.dirty_writeback_centisecs = 3000
  */
 public class BigData {
-    final static long MAXSIZE = 1000 * 1000 * 1000L;
+    static final long MAXSIZE = 1000 * 1000 * 1000L;
     static final ChronicleMapBuilder<Long, BigDataStuff> builder =
             ChronicleMapBuilder.of(Long.class, BigDataStuff.class);
     //run 1st test with no map, and Highwatermark set to 0
     //then switch to Highwatermark set to MAXSIZE for subsequent test repeats
-    static AtomicInteger Highwatermark = new AtomicInteger((int) MAXSIZE);
+    static final AtomicInteger highWatermark = new AtomicInteger((int) MAXSIZE);
     static Map<Long, BigDataStuff> theMap;
 
     //    static AtomicInteger Highwatermark = new AtomicInteger(0);
@@ -47,37 +47,37 @@ public class BigData {
     public static void main(String[] args) throws IOException, InterruptedException {
         long start = System.currentTimeMillis();
         initialbuild();
-        System.out.println("Start highwatermark " + Highwatermark.get());
+        System.out.println("Start highwatermark " + highWatermark.get());
         for (int i = 0; i < 10; i++) {
             Thread t1 = new Thread("test 1") {
                 public void run() {
-                    _test();
+                    runTest();
                 }
             };
             Thread t2 = new Thread("test 2") {
                 public void run() {
-                    _test();
+                    runTest();
                 }
             };
             Thread t3 = new Thread("test 3") {
                 public void run() {
-                    _test();
+                    runTest();
                 }
             };
             t1.start();
             t2.start();
             t3.start();
-            _test();
+            runTest();
             t1.join();
             t2.join();
             t3.join();
         }
-        System.out.println("End highwatermark " + Highwatermark.get());
+        System.out.println("End highwatermark " + highWatermark.get());
         long time = System.currentTimeMillis() - start;
         System.out.printf("End to end took %.1f%n", time / 1e3);
     }
 
-    public static void initialbuild() throws IOException, InterruptedException {
+    public static void initialbuild() throws InterruptedException {
         System.out.println("building an empty map");
         long start = System.currentTimeMillis();
         Thread t1 = new Thread("test 1") {
@@ -123,26 +123,22 @@ public class BigData {
         }
     }
 
-    public static void _test() {
+    public static void runTest() {
         // improves logging of these threads.
         Affinity.setThreadId();
-        try {
-            test();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        runPerformanceIteration();
+
     }
 
-    public static void test() throws IOException {
+    public static void runPerformanceIteration() {
         //do a sequence 1m of each of insert/read/update
         //inserts
-        long LOOPCOUNT = 100 * 1000L;
+        long loopCount = 100 * 1000L;
         Random rand = new Random();
         long start = System.currentTimeMillis();
         BigDataStuff value = new BigDataStuff(0);
-        for (long i = 0; i < LOOPCOUNT; i++) {
-            long current = rand.nextInt(Highwatermark.get());
+        for (long i = 0; i < loopCount; i++) {
+            long current = rand.nextInt(highWatermark.get());
             value.x = current;
             value.y.setLength(0);
             value.y.append(current);
@@ -153,8 +149,8 @@ public class BigData {
 
         int count = 0;
         start = System.currentTimeMillis();
-        for (long i = 0; i < LOOPCOUNT; i++) {
-            long keyval = rand.nextInt(Highwatermark.get());
+        for (long i = 0; i < loopCount; i++) {
+            long keyval = rand.nextInt(highWatermark.get());
             count++;
             BigDataStuff stuff = theMap.get(keyval);
             if (stuff == null) {
@@ -166,8 +162,8 @@ public class BigData {
 
         start = System.currentTimeMillis();
         count = 0;
-        for (long i = 0; i < LOOPCOUNT; i++) {
-            long keyval = rand.nextInt(Highwatermark.get());
+        for (long i = 0; i < loopCount; i++) {
+            long keyval = rand.nextInt(highWatermark.get());
             BigDataStuff stuff = theMap.get(keyval);
             if (stuff == null) {
                 System.out.println("hit an empty at key " + keyval);
@@ -189,6 +185,9 @@ class BigDataStuff implements Externalizable {
 
     public BigDataStuff(long x) {
         this.x = x;
+    }
+
+    public BigDataStuff() {
     }
 
     @Override

@@ -70,6 +70,6 @@ public class AutoResizeTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeReplication() {
-	ChronicleMapBuilder.of(String.class, String.class).replication((byte) -1);
+        ChronicleMapBuilder.of(String.class, String.class).replication((byte) -1);
     }
 }

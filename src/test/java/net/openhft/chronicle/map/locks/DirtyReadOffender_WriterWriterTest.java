@@ -5,7 +5,6 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +22,7 @@ public class DirtyReadOffender_WriterWriterTest {
     @Test
     public void main() {
         try {
-            long sleepT = Long.parseLong("8");
+            final long sleepT = Long.parseLong("8");
             long holdTime = Long.parseLong("20");
 
             Thread tooThread = new Thread(new WriterToo());
@@ -43,7 +42,7 @@ public class DirtyReadOffender_WriterWriterTest {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            Assert.assertNotEquals(offHeapLock, null);
+            Assert.assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
@@ -83,7 +82,7 @@ public class DirtyReadOffender_WriterWriterTest {
                 );
 
             }
-            Assert.assertNotEquals(blockedByHoldingWriterCount, 0);
+            Assert.assertNotEquals(0, blockedByHoldingWriterCount);
             System.out.println(
                     "                             " +
                             " @t=" + System.currentTimeMillis() +

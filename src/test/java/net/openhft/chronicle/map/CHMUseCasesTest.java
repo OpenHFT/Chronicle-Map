@@ -136,6 +136,7 @@ interface IBean {
 
     }
 }
+
 /**
  * This test enumerates common use cases for keys and values.
  */
@@ -219,7 +220,9 @@ public class CHMUseCasesTest {
                 for (int i = 0; i < o1.length; i++) {
                     Assert.assertArrayEquals(o1[i], o2[i]);
                 }
-            } else throw new IllegalStateException("unsupported type");
+            } else {
+                throw new IllegalStateException("unsupported type");
+            }
 
         }
     }
@@ -501,7 +504,7 @@ public class CHMUseCasesTest {
             assertEquals("World", map.get("Hello"));
 
             assertEquals("New World", map.getMapped("Hello", new PrefixStringFunction("New ")));
-            assertEquals(null, map.getMapped("No key", new PrefixStringFunction("New ")));
+            assertNull(map.getMapped("No key", new PrefixStringFunction("New ")));
             mapChecks();
         }
     }
@@ -582,7 +585,7 @@ public class CHMUseCasesTest {
             assertNull(map.getUsing(key, value));
 
             assertEquals("New World", map.getMapped("Hello", s -> "New " + s));
-            assertEquals(null, map.getMapped("No key",
+            assertNull(map.getMapped("No key",
                     (SerializableFunction<CharSequence, CharSequence>) s -> "New " + s));
 
             assertEquals("New World !!", map.computeIfPresent("Hello", (k, s) -> {
@@ -635,7 +638,7 @@ public class CHMUseCasesTest {
                 assertNull(c.entry());
             }
 
-            assertEquals(null, map.get("1"));
+            assertNull(map.get("1"));
             mapChecks();
         }
     }
@@ -657,19 +660,19 @@ public class CHMUseCasesTest {
                 using.setValue(1);
             }
 
-            assertEquals(null, map.get("1"));
+            assertNull(map.get("1"));
             mapChecks();
         }
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeActualChunkSize() {
-	ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1);
+        ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testActualChunksPerSegmentTier() {
-	ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
+        ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
     }
 
     @Test
@@ -737,9 +740,9 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<StringValue, StringValue> map = newInstance(builder)) {
             StringValue key1 = Values.newHeapInstance(StringValue.class);
-            StringValue key2 = Values.newHeapInstance(StringValue.class);
+            final StringValue key2 = Values.newHeapInstance(StringValue.class);
             StringValue value1 = Values.newHeapInstance(StringValue.class);
-            StringValue value2 = Values.newHeapInstance(StringValue.class);
+            final StringValue value2 = Values.newHeapInstance(StringValue.class);
 
             key1.setValue(new StringBuilder("1"));
             value1.setValue("11");
@@ -876,9 +879,9 @@ public class CHMUseCasesTest {
 
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             Integer key1;
-            Integer key2;
+            final Integer key2;
             Integer value1;
-            Integer value2;
+            final Integer value2;
 
             key1 = 1;
             value1 = 11;
@@ -892,8 +895,8 @@ public class CHMUseCasesTest {
 
             assertEquals((Integer) 11, map.get(key1));
             assertEquals((Integer) 22, map.get(key2));
-            assertEquals(null, map.get(3));
-            assertEquals(null, map.get(4));
+            assertNull(map.get(3));
+            assertNull(map.get(4));
 
             mapChecks();
 
@@ -906,7 +909,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            assertEquals(null, map.getMapped(-1, new SerializableFunction<Integer, Integer>() {
+            assertNull(map.getMapped(-1, new SerializableFunction<Integer, Integer>() {
                 @Override
                 public Integer apply(Integer s) {
                     return 10 * s;
@@ -918,6 +921,7 @@ public class CHMUseCasesTest {
             try {
                 map.computeIfPresent(1, (k, s) -> s + 1);
             } catch (Exception todoMoreSpecificException) {
+                assertNotNull(todoMoreSpecificException);
             }
             mapChecks();
 
@@ -932,16 +936,16 @@ public class CHMUseCasesTest {
                 .entries(10);
 
         try (ChronicleMap<Long, Long> map = newInstance(builder)) {
-//            assertEquals(16, entrySize(map));
-//            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
+            //            assertEquals(16, entrySize(map));
+            //            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             map.put(1L, 11L);
             assertEquals((Long) 11L, map.get(1L));
 
             map.put(2L, 22L);
             assertEquals((Long) 22L, map.get(2L));
 
-            assertEquals(null, map.get(3L));
-            assertEquals(null, map.get(4L));
+            assertNull(map.get(3L));
+            assertNull(map.get(4L));
 
             mapChecks();
 
@@ -951,13 +955,14 @@ public class CHMUseCasesTest {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.getMapped(-1L, (SerializableFunction<Long, Long>) s -> 10 * s));
+            assertNull(map.getMapped(-1L, (SerializableFunction<Long, Long>) s -> 10 * s));
 
             mapChecks();
 
             try {
                 map.computeIfPresent(1L, (k, s) -> s + 1);
             } catch (Exception todoMoreSpecificException) {
+                assertNotNull(todoMoreSpecificException);
             }
 
             mapChecks();
@@ -980,8 +985,8 @@ public class CHMUseCasesTest {
             map.put(2.0, 22.0);
             assertEquals((Double) 22.0, map.get(2.0));
 
-            assertEquals(null, map.get(3.0));
-            assertEquals(null, map.get(4.0));
+            assertNull(map.get(3.0));
+            assertNull(map.get(4.0));
 
             assertEquals((Double) 110.0, map.getMapped(1.0, new SerializableFunction<Double, Double>() {
                 @Override
@@ -989,12 +994,13 @@ public class CHMUseCasesTest {
                     return 10 * s;
                 }
             }));
-            assertEquals(null, map.getMapped(-1.0, (SerializableFunction<Double, Double>) s -> 10 * s));
+            assertNull(map.getMapped(-1.0, (SerializableFunction<Double, Double>) s -> 10 * s));
 
             try {
                 map.computeIfPresent(1.0, (k, s) -> s + 1);
 
             } catch (Exception todoMoreSpecificException) {
+                assertNotNull(todoMoreSpecificException);
             }
         }
     }
@@ -1009,39 +1015,37 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<byte[], byte[]> map = newInstance(builder)) {
             byte[] key1 = {1, 1, 1, 1};
-            byte[] key2 = {2, 2, 2, 2};
+            final byte[] key2 = {2, 2, 2, 2};
             byte[] value1 = {11, 11, 11, 11};
-            byte[] value2 = {22, 22, 22, 22};
+            final byte[] value2 = {22, 22, 22, 22};
             assertNull(map.put(key1, value1));
-            assertTrue(Arrays.equals(value1, map.put(key1, value2)));
-            assertTrue(Arrays.equals(value2, map.get(key1)));
+            assertArrayEquals(value1, map.put(key1, value2));
+            assertArrayEquals(value2, map.get(key1));
             assertNull(map.get(key2));
 
             map.put(key1, value1);
 
-            assertTrue(Arrays.equals(new byte[]{11, 11},
-                    map.getMapped(key1, new SerializableFunction<byte[], byte[]>() {
-                        @Override
-                        public byte[] apply(byte[] s) {
-                            return Arrays.copyOf(s, 2);
-                        }
-                    })));
-            assertEquals(null, map.getMapped(key2, new SerializableFunction<byte[], byte[]>() {
+            assertArrayEquals(new byte[]{11, 11}, map.getMapped(key1, new SerializableFunction<byte[], byte[]>() {
+                @Override
+                public byte[] apply(byte[] s) {
+                    return Arrays.copyOf(s, 2);
+                }
+            }));
+            assertNull(map.getMapped(key2, new SerializableFunction<byte[], byte[]>() {
                 @Override
                 public byte[] apply(byte[] s) {
                     return Arrays.copyOf(s, 2);
                 }
             }));
 
-            assertTrue(Arrays.equals(new byte[]{12, 10},
-                    map.computeIfPresent(key1, (k, s) -> {
-                        s[0]++;
-                        s[1]--;
-                        return Arrays.copyOf(s, 2);
-                    })));
+            assertArrayEquals(new byte[]{12, 10}, map.computeIfPresent(key1, (k, s) -> {
+                s[0]++;
+                s[1]--;
+                return Arrays.copyOf(s, 2);
+            }));
 
             byte[] a2 = map.get(key1);
-            assertTrue(Arrays.equals(new byte[]{12, 10}, a2));
+            assertArrayEquals(new byte[]{12, 10}, a2);
 
         }
     }
@@ -1058,10 +1062,10 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
-            ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
-            ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
-            ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
-            ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22});
+            final ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1});
+            final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
+            final ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
+            final ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22});
             assertNull(map.put(key1, value1));
             assertBBEquals(value1, map.put(key1, value2));
             assertBBEquals(value2, map.get(key1));
@@ -1086,9 +1090,9 @@ public class CHMUseCasesTest {
         try (ChronicleMap<ByteBuffer, ByteBuffer> map = newInstance(builder)) {
 
             ByteBuffer key1 = ByteBuffer.wrap(new byte[]{1, 1, 1, 1}).order(ByteOrder.nativeOrder());
-            ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2}).order(ByteOrder.nativeOrder());
+            final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2}).order(ByteOrder.nativeOrder());
             ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11}).order(ByteOrder.nativeOrder());
-            ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22}).order(ByteOrder.nativeOrder());
+            final ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22}).order(ByteOrder.nativeOrder());
             assertNull(map.put(key1, value1));
             assertBBEquals(value1, map.put(key1, value2));
             assertBBEquals(value2, map.get(key1));
@@ -1106,7 +1110,7 @@ public class CHMUseCasesTest {
 
             map.put(key1, value1);
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
-            assertEquals(null, map.getMapped(key2, function));
+            assertNull(map.getMapped(key2, function));
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
                     map.computeIfPresent(key1, (k, s) -> {
@@ -1123,7 +1127,7 @@ public class CHMUseCasesTest {
             map.put(key2, value2);
             ByteBuffer valueA = ByteBuffer.allocateDirect(8).order(ByteOrder.nativeOrder());
             ByteBuffer valueB = ByteBuffer.allocate(8).order(ByteOrder.nativeOrder());
-//            assertBBEquals(value1, valueA);
+            //            assertBBEquals(value1, valueA);
             try (ExternalMapQueryContext<ByteBuffer, ByteBuffer, ?> c = map.queryContext(key1)) {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
                 assertNotNull(entry);
@@ -1263,12 +1267,12 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, IntValue> map = newInstance(builder)) {
             // this may change due to alignment
-//            assertEquals(8, entrySize(map));
+            //            assertEquals(8, entrySize(map));
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
-            IntValue key1 = Values.newHeapInstance(IntValue.class);
-            IntValue key2 = Values.newHeapInstance(IntValue.class);
-            IntValue value1 = Values.newHeapInstance(IntValue.class);
-            IntValue value2 = Values.newHeapInstance(IntValue.class);
+            final IntValue key1 = Values.newHeapInstance(IntValue.class);
+            final IntValue key2 = Values.newHeapInstance(IntValue.class);
+            final IntValue value1 = Values.newHeapInstance(IntValue.class);
+            final IntValue value2 = Values.newHeapInstance(IntValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
@@ -1287,10 +1291,6 @@ public class CHMUseCasesTest {
             }
             // TODO review -- the previous version of this block:
             // acquiring for value1, comparing value2 -- as intended?
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue());
-//            }
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key2)) {
                 MapEntry<IntValue, IntValue> entry = c.entry();
                 assertNotNull(entry);
@@ -1377,14 +1377,15 @@ public class CHMUseCasesTest {
             assertEquals(value1, map.get(key1));
 
             key1 = Values.newHeapInstance(UnsignedIntValue.class);
-            UnsignedIntValue key2 = Values.newHeapInstance(UnsignedIntValue.class);
             value1 = Values.newHeapInstance(UnsignedIntValue.class);
-            UnsignedIntValue value2 = Values.newHeapInstance(UnsignedIntValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
+
+            UnsignedIntValue key2 = Values.newHeapInstance(UnsignedIntValue.class);
+            UnsignedIntValue value2 = Values.newHeapInstance(UnsignedIntValue.class);
 
             key2.setValue(2);
             value2.setValue(22);
@@ -1398,10 +1399,6 @@ public class CHMUseCasesTest {
                 assertEquals(11, entry.value().get().getValue());
             }
             // TODO review suspicious block
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue());
-//            }
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key2)) {
                 MapEntry<UnsignedIntValue, UnsignedIntValue> entry = c.entry();
@@ -1488,10 +1485,10 @@ public class CHMUseCasesTest {
             // assertEquals(6, entrySize(map));
 
             //     assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
-            IntValue key1 = Values.newHeapInstance(IntValue.class);
-            IntValue key2 = Values.newHeapInstance(IntValue.class);
-            ShortValue value1 = Values.newHeapInstance(ShortValue.class);
-            ShortValue value2 = Values.newHeapInstance(ShortValue.class);
+            final IntValue key1 = Values.newHeapInstance(IntValue.class);
+            final IntValue key2 = Values.newHeapInstance(IntValue.class);
+            final ShortValue value1 = Values.newHeapInstance(ShortValue.class);
+            final ShortValue value2 = Values.newHeapInstance(ShortValue.class);
 
             key1.setValue(1);
             value1.setValue((short) 11);
@@ -1509,10 +1506,10 @@ public class CHMUseCasesTest {
                 assertEquals(11, entry.value().get().getValue());
             }
             // TODO the same as above.
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue());
-//            }
+            //            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
+            //                assertTrue(rc.present());
+            //                assertEquals(22, value2.getValue());
+            //            }
             try (ExternalMapQueryContext<?, ShortValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, ShortValue> entry = c.entry();
                 assertNotNull(entry);
@@ -1594,14 +1591,15 @@ public class CHMUseCasesTest {
             // assertEquals(8, entrySize(map));
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             IntValue key1 = Values.newHeapInstance(IntValue.class);
-            IntValue key2 = Values.newHeapInstance(IntValue.class);
             UnsignedShortValue value1 = Values.newHeapInstance(UnsignedShortValue.class);
-            UnsignedShortValue value2 = Values.newHeapInstance(UnsignedShortValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
+
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            UnsignedShortValue value2 = Values.newHeapInstance(UnsignedShortValue.class);
 
             key2.setValue(2);
             value2.setValue(22);
@@ -1614,10 +1612,6 @@ public class CHMUseCasesTest {
                 assertEquals(11, entry.value().get().getValue());
             }
             // TODO the same as above.
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue());
-//            }
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, UnsignedShortValue> entry = c.entry();
                 assertNotNull(entry);
@@ -1696,14 +1690,15 @@ public class CHMUseCasesTest {
 
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
             IntValue key1 = Values.newHeapInstance(IntValue.class);
-            IntValue key2 = Values.newHeapInstance(IntValue.class);
             CharValue value1 = Values.newHeapInstance(CharValue.class);
-            CharValue value2 = Values.newHeapInstance(CharValue.class);
 
             key1.setValue(1);
             value1.setValue((char) 11);
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
+
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            CharValue value2 = Values.newHeapInstance(CharValue.class);
 
             key2.setValue(2);
             value2.setValue((char) 22);
@@ -1716,10 +1711,6 @@ public class CHMUseCasesTest {
                 assertEquals(11, entry.value().get().getValue());
             }
             // TODO The same as above
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue());
-//            }
             try (ExternalMapQueryContext<?, CharValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, CharValue> entry = c.entry();
                 assertNotNull(entry);
@@ -1799,14 +1790,15 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             IntValue key1 = Values.newHeapInstance(IntValue.class);
-            IntValue key2 = Values.newHeapInstance(IntValue.class);
             UnsignedByteValue value1 = Values.newHeapInstance(UnsignedByteValue.class);
-            UnsignedByteValue value2 = Values.newHeapInstance(UnsignedByteValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
+
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            UnsignedByteValue value2 = Values.newHeapInstance(UnsignedByteValue.class);
 
             key2.setValue(2);
             value2.setValue(22);
@@ -1819,10 +1811,6 @@ public class CHMUseCasesTest {
                 assertEquals(11, entry.value().get().getValue());
             }
             // TODO the same as above
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue());
-//            }
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, UnsignedByteValue> entry = c.entry();
                 assertNotNull(entry);
@@ -1901,14 +1889,15 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             IntValue key1 = Values.newHeapInstance(IntValue.class);
-            IntValue key2 = Values.newHeapInstance(IntValue.class);
             BooleanValue value1 = Values.newHeapInstance(BooleanValue.class);
-            BooleanValue value2 = Values.newHeapInstance(BooleanValue.class);
 
             key1.setValue(1);
             value1.setValue(true);
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
+
+            IntValue key2 = Values.newHeapInstance(IntValue.class);
+            BooleanValue value2 = Values.newHeapInstance(BooleanValue.class);
 
             key2.setValue(2);
             value2.setValue(false);
@@ -1918,27 +1907,23 @@ public class CHMUseCasesTest {
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(true, entry.value().get().getValue());
+                assertTrue(entry.value().get().getValue());
             }
             // TODO the same as above. copy paste, copy paste, copy-paste...
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(false, value2.getValue());
-//            }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(false, entry.value().get().getValue());
+                assertFalse(entry.value().get().getValue());
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(true, entry.value().get().getValue());
+                assertTrue(entry.value().get().getValue());
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(false, entry.value().get().getValue());
+                assertFalse(entry.value().get().getValue());
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
@@ -1951,38 +1936,38 @@ public class CHMUseCasesTest {
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(false, value1.getValue());
+                assertFalse(value1.getValue());
                 value1.setValue(true);
-                assertEquals(true, value1.getValue());
+                assertTrue(value1.getValue());
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(true, value2.getValue());
+                assertTrue(value2.getValue());
                 value2.setValue(false);
-                assertEquals(false, value2.getValue());
+                assertFalse(value2.getValue());
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(false, entry.value().get().getValue());
+                assertFalse(entry.value().get().getValue());
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(false, value2.getValue());
+                assertFalse(value2.getValue());
                 value2.setValue(true);
-                assertEquals(true, value2.getValue());
+                assertTrue(value2.getValue());
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(true, value1.getValue());
+                assertTrue(value1.getValue());
                 value1.setValue(false);
-                assertEquals(false, value1.getValue());
+                assertFalse(value1.getValue());
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(false, entry.value().get().getValue());
+                assertFalse(entry.value().get().getValue());
             }
             mapChecks();
         }
@@ -2003,14 +1988,15 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             FloatValue key1 = Values.newHeapInstance(FloatValue.class);
-            FloatValue key2 = Values.newHeapInstance(FloatValue.class);
             FloatValue value1 = Values.newHeapInstance(FloatValue.class);
-            FloatValue value2 = Values.newHeapInstance(FloatValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
             assertEquals(value1, map.get(key1));
+
+            FloatValue key2 = Values.newHeapInstance(FloatValue.class);
+            FloatValue value2 = Values.newHeapInstance(FloatValue.class);
 
             key2.setValue(2);
             value2.setValue(22);
@@ -2023,10 +2009,6 @@ public class CHMUseCasesTest {
                 assertEquals(11, entry.value().get().getValue(), 0);
             }
             // TODO see above
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue(), 0);
-//            }
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, FloatValue> entry = c.entry();
                 assertNotNull(entry);
@@ -2108,17 +2090,18 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             DoubleValue key1 = Values.newHeapInstance(DoubleValue.class);
-            DoubleValue key2 = Values.newHeapInstance(DoubleValue.class);
             DoubleValue value1 = Values.newHeapInstance(DoubleValue.class);
-            DoubleValue value2 = Values.newHeapInstance(DoubleValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
-            assertEquals(null, map.get(key1));
+            assertNull(map.get(key1));
 
             map.put(key1, value1);
             DoubleValue v2 = map.get(key1);
             assertEquals(value1, v2);
+
+            DoubleValue key2 = Values.newHeapInstance(DoubleValue.class);
+            DoubleValue value2 = Values.newHeapInstance(DoubleValue.class);
 
             key2.setValue(2);
             value2.setValue(22);
@@ -2130,10 +2113,6 @@ public class CHMUseCasesTest {
                 assertNotNull(entry);
                 assertEquals(11, entry.value().get().getValue(), 0);
             }
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue(), 0);
-//            }
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, DoubleValue> entry = c.entry();
                 assertNotNull(entry);
@@ -2214,14 +2193,15 @@ public class CHMUseCasesTest {
             assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
 
             LongValue key1 = Values.newHeapInstance(LongValue.class);
-            LongValue key2 = Values.newHeapInstance(LongValue.class);
             LongValue value1 = Values.newHeapInstance(LongValue.class);
-            LongValue value2 = Values.newHeapInstance(LongValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
-            assertEquals(null, map.get(key1));
+            assertNull(map.get(key1));
             map.put(key1, value1);
+
+            LongValue key2 = Values.newHeapInstance(LongValue.class);
+            LongValue value2 = Values.newHeapInstance(LongValue.class);
 
             key2.setValue(2);
             value2.setValue(22);
@@ -2234,10 +2214,6 @@ public class CHMUseCasesTest {
                 assertEquals(11, entry.value().get().getValue());
             }
             // TODO see above
-//            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
-//                assertTrue(rc.present());
-//                assertEquals(22, value2.getValue());
-//            }
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, LongValue> entry = c.entry();
                 assertNotNull(entry);
@@ -2312,18 +2288,18 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<String, List<String>> map = newInstance(builder)) {
             map.put("1", Collections.emptyList());
-            map.put("2", asList("two-A"));
+            map.put("2", Collections.singletonList("two-A"));
 
             List<String> list1 = new ArrayList<>();
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", list1)) {
                 list1.add("one");
-                assertEquals(asList("one"), list1);
+                assertEquals(Collections.singletonList("one"), list1);
             }
             List<String> list2 = new ArrayList<>();
             try (ExternalMapQueryContext<String, List<String>, ?> c = map.queryContext("1")) {
                 MapEntry<String, List<String>> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(asList("one"), entry.value().getUsing(list2));
+                assertEquals(Collections.singletonList("one"), entry.value().getUsing(list2));
             }
 
             try (ExternalMapQueryContext<String, List<String>, ?> c = map.queryContext("2")) {
@@ -2358,18 +2334,18 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<String, Set<String>> map = newInstance(builder)) {
             map.put("1", Collections.emptySet());
-            map.put("2", new LinkedHashSet<>(asList("one")));
+            map.put("2", new LinkedHashSet<>(Collections.singletonList("one")));
 
             Set<String> list1 = new LinkedHashSet<>();
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", list1)) {
                 list1.add("two");
-                assertEquals(new LinkedHashSet<>(asList("two")), list1);
+                assertEquals(new LinkedHashSet<>(Collections.singletonList("two")), list1);
             }
             Set<String> list2 = new LinkedHashSet<>();
             try (ExternalMapQueryContext<String, Set<String>, ?> c = map.queryContext("1")) {
                 MapEntry<String, Set<String>> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(new LinkedHashSet<>(asList("two")), entry.value().getUsing(list2));
+                assertEquals(new LinkedHashSet<>(Collections.singletonList("two")), entry.value().getUsing(list2));
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext("2", list1)) {
@@ -2656,7 +2632,7 @@ public class CHMUseCasesTest {
     private static class StringPrefixUnaryOperator
             implements BiFunction<String, String, String>, Serializable {
 
-        private String prefix;
+        private final String prefix;
 
         StringPrefixUnaryOperator(final String prefix1) {
             prefix = prefix1;

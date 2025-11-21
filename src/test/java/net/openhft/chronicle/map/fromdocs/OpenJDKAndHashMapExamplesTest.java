@@ -38,7 +38,7 @@ public class OpenJDKAndHashMapExamplesTest {
     }
 
     @Test
-    public void bondExample() throws IOException, InterruptedException {
+    public void bondExample() throws IOException {
 
         File file = new File(TMP + "/chm-myBondPortfolioCHM-" + Time.uniqueId());
         file.deleteOnExit();
@@ -94,7 +94,7 @@ public class OpenJDKAndHashMapExamplesTest {
             assertNotNull(c);
             // found a key and bond has been set
             // get directly without touching the rest of the record.
-            long _matDate = bond.getMaturityDate();
+            bond.getMaturityDate();
             // write just this field, again we need to assume we are the only writer.
             bond.setMaturityDate(parseYYYYMMDD("20440315"));
 

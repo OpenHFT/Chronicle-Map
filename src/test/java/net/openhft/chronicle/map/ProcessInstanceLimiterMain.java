@@ -18,13 +18,11 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("this-escape")
 public class ProcessInstanceLimiterMain implements Runnable {
     private static final long TIME_UPDATE_INTERVAL = 100L;
-    private final String sharedMapName;
     private final Map<String, Data> theSharedMap;
     private final Callback callback;
     private final Map<String, IntWrapper> localUpdates = new ConcurrentHashMap<String, IntWrapper>();
 
-    public ProcessInstanceLimiterMain(String sharedMapName, Callback callback) throws IOException {
-        this.sharedMapName = sharedMapName;
+    public ProcessInstanceLimiterMain(String sharedMapName, Callback callback) {
         this.callback = callback;
         ChronicleMapBuilder<String, Data> builder =
                 ChronicleMapBuilder.of(String.class, Data.class);
@@ -112,9 +110,9 @@ public class ProcessInstanceLimiterMain implements Runnable {
     }
 
     public interface Callback {
-        public void tooManyProcessesOfType(String processType);
+        void tooManyProcessesOfType(String processType);
 
-        public void noDefinitionForProcessesOfType(String processType);
+        void noDefinitionForProcessesOfType(String processType);
     }
 
     public static class Data implements Serializable {
@@ -122,9 +120,9 @@ public class ProcessInstanceLimiterMain implements Runnable {
          * generated serialVersionUID
          */
         private static final long serialVersionUID = 9163018396438735118L;
-        String processType;
-        int maxNumberOfProcessesAllowed;
-        long[] time;
+        final String processType;
+        final int maxNumberOfProcessesAllowed;
+        final long[] time;
 
         public Data(String processType, int maxNumberOfProcessesAllowed) {
             this.processType = processType;
@@ -134,7 +132,7 @@ public class ProcessInstanceLimiterMain implements Runnable {
     }
 
     public static class IntWrapper {
-        int intValue;
+        final int intValue;
 
         public IntWrapper(int intValue) {
             this.intValue = intValue;

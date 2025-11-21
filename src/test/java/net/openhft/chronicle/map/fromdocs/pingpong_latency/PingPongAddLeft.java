@@ -40,12 +40,12 @@ public class PingPongAddLeft {
         long[] timings = new long[runs];
         for (int j = 0; j < 100; j++) {
             for (int i = 0; i < runs; i++) {
-                long _start = System.nanoTime();
+                final long startTime = System.nanoTime();
                 bond1.addAtomicCoupon(add);
                 bond2.addAtomicCoupon(add);
                 bond3.addAtomicCoupon(add);
                 bond4.addAtomicCoupon(add);
-                timings[i] = (System.nanoTime() - _start - timeToCallNanoTime) / 4;
+                timings[i] = (System.nanoTime() - startTime - timeToCallNanoTime) / 4;
             }
             Arrays.sort(timings);
             System.out.printf("#%d:  atomic add coupon 50/90/99%%tile was %,d / %,d / %,d%n",
