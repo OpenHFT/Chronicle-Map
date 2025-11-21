@@ -121,7 +121,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private transient long startOfModificationIterators;
     private transient long[] remoteNodeCouldBootstrapFrom;
 
-    public ReplicatedChronicleMap(@NotNull final ChronicleMapBuilder<K, V> builder) throws IOException {
+    public ReplicatedChronicleMap(@NotNull final ChronicleMapBuilder<K, V> builder) {
         super(builder);
         tierModIterBitSetSizeInBits = computeTierModIterBitSetSizeInBits();
         tierModIterBitSetOuterSize = computeTierModIterBitSetOuterSize();

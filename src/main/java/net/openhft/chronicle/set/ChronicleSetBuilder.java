@@ -35,7 +35,6 @@ public final class ChronicleSetBuilder<K>
             corruption -> Jvm.error().on(ChronicleSetBuilder.class, corruption.message(), corruption.exception());
 
     private ChronicleMapBuilder<K, DummyValue> chronicleMapBuilder;
-    private final ChronicleSetBuilderPrivateAPI<K> privateAPI;
 
     ChronicleSetBuilder(Class<K> keyClass) {
         chronicleMapBuilder = ChronicleMapBuilder.of(keyClass, DummyValue.class)
@@ -43,7 +42,7 @@ public final class ChronicleSetBuilder<K>
                         DummyValueMarshaller.INSTANCE, DummyValueMarshaller.INSTANCE)
                 .valueSizeMarshaller(SizeMarshaller.constant(0));
         //noinspection deprecation,unchecked
-        privateAPI = new ChronicleSetBuilderPrivateAPI<>(
+        ChronicleSetBuilderPrivateAPI<K> privateAPI = new ChronicleSetBuilderPrivateAPI<>(
                 (ChronicleHashBuilderPrivateAPI<K, MapRemoteOperations<K, DummyValue, ?>>)
                         Jvm.getValue(chronicleMapBuilder, "privateAPI"));
     }
