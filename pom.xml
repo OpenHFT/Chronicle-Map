@@ -33,7 +33,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
-                <version>3.27ea5</version>
+                <version>3.27ea7</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -330,7 +330,6 @@
                         <exclude>**/Compiled*.java</exclude>
                     </sourceFileExcludes>
                     <failOnError>false</failOnError>
-                    <additionalOptions>-Xdoclint:none</additionalOptions>
                 </configuration>
             </plugin>
 
