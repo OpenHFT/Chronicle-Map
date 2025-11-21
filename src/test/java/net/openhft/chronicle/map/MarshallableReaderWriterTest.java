@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Objects;
 
 public class MarshallableReaderWriterTest {

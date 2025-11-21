@@ -9,8 +9,6 @@ import net.openhft.chronicle.values.Values;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 public class PutIfAbsentNoGarbageTest {
 
     static ChronicleMap<Long, LongValue> newShmLongLongValueUsing(int size, boolean putIfAbsentUsingValue) {

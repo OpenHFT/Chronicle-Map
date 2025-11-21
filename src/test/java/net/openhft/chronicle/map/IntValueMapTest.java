@@ -9,8 +9,6 @@ import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
-import java.io.IOException;
-
 import static org.junit.Assert.assertEquals;
 
 /**

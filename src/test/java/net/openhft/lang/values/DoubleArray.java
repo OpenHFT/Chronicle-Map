@@ -8,7 +8,6 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.DynamicallySized;
 import net.openhft.chronicle.values.Copyable;
 
-import java.io.IOException;
 import java.nio.channels.FileLock;
 
 /**

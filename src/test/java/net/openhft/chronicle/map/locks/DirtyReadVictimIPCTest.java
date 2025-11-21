@@ -9,8 +9,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.Assume.assumeFalse;
 

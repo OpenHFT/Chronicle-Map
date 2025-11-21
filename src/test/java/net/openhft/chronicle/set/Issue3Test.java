@@ -6,7 +6,6 @@ package net.openhft.chronicle.set;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Random;
 
 public class Issue3Test {

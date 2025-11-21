@@ -6,7 +6,6 @@ package net.openhft.chronicle.map.ipc;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesStore;
 
-import java.io.IOException;
 import java.nio.channels.FileLock;
 
 /**
