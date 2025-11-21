@@ -6,6 +6,9 @@ Neil Clifford
 :toc-placement: macro
 :icons: font
 
+:lang: en-GB
+:source-highlighter: rouge
+
 toc::[]
 
 This pair of interfaces is configured using `ChronicleMapBuilder.keyMarshallers()` or
