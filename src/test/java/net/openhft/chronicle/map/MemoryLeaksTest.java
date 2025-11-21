@@ -44,7 +44,7 @@ public class MemoryLeaksTest {
     private final AtomicInteger serializerCount = new AtomicInteger();
     private final List<WeakReference<CountedStringReader>> serializers = new ArrayList<>();
     @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    public final TemporaryFolder folder = new TemporaryFolder();
 
     private final boolean persisted;
     private final ChronicleMapBuilder<IntValue, String> builder;
@@ -178,7 +178,7 @@ public class MemoryLeaksTest {
                 byte[] garbage = new byte[50_000_000];
                 Thread.sleep(1);
             }
-            Assert.assertTrue(serializerCount.get() == serializersBeforeMap);
+            assertEquals(serializerCount.get(), serializersBeforeMap);
             // This assertion ensures GC doesn't reclaim the map before or during the loop iteration
             // above, to ensure that we test that the direct memory and contexts are released because
             // of the manual map.close(), despite the "leak" of the map object itself.
@@ -223,19 +223,17 @@ public class MemoryLeaksTest {
 
     private static final class CountedStringReader extends StringSizedReader {
         private transient MemoryLeaksTest memoryLeaksTest;
-        private final String creationStackTrace;
-        private final Cleaner cleaner;
 
         CountedStringReader(MemoryLeaksTest memoryLeaksTest) {
             this.memoryLeaksTest = memoryLeaksTest;
             this.memoryLeaksTest.serializerCount.incrementAndGet();
             this.memoryLeaksTest.serializers.add(new WeakReference<>(this));
-            cleaner = CleanerUtils.createCleaner(this, this.memoryLeaksTest.serializerCount::decrementAndGet);
+            Cleaner cleaner = CleanerUtils.createCleaner(this, this.memoryLeaksTest.serializerCount::decrementAndGet);
             try (StringWriter stringWriter = new StringWriter();
                  PrintWriter printWriter = new PrintWriter(stringWriter)) {
                 new Exception().printStackTrace(printWriter);
                 printWriter.flush();
-                creationStackTrace = stringWriter.toString();
+                String creationStackTrace = stringWriter.toString();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

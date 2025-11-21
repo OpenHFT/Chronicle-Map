@@ -17,16 +17,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 interface DemoOrderVOInterface {
-    public CharSequence getSymbol();
+    CharSequence getSymbol();
     //    public StringBuilder getUsingSymbol(StringBuilder sb);
 
-    public void setSymbol(@MaxUtf8Length(20) CharSequence symbol);
+    void setSymbol(@MaxUtf8Length(20) CharSequence symbol);
 
-    public double addAtomicOrderQty(double toAdd);
+    double addAtomicOrderQty(double toAdd);
 
-    public double getOrderQty();
+    double getOrderQty();
 
-    public void setOrderQty(double orderQty);
+    void setOrderQty(double orderQty);
 
 }
 

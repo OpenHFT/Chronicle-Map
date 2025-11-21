@@ -97,7 +97,7 @@ public class GuavaTest extends TestCase {
     }
 
     static class CHMTestGenerator extends TestGenerator {
-        ChronicleMapBuilder<String, String> builder =
+        final ChronicleMapBuilder<String, String> builder =
                 ChronicleMapBuilder.of(String.class, String.class)
                         .entries(100)
                         .averageKeySize(10).averageValueSize(10)

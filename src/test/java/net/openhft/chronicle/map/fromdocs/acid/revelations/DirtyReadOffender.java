@@ -60,7 +60,7 @@ public class DirtyReadOffender {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = offHeapLock.writeLock()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     " @t=" + System.currentTimeMillis() +

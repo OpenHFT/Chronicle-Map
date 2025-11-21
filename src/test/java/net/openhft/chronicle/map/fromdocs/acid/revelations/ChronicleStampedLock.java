@@ -371,7 +371,7 @@ public class ChronicleStampedLock extends StampedLock {
         } else if (stamp > 0L) {
             unlockRead(stamp);
         } else {
-    ; // none// lock available
+            // none// lock available
         }
     }
 

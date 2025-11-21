@@ -13,7 +13,9 @@ import java.util.Random;
 
 public class LargeMapMain {
     //    static int avgSize = 4096, maxSize = 40_000, entries= 500_000; // average ~= 4K
-    static int avgSize = 1024, maxSize = 8_000, entries = 1_000_000; // average ~= 1K
+    static final int avgSize = 1024;
+    static final int maxSize = 8_000;
+    static final int entries = 1_000_000; // average ~= 1K
 
     public static void main(String[] args) throws IOException {
         ChronicleMap<CharSequence, CharSequence> map = createMap(false);
@@ -70,8 +72,7 @@ public class LargeMapMain {
                 .averageValueSize(avgSize)
                 .maxBloatFactor(4)
                 .sparseFile(sparseFile);
-        ChronicleMap<CharSequence, CharSequence> map = builder.createPersistedTo(file);
-        return map;
+        return builder.createPersistedTo(file);
     }
 
     private static void generate(Random rand, StringBuilder sb, int length) {

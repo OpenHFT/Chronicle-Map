@@ -21,7 +21,6 @@ import static org.junit.Assert.*;
 public class FileLockUtilTest {
 
     private File canonicalFile;
-    private RandomAccessFile raf;
     private FileChannel fileChannel;
 
     @Before
@@ -29,7 +28,7 @@ public class FileLockUtilTest {
         canonicalFile = new File("file.lock").getCanonicalFile();
         canonicalFile.delete();
         canonicalFile.createNewFile();
-        raf = CanonicalRandomAccessFiles.acquire(canonicalFile);
+        RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(canonicalFile);
         fileChannel = raf.getChannel();
     }
 

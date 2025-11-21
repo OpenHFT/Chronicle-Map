@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.util.HashMap;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class ChronicleMapEqualsTest {
@@ -22,6 +23,6 @@ public class ChronicleMapEqualsTest {
         HashMap<String, String> refMap = new HashMap<>();
         refMap.put("a", "b");
         map.putAll(refMap);
-        assertTrue(map.equals(refMap));
+        assertEquals(map, refMap);
     }
 }

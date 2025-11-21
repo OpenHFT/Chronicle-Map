@@ -155,7 +155,7 @@ public abstract class VanillaChronicleHash<K,
      */
     @Nullable
     private transient FileLock fileLock;
-    private transient boolean sparseFile;
+    private final transient boolean sparseFile;
 
     public VanillaChronicleHash(@NotNull final ChronicleMapBuilder<K, ?> builder) {
         // Version

@@ -9,6 +9,7 @@ import shaded.org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 /**
  * gets the version of the current build
@@ -84,7 +85,7 @@ public final class BuildVersion {
 
         final File file = new File(absolutePath + "/pom.xml");
 
-        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
+        try (InputStreamReader reader = new InputStreamReader(Files.newInputStream(file.toPath()), StandardCharsets.UTF_8)) {
 
             final MavenXpp3Reader xpp3Reader = new MavenXpp3Reader();
             Model model = xpp3Reader.read(reader);

@@ -80,7 +80,7 @@ public class VanillaChronicleMap<K, V, R>
     /////////////////////////////////////////////////
     private transient String name;
     /**
-     * identityString is initialized lazily in {@link #toIdentityString()} rather than in {@link #initOwnTransients()} because it depends on {@link
+     * identityString is initialized lazily in {@link #toIdentityString()} rather than in  because it depends on {@link
      * #file()} which is set after initOwnTransients().
      */
     private transient String identityString;

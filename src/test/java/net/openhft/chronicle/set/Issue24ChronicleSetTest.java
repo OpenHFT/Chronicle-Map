@@ -26,9 +26,8 @@ public class Issue24ChronicleSetTest {
         File file = File.createTempFile("stringSet", ".dat");
         file.deleteOnExit();
         try {
-            H result = builder.entries(entrySize)
+            return builder.entries(entrySize)
                     .averageKeySize(averageKeySize).createPersistedTo(file);
-            return result;
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }

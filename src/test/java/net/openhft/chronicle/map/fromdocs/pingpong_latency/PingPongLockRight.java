@@ -9,7 +9,7 @@ import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import java.io.IOException;
 
 public class PingPongLockRight {
-    public static void main(String... ignored) throws IOException, InterruptedException {
+    public static void main(String... ignored) throws IOException {
         ChronicleMap<String, BondVOInterface> chm = PingPongCASLeft.acquireCHM();
 
         //PingPongLockLeft.playPingPong(chm, 5, 4, false, "PingPongLockRIGHT");

@@ -15,7 +15,7 @@ import java.io.IOException;
 public class BuildVersionTest {
 
     @Test
-    public void test() throws IOException, InterruptedException {
+    public void test() {
         // checks that we always get a version
         Assert.assertNotNull(BuildVersion.version());
     }
@@ -25,7 +25,7 @@ public class BuildVersionTest {
      *
      */
     @Test
-    public void testVersion() throws IOException, InterruptedException {
+    public void testVersion() {
 
         try (ChronicleMap<Integer, Double> expected = ChronicleMap.of(Integer.class, Double.class)
                 .entries(1).create()) {

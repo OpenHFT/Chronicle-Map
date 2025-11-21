@@ -19,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 public class IntValueMapTest {
 
     @Test
-    public void test() throws IOException {
+    public void test() {
 
         try (final ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)

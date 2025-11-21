@@ -20,7 +20,7 @@ public final class Objects {
     }
 
     public static boolean equal(@Nullable Object a, @Nullable Object b) {
-        return a != null ? a.equals(b) : b == null;
+        return java.util.Objects.equals(a, b);
     }
 
     public static boolean builderEquals(@NotNull Object builder, @Nullable Object o) {

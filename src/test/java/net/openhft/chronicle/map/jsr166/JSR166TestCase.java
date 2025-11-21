@@ -5,15 +5,10 @@ package net.openhft.chronicle.map.jsr166;
 
 import junit.framework.AssertionFailedError;
 import net.openhft.chronicle.core.Jvm;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.security.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -125,7 +120,7 @@ public class JSR166TestCase {
      * if the sleep is shorter than specified, may re-sleep or yield
      * until time elapses.
      */
-    static void delay(long millis) throws InterruptedException {
+    static void delay(long millis) {
         long startTime = System.nanoTime();
         long ns = millis * 1000 * 1000;
         for (; ; ) {
@@ -169,12 +164,8 @@ public class JSR166TestCase {
             }
 
             public void run() {
-                try {
-                    delay(timeoutMillis);
-                    done = true;
-                } catch (InterruptedException ok) {
-                    Thread.currentThread().interrupt();
-                }
+                delay(timeoutMillis);
+                done = true;
             }
         };
     }
@@ -445,13 +436,9 @@ public class JSR166TestCase {
      * Checks that thread does not terminate within the given millisecond delay.
      */
     void assertThreadStaysAlive(Thread thread, long millis) {
-        try {
-            // No need to optimize the Assert.failing case via Thread.join.
-            delay(millis);
-            Assert.assertTrue(thread.isAlive());
-        } catch (InterruptedException ie) {
-            Assert.fail("Unexpected InterruptedException");
-        }
+        // No need to optimize the Assert.failing case via Thread.join.
+        delay(millis);
+        Assert.assertTrue(thread.isAlive());
     }
 
     /**
@@ -466,14 +453,10 @@ public class JSR166TestCase {
      * Checks that the threads do not terminate within the given millisecond delay.
      */
     void assertThreadsStayAlive(long millis, Thread... threads) {
-        try {
-            // No need to optimize the Assert.failing case via Thread.join.
-            delay(millis);
-            for (Thread thread : threads)
-                Assert.assertTrue(thread.isAlive());
-        } catch (InterruptedException ie) {
-            Assert.fail("Unexpected InterruptedException");
-        }
+        // No need to optimize the Assert.failing case via Thread.join.
+        delay(millis);
+        for (Thread thread : threads)
+            Assert.assertTrue(thread.isAlive());
     }
 
     /**

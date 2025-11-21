@@ -14,13 +14,15 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
 
+import static java.nio.charset.StandardCharsets.*;
+
 /**
  * Created by Rob Austin
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ByteBufferConverter implements Converter {
 
-    private final Charset charset = Charset.forName("ISO-8859-1");
+    private final Charset charset = ISO_8859_1;
     private final CharsetDecoder decoder = charset.newDecoder();
 
     @Override

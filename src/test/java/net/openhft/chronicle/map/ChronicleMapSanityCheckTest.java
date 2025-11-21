@@ -24,7 +24,7 @@ import java.util.concurrent.locks.LockSupport;
 public class ChronicleMapSanityCheckTest {
 
     @Test
-    public void testSanity1() throws IOException, InterruptedException {
+    public void testSanity1() throws IOException {
 
         String tmp = OS.getTarget();
 
@@ -33,7 +33,7 @@ public class ChronicleMapSanityCheckTest {
         File file = new File(pathname);
 
         System.out.println("Starting sanity test 1. Chronicle file :" +
-                file.getAbsolutePath().toString());
+                file.getAbsolutePath());
 
         ScheduledExecutorService producerExecutor =
                 Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() - 1,

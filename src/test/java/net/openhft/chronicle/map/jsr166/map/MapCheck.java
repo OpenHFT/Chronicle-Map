@@ -29,7 +29,7 @@ public class MapCheck {
     static final String MISSING = "MISSING";
     static final LoopHelpers.SimpleRandom srng = new LoopHelpers.SimpleRandom();
     static final Random rng = new Random(3152688);
-    static TestTimer timer = new TestTimer();
+    static final TestTimer timer = new TestTimer();
     static Class<?> eclass;
     static volatile int checkSum;
     static int counter = 0;
@@ -159,10 +159,7 @@ public class MapCheck {
         try {
             m.put(null, x);
             v = m.get(null);
-        } catch (NullPointerException npe) {
-            System.out.println("Map does not allow null keys");
-            return;
-        } catch (IllegalArgumentException npe) {
+        } catch (NullPointerException | IllegalArgumentException npe) {
             System.out.println("Map does not allow null keys");
             return;
         }
@@ -594,9 +591,8 @@ public class MapCheck {
     static void initDoubles(Object[] key, Object[] absent, int size) {
         Map m = newMap();
         for (int i = 0; i < size; ++i) {
-            double r = (double) i;
-            key[i] = r;
-            m.put(r, r);
+            key[i] = (double) i;
+            m.put((double) i, (double) i);
         }
         int k = 0;
         while (k < size) {
@@ -732,8 +728,8 @@ public class MapCheck {
     static final class Stats {
         long sum;
         long number;
-        long first;
-        long firstn;
+        final long first;
+        final long firstn;
 
         Stats(long t, long n) {
             first = t;

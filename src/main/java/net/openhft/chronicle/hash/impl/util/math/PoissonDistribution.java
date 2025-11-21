@@ -41,20 +41,18 @@ public class PoissonDistribution {
 
         // use the one-sided Chebyshev inequality to narrow the bracket
         // cf. AbstractRealDistribution.inverseCumulativeProbability(double)
-        final double mu = mean;
         // in Poisson distribution, variance == mean
-        double variance = mean;
-        final double sigma = Math.sqrt(variance);
-        final boolean chebyshevApplies = !(Double.isInfinite(mu) || Double.isNaN(mu) ||
+        final double sigma = Math.sqrt(mean);
+        final boolean chebyshevApplies = !(Double.isInfinite(mean) || Double.isNaN(mean) ||
                 Double.isInfinite(sigma) || Double.isNaN(sigma) || sigma == 0.0);
         if (chebyshevApplies) {
             double k = Math.sqrt((1.0 - p) / p);
-            double tmp = mu - k * sigma;
+            double tmp = mean - k * sigma;
             if (tmp > lower) {
                 lower = ((int) Math.ceil(tmp)) - 1L;
             }
             k = 1.0 / k;
-            tmp = mu + k * sigma;
+            tmp = mean + k * sigma;
             if (tmp < upper) {
                 upper = ((int) Math.ceil(tmp)) - 1L;
             }

@@ -29,7 +29,7 @@ import static net.openhft.chronicle.set.DummyValue.DUMMY_VALUE;
 class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
 
     private final ChronicleMap<E, DummyValue> m;  // The backing map
-    private transient Set<E> s;       // Its keySet
+    private final transient Set<E> s;       // Its keySet
 
     SetFromMap(VanillaChronicleMap<E, DummyValue, ?> map) {
         m = map;

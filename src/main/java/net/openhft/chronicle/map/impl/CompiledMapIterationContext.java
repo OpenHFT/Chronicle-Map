@@ -1516,7 +1516,8 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
     }
 
     public enum SearchState {
-PRESENT, ABSENT;    }
+PRESENT, ABSENT
+    }
 
     private long _HashEntryStages_entryEnd() {
         return keyEnd();

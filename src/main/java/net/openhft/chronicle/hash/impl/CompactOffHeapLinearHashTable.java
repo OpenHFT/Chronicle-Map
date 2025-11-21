@@ -71,9 +71,7 @@ public abstract class CompactOffHeapLinearHashTable {
         int entrySize = (int) BYTES.alignAndConvert((long) (keyBits + valueBits), BITS);
         if (entrySize <= 4)
             return 4;
-        if (entrySize <= 8)
-            return 8;
-        return entrySize;
+        return Math.max(entrySize, 8);
     }
 
     public static long capacityFor(long entriesPerSegment) {

@@ -41,7 +41,7 @@ public final class CanonicalRandomAccessFiles {
     private CanonicalRandomAccessFiles() {
     }
 
-    public static RandomAccessFile acquire(@NotNull final File file) throws FileNotFoundException {
+    public static RandomAccessFile acquire(@NotNull final File file) {
         return acquire0(file, NO_OP).raf;
     }
 

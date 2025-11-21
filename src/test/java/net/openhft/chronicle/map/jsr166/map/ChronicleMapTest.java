@@ -26,13 +26,13 @@ import static org.junit.Assert.*;
 @SuppressWarnings({"rawtypes", "unchecked", "try"})
 public class ChronicleMapTest extends JSR166TestCase {
 
-    static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
+    static ChronicleMap<Integer, CharSequence> newShmIntString(int size) {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .averageValueSize(1)
                 .entries(size).create();
     }
 
-    static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) throws IOException {
+    static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .averageKeySize(20).averageValueSize(20)
                 .entries(size).create();
@@ -215,9 +215,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set<Entry<Integer, CharSequence>> s = map.entrySet();
             assertEquals(5, s.size());
-            Iterator<Entry<Integer, CharSequence>> it = s.iterator();
-            while (it.hasNext()) {
-                Entry<Integer, CharSequence> e = it.next();
+            for (Entry<Integer, CharSequence> e : s) {
                 assertTrue(
                         (e.getKey().equals(one) && "A".contentEquals(e.getValue())) ||
                                 (e.getKey().equals(two) && "B".contentEquals(e.getValue())) ||

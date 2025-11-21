@@ -18,7 +18,6 @@
  */
 package net.openhft.chronicle.hash.impl.stage.data.bytes;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.bytes.VanillaBytes;
@@ -33,7 +32,7 @@ import net.openhft.sg.Staged;
 public class InputKeyBytesData<K> extends AbstractData<K> {
 
     @Stage("InputKeyBytes")
-    private final VanillaBytes<Void> inputKeyBytes = VanillaBytes.vanillaBytes();;
+    private final VanillaBytes<Void> inputKeyBytes = VanillaBytes.vanillaBytes();
     @StageRef
     KeyBytesInterop<K> ki;
     @StageRef
@@ -48,8 +47,6 @@ public class InputKeyBytesData<K> extends AbstractData<K> {
     private boolean inputKeyBytesUsed = false;
     @Stage("CachedInputKey")
     private K cachedInputKey;
-    @Stage("CachedInputKey")
-    private boolean cachedInputKeyRead = false;
 
     public void initInputKeyBytesStore(BytesStore<?, Void> bytesStore, long offset, long size) {
         inputKeyBytesStore = bytesStore;
@@ -73,7 +70,7 @@ public class InputKeyBytesData<K> extends AbstractData<K> {
 
     private void initCachedInputKey() {
         cachedInputKey = innerGetUsing(cachedInputKey);
-        cachedInputKeyRead = true;
+        boolean cachedInputKeyRead = true;
     }
 
     @Override

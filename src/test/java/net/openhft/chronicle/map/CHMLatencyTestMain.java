@@ -119,8 +119,8 @@ public class CHMLatencyTestMain {
 
     static class Monitor implements Runnable {
         final Thread thread;
-        volatile boolean running = true;
-        volatile long sample;
+        final boolean running = true;
+        final long sample;
 
         Monitor() {
             this.thread = Thread.currentThread();

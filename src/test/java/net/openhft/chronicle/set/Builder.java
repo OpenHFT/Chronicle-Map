@@ -19,7 +19,7 @@ public class Builder {
     public static final int SIZE = 10_000;
     // added to ensure uniqueness
     static int count;
-    static String WIN_OS = "WINDOWS";
+    static final String WIN_OS = "WINDOWS";
 
     public static File getPersistenceFile() throws IOException {
 

@@ -48,12 +48,10 @@ public class EntryKeyBytesData<K> extends AbstractData<K> {
 
     @Stage("CachedEntryKey")
     private K cachedEntryKey;
-    @Stage("CachedEntryKey")
-    private boolean cachedEntryKeyRead = false;
 
     private void initCachedEntryKey() {
         cachedEntryKey = innerGetUsing(cachedEntryKey);
-        cachedEntryKeyRead = true;
+        boolean cachedEntryKeyRead = true;
     }
 
     @Override

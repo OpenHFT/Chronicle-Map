@@ -19,10 +19,6 @@ interface FindByName {
      * @param <T>  the type returned
      * @return a chronicle map or set
      * @throws IllegalArgumentException if a map with this name can not be found
-     * @throws IOException              if it not possible to create the map or set
-     * @throws TimeoutException         if the call times out
-     * @throws InterruptedException     if interrupted by another thread
      */
-    <T extends ChronicleHash> T from(String name) throws IllegalArgumentException,
-            IOException, TimeoutException, InterruptedException;
+    <T extends ChronicleHash> T from(String name) throws IllegalArgumentException;
 }

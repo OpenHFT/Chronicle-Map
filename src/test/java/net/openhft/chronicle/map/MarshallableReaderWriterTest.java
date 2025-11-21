@@ -17,7 +17,7 @@ import java.util.Objects;
 
 public class MarshallableReaderWriterTest {
     @Test
-    public void test() throws IOException {
+    public void test() {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyOrder.class);
 
         try (ChronicleMap<CharSequence, MyOrder> map = ChronicleMap

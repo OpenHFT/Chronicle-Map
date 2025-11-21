@@ -42,7 +42,7 @@ public class DirtyReadOffender_ReaderWriterTest {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            Assert.assertNotEquals(offHeapLock, null);
+            Assert.assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
@@ -82,7 +82,7 @@ public class DirtyReadOffender_ReaderWriterTest {
                 );
 
             }
-            Assert.assertNotEquals(blockedByHoldingReaderCount, 0);
+            Assert.assertNotEquals(0, blockedByHoldingReaderCount);
             System.out.println(
                     "                             " +
                             " @t=" + System.currentTimeMillis() +

@@ -19,8 +19,8 @@ import java.util.UUID;
 import static java.util.stream.Collectors.toMap;
 
 public class Issue58 {
-    File mapFile = new File("string-to-uuid.dat");
-    File reverseMapFile = new File("uuid-to-string.dat");
+    final File mapFile = new File("string-to-uuid.dat");
+    final File reverseMapFile = new File("uuid-to-string.dat");
 
     public static void main(String... args) {
         Map<String, UUID> map = new HashMap<>();
@@ -108,7 +108,7 @@ public class Issue58 {
             System.out.println("BB" + " == " + reverseMap.get(uuid));
             System.out.println(uuid + " == " + map.get("BB")); //returns null
             System.out.println("despite all data being present:");
-            map.entrySet().forEach(e -> System.out.println(e.getKey() + "->" + e.getValue()));
+            map.forEach((key, value) -> System.out.println(key + "->" + value));
             reverseMap.forEach((k, v) -> System.out.println(k + " -> " + v));
         }
     }

@@ -12,7 +12,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
  * own instances of key and value marshallers, which usually have buffers for serialization (e. g.
  * see {@link net.openhft.chronicle.hash.serialization.impl.SerializableDataAccess}). The contexts
  * are stored in {@link ThreadLocal}s, which are <i>instance</i> fields of ChronicleMap objects
- * (see {@link net.openhft.chronicle.map.VanillaChronicleMap#cxt}). We want the context objects to
+ * (see ). We want the context objects to
  * be eligible for garbage collection as soon as possible after the ChronicleMap object is closed
  * or becomes unreachable.
  * <p>
@@ -29,13 +29,11 @@ import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
  * object leaked, ChronicleMap's ThreadLocal field doesn't become unreachable and the leak of
  * context objects is "legitimate".
  * <p>
- * Solution for this is to reference from {@link
- * net.openhft.chronicle.map.VanillaChronicleMap#cxt} not huge context object directly, but small
+ * Solution for this is to reference from  not huge context object directly, but small
  * ContextHolder object, and clear the reference to context via {@link #clear()} on
  * ChronicleMap.close() or from {@link sun.misc.Cleaner}'s registered cleaner for ChronicleMap, if
  * it weren't closed, but becomes unreachable and reclaimed by the garbage collector.
  *
- * @see ChronicleHashResources#closeContext(ContextHolder)
  */
 public final class ContextHolder {
 

@@ -227,7 +227,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     private static boolean tryWriteLockNanos(final long address,
                                              final long timeInNanos,
-                                             final boolean interruptible) throws InterruptedException {
+                                             final boolean interruptible) {
         assert SKIP_ASSERTIONS || assertAddress(address);
         final long end = System.nanoTime() + timeInNanos;
         registerWait(address);
@@ -250,7 +250,7 @@ public final class BigSegmentHeader implements SegmentHeader {
      */
     private static boolean tryWriteLockMillis(final long address,
                                               long timeInMillis,
-                                              final boolean interruptible) throws InterruptedException {
+                                              final boolean interruptible) {
         assert SKIP_ASSERTIONS || assertAddress(address);
         long lastTime = System.currentTimeMillis();
         registerWait(address);
@@ -313,7 +313,7 @@ public final class BigSegmentHeader implements SegmentHeader {
 
     private static boolean tryUpgradeUpdateToWriteLockNanos(final long address,
                                                             final long timeInNanos,
-                                                            final boolean interruptible) throws InterruptedException {
+                                                            final boolean interruptible) {
         assert SKIP_ASSERTIONS || assertAddress(address);
         final long end = System.nanoTime() + timeInNanos;
         registerWait(address);
@@ -336,7 +336,7 @@ public final class BigSegmentHeader implements SegmentHeader {
      */
     private static boolean tryUpgradeUpdateToWriteLockMillis(final long address,
                                                              long timeInMillis,
-                                                             final boolean interruptible) throws InterruptedException {
+                                                             final boolean interruptible) {
         assert SKIP_ASSERTIONS || assertAddress(address);
         long lastTime = System.currentTimeMillis();
         registerWait(address);

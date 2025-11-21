@@ -43,7 +43,7 @@ public interface VanillaGlobalMutableState extends Byteable {
     @Group(5)
     long getDataStoreSize();
 
-    void setDataStoreSize(@Range(min = 0, max = Long.MAX_VALUE) long dataStoreSize);
+    void setDataStoreSize(@Range(min = 0) long dataStoreSize);
 
     long addDataStoreSize(long addition);
 }
