@@ -3,8 +3,6 @@
  */
 package net.openhft.chronicle.map.fromdocs.acid;
 
-//import net.openhft.affinity.AffinitySupport;
-
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 
