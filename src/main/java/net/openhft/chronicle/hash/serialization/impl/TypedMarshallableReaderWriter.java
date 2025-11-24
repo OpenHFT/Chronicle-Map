@@ -11,7 +11,6 @@ import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
 /**
  * {@link CachingCreatingMarshaller} for typed {@link Marshallable} values.
  *
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * can carry both the object graph and its runtime type information, which is useful when
  * a Chronicle hash structure needs to store heterogeneous marshallable values.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class TypedMarshallableReaderWriter<V extends Marshallable>
         extends CachingCreatingMarshaller<V> {
 

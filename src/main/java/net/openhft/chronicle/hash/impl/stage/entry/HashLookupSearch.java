@@ -13,12 +13,12 @@ import net.openhft.sg.Staged;
 
 import static net.openhft.chronicle.hash.impl.CompactOffHeapLinearHashTable.UNSET_KEY;
 
-@Staged
 /**
  * Performs linear-probing lookups over the hash table backing a Chronicle map
  * segment. Maintains search state across stages to enable incremental scans,
  * insertion, and removal while coordinating with tier transitions.
  */
+@Staged
 public abstract class HashLookupSearch {
 
     @StageRef

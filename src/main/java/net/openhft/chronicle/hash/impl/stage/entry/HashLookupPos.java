@@ -7,12 +7,12 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-@Staged
 /**
  * Tracks the current hash lookup position within a segment during staged map
  * operations. Ensures the lookup position is reset appropriately when the tier
  * changes and provides stage wiring for dependent components.
  */
+@Staged
 public abstract class HashLookupPos {
 
     public long hashLookupPos = -1;

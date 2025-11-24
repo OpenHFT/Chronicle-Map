@@ -20,13 +20,13 @@ import org.jetbrains.annotations.NotNull;
 import static net.openhft.chronicle.algo.bytes.Access.checkedBytesStoreAccess;
 import static net.openhft.chronicle.algo.bytes.Access.nativeAccess;
 
-@Staged
-@SuppressWarnings({"rawtypes", "unchecked"})
 /**
  * Stage bundle encapsulating offsets, sizes, and checksum handling for a single
  * hash entry. Manages reading/writing entry metadata, tracking positions, and
  * coordinating checksum updates under locking.
  */
+@Staged
+@SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class HashEntryStages<K> implements HashEntry<K>, ChecksumEntry {
 
     @StageRef
