@@ -18,6 +18,14 @@ import java.lang.reflect.Type;
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+/**
+ * {@link DataAccess} implementation for values encoded via size-aware reader and writer pairs.
+ *
+ * <p>The access uses a {@link SizedWriter} to compute the serialised size and to write the
+ * value into an internal elastic {@link Bytes} buffer, and a matching {@link SizedReader} to
+ * materialise instances from that buffer on demand. It can either copy bytes into a target
+ * store or write directly when the target is a {@link BytesStore}.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class SizedMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T>
         implements DataAccess<T>, Data<T> {

@@ -3,6 +3,12 @@
  */
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+/**
+ * Allocation strategy used by the staging pipeline when an entry needs space in a segment tier.
+ * <p>
+ * Implementations reserve a contiguous block of chunks and may clear an earlier allocation so that
+ * callers can relocate entries without leaking capacity or corrupting existing data.
+ */
 public interface Alloc {
 
     /**

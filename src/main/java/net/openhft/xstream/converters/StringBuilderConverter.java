@@ -12,6 +12,14 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class StringBuilderConverter implements Converter {
 
+    /**
+     * XStream converter specialising in {@link StringBuilder}.
+     * <p>
+     * Serialises the builder's contents as a plain text node and reconstructs
+     * a new {@code StringBuilder} instance on deserialisation. This avoids
+     * accidental conversion to immutable {@link String} while remaining
+     * compatible with XStream's converter SPI.
+     */
     @Override
     public void marshal(
             Object source, HierarchicalStreamWriter writer, MarshallingContext context) {

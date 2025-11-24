@@ -3,6 +3,14 @@
  */
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+/**
+ * Abstraction over per-segment lock accounting shared across contexts.
+ *
+ * <p>Implementations track the current segment header, aggregate read, update and
+ * write lock counts across all contexts on the segment, and form a linked list
+ * of contexts participating in locking so that diagnostics and deadlock reports
+ * can enumerate their state.
+ */
 public interface LocksInterface {
 
     boolean segmentHeaderInit();

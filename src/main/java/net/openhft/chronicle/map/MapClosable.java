@@ -5,11 +5,19 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.io.ManagedCloseable;
 
+/**
+ * Marker interface for Chronicle-Map resources that can be closed.
+ * <p>
+ * Implementations may not be able to report an accurate closed state
+ * in all environments; the default {@link #isClosed()} therefore
+ * returns {@code false} so that callers treat the instance as live
+ * unless explicitly closed.
+ */
 public interface MapClosable extends ManagedCloseable {
 
     @Override
     default boolean isClosed() {
-        // if we don't know, pretend it is not.
+        // if we do not know, pretend it is not
         return false;
     }
 }

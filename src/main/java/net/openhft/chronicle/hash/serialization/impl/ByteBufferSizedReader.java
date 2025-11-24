@@ -10,6 +10,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 
+/**
+ * {@link SizedReader} for {@link ByteBuffer} values.
+ *
+ * <p>The reader ensures that the requested size is representable as a Java array length,
+ * prepares a buffer of at least that capacity, then reads the bytes from the supplied
+ * {@link Bytes} into it. The returned buffer is flipped ready for reading.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class ByteBufferSizedReader
         implements SizedReader<ByteBuffer>, EnumMarshallable<ByteBufferSizedReader> {

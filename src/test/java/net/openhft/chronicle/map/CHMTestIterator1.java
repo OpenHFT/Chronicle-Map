@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author Anshul Shelley
  */
-
 public class CHMTestIterator1 {
     public static void main(String[] args) {
         AtomicLong alValue = new AtomicLong();

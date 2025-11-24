@@ -14,7 +14,6 @@ import java.util.*;
  * Expert Group and released to the public domain, as explained at
  * http://creativecommons.org/publicdomain/zero/1.0/
  */
-
 /**
  * Times and checks basic map operations
  * <p>
@@ -23,7 +22,6 @@ import java.util.*;
  * can create one from a real dictionary (1 line per word) and then run
  * linux "shuf" to randomize entries.
  */
-
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class MapCheck {
     static final String MISSING = "MISSING";

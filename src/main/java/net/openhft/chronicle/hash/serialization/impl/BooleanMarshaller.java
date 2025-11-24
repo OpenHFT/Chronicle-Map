@@ -11,6 +11,13 @@ import net.openhft.chronicle.hash.serialization.SizedWriter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Serialises {@link Boolean} values to a single byte for Chronicle hash structures.
+ *
+ * <p>Values are written using a compact representation where {@code true} is encoded as the
+ * character {@code 'Y'} and {@code false} as {@code 0}. The marshaller is stateless and exposed
+ * as a singleton instance for reuse across maps and sets.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class BooleanMarshaller
         implements SizedReader<Boolean>, BytesReader<Boolean>,

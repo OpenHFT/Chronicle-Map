@@ -30,6 +30,15 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * {@link net.openhft.chronicle.hash.Data} view over the value bytes of the
+ * current map entry.
+ * <p>
+ * The stage keeps track of the value offset and size within the segment and
+ * exposes a cached decoded value for repeated access during a single
+ * operation. All reads go through the configured {@link ValueBytesInterop}
+ * so that user-defined value marshallers are honoured.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class EntryValueBytesData<V> extends AbstractData<V> {

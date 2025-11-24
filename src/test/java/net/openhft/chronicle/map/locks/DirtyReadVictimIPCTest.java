@@ -32,7 +32,6 @@ public class DirtyReadVictimIPCTest {
      * this belief is STRICTLY conjecture.
      *
      */
-
     @Test
     public void mainOptimisticNegative() {
         try {
@@ -68,7 +67,6 @@ public class DirtyReadVictimIPCTest {
             /*
                ben.cotton@rutgers.edu   START
              */
-
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"

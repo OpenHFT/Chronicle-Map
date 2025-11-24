@@ -21,6 +21,16 @@ import java.util.function.Consumer;
 import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 import static net.openhft.chronicle.hash.replication.TimeProvider.systemTimeIntervalBetween;
 
+/**
+ * Allocation strategy for replicated Chronicle-Map segments.
+ * <p>
+ * This stage extends the generic {@link QueryAlloc} algorithm by actively
+ * cleaning up old deleted entries when space is exhausted, using
+ * {@link #forcedOldDeletedEntriesCleanup(long)} to reclaim chunks before
+ * walking additional tiers. It is aware of replication semantics through
+ * {@link ReplicatedChronicleMapHolder} and cooperates with
+ * {@link ReplicationUpdate} to keep change tracking consistent.
+ */
 @Staged
 public class ReplicatedQueryAlloc extends QueryAlloc {
 

@@ -16,6 +16,16 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@link MapAbsentEntry} and {@link SetAbsentEntry} implementation used while
+ * iterating replicated map segments.
+ * <p>
+ * This stage delegates all mutation operations to the owning
+ * {@link ReplicatedMapSegmentIteration} while exposing the absent-key view and
+ * providing access to the replication-aware entry via {@link #d()}. It allows
+ * the iteration code to treat absent and present entries uniformly when
+ * interacting with the replication layer.
+ */
 @Staged
 public class ReplicatedMapAbsentDelegatingForIteration<K, V>
         implements MapAbsentEntry<K, V>, SetAbsentEntry<K>, ReplicableEntryDelegating {

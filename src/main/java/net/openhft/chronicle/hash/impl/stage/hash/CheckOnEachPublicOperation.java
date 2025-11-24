@@ -10,6 +10,13 @@ import net.openhft.chronicle.map.impl.stage.query.QueryCheckOnEachPublicOperatio
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Guard stage that enforces single-threaded access to a context on every public call.
+ *
+ * <p>All public Chronicle Map operations and associated lock methods invoke one of the
+ * {@code checkOnEach*} methods, which delegate to {@link OwnerThreadHolder} to ensure
+ * that a context is only used from the thread that created it.
+ */
 @Staged
 public abstract class CheckOnEachPublicOperation {
 

@@ -16,6 +16,16 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Replication-aware {@link MapQuery} implementation.
+ * <p>
+ * This stage combines the standard map query behaviour with the
+ * {@link MapRemoteQueryContext}, {@link SetRemoteQueryContext} and
+ * {@link ReplicableEntry} contracts so that the same pipeline can be used both
+ * for local API calls and for applying replicated updates. It is responsible
+ * for honouring deletion markers, updating replication state and exposing the
+ * correct absent-entry view.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedMapQuery<K, V, R> extends MapQuery<K, V, R>

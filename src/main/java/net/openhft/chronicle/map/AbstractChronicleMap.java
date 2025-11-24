@@ -17,6 +17,16 @@ import java.util.function.Predicate;
 import static java.util.Collections.emptyList;
 import static net.openhft.chronicle.hash.impl.util.Objects.requireNonNull;
 
+/**
+ * Common default implementations for {@link ChronicleMap}.
+ * <p>
+ * Supplies reference implementations of {@link java.util.Map} views and helpers (values, keySet,
+ * equals, hashCode, forEach) built on top of Chronicle Map's query context APIs. Concrete map
+ * implementations inherit these behaviours to keep core classes focused on off-heap layout,
+ * replication and persistence concerns.
+ * <p>
+ * Methods assume a valid map lifecycle and should only be used inside Chronicle Map internals.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
 

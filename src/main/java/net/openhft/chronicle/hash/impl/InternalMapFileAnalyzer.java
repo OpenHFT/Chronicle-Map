@@ -360,5 +360,4 @@ public final class InternalMapFileAnalyzer {
         }
         return cnt;
     }
-
 }

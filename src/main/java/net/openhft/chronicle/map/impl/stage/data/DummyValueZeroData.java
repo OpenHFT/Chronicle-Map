@@ -27,6 +27,17 @@ import net.openhft.chronicle.map.impl.stage.map.ValueBytesInterop;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * {@link net.openhft.chronicle.hash.Data} view that represents a logical map
+ * value encoded as a sequence of zero bytes.
+ * <p>
+ * Chronicle-Map uses this data wrapper when a "dummy" value is required, for
+ * example to back {@code ChronicleSet} views or mark deleted replicated
+ * entries. The bytes are read from the shared {@link ZeroBytesStore} and
+ * interpreted using the map's configured {@code valueReader}. Most callers use
+ * the bytes form only; {@link #get()} is provided as a convenience and may
+ * allocate.
+ */
 @Staged
 public class DummyValueZeroData<V> extends AbstractData<V> {
 

@@ -8,6 +8,13 @@ import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Specialised {@link SegmentStages} implementation for query contexts.
+ *
+ * <p>In addition to the base segment bookkeeping, this stage computes the segment index directly
+ * from the current key hash code, ensuring that all subsequent staged operations work against the
+ * correct segment and tier chain for the queried key.
+ */
 @Staged
 public abstract class QuerySegmentStages extends SegmentStages {
 

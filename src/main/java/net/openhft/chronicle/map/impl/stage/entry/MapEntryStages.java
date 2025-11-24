@@ -20,6 +20,15 @@ import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
 
+/**
+ * Chronicle-Map specific extension of {@link HashEntryStages} that manages the
+ * value portion of a hash entry.
+ * <p>
+ * This stage knows how to lay out, read and update the value size and value
+ * bytes within a segment, including alignment, relocation when entry size
+ * changes and freeing of extra chunks. It also exposes a {@link MapEntry}
+ * view used by higher-level map contexts.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class MapEntryStages<K, V> extends HashEntryStages<K>

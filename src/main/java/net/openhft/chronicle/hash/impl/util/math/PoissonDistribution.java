@@ -3,6 +3,14 @@
  */
 package net.openhft.chronicle.hash.impl.util.math;
 
+/**
+ * Utilities for working with a Poisson distribution tailored to Chronicle Map sizing.
+ *
+ * <p>The methods in this class are used to estimate segment fill levels and choose capacity
+ * thresholds based on Poisson probabilities. Unlike general-purpose maths libraries, the
+ * implementation operates on a bounded domain suitable for large off-heap data structures and
+ * uses simple bisection-based solvers rather than depending on external dependencies.
+ */
 public class PoissonDistribution {
 
     private static final double EPSILON = 1e-12;

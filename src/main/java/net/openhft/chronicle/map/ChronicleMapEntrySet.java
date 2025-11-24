@@ -9,6 +9,14 @@ import java.util.AbstractSet;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * {@link java.util.Set} view over the entries of a Chronicle-Map.
+ *
+ * <p>The set is backed directly by the underlying map and reflects its contents
+ * in real time. Removal through this view delegates to the map, but the iterator
+ * itself does not support structural modification; callers should use
+ * {@link Map#remove(Object)} or {@link Map#remove(Object, Object)} instead.
+ */
 class ChronicleMapEntrySet<K, V> extends AbstractSet<Map.Entry<K, V>> {
 
     private final AbstractChronicleMap<K, V> map;

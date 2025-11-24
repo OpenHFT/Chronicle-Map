@@ -15,6 +15,13 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link SizedReader} and {@link BytesReader} for Chronicle Values.
+ *
+ * <p>The reader maps the underlying bytes directly into a native {@link Byteable} reference
+ * when possible and otherwise copies through a {@link Copyable} heap instance, allowing
+ * Chronicle hash structures to work efficiently with value interfaces on and off heap.
+ */
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class ValueReader<T>
         implements SizedReader<T>, BytesReader<T>, StatefulCopyable<ValueReader<T>> {

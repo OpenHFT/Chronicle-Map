@@ -9,6 +9,17 @@ import org.slf4j.helpers.MessageFormatter;
 
 import java.util.function.Supplier;
 
+/**
+ * Default {@link ChronicleHashCorruption} implementation used by Chronicle-Map.
+ * <p>
+ * Instances of this class capture information about suspected on-disk or
+ * in-memory corruption, including the affected segment index, a lazily
+ * evaluated message, and an optional cause. Helper methods route these
+ * instances to a {@link ChronicleHashCorruption.Listener}.
+ * <p>
+ * Callers normally use the static {@code report} or {@code reportException}
+ * methods rather than constructing this type directly.
+ */
 public class ChronicleHashCorruptionImpl implements ChronicleHashCorruption {
 
     private int segmentIndex;

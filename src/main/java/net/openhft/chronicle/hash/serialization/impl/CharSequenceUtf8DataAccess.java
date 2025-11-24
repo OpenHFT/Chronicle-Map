@@ -6,6 +6,13 @@ package net.openhft.chronicle.hash.serialization.impl;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link DataAccess} for general {@link CharSequence} values encoded as UTF-8.
+ *
+ * <p>The access reuses a backing {@link StringBuilder} when copying out via
+ * {@link #getUsing(CharSequence)}, allowing Chronicle hash structures to work with a
+ * mutable view when desired while still storing a compact UTF-8 representation.
+ */
 public final class CharSequenceUtf8DataAccess
         extends AbstractCharSequenceUtf8DataAccess<CharSequence> {
 

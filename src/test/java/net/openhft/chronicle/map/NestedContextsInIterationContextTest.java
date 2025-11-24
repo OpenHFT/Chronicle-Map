@@ -7,6 +7,10 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertNull;
 
+/**
+ * Verifies that nested map lookups within an iteration context are permitted
+ * and do not trigger context misuse errors.
+ */
 public class NestedContextsInIterationContextTest {
 
     @Test

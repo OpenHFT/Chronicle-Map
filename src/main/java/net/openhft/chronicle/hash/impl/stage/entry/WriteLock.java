@@ -15,6 +15,14 @@ import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.hash.impl.LocalLockState.*;
 
+/**
+ * Stage-backed interprocess write lock for a hash segment.
+ *
+ * <p>This lock provides exclusive access to a segment for mutating operations,
+ * coordinating with {@link SegmentStages} to upgrade from update locks where
+ * appropriate and to maintain consistent read/update/write lock counts across
+ * all contexts on the segment.
+ */
 @Staged
 public class WriteLock implements InterProcessLock {
 

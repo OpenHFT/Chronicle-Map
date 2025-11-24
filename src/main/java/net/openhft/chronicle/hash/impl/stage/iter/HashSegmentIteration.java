@@ -16,6 +16,18 @@ import net.openhft.sg.Staged;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/**
+ * Lock-based iteration logic over all entries in a hash segment and its tiered extensions.
+ *
+ * <p>This stage walks the off-heap hash lookup table for a single segment, visiting each live
+ * entry exactly once while respecting relocations that may occur when entries are removed or
+ * moved between tiers. Iteration always runs under the segment's update or read locks so that
+ * callers observe a consistent view of the segment contents.
+ *
+ * <p>The class is an internal part of Chronicle Map's staged pipeline and is not intended to be
+ * used directly by application code. Instances are not thread-safe and are expected to be
+ * confined to the owning query or iteration context.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class HashSegmentIteration<K, E extends HashEntry<K>>

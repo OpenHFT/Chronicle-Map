@@ -85,7 +85,6 @@ public class DirtyReadVictim implements Runnable {
             /*
                ben.cotton@rutgers.edu   END
              */
-
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
                             " DirtyReadVictim got() coupon=" +

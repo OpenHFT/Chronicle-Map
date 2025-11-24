@@ -9,6 +9,14 @@ import net.openhft.chronicle.hash.serialization.SizedWriter;
 import net.openhft.chronicle.wire.*;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Base class for marshallers that encode values via Chronicle Wire with per-thread caching.
+ *
+ * <p>The marshaller uses a thread-local {@link Wire} to compute the size of a value and,
+ * when possible, reuses the previously encoded bytes when writing to an output {@link Bytes}.
+ * Subclasses implement {@link #writeToWire(Wire, Object)} to define how a particular value
+ * type is written.
+ */
 public abstract class CachingCreatingMarshaller<V>
         extends InstanceCreatingMarshaller<V>
         implements SizedReader<V>, SizedWriter<V> {

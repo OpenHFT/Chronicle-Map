@@ -17,6 +17,13 @@ import java.util.Objects;
 
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+/**
+ * Base {@link DataAccess} for {@link CharSequence} implementations encoded as UTF-8.
+ *
+ * <p>Subclasses provide the concrete character sequence type and conversion logic in
+ * {@link #getUsing(Object)}; this class handles encoding the sequence into an internal
+ * elastic {@link Bytes} buffer and exposing it through the {@link Data} view.
+ */
 abstract class AbstractCharSequenceUtf8DataAccess<T extends CharSequence> extends AbstractData<T>
         implements DataAccess<T>, Data<T> {
 

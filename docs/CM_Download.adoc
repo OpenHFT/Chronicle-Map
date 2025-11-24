@@ -1,11 +1,15 @@
 = Download the library
+:toc:
+:lang: en-GB
+:source-highlighter: rouge
 Neil Clifford
+:toc:
 :toc: macro
+:icons: font
+:lang: en-GB
 :toclevels: 1
 :css-signature: demo
 :toc-placement: macro
-:icons: font
-:lang: en-GB
 :source-highlighter: rouge
 
 toc::[]

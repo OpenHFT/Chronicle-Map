@@ -15,6 +15,16 @@ import net.openhft.sg.Staged;
 import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 import static net.openhft.chronicle.map.ReplicatedChronicleMap.ADDITIONAL_ENTRY_BYTES;
 
+/**
+ * {@link MapEntryStages} variant that embeds replication metadata alongside
+ * the key and value.
+ * <p>
+ * Each entry stores its origin identifier, origin timestamp and a deletion
+ * flag, and this stage provides helpers for reading and updating that state as
+ * well as for notifying {@link ReplicationUpdate} when changes occur. The
+ * extra data increases the logical entry size by
+ * {@link net.openhft.chronicle.map.ReplicatedChronicleMap#ADDITIONAL_ENTRY_BYTES}.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedMapEntryStages<K, V> extends MapEntryStages<K, V>

@@ -13,6 +13,13 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
+/**
+ * {@link SizedReader} and {@link BytesReader} for {@link Externalizable} types.
+ *
+ * <p>The reader constructs or reuses an instance of the target type and delegates to its
+ * {@link Externalizable#readExternal(java.io.ObjectInput)} method using an
+ * {@link ObjectInputStream} backed by the supplied {@link Bytes}.
+ */
 public class ExternalizableReader<T extends Externalizable> extends InstanceCreatingMarshaller<T>
         implements SizedReader<T>, BytesReader<T> {
 

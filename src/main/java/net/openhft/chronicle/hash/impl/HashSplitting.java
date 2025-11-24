@@ -12,6 +12,11 @@ import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.core.Maths.isPowerOf2;
 
+/**
+ * Strategy for splitting hash codes into segment indices and per-segment hashes
+ * for Chronicle maps. Provides implementations optimised for single, power-of-2
+ * and non-power-of-2 segment counts to keep distribution efficient.
+ */
 public interface HashSplitting extends Marshallable {
 
     static HashSplitting forSegments(int segments) {

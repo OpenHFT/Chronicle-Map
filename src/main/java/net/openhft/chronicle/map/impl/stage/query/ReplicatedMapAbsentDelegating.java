@@ -10,6 +10,15 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Lightweight {@link Absent} implementation that delegates to
+ * {@link ReplicatedMapAbsent} while deriving the absent key from the current
+ * {@link KeySearch} stage.
+ * <p>
+ * This indirection allows the query pipeline to reuse the same absent-entry
+ * logic for both replicated and non-replicated maps while keeping the
+ * replication-specific behaviour encapsulated in {@link ReplicatedMapAbsent}.
+ */
 @Staged
 public class ReplicatedMapAbsentDelegating<K, V> implements Absent<K, V> {
 

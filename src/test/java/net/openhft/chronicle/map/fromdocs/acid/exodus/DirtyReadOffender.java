@@ -40,7 +40,6 @@ public class DirtyReadOffender implements Runnable {
                START
 
              */
-
             long stamp = 0;
             System.out.println(
                     " @t=" + System.currentTimeMillis() +

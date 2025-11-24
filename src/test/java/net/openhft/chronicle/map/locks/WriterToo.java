@@ -9,6 +9,10 @@ import org.junit.Assert;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
+/**
+ * Runnable used in lock contention tests to simulate a writer holding a map
+ * entry lock for a period of time.
+ */
 class WriterToo implements Runnable {
 
     @Override

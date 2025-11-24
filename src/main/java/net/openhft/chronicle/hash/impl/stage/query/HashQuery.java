@@ -18,6 +18,17 @@ import net.openhft.sg.Staged;
 
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.ABSENT;
 
+/**
+ * Common query-stage logic for locating and optionally removing entries keyed by {@code K}.
+ *
+ * <p>{@code HashQuery} coordinates key search, hash-lookup probing, and segment locking for a
+ * single logical query context. It owns an input {@link DataAccess}, tracks whether the queried
+ * entry is present across all tiers of the segment, and provides a consistent {@link #doRemove()}
+ * implementation that updates both the entry area and hash lookup table.
+ *
+ * <p>This class forms part of Chronicle Map's internal staged engine and is not intended to be
+ * used directly by application code.
+ */
 @Staged
 public abstract class HashQuery<K> implements SetEntry<K> {
 

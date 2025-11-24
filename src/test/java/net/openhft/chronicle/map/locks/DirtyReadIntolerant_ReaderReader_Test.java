@@ -16,7 +16,6 @@ import static org.junit.Assume.assumeFalse;
  * This Test efforts to ensure that a READERS-only set of requests to access the CSL
  * is always granted (i.e. csl.tryReadLock()  ALWAYS returns true)
  */
-
 public class DirtyReadIntolerant_ReaderReader_Test {
 
     @Before

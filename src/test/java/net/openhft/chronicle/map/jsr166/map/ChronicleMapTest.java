@@ -22,7 +22,6 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd.
  */
-
 @SuppressWarnings({"rawtypes", "unchecked", "try"})
 public class ChronicleMapTest extends JSR166TestCase {
 

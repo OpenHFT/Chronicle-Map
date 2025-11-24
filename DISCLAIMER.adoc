@@ -1,4 +1,7 @@
 == Data
+:toc:
+:lang: en-GB
+:source-highlighter: rouge
 
 This product uses Google Analytics, a web analytics service provided by Google, Inc.("Google").
 

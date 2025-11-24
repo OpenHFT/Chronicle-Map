@@ -15,6 +15,15 @@ import java.util.concurrent.TimeUnit;
 import static net.openhft.chronicle.hash.impl.LocalLockState.READ_LOCKED;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 
+/**
+ * Stage-backed interprocess read lock for a single hash segment.
+ *
+ * <p>The lock coordinates with {@link SegmentStages} to acquire and release the
+ * shared segment header read lock and updates per-segment lock counters so that
+ * read, update and write locking can coexist safely across nested contexts.
+ * Callers obtain instances via the owning {@link net.openhft.chronicle.hash.SegmentLock SegmentLock} rather than using
+ * this class directly.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ReadLock implements InterProcessLock {

@@ -21,6 +21,18 @@ import net.openhft.sg.Staged;
 
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.*;
 
+/**
+ * Performs integrity checks and repair operations for a single segment tier.
+ *
+ * <p>A {@code TierRecovery} instance scans the hash-lookup table for the current tier, validates
+ * each entry against the on-disk key and value bytes, and rebuilds free-list and counter state.
+ * It also normalises duplicate keys, fixes inconsistent metadata in the tier counters area, and
+ * ensures that hash-lookup entries obey the expected probing and masking rules.
+ *
+ * <p>This class is used exclusively as part of Chronicle Map recovery routines and is not
+ * thread-safe; callers must ensure that no concurrent modifications to the underlying map occur
+ * while recovery is in progress.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class TierRecovery {

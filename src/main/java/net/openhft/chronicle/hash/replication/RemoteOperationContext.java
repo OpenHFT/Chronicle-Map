@@ -7,7 +7,7 @@ import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.HashContext;
 
 /**
- * Context of internal replication operation.
+ * Context provided to replication logic when applying remote updates to a {@link ChronicleHash}.
  *
  * @param <K> the key type of accessed {@link ChronicleHash}
  */

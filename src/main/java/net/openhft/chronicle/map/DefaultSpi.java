@@ -7,6 +7,15 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.replication.MapRemoteOperations;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Default implementation of all Chronicle-Map SPI interfaces.
+ * <p>
+ * This singleton provides baseline implementations of {@link MapMethods},
+ * {@link MapEntryOperations}, {@link MapRemoteOperations}, and
+ * {@link DefaultValueProvider}. Builders use it when callers have not supplied
+ * custom strategies, keeping the configuration surface small while still
+ * allowing advanced users to plug in specialised behaviour.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 final class DefaultSpi implements MapMethods, MapEntryOperations, MapRemoteOperations,
         DefaultValueProvider {

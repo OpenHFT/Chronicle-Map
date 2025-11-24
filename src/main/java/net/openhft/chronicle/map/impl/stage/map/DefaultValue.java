@@ -10,6 +10,14 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Stage that exposes the default value used for absent map entries.
+ * <p>
+ * The default is represented by {@link DummyValueZeroData}, which reads a
+ * logical value from a stream of zero bytes using the configured value
+ * marshaller. This stage is typically used when a {@code ChronicleSet}
+ * overlay needs a synthetic value.
+ */
 @Staged
 public abstract class DefaultValue<V> {
 

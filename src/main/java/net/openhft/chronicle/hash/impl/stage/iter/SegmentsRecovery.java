@@ -17,6 +17,19 @@ import net.openhft.sg.Staged;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
+/**
+ * Recovers all segments and extra tiers of a Chronicle hash from potentially corrupted on-disk
+ * state.
+ *
+ * <p>This stage walks each segment and its extra tiers, rebuilding tier linkage metadata,
+ * correcting counters and free-list information, and delegating detailed per-tier checks to
+ * {@link TierRecovery}. Any inconsistencies detected during the pass are reported via the
+ * supplied {@link ChronicleHashCorruption.Listener}, and where possible the structure is brought
+ * back to a self-consistent state suitable for further use.
+ *
+ * <p>The implementation is intended for use by recovery tooling and should not be invoked while
+ * the map is concurrently mutated by other threads or processes.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class SegmentsRecovery implements IterationContext {

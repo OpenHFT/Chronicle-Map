@@ -10,6 +10,15 @@ import net.openhft.sg.Staged;
 
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 
+/**
+ * Helper stage that exposes a per-context {@link SizedReader} for values.
+ * <p>
+ * Some {@code SizedReader} implementations keep internal state and therefore
+ * cannot be shared safely across threads. This class takes the map's
+ * configured value reader and {@linkplain net.openhft.chronicle.hash.serialization.StatefulCopyable#copyIfNeeded(Object) copies it} when
+ * necessary so that staged code can decode values from bytes without
+ * additional allocation or locking.
+ */
 @Staged
 public class ValueBytesInterop<V> {
 

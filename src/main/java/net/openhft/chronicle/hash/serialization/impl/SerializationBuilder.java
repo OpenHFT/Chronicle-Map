@@ -21,6 +21,15 @@ import java.nio.ByteBuffer;
 import static net.openhft.chronicle.hash.serialization.SizeMarshaller.constant;
 import static net.openhft.chronicle.hash.serialization.SizeMarshaller.stopBit;
 
+/**
+ * Configures serializers and {@link DataAccess} implementations for Chronicle hash key and value types.
+ *
+ * <p>Given a Java type this builder chooses an appropriate combination of {@link SizedReader},
+ * {@link SizedWriter} and {@link SizeMarshaller}, taking into account Chronicle-specific types
+ * such as {@link Byteable}, {@link BytesMarshallable}, {@link Externalizable} and Chronicle
+ * Values. It is used by Chronicle-Map and related builders and is not intended to be used
+ * directly by application code.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class SerializationBuilder<T> implements Cloneable {
 

@@ -11,6 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
+/**
+ * Manages the chain of staged contexts associated with a thread and map instance.
+ *
+ * <p>{@code Chaining} keeps track of all contexts created in a thread for a given
+ * {@link VanillaChronicleMap}, handles reuse of existing contexts, and ensures that
+ * the owning map can be garbage collected by only holding a strong reference while
+ * a context is actively in use.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
 public abstract class Chaining extends ChainingInterface {

@@ -25,6 +25,15 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Holder for an on-heap value and its corresponding {@link Data} view.
+ * <p>
+ * This stage copies the map's {@code valueDataAccess} so that callers can
+ * wrap a Java value into a {@code Data} instance without allocating new
+ * access objects on each operation. Instances are reused via
+ * {@link #getUnusedWrappedValueHolder()} and are typically accessed through
+ * {@link net.openhft.chronicle.map.impl.stage.map.WrappedValueInstanceDataHolderAccess}.
+ */
 @Staged
 public class WrappedValueInstanceDataHolder<V> {
 

@@ -12,6 +12,13 @@ import java.lang.reflect.Type;
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+/**
+ * {@link SizedMarshallableDataAccess} variant for writers that do not reuse instances.
+ *
+ * <p>This implementation always returns {@code null} from {@link #createInstance()}, forcing
+ * callers to supply their own instance when reading. It is useful when the writer logic
+ * itself manages object reuse or when values are treated as immutable snapshots.
+ */
 public class NotReusingSizedMarshallableDataAccess<T> extends SizedMarshallableDataAccess<T> {
 
     public NotReusingSizedMarshallableDataAccess(

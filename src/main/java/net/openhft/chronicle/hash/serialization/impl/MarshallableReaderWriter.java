@@ -10,6 +10,13 @@ import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link CachingCreatingMarshaller} for Chronicle {@link Marshallable} types.
+ *
+ * <p>Values are read and written using {@link Wire}-level marshalling, which allows complex
+ * object graphs to be stored in Chronicle hash structures while still benefiting from
+ * cached size computations for repeated values.
+ */
 public class MarshallableReaderWriter<V extends Marshallable>
         extends CachingCreatingMarshaller<V> {
     public MarshallableReaderWriter(Class<V> vClass) {

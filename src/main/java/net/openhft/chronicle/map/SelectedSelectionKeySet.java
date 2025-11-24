@@ -9,6 +9,13 @@ import java.nio.channels.SelectionKey;
 import java.util.AbstractSet;
 import java.util.Iterator;
 
+/**
+ * Double buffered selection key set used with epoll or selector optimisations.
+ * <p>
+ * This specialised set maintains two backing arrays and flips between them
+ * so that one buffer can be iterated by the selector thread while the other
+ * is filled with fresh keys, reducing allocation and contention.
+ */
 final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
 
     private SelectionKey[] keysA;

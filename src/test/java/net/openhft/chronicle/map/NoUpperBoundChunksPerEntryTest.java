@@ -6,6 +6,10 @@ package net.openhft.chronicle.map;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Confirms ChronicleMap can store very large values spanning many chunks when
+ * no explicit upper bound is set for chunks per entry.
+ */
 public class NoUpperBoundChunksPerEntryTest {
 
     @Test

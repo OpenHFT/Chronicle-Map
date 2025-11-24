@@ -6,6 +6,10 @@ package net.openhft.chronicle.map;
 import org.junit.Ignore;
 import org.junit.Test;
 
+/**
+ * Placeholder test intended to verify warning behaviour on Windows; currently
+ * ignored due to OOM/crash risk when allocating huge maps.
+ */
 public class WarnOnWindowsTest {
 
     @Test

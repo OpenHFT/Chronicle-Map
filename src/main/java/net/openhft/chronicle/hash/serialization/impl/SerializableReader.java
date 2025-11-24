@@ -15,6 +15,13 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;
 
+/**
+ * {@link SizedReader} and {@link BytesReader} implementation for {@link Serializable} types.
+ *
+ * <p>The reader reconstructs objects from a Java {@link ObjectInputStream} backed by the
+ * supplied {@link Bytes}, providing a fallback for types without Chronicle-specific
+ * marshallers.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class SerializableReader<T extends Serializable> implements SizedReader<T>, BytesReader<T> {
 

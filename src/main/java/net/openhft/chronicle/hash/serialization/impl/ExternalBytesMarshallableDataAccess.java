@@ -19,6 +19,14 @@ import java.lang.reflect.Type;
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+/**
+ * {@link DataAccess} that stores objects by writing them into an internal {@link Bytes} buffer.
+ *
+ * <p>Encoding and decoding are delegated to pluggable {@link SizedReader} and
+ * {@link BytesWriter} implementations so that callers can define how instances are
+ * converted to and from bytes while Chronicle hash structures work purely with the
+ * resulting binary representation.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ExternalBytesMarshallableDataAccess<T> extends InstanceCreatingMarshaller<T>
         implements DataAccess<T>, Data<T> {

@@ -30,7 +30,6 @@ public class DirtyReadVictimTest {
             /*
                ben.cotton@rutgers.edu   START
              */
-
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"

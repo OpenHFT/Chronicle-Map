@@ -6,6 +6,13 @@ package net.openhft.chronicle.map.internal;
 import net.openhft.chronicle.core.analytics.AnalyticsFacade;
 import net.openhft.chronicle.core.pom.PomProperties;
 
+/**
+ * Singleton holder for the Chronicle Map analytics reporter.
+ * <p>
+ * Centralises construction of the shared {@link AnalyticsFacade} so callers reuse the same
+ * measurement id, secret and app version metadata derived from the POM, while still honouring the
+ * global {@code chronicle.analytics.disable} toggle.
+ */
 public enum AnalyticsHolder {
     ; // none
 

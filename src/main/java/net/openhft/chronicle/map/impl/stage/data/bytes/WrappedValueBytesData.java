@@ -28,6 +28,16 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * {@link net.openhft.chronicle.hash.Data} view that wraps an arbitrary
+ * {@link BytesStore} containing a value encoding.
+ * <p>
+ * Instances are pooled and reused by {@link net.openhft.chronicle.map.impl.stage.map.WrappedValueBytesDataAccess} to
+ * minimise allocation when map operations need to treat external bytes as a
+ * value, for example when reading replicated updates. The wrapped region is
+ * described by {@code wrappedValueBytesStore}, {@code offset} and {@code size}
+ * and decoded via the configured {@link ValueBytesInterop}.
+ */
 @Staged
 public class WrappedValueBytesData<V> extends AbstractData<V> {
 

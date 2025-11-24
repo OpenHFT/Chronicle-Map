@@ -23,6 +23,16 @@ import net.openhft.chronicle.map.impl.stage.replication.ReplicationUpdate;
 import net.openhft.sg.Context;
 import net.openhft.sg.Staged;
 
+/**
+ * Staged context definition used to compile Chronicle-Map iteration pipelines
+ * for replicated maps.
+ * <p>
+ * The {@link Context} annotation declares all stages required to scan a
+ * replicated segment: entry and key access, value wrapping, checksum handling,
+ * replication metadata and recovery logic. As with {@link MapIterationContext},
+ * this class is purely declarative and contains no executable logic; it is
+ * consumed by the staging framework to generate optimised iteration code.
+ */
 @Staged
 @Context(topLevel = {
         CompilationAnchor.class,

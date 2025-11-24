@@ -1,10 +1,16 @@
 = Behaviour Customization
+:toc:
+:lang: en-GB
+:source-highlighter: rouge
 Neil Clifford
+:toc:
 :toc: macro
+:icons: font
+:lang: en-GB
 :toclevels: 2
 :css-signature: demo
 :toc-placement: macro
-:icons: font
+:source-highlighter: rouge
 
 :lang: en-GB
 :source-highlighter: rouge

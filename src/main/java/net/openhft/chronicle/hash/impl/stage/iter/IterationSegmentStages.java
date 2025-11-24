@@ -11,6 +11,17 @@ import net.openhft.chronicle.hash.impl.stage.query.KeySearch;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Segment-level staging used while iterating over tiered hash segments.
+ *
+ * <p>In addition to the base {@link SegmentStages} responsibilities, this stage tracks the
+ * current {@link HashSegmentIteration} and {@link HashLookupSearch} so that tier transitions
+ * performed during updates (for example when relocating an entry to a higher tier) can correctly
+ * reinitialise hash-lookup search state.
+ *
+ * <p>The class is internal to Chronicle Map's staged query and iteration engine and must not be
+ * used from application code.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class IterationSegmentStages extends SegmentStages {

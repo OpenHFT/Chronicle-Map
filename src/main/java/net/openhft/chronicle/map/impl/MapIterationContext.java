@@ -19,6 +19,13 @@ import net.openhft.chronicle.map.impl.stage.map.*;
 import net.openhft.sg.Context;
 import net.openhft.sg.Staged;
 
+/**
+ * Staged context definition used to compile Chronicle-Map iteration pipelines.
+ *
+ * <p>The {@link Context} annotation lists the stages that participate in a compiled
+ * iteration, including segment iteration, key hashing, value access and recovery. This
+ * class itself contains no logic; it serves as a wiring template for the staging framework.
+ */
 @Staged
 @Context(topLevel = {
         CompilationAnchor.class,

@@ -19,6 +19,14 @@ import net.openhft.sg.Staged;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.format;
 import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
+/**
+ * Tier recovery logic specialised for replicated Chronicle-Map segments.
+ * <p>
+ * In addition to the generic {@link TierRecovery} checks, this stage validates
+ * and repairs the {@code tierDeleted} counter and clears modification bits in
+ * all {@link ReplicatedChronicleMap.ModificationIterator} instances so that
+ * recovery does not leave stale replication state behind.
+ */
 @Staged
 public class ReplicatedTierRecovery extends TierRecovery {
 

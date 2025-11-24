@@ -13,6 +13,16 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@link MapContext} implementation that delegates core entry operations to
+ * the owning {@link net.openhft.chronicle.map.VanillaChronicleMap}.
+ * <p>
+ * The staged map contexts call into this class for {@code get}, {@code put}
+ * and {@code remove} style operations, which in turn forward to the map's
+ * configured entry operations and default value provider. This keeps the
+ * staged code generic while allowing different maps to plug in custom
+ * behaviour.
+ */
 @Staged
 public abstract class MapEntryOperationsDelegation<K, V, R> implements MapContext<K, V, R> {
 

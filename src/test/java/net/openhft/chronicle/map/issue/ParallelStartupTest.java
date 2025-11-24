@@ -52,5 +52,4 @@ public class ParallelStartupTest {
             Assertions.fail();
         }
     }
-
 }

@@ -3,6 +3,13 @@
  */
 package net.openhft.chronicle.hash.impl.util.math;
 
+/**
+ * Utilities for comparing {@code double} values with ULP-based precision.
+ *
+ * <p>The methods implement tolerant equality checks that treat values as equal when
+ * they are within a bounded number of representable doubles or within a supplied
+ * absolute error, following well-known floating point comparison techniques.
+ */
 class Precision {
 
     /**

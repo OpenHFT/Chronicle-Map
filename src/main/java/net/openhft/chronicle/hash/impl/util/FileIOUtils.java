@@ -7,6 +7,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+/**
+ * Blocking file-channel helpers for reading and writing {@link ByteBuffer}s fully.
+ *
+ * <p>The methods repeatedly invoke the underlying {@link FileChannel} until the buffer
+ * has no remaining bytes (or end of file is reached on read), simplifying code that
+ * would otherwise need to handle partial NIO operations.
+ */
 public final class FileIOUtils {
 
     private FileIOUtils() {

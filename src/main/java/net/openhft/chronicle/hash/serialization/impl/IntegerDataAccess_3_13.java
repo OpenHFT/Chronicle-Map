@@ -15,6 +15,13 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Legacy {@link DataAccess} for {@link Integer} values used for on-disk compatibility.
+ *
+ * <p>The access encodes the integer into a fixed four-byte {@link BytesStore}, exposing
+ * that representation for hashing and comparison while preserving the serialised format
+ * used by Chronicle Map 3.13.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class IntegerDataAccess_3_13 extends AbstractData<Integer>
         implements DataAccess<Integer>, Data<Integer> {

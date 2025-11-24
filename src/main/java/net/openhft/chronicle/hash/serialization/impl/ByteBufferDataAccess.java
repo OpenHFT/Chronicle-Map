@@ -18,6 +18,14 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+/**
+ * {@link DataAccess} implementation for {@link ByteBuffer}-backed keys or values.
+ *
+ * <p>The access presents the readable portion of the buffer as a {@link BytesStore},
+ * preserving the buffer's byte order and copying bytes into a caller-supplied buffer
+ * when {@link #getUsing(ByteBuffer)} is invoked. Instances are intended to be reused
+ * within a single map or set context and are not thread-safe.
+ */
 public class ByteBufferDataAccess extends AbstractData<ByteBuffer>
         implements DataAccess<ByteBuffer> {
 

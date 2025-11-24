@@ -22,6 +22,15 @@ import java.util.function.Predicate;
 import static net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration.EntriesToTest.ALL;
 import static net.openhft.chronicle.map.impl.stage.iter.ReplicatedMapSegmentIteration.EntriesToTest.PRESENT;
 
+/**
+ * Segment iteration context for replicated Chronicle-Map instances.
+ * <p>
+ * This stage extends {@link MapSegmentIteration} with replication semantics:
+ * it knows how to expose present and absent entries as {@link ReplicableEntry}
+ * instances, maintain deleted-entry counters and update replication state via
+ * {@link ReplicationUpdate}. It underpins the implementation of methods such
+ * as {@code forEachSegmentReplicableEntry}.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedMapSegmentIteration<K, V, R> extends MapSegmentIteration<K, V, R>

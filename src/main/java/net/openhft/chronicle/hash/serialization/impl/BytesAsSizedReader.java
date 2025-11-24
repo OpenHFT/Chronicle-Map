@@ -12,6 +12,13 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Adapter that exposes a {@link BytesReader} as a {@link SizedReader}.
+ *
+ * <p>The implementation ignores the {@code size} hint and delegates reads directly to the
+ * underlying {@link BytesReader}, preserving any stateful behaviour by using
+ * {@link net.openhft.chronicle.hash.serialization.StatefulCopyable} when copying.
+ */
 public class BytesAsSizedReader<T>
         implements SizedReader<T>, StatefulCopyable<BytesAsSizedReader<T>> {
 

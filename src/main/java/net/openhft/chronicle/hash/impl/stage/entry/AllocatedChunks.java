@@ -7,6 +7,14 @@ import net.openhft.chronicle.hash.impl.VanillaChronicleHashHolder;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Stage-scoped helper that records how many chunks were allocated for a hash entry and performs
+ * the reallocation/copy workflow when the entry needs to move.
+ * <p>
+ * The stage collaborates with {@link SegmentStages}, {@link HashEntryStages} and an {@link Alloc}
+ * implementation to reserve space, copy the existing key/value bytes and report whether the entry
+ * ended up in a different tier after the move.
+ */
 @Staged
 public class AllocatedChunks {
 

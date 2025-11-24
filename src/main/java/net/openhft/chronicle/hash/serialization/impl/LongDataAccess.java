@@ -15,6 +15,13 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link DataAccess} and {@link Data} implementation for {@link Long} values.
+ *
+ * <p>The access maintains a fixed eight-byte {@link BytesStore} containing the raw long
+ * bits and uses {@link LongHashFunction} for hashing, so that Chronicle hash structures
+ * can treat boxed longs as compact binary keys or values.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class LongDataAccess extends AbstractData<Long>
         implements DataAccess<Long>, Data<Long> {

@@ -15,6 +15,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 
+/**
+ * {@link DataAccess} implementation that exposes a heap {@code byte[]} as {@link Data}.
+ *
+ * <p>The access wraps the current array in a {@link BytesStore} so that Chronicle hash
+ * structures can treat it as binary data when hashing, comparing and serialising entries.
+ * Instances are reused within a single map context and are not thread-safe for concurrent
+ * use.
+ */
 public class ByteArrayDataAccess extends AbstractData<byte[]> implements DataAccess<byte[]> {
 
     /**

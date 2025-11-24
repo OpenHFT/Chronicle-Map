@@ -8,6 +8,16 @@ import net.openhft.chronicle.hash.AbstractData;
 import net.openhft.chronicle.map.impl.stage.data.ZeroBytesStore;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link net.openhft.chronicle.hash.Data} implementation used as the value
+ * representation for {@link DummyValue}-backed Chronicle-Set views.
+ * <p>
+ * The bytes view is backed by {@link ZeroBytesStore} and always reports a
+ * fixed zero-length region, while {@link #get()} and
+ * {@link #getUsing(DummyValue)} return the singleton
+ * {@link DummyValue#DUMMY_VALUE}. This avoids allocating per-entry value
+ * objects while still satisfying the Chronicle-Hash data contract.
+ */
 public class DummyValueData extends AbstractData<DummyValue> {
 
     public static final DummyValueData INSTANCE = new DummyValueData();

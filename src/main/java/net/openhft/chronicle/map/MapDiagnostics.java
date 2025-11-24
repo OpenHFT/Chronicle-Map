@@ -6,6 +6,14 @@ package net.openhft.chronicle.map;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Simple command line diagnostics for Chronicle-Map files.
+ * <p>
+ * This utility opens a persisted map file and prints per segment
+ * statistics, including the number of entries and approximate key and
+ * value sizes. It is intended for troubleshooting and offline analysis
+ * rather than for use in production code paths.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class MapDiagnostics {
 

@@ -1,11 +1,15 @@
 = Chronicle Map Frequently Asked Questions
+:toc:
+:lang: en-GB
+:source-highlighter: rouge
 Neil Clifford, Peter Lawrey, Rob Austin, Jerry Shea
+:toc:
+:icons: font
+:lang: en-GB
 :toc: manual
 :toclevels: 1
 :css-signature: demo
 :toc-placement: preamble
-:icons: font
-:lang: en-GB
 :source-highlighter: rouge
 
 This document provides information for some common tasks within Chronicle Map.

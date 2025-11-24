@@ -14,6 +14,15 @@ import java.lang.reflect.Type;
 
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+/**
+ * {@link DataAccess} for {@link BytesMarshallable} keys and values.
+ *
+ * <p>For a given instance this access lazily serialises the object into an internal
+ * elastic {@link Bytes} buffer and exposes that binary representation through the
+ * {@link Data} interface. It can also materialise a new or reused instance from the
+ * stored bytes, keeping the wire-level form and object view in sync for Chronicle hash
+ * structures.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class BytesMarshallableDataAccess<T extends BytesMarshallable>
         extends InstanceCreatingMarshaller<T> implements DataAccess<T>, Data<T> {

@@ -10,6 +10,13 @@ import net.openhft.sg.Staged;
 
 import static net.openhft.chronicle.hash.serialization.StatefulCopyable.copyIfNeeded;
 
+/**
+ * Stage that exposes a per-context {@link SizedReader} for keys.
+ *
+ * <p>The reader is copied from the map's configured key reader using
+ * {@link net.openhft.chronicle.hash.serialization.StatefulCopyable} so that staged
+ * queries can safely decode keys without sharing mutable state across contexts.
+ */
 @Staged
 public class KeyBytesInterop<K> {
 

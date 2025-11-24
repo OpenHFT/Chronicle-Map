@@ -12,6 +12,15 @@ import net.openhft.chronicle.map.impl.stage.data.bytes.WrappedValueBytesData;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * {@link MapContext} implementation that wraps external bytes as map values.
+ * <p>
+ * The {@link #wrapValueBytesAsData(BytesStore, long, long)} method obtains a
+ * reusable {@link WrappedValueBytesData} instance, initialises it to point at
+ * the supplied {@link BytesStore} region and returns it as a {@code Data}
+ * view. This is used heavily in replication paths where values arrive as raw
+ * bytes.
+ */
 @Staged
 public abstract class WrappedValueBytesDataAccess<K, V, R> implements MapContext<K, V, R> {
 

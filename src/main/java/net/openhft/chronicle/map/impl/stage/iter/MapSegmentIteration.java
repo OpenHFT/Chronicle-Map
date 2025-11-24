@@ -14,6 +14,15 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Chronicle-Map specific segment iteration context.
+ * <p>
+ * This stage extends the generic {@link HashSegmentIteration} with
+ * {@link MapEntry} semantics and support for wrapping on-heap values via
+ * {@link WrappedValueInstanceDataHolder}. It forms the core of the staged
+ * implementation of {@code MapSegmentContext.forEachSegmentEntry} and related
+ * APIs.
+ */
 @Staged
 public abstract class MapSegmentIteration<K, V, R> extends HashSegmentIteration<K, MapEntry<K, V>>
         implements MapEntry<K, V>, IterationContext<K, V, R> {

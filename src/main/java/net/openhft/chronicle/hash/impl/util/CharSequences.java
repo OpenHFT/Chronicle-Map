@@ -5,6 +5,13 @@ package net.openhft.chronicle.hash.impl.util;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Utility methods for comparing and hashing {@link CharSequence} instances.
+ *
+ * <p>The helpers avoid unnecessary allocation when dealing with non-{@link String}
+ * implementations and provide consistent hashing semantics for keys that may be
+ * represented by different {@code CharSequence} types.
+ */
 public final class CharSequences {
 
     private CharSequences() {

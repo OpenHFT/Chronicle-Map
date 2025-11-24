@@ -10,6 +10,13 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.lang.reflect.Field;
 
+/**
+ * Thin wrapper around {@code posix_fallocate} exposed via {@link PosixAPI}.
+ *
+ * <p>Used to preallocate space for backing files on POSIX platforms so that Chronicle
+ * data structures can rely on the file size and avoid fragmentation-related latency
+ * spikes during growth.
+ */
 public final class PosixFallocate {
 
     private PosixFallocate() {

@@ -8,6 +8,12 @@ import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+/**
+ * Segment-level context for replicated ChronicleHash operations.
+ * <p>
+ * Extends {@link HashSegmentContext} with iteration hooks over {@link ReplicableEntry} instances so
+ * replication code can visit only the entries within the currently locked segment.
+ */
 public interface ReplicatedHashSegmentContext<K, E extends HashEntry<K>>
         extends HashSegmentContext<K, E> {
 

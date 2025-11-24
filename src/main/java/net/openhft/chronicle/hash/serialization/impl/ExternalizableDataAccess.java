@@ -17,6 +17,14 @@ import java.io.ObjectOutputStream;
 
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+/**
+ * {@link DataAccess} that serialises {@link Externalizable} objects using Java object streams.
+ *
+ * <p>Instances are written into an internal {@link java.io.ObjectOutputStream} backed by
+ * elastic bytes and later reconstructed via {@link ObjectInputStream}, allowing Chronicle
+ * hash structures to store arbitrary {@code Externalizable} types while keeping the on-disk
+ * format self-contained.
+ */
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class ExternalizableDataAccess<T extends Externalizable> extends SerializableDataAccess<T> {
 

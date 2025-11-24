@@ -9,6 +9,13 @@ import net.openhft.sg.Staged;
 
 import java.util.ConcurrentModificationException;
 
+/**
+ * Records the thread that owns a context and enforces single-threaded access.
+ *
+ * <p>On each public or locking operation the owning thread is compared with the
+ * current thread; any mismatch results in a {@link ConcurrentModificationException}
+ * that includes the identity string of the associated Chronicle hash.
+ */
 @Staged
 public class OwnerThreadHolder {
 

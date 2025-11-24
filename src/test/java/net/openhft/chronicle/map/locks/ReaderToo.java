@@ -96,7 +96,6 @@ class ReaderToo implements Runnable {
             /*
                ben.cotton@rutgers.edu   END
              */
-
             System.out.println(
                     "READER_TOO " +
                             " ,,@t=" + System.currentTimeMillis() +

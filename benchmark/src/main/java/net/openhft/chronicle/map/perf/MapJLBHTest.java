@@ -42,6 +42,11 @@ import java.util.concurrent.TimeUnit;
  * worst:       4276.22      2035.71      2465.79      2121.73      2068.48        12.35
  * -------------------------------------------------------------------------------------------------------------------
  */
+/**
+ * JLBH benchmark measuring ChronicleMap throughput for mixed get/put workloads
+ * using long keys and facade values, in both persisted and non-persisted
+ * configurations.
+ */
 public class MapJLBHTest implements JLBHTask {
     private static final int KEYS = Integer.getInteger("keys", 10_000_000);
     private static final int ITERATIONS = Math.max(10_000_000, KEYS);

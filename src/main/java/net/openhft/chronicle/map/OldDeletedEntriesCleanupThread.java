@@ -17,6 +17,18 @@ import java.util.function.Predicate;
 import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
 import static net.openhft.chronicle.hash.replication.TimeProvider.systemTimeIntervalBetween;
 
+/**
+ * Background thread that cleans up old tombstoned entries in replicated maps.
+ * <p>
+ * This thread iterates over segments in a randomised order and removes
+ * entries that have been marked deleted for longer than the configured
+ * cleanup timeout and have not been changed since. It holds only a weak
+ * reference to the map so that the map can still be garbage collected if
+ * the user forgets to close it.
+ * <p>
+ * The thread sleeps between full scans and can be shut down via
+ * {@link #close()}, which interrupts any sleep in progress.
+ */
 class OldDeletedEntriesCleanupThread extends Thread
         implements MapClosable, Predicate<ReplicableEntry> {
 

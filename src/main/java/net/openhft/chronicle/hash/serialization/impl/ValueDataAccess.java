@@ -19,6 +19,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 
+/**
+ * {@link DataAccess} for Chronicle Values stored via their native {@link Byteable} form.
+ *
+ * <p>The access maintains a native value instance backed by an off-heap or heap
+ * {@link BytesStore} and copies between native and heap implementations as required, so
+ * that Chronicle hash structures can treat value interfaces as fixed-size binary records.
+ */
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})
 public class ValueDataAccess<T> extends AbstractData<T> implements DataAccess<T> {
 

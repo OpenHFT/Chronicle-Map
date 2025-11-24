@@ -5,6 +5,13 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.values.Group;
 
+/**
+ * Value interface backing a stamped lock used by Chronicle-Map.
+ * <p>
+ * The fields defined here are implemented by Chronicle Values to
++ * provide a compact, off-heap friendly representation of the lock
+ * state associated with a map entry or segment.
+ */
 interface ChronicleStampedLockVOInterface {
 
     @Group(0)

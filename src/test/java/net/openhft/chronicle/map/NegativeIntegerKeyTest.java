@@ -9,6 +9,10 @@ import org.junit.Test;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Verifies ChronicleMap can persist and retrieve entries using negative
+ * integer keys without errors.
+ */
 public class NegativeIntegerKeyTest {
 
     @Test

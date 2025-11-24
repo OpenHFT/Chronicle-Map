@@ -45,6 +45,19 @@ import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonMap;
 import static net.openhft.chronicle.map.ChronicleMapBuilder.greatestCommonDivisor;
 
+/**
+ * Concrete Chronicle-Map implementation backed by Chronicle-Hash.
+ * <p>
+ * This class implements the off-heap, segment based key or value store
+ * for Chronicle-Map, including configuration of hashing, replication,
+ * value layout and analytics. Most users obtain instances via
+ * {@link ChronicleMapBuilder} rather than constructing this type
+ * directly.
+ *
+ * <p>The generic parameter {@code R} represents the return value
+ * strategy used by map operations and is an internal detail of the
+ * staged execution framework.
+ */
 @SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
 public class VanillaChronicleMap<K, V, R>
         extends VanillaChronicleHash<K, MapEntry<K, V>, MapSegmentContext<K, V, ?>, ExternalMapQueryContext<K, V, ?>>

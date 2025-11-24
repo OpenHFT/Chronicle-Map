@@ -24,6 +24,14 @@ import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
 import net.openhft.sg.Context;
 import net.openhft.sg.Staged;
 
+/**
+ * Staged context definition used to compile Chronicle-Map query pipelines.
+ *
+ * <p>The top-level and nested stages declared in {@link Context} describe how keys are
+ * read, looked up and resolved into entries and return values. Like {@link MapIterationContext},
+ * this class is a declarative template consumed by the staging framework rather than a
+ * container for executable logic.
+ */
 @Staged
 @Context(topLevel = {
         CompilationAnchor.class,

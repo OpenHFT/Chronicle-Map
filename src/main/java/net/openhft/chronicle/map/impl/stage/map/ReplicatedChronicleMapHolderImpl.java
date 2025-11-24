@@ -15,6 +15,16 @@ import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.sg.Stage;
 import net.openhft.sg.Staged;
 
+/**
+ * Staged implementation of {@link ReplicatedChronicleMapHolder} backed by a
+ * {@link ReplicatedChronicleMap}.
+ * <p>
+ * This class extends the generic {@link Chaining} context plumbing with
+ * replication-specific accessors, exposing the replicated map, its underlying
+ * {@link VanillaChronicleHash} view and the associated {@link ChronicleSet}
+ * overlay where present. It is instantiated and managed by the staging
+ * framework and is not intended to be created directly by user code.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedChronicleMapHolderImpl<K, V, R>

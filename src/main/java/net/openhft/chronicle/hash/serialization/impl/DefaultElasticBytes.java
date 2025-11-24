@@ -5,6 +5,13 @@ package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
 
+/**
+ * Centralises allocation of elastic {@link Bytes} with a sensible default capacity.
+ *
+ * <p>Small capacities are served from heap-backed buffers while very large capacities
+ * use direct memory, balancing GC pressure against the needs of large Chronicle data
+ * structures.
+ */
 final class DefaultElasticBytes {
 
     static final int DEFAULT_BYTES_CAPACITY = 32;

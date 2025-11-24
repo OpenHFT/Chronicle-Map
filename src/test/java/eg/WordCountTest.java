@@ -24,6 +24,10 @@ import static java.util.stream.Collectors.reducing;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+/**
+ * Example test demonstrating a ChronicleMap-backed word count over a gzipped
+ * War and Peace corpus, with expected counts derived via streams.
+ */
 public class WordCountTest {
 
     static final String[] words;

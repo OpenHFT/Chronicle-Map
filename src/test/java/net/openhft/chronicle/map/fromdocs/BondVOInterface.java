@@ -18,12 +18,10 @@ public interface BondVOInterface {
     long getIssueDate();
 
     void setIssueDate(long issueDate);  /* time in millis */
-
     @Group(1)
     long getMaturityDate();
 
     void setMaturityDate(long maturityDate);  /* time in millis */
-
     long addAtomicMaturityDate(long toAdd);
 
     @Group(1)
@@ -51,7 +49,6 @@ public interface BondVOInterface {
      …,
      * index_6 = 4.30pm
      */
-
     MarketPx getMarketPxIntraDayHistoryAt(int tradingDayHour);
 
     /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”

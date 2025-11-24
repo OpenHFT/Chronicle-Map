@@ -19,6 +19,11 @@ import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 
+/**
+ * JLBH benchmark that measures read/write latency for an in-memory
+ * non-persisted ChronicleMap, using a simple value interface to isolate map
+ * overhead without disk effects.
+ */
 public class NonPersistedMapJLBHTest implements JLBHTask {
     private static final int WARM_UP_ITERATIONS = 40_000;
     private static final int ITERATIONS = 500_000;

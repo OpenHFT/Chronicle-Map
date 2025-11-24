@@ -29,6 +29,13 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
+/**
+ * {@link BytesStore} implementation that behaves like an infinite region of zero bytes.
+ * <p>
+ * All reads return zero (or fill the target with zero) and writes are unsupported, making this a
+ * useful stand-in for absent or default values when a {@link BytesStore} is required by the API.
+ * The singleton {@link #INSTANCE} is shared internally across Chronicle Map stages.
+ */
 public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     INSTANCE;
 

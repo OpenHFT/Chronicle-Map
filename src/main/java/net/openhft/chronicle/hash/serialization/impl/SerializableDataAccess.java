@@ -17,6 +17,13 @@ import java.io.*;
 
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+/**
+ * {@link DataAccess} that serialises {@link Serializable} objects using standard Java object streams.
+ *
+ * <p>Objects are written into an internal {@link Bytes}-backed {@link OutputStream} and later
+ * reconstructed via {@link ObjectInputStream}, allowing Chronicle hash structures to store
+ * arbitrary serialisable values when Chronicle-specific marshallers are not available.
+ */
 @SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
 public class SerializableDataAccess<T extends Serializable> extends AbstractData<T>
         implements DataAccess<T> {

@@ -33,6 +33,17 @@ import static net.openhft.chronicle.algo.bitset.BitSetFrame.NOT_FOUND;
 import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.TIER_COUNTERS_AREA_SIZE;
 
+/**
+ * Core segment-level stage managing off-heap memory, tiers, and locks.
+ *
+ * <p>{@code SegmentStages} owns the view of a single hash segment and its tiered
+ * extensions, including the free-list, entry space offsets, and the segment header
+ * metadata. It also coordinates per-thread locking state via {@link LocksInterface}
+ * so that nested query and iteration contexts can share and upgrade locks safely.
+ *
+ * <p>This is a central internal building block of Chronicle Map and is not intended
+ * to be called directly from application code.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class SegmentStages implements SegmentLock, LocksInterface {

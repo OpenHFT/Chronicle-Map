@@ -10,6 +10,13 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link SizedReader} and {@link BytesReader} for {@link BytesMarshallable} types.
+ *
+ * <p>The reader creates or reuses an instance of the target type and delegates decoding to
+ * its {@link BytesMarshallable#readMarshallable(Bytes)} method, so that Chronicle hash
+ * structures can materialise values directly from their binary representation.
+ */
 public class BytesMarshallableReader<T extends BytesMarshallable>
         extends InstanceCreatingMarshaller<T> implements SizedReader<T>, BytesReader<T> {
 

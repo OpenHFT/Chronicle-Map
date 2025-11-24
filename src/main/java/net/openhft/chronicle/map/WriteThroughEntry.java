@@ -5,6 +5,13 @@ package net.openhft.chronicle.map;
 
 import java.util.AbstractMap;
 
+/**
+ * {@link java.util.Map.Entry} that writes through to the backing Chronicle-Map.
+ * <p>
+ * Instances of this class are returned from views such as {@code entrySet()}
+ * and ensure that {@link #setValue(Object)} both updates the underlying map
+ * and the in-memory entry representation.
+ */
 @SuppressWarnings("serial")
 class WriteThroughEntry<K, V> extends AbstractMap.SimpleEntry<K, V> {
     private static final long serialVersionUID = 0L;

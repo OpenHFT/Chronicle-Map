@@ -68,7 +68,6 @@ class Gamma {
      * Constants for the computation of double invGamma1pm1(double).
      * Copied from DGAM1 in the NSWC library.
      */
-
     /**
      * The constant {@code A0} defined in {@code DGAM1}.
      */

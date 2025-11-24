@@ -7,6 +7,15 @@ import net.openhft.chronicle.hash.impl.stage.entry.AllocatedChunks;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Allocates space for a new entry during a query and writes the key bytes into it.
+ *
+ * <p>The stage wraps {@link AllocatedChunks} to request enough chunks for the entry, delegates
+ * to the configured allocator, and initialises the entry at the returned position using the key
+ * provided by {@link KeySearch}. It also reports whether the allocation caused the segment to
+ * move to a different tier, which is useful for callers that need to update iteration or search
+ * state.
+ */
 @Staged
 public class SearchAllocatedChunks extends AllocatedChunks {
 

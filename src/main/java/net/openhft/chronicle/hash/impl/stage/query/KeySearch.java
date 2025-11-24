@@ -16,6 +16,14 @@ import net.openhft.sg.Staged;
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.ABSENT;
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
+/**
+ * Performs key-based search within a single hash segment tier.
+ *
+ * <p>The stage walks the hash-lookup table using {@link HashLookupSearch}, comparing candidate
+ * keys against an input {@link Data} instance held off-heap. When a matching entry is found it
+ * initialises {@link HashEntryStages} with the located position and records whether the search
+ * state is {@link SearchState#PRESENT} or {@link SearchState#ABSENT}.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class KeySearch<K> {

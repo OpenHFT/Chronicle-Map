@@ -8,6 +8,14 @@ import net.openhft.chronicle.core.Jvm;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Bridges Chronicle code to the JDK's cleaner mechanism.
+ *
+ * <p>This utility locates the appropriate cleaner implementation for the current Java
+ * version and exposes it via the lightweight {@link Cleaner} interface. It is used to
+ * arrange explicit cleanup of direct buffers and other off-heap state without relying
+ * on finalisers.
+ */
 public class CleanerUtils {
 
     private static final Method CREATE_METHOD;

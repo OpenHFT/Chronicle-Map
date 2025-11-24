@@ -13,6 +13,14 @@ import org.jetbrains.annotations.NotNull;
 
 import static net.openhft.chronicle.hash.impl.stage.query.KeySearch.SearchState.PRESENT;
 
+/**
+ * {@link MapAbsent} specialisation for replicated Chronicle-Map instances.
+ * <p>
+ * When inserting into a replicated map this stage is responsible for updating
+ * the replication metadata on the corresponding entry, adjusting deletion
+ * counters and notifying {@link ReplicationUpdate} so that change sets are
+ * kept consistent across nodes.
+ */
 @Staged
 public abstract class ReplicatedMapAbsent<K, V> extends MapAbsent<K, V> {
 

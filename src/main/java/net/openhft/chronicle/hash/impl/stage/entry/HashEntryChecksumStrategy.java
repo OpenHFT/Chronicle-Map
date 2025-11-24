@@ -10,6 +10,11 @@ import net.openhft.sg.Staged;
 import static net.openhft.chronicle.hash.impl.stage.entry.ChecksumHashing.hash8To16Bytes;
 
 @Staged
+/**
+ * Computes and stores per-entry checksums within a map segment. Combines key
+ * hash code, key size, and payload hash to detect corruption when reading back
+ * entries.
+ */
 public class HashEntryChecksumStrategy implements ChecksumStrategy {
 
     @StageRef

@@ -9,6 +9,12 @@ import net.openhft.chronicle.hash.serialization.SizedReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link SizedReader} for {@link StringBuilder} values encoded as UTF-8.
+ *
+ * <p>The reader validates the declared character count, ensures the builder has sufficient
+ * capacity, and then fills it by parsing UTF-8 bytes from the supplied {@link Bytes}.
+ */
 public final class StringBuilderSizedReader
         implements SizedReader<StringBuilder>, EnumMarshallable<StringBuilderSizedReader> {
     public static final StringBuilderSizedReader INSTANCE = new StringBuilderSizedReader();

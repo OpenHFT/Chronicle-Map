@@ -8,6 +8,13 @@ import org.jetbrains.annotations.Nullable;
 
 import static net.openhft.chronicle.hash.serialization.impl.DefaultElasticBytes.DEFAULT_BYTES_CAPACITY;
 
+/**
+ * {@link DataAccess} for {@link StringBuilder} values encoded as UTF-8.
+ *
+ * <p>The access maintains an internal UTF-8 representation of the current builder contents
+ * and can copy them into a caller-supplied or newly created {@link StringBuilder}, which
+ * is useful when values are updated in place within Chronicle hash structures.
+ */
 public final class StringBuilderUtf8DataAccess
         extends AbstractCharSequenceUtf8DataAccess<StringBuilder> {
 

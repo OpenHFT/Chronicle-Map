@@ -20,7 +20,19 @@ import java.nio.channels.OverlappingFileLockException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-
+ 
+/**
+ * Manages canonical {@link RandomAccessFile} instances and file locks per canonical file.
+ *
+ * <p>This utility ensures that all access to a given backing file within a JVM goes through a
+ * single shared {@link RandomAccessFile} reference, so that file locking and resource management
+ * can be coordinated. It provides helpers for acquiring shared and exclusive {@link FileLock
+ * FileLocks} and for executing I/O actions under those locks while honouring configuration that
+ * may disable OS-level locking on some platforms.
+ *
+ * <p>The class is internal infrastructure for Chronicle Map's persistence and recovery logic and
+ * is not intended to be used directly from application code.
+ */
 public final class CanonicalRandomAccessFiles {
 
     /**

@@ -15,6 +15,13 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link DataAccess} and {@link Data} implementation for {@link Double} values.
+ *
+ * <p>The access encodes the double into an eight-byte {@link BytesStore} and exposes it
+ * as a binary view suitable for hashing and comparison, using {@link LongHashFunction}
+ * over the raw IEEE 754 bits to maintain consistent semantics.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class DoubleDataAccess extends AbstractData<Double>
         implements DataAccess<Double>, Data<Double> {

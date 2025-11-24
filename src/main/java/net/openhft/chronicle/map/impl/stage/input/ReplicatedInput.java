@@ -17,6 +17,15 @@ import net.openhft.chronicle.map.replication.MapRemoteQueryContext;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Staged adapter that applies replicated updates to a Chronicle-Map segment.
+ * <p>
+ * Implementations read replication events from a {@link Bytes} stream,
+ * initialise {@link ReplicationUpdate} with the remote identifiers and then
+ * route {@code put} or {@code remove} operations through the map's
+ * {@code remoteOperations} API. The class also provides access to a dummy
+ * zero value via {@link #dummyZeroValue()} for set-style semantics.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class ReplicatedInput<K, V, R> implements RemoteOperationContext<K>,

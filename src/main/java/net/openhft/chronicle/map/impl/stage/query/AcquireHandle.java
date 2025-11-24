@@ -9,6 +9,14 @@ import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * {@link MapClosable} handle returned by {@code acquireUsing} style methods.
+ * <p>
+ * While open, callers may mutate the {@link UsingReturnValue} instance
+ * associated with the query. When {@link #close()} is called the new value is
+ * written back to the map via {@link MapQuery#replaceValue} and the underlying
+ * query context is closed, releasing any off-heap resources.
+ */
 @Staged
 public class AcquireHandle<K, V> implements MapClosable {
 

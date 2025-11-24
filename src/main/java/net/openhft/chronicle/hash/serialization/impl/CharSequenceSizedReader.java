@@ -13,6 +13,13 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link SizedReader} for {@link CharSequence} values encoded as UTF-8.
+ *
+ * <p>The reader validates the declared character length, then parses UTF-8 bytes from the
+ * supplied {@link Bytes} into a {@link StringBuilder}, reusing the {@code using} instance
+ * when possible to reduce allocations.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class CharSequenceSizedReader implements SizedReader<CharSequence>,
         StatefulCopyable<CharSequenceSizedReader>, ReadResolvable<CharSequenceSizedReader> {

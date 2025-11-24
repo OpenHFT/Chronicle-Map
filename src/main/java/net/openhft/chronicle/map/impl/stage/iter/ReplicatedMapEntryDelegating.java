@@ -13,6 +13,16 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@link MapEntry} implementation that delegates entry operations to the
+ * underlying {@link ReplicatedMapSegmentIteration}.
+ * <p>
+ * The stage presents a replication-aware entry view while forwarding all
+ * mutation methods to the iteration context and exposing the underlying
+ * {@link ReplicableEntry} through {@link #d()}. This indirection keeps the
+ * replication-specific bookkeeping encapsulated in
+ * {@link ReplicatedMapEntryStages}.
+ */
 @Staged
 public class ReplicatedMapEntryDelegating<K, V>
         implements MapEntry<K, V>, ReplicableEntryDelegating {

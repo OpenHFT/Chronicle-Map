@@ -19,7 +19,10 @@ import static net.openhft.chronicle.values.ValueModel.$$HEAP;
 import static net.openhft.chronicle.values.ValueModel.$$NATIVE;
 
 /**
- * @author Rob Austin.
+ * XStream converter that serialises and deserialises Chronicle Map implementations.
+ * <p>
+ * Supports Chronicle Values generated classes, handling both heap and native variants, and safely
+ * restores empty collection singletons. Used by test and tooling code that writes maps to XML.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 class AbstractChronicleMapConverter<K, V> implements Converter {

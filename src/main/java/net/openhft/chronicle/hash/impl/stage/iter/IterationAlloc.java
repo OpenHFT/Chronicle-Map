@@ -8,6 +8,14 @@ import net.openhft.chronicle.hash.impl.stage.entry.SegmentStages;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Allocation strategy used when resizing or relocating entries during segment iteration.
+ *
+ * <p>The allocator frees the previous location, then searches the current tier followed by later
+ * tiers until it finds space for the requested number of chunks. It deliberately never walks
+ * backwards through tiers so that iterator implementations do not visit relocated entries more
+ * than once.
+ */
 @Staged
 public class IterationAlloc implements Alloc {
 

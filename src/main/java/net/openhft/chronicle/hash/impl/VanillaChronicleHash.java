@@ -1220,5 +1220,4 @@ public abstract class VanillaChronicleHash<K,
     }
 
      */
-
 }

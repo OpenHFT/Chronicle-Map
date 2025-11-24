@@ -12,6 +12,17 @@ import net.openhft.sg.Stage;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Helper stage that tracks replication-related state for the current entry.
+ * <p>
+ * The stage records the remote identifier, timestamp and node identifier for
+ * an update and exposes convenience methods for manipulating the corresponding
+ * entry in the {@link ReplicatedChronicleMap} change-set (for example
+ * {@link #raiseChange()}, {@link #dropChange()} and
+ * {@link #moveChange(long, long, long)}). Query and iteration contexts use
+ * it to keep the map's internal replication bookkeeping in sync with entry
+ * mutations.
+ */
 @Staged
 public abstract class ReplicationUpdate<K> implements RemoteOperationContext<K> {
     @Stage("ReplicationUpdate")

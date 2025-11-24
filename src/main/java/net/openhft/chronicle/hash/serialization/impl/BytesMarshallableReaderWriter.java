@@ -11,6 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
+/**
+ * Combined reader and writer for {@link BytesMarshallable} types using cached Chronicle Wire.
+ *
+ * <p>Reads reuse a thread-local {@link net.openhft.chronicle.bytes.VanillaBytes} view over
+ * the source {@link Bytes}, while writes are delegated to {@link CachingCreatingMarshaller}
+ * to take advantage of size caching for repeated values.
+ */
 public class BytesMarshallableReaderWriter<V extends BytesMarshallable>
         extends CachingCreatingMarshaller<V> {
     private static final ThreadLocal<VanillaBytes> VANILLA_BYTES_TL = ThreadLocal.withInitial(VanillaBytes::vanillaBytes);

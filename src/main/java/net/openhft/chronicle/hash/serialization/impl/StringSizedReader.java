@@ -12,6 +12,12 @@ import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * {@link SizedReader} for {@link String} values encoded as UTF-8.
+ *
+ * <p>The reader uses an internal {@link StringBuilder} to parse the bytes and then returns
+ * an immutable {@link String}, avoiding per-call allocation of new builders where possible.
+ */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class StringSizedReader implements SizedReader<String>, StatefulCopyable<StringSizedReader> {
 

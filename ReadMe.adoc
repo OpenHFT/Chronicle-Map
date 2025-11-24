@@ -1,10 +1,14 @@
 = Chronicle Map
+:toc:
+:lang: en-GB
+:source-highlighter: rouge
 Chronicle Software
-:css-signature: demo
+:toc:
 :toc: macro
-:toclevels: 2
 :icons: font
 :lang: en-GB
+:toclevels: 2
+:css-signature: demo
 :source-highlighter: rouge
 
 image:https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[caption="",link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
@@ -21,7 +25,7 @@ toc::[]
 == About
 
 Chronicle Map is a super-fast, in-memory, non-blocking, key-value store, designed for low-latency, and/or multi-process applications such as trading and financial market applications.
-See link:docs/CM_Features.adoc[] for more information.
+See link:src/main/docs/CM_Features.adoc[] for more information.
 
 The size of a Chronicle Map is not limited by memory (RAM), but rather by the available disk capacity.
 

@@ -15,6 +15,14 @@ import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.hash.impl.LocalLockState.*;
 
+/**
+ * Stage-backed interprocess update lock for a hash segment.
+ *
+ * <p>The update lock represents a mid-level lock state between read and write:
+ * it is intended for callers that need to perform modifications without blocking
+ * all concurrent readers, and it may be upgraded to a write lock subject to the
+ * usual Chronicle Map rules about nested contexts and outer read locks.
+ */
 @Staged
 public class UpdateLock implements InterProcessLock {
 

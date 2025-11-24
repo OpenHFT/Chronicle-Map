@@ -8,6 +8,15 @@ import net.openhft.chronicle.map.impl.ret.UsableReturnValue;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * {@link UsableReturnValue} implementation that attempts to fill a
+ * caller-provided instance in place.
+ * <p>
+ * The {@link #initUsingReturnValue(Object)} method establishes the object to
+ * reuse; when {@link #returnValue(Data)} is invoked the data are read into that
+ * instance and later exposed via {@link #returnValue()}. If the returned value
+ * has not been initialised the method falls back to {@code null}.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class UsingReturnValue<V> implements UsableReturnValue<V> {

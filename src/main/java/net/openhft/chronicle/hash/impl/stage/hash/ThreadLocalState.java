@@ -13,6 +13,14 @@ import java.util.concurrent.TimeUnit;
 
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
 
+/**
+ * Common thread-local lifecycle state for Chronicle hash contexts.
+ *
+ * <p>This abstraction manages a small state machine that distinguishes between
+ * unused, locally locked, and closed contexts. It is used to prevent closing a
+ * map while a thread still has an active context and to generate detailed error
+ * messages when contexts are leaked or held for too long.
+ */
 public abstract class ThreadLocalState {
 
     private static final Memory MEMORY = OS.memory();

@@ -10,6 +10,19 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.AcceptanceDecision.DISCARD;
 import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyStrategy.decideOnRemoteModification;
 
+/**
+ * Default implementation of replicated operations for {@code ChronicleSet}.
+ * <p>
+ * The algorithms here mirror {@code MapRemoteOperations}, applying remote
+ * {@code put} and {@code remove} events to a {@link SetRemoteQueryContext}
+ * according to the eventual consistency strategy. They take care of creating
+ * and marking tombstone entries, updating origin identifiers and timestamps
+ * and raising or dropping change flags so that modification iterators see a
+ * coherent view across nodes.
+ *
+ * @param <K> key type stored in the set
+ * @param <R> return value type exposed by the set context
+ */
 public interface SetRemoteOperations<K, R> {
 
     default void remove(SetRemoteQueryContext<K, R> q) {

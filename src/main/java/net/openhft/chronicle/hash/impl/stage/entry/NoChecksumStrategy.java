@@ -3,6 +3,13 @@
  */
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+/**
+ * {@link ChecksumStrategy} implementation used when checksums are disabled.
+ *
+ * <p>Attempts to compute and store a checksum are rejected, but all read-side
+ * verification methods return success and no additional bytes are reserved in
+ * the entry layout.
+ */
 public enum NoChecksumStrategy implements ChecksumStrategy {
     INSTANCE;
 

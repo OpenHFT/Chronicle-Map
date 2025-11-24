@@ -14,6 +14,15 @@ import net.openhft.chronicle.set.ChronicleSet;
 import net.openhft.sg.Stage;
 import net.openhft.sg.Staged;
 
+/**
+ * Staged implementation of {@link VanillaChronicleMapHolder} backed by a
+ * {@link VanillaChronicleMap}.
+ * <p>
+ * The holder exposes the map as both {@link ChronicleMap} and
+ * {@link VanillaChronicleHash}, and, where configured, as a {@link ChronicleSet}
+ * overlay. It is created and wired by the staging compiler and should be
+ * treated as an internal implementation detail of Chronicle-Map.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked"})
 public abstract class VanillaChronicleMapHolderImpl<K, V, R>

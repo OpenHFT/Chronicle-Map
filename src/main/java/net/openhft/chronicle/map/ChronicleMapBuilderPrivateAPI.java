@@ -9,6 +9,17 @@ import net.openhft.chronicle.map.replication.MapRemoteOperations;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Chronicle-Map specific view of the generic Chronicle-Hash builder SPI.
+ * <p>
+ * This adapter exposes the internal state of {@link ChronicleMapBuilder} via
+ * the {@link net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI}
+ * interface so that shared Chronicle-Hash infrastructure can construct and
+ * recover map instances without depending on map-specific details.
+ * <p>
+ * It is internal to Chronicle-Map and not intended for direct use in
+ * application code.
+ */
 class ChronicleMapBuilderPrivateAPI<K, V>
         implements ChronicleHashBuilderPrivateAPI<K, MapRemoteOperations<K, V, ?>> {
 

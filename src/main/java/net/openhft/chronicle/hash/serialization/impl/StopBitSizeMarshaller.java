@@ -11,6 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
+/**
+ * {@link SizeMarshaller} that encodes lengths using stop-bit (variable-length) encoding.
+ *
+ * <p>The implementation delegates to {@link BytesUtil} for the actual stop-bit format and
+ * can describe the minimum and maximum storage length for a given range of sizes, which is
+ * used when analysing constant-size serialisation contracts.
+ */
 public final class StopBitSizeMarshaller
         implements SizeMarshaller, EnumMarshallable<StopBitSizeMarshaller> {
     public static final StopBitSizeMarshaller INSTANCE = new StopBitSizeMarshaller();
