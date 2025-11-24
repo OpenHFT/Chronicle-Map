@@ -13,4 +13,3 @@
  * between releases.
  */
 package net.openhft.chronicle.hash.impl.stage.query;
-

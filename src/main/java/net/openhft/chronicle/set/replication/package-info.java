@@ -9,4 +9,3 @@
  * implementation when integrating with Chronicle-Hash replication.
  */
 package net.openhft.chronicle.set.replication;
-

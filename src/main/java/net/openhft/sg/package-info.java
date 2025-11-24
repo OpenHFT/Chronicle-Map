@@ -10,4 +10,3 @@
  * these annotations to assemble efficient pipelines.
  */
 package net.openhft.sg;
-

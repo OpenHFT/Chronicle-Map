@@ -10,4 +10,3 @@
  * maps participate in replicated topologies.
  */
 package net.openhft.chronicle.map.replication;
-

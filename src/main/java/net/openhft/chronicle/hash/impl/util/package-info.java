@@ -12,4 +12,3 @@
  * Chronicle-Map and Chronicle-Set APIs instead.
  */
 package net.openhft.chronicle.hash.impl.util;
-

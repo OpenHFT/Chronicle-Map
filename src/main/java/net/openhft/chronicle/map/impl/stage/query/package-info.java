@@ -9,4 +9,3 @@
  * patterns built from the underlying hash query stages.
  */
 package net.openhft.chronicle.map.impl.stage.query;
-

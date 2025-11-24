@@ -14,4 +14,3 @@
  * on these contracts to implement replicated maps and sets.
  */
 package net.openhft.chronicle.hash.replication;
-

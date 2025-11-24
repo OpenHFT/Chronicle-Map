@@ -59,10 +59,10 @@ public class PingPongCASLeft {
         for (int j = 0; j < 10; j++) {
             for (int i = 0; i < runs; i++) {
                 final long start = System.nanoTime(); //
-                while (!bond1.compareAndSwapCoupon(coupon, coupon2)) ;
-                while (!bond2.compareAndSwapCoupon(coupon, coupon2)) ;
-                while (!bond3.compareAndSwapCoupon(coupon, coupon2)) ;
-                while (!bond4.compareAndSwapCoupon(coupon, coupon2)) ;
+                while (!bond1.compareAndSwapCoupon(coupon, coupon2));
+                while (!bond2.compareAndSwapCoupon(coupon, coupon2));
+                while (!bond3.compareAndSwapCoupon(coupon, coupon2));
+                while (!bond4.compareAndSwapCoupon(coupon, coupon2));
 
                 timings[i] = (System.nanoTime() - start - timeToCallNanoTime) / 4;
             }

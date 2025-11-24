@@ -10,4 +10,3 @@
  * platforms where JNA or the underlying calls are unavailable.
  */
 package net.openhft.chronicle.hash.impl.util.jna;
-

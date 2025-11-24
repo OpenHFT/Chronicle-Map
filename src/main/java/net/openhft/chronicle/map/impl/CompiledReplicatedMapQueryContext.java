@@ -172,7 +172,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
     public void doCloseDelayedUpdateChecksum() {
         if (!(this.delayedUpdateChecksumInit()))
-            return ;
+            return;
 
         if (this.h().checksumEntries)
             this.hashEntryChecksumStrategy.computeAndStoreChecksum();
@@ -198,7 +198,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
     public void doCloseInputKeyDataAccess() {
         if (!(this.inputKeyDataAccessInit()))
-            return ;
+            return;
 
         innerInputKeyDataAccess.uninit();
         inputKeyDataAccessInitialized = false;
@@ -206,7 +206,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
     public void doCloseInputValueDataAccess() {
         if (!(this.inputValueDataAccessInit()))
-            return ;
+            return;
 
         innerInputValueDataAccess.uninit();
         inputValueDataAccessInitialized = false;
@@ -230,7 +230,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
     public void doCloseLocks() {
         if (!(this.locksInit()))
-            return ;
+            return;
 
         if ((rootContextLockedOnThisSegment) == (this)) {
             closeRootLocks();
@@ -268,7 +268,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
     public void doCloseSegment() {
         if (!(this.segmentInit()))
-            return ;
+            return;
 
         entrySpaceOffset = 0;
     }
@@ -287,7 +287,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
     public void doCloseUsed() {
         if (!(this.usedInit()))
-            return ;
+            return;
 
         used = false;
         if (firstContextLockedInThisThread)
@@ -603,7 +603,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public class EntryValueBytesData extends AbstractData<V> {
         public void doCloseCachedEntryValue() {
             if (!(this.cachedEntryValueInit()))
-                return ;
+                return;
 
             cachedEntryValueRead = false;
         }
@@ -656,7 +656,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         public void closeCachedEntryValue() {
             if (!(this.cachedEntryValueInit()))
-                return ;
+                return;
 
             cachedEntryValueRead = false;
         }
@@ -740,7 +740,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         public void doCloseInputKeyBytes() {
             if (!(this.inputKeyBytesInit()))
-                return ;
+                return;
 
             inputKeyBytes.bytesStore(BytesStore.empty(), 0, 0);
             inputKeyBytesUsed = false;
@@ -789,7 +789,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         public void closeInputKeyBytesStore() {
             if (!(this.inputKeyBytesStoreInit()))
-                return ;
+                return;
 
             this.closeInputKeyBytesStoreDependants();
             this.inputKeyBytesStore = null;
@@ -824,7 +824,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         void closeInputKeyBytes() {
             if (!(this.inputKeyBytesInit()))
-                return ;
+                return;
 
             this.closeInputKeyBytesDependants();
             inputKeyBytes.bytesStore(BytesStore.empty(), 0, 0);
@@ -1137,7 +1137,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     } 
                     CompiledReplicatedMapQueryContext.this.incrementUpdateGuarded();
                     CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
-                    return ;
+                    return;
                 case READ_LOCKED :
                     throw forbiddenUpgrade();
                 case UPDATE_LOCKED :
@@ -1151,7 +1151,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             switch (CompiledReplicatedMapQueryContext.this.localLockState()) {
                 case UNLOCKED :
                 case READ_LOCKED :
-                    return ;
+                    return;
                 case UPDATE_LOCKED :
                     CompiledReplicatedMapQueryContext.this.closeDelayedUpdateChecksum();
                     if (((CompiledReplicatedMapQueryContext.this.decrementUpdateGuarded()) == 0) && (CompiledReplicatedMapQueryContext.this.writeZeroGuarded())) {
@@ -1190,7 +1190,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     } 
                     CompiledReplicatedMapQueryContext.this.incrementUpdateGuarded();
                     CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.UPDATE_LOCKED);
-                    return ;
+                    return;
                 case READ_LOCKED :
                     throw forbiddenUpgrade();
                 case UPDATE_LOCKED :
@@ -1213,13 +1213,13 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         public void doCloseNext() {
             if (!(this.nextInit()))
-                return ;
+                return;
 
         }
 
         public void doCloseWrappedValueBytes() {
             if (!(this.wrappedValueBytesInit()))
-                return ;
+                return;
 
             wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
             wrappedValueBytesUsed = false;
@@ -1227,7 +1227,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         public void doCloseWrappedValueBytesStore() {
             if (!(this.wrappedValueBytesStoreInit()))
-                return ;
+                return;
 
             wrappedValueBytesStore = null;
             if ((next) != null)
@@ -1269,7 +1269,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         void closeNext() {
             if (!(this.nextInit()))
-                return ;
+                return;
 
             this.closeNextDependants();
         }
@@ -1315,7 +1315,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         void closeWrappedValueBytesStore() {
             if (!(this.wrappedValueBytesStoreInit()))
-                return ;
+                return;
 
             this.closeWrappedValueBytesStoreDependants();
             wrappedValueBytesStore = null;
@@ -1353,7 +1353,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         void closeWrappedValueBytes() {
             if (!(this.wrappedValueBytesInit()))
-                return ;
+                return;
 
             this.closeWrappedValueBytesDependants();
             wrappedValueBytes.bytesStore(BytesStore.empty(), 0, 0);
@@ -1431,7 +1431,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     public class WrappedValueInstanceDataHolder {
         public void doCloseValue() {
             if (!(this.valueInit()))
-                return ;
+                return;
 
             value = null;
             if ((next) != null)
@@ -1441,13 +1441,13 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         public void doCloseNext() {
             if (!(this.nextInit()))
-                return ;
+                return;
 
         }
 
         public void doCloseWrappedData() {
             if (!(this.wrappedDataInit()))
-                return ;
+                return;
 
             wrappedData = null;
             wrappedValueDataAccess.uninit();
@@ -1491,7 +1491,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         void closeNext() {
             if (!(this.nextInit()))
-                return ;
+                return;
 
             this.closeNextDependants();
         }
@@ -1522,7 +1522,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         public void closeValue() {
             if (!(this.valueInit()))
-                return ;
+                return;
 
             this.closeValueDependants();
             value = null;
@@ -1554,7 +1554,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
 
         private void closeWrappedData() {
             if (!(this.wrappedDataInit()))
-                return ;
+                return;
 
             wrappedData = null;
             wrappedValueDataAccess.uninit();
@@ -1723,7 +1723,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     } 
                     CompiledReplicatedMapQueryContext.this.incrementWriteGuarded();
                     CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                    return ;
+                    return;
                 case READ_LOCKED :
                     throw forbiddenUpgrade();
                 case UPDATE_LOCKED :
@@ -1751,7 +1751,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                 case UNLOCKED :
                 case READ_LOCKED :
                 case UPDATE_LOCKED :
-                    return ;
+                    return;
                 case WRITE_LOCKED :
                     CompiledReplicatedMapQueryContext.this.closeDelayedUpdateChecksum();
                     if ((CompiledReplicatedMapQueryContext.this.decrementWriteGuarded()) == 0)
@@ -1784,7 +1784,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
                     } 
                     CompiledReplicatedMapQueryContext.this.incrementWriteGuarded();
                     CompiledReplicatedMapQueryContext.this.setLocalLockStateGuarded(LocalLockState.WRITE_LOCKED);
-                    return ;
+                    return;
                 case READ_LOCKED :
                     throw forbiddenUpgrade();
                 case UPDATE_LOCKED :
@@ -1986,14 +1986,14 @@ PRESENT, ABSENT
     public void readUnlockAndDecrementCount() {
         switch (localLockState) {
             case UNLOCKED :
-                return ;
+                return;
             case READ_LOCKED :
                 if ((decrementRead()) == 0) {
                     if ((updateZero()) && (writeZero()))
                         segmentHeader().readUnlock(segmentHeaderAddress());
 
                 } 
-                return ;
+                return;
             case UPDATE_LOCKED :
                 if ((decrementUpdate()) == 0) {
                     if (writeZero()) {
@@ -2004,7 +2004,7 @@ PRESENT, ABSENT
                         }
                     } 
                 } 
-                return ;
+                return;
             case WRITE_LOCKED :
                 if ((decrementWrite()) == 0) {
                     if (!(updateZero())) {
@@ -2076,13 +2076,13 @@ PRESENT, ABSENT
         verifyInnermostContext();
         switch (localLockState) {
             case UNLOCKED :
-                return ;
+                return;
             case READ_LOCKED :
                 segmentHeader().readUnlock(segmentHeaderAddress());
-                return ;
+                return;
             case UPDATE_LOCKED :
                 segmentHeader().updateUnlock(segmentHeaderAddress());
-                return ;
+                return;
             case WRITE_LOCKED :
                 segmentHeader().writeUnlock(segmentHeaderAddress());
         }
@@ -2128,15 +2128,15 @@ PRESENT, ABSENT
         public void accept(ReplicableEntry e) {
             ReplicatedChronicleMap<K, V, R> map = CompiledReplicatedMapQueryContext.this.m();
             if ((!(e instanceof MapAbsentEntry)) || ((iterationContext.pos()) == (posToSkip)))
-                return ;
+                return;
 
             long currentTime = net.openhft.chronicle.hash.replication.TimeProvider.currentTime();
             if ((e.originTimestamp()) > currentTime)
-                return ;
+                return;
 
             long deleteTimeout = net.openhft.chronicle.hash.replication.TimeProvider.systemTimeIntervalBetween(e.originTimestamp(), currentTime, map.cleanupTimeoutUnit);
             if ((deleteTimeout <= (map.cleanupTimeout)) || (e.isChanged()))
-                return ;
+                return;
 
             e.doRemoveCompletely();
             (removedCompletely)++;
@@ -2297,7 +2297,7 @@ PRESENT, ABSENT
 
         public void closeUsingReturnValue() {
             if (!(this.usingReturnValueInit()))
-                return ;
+                return;
 
             this.closeUsingReturnValueDependants();
             this.usingReturnValue = ((V)(UsableReturnValue.USING_RETURN_VALUE_UNINIT));
@@ -2653,7 +2653,7 @@ PRESENT, ABSENT
 
     void closeInputKeyDataAccess() {
         if (!(this.inputKeyDataAccessInit()))
-            return ;
+            return;
 
         innerInputKeyDataAccess.uninit();
         inputKeyDataAccessInitialized = false;
@@ -2680,7 +2680,7 @@ PRESENT, ABSENT
 
     public void closeKeySize() {
         if (!(this.keySizeInit()))
-            return ;
+            return;
 
         this.closeKeySizeDependants();
         this.keySize = -1;
@@ -2704,7 +2704,7 @@ PRESENT, ABSENT
 
     void closeInputValueDataAccess() {
         if (!(this.inputValueDataAccessInit()))
-            return ;
+            return;
 
         innerInputValueDataAccess.uninit();
         inputValueDataAccessInitialized = false;
@@ -2731,7 +2731,7 @@ PRESENT, ABSENT
 
     public void closeInputKey() {
         if (!(this.inputKeyInit()))
-            return ;
+            return;
 
         this.closeInputKeyDependants();
         this.inputKey = null;
@@ -2779,7 +2779,7 @@ PRESENT, ABSENT
 
     public void closeKeyHash() {
         if (!(this.keyHashInit()))
-            return ;
+            return;
 
         this.closeKeyHashDependants();
         this.keyHash = 0;
@@ -2831,7 +2831,7 @@ PRESENT, ABSENT
 
     public void closeSegmentIndex() {
         if (!(this.segmentIndexInit()))
-            return ;
+            return;
 
         this.closeSegmentIndexDependants();
         this.segmentIndex = -1;
@@ -2876,7 +2876,7 @@ PRESENT, ABSENT
 
     public void closeSegmentHeader() {
         if (!(this.segmentHeaderInit()))
-            return ;
+            return;
 
         this.closeSegmentHeaderDependants();
         this.segmentHeader = null;
@@ -2957,7 +2957,7 @@ PRESENT, ABSENT
 
     public void closeSegmentTier() {
         if (!(this.segmentTierInit()))
-            return ;
+            return;
 
         this.closeSegmentTierDependants();
         this.tier = -1;
@@ -3170,7 +3170,7 @@ PRESENT, ABSENT
 
     void closeSegment() {
         if (!(this.segmentInit()))
-            return ;
+            return;
 
         this.closeSegmentDependants();
         entrySpaceOffset = 0;
@@ -3270,7 +3270,7 @@ PRESENT, ABSENT
 
     public void closeSearchKey() {
         if (!(this.searchKeyInit()))
-            return ;
+            return;
 
         this.closeSearchKeyDependants();
         this.searchKey = CompactOffHeapLinearHashTable.UNSET_KEY;
@@ -3303,7 +3303,7 @@ PRESENT, ABSENT
 
     public void closePos() {
         if (!(this.posInit()))
-            return ;
+            return;
 
         this.closePosDependants();
         this.pos = -1;
@@ -3345,7 +3345,7 @@ PRESENT, ABSENT
 
     public void closeEntryOffset() {
         if (!(this.entryOffsetInit()))
-            return ;
+            return;
 
         this.closeEntryOffsetDependants();
         this.keySizeOffset = -1;
@@ -3391,7 +3391,7 @@ PRESENT, ABSENT
 
     public void closeKeyOffset() {
         if (!(this.keyOffsetInit()))
-            return ;
+            return;
 
         this.closeKeyOffsetDependants();
         this.keyOffset = -1;
@@ -3445,7 +3445,7 @@ PRESENT, ABSENT
 
     public void closeValueSizeOffset() {
         if (!(this.valueSizeOffsetInit()))
-            return ;
+            return;
 
         this.closeValueSizeOffsetDependants();
         this.valueSizeOffset = -1;
@@ -3585,7 +3585,7 @@ PRESENT, ABSENT
 
     public void closeMap() {
         if (!(this.mapInit()))
-            return ;
+            return;
 
         this.closeMapDependants();
         this.m = null;
@@ -3661,7 +3661,7 @@ PRESENT, ABSENT
 
     public void closeValueSize() {
         if (!(this.valueSizeInit()))
-            return ;
+            return;
 
         this.closeValueSizeDependants();
         this.valueSize = -1;
@@ -3951,7 +3951,7 @@ PRESENT, ABSENT
     @SuppressWarnings(value = "unused")
     void closeUsed() {
         if (!(this.usedInit()))
-            return ;
+            return;
 
         this.closeUsedDependants();
         used = false;
@@ -3996,12 +3996,12 @@ PRESENT, ABSENT
         int indexOfThisContext = this.indexInContextChain;
         for (int i = indexOfThisContext - 1 ; i >= 0 ; i--) {
             if (tryFindInitLocksOfThisSegment(i))
-                return ;
+                return;
 
         }
         for (int i = indexOfThisContext + 1, size = this.contextChain.size() ; i < size ; i++) {
             if (tryFindInitLocksOfThisSegment(i))
-                return ;
+                return;
 
         }
         rootContextLockedOnThisSegment = this;
@@ -4081,7 +4081,7 @@ PRESENT, ABSENT
 
     void closeLocks() {
         if (!(this.locksInit()))
-            return ;
+            return;
 
         this.closeLocksDependants();
         if ((rootContextLockedOnThisSegment) == (this)) {
@@ -4120,7 +4120,7 @@ PRESENT, ABSENT
 
     public void closeDelayedUpdateChecksum() {
         if (!(this.delayedUpdateChecksumInit()))
-            return ;
+            return;
 
         if (this.h().checksumEntries)
             this.hashEntryChecksumStrategy.computeAndStoreChecksum();
@@ -4187,7 +4187,7 @@ PRESENT, ABSENT
 
     public void closeHashLookupPos() {
         if (!(this.hashLookupPosInit()))
-            return ;
+            return;
 
         this.closeHashLookupPosDependants();
         this.hashLookupPos = -1;
@@ -4253,7 +4253,7 @@ PRESENT, ABSENT
                 this.found();
                 this.readFoundEntry(pos, keySizeOffset, keySize, keyOffset);
                 searchState = CompiledReplicatedMapQueryContext.SearchState.PRESENT;
-                return ;
+                return;
             } 
         }
         searchState = CompiledReplicatedMapQueryContext.SearchState.ABSENT;
@@ -4271,7 +4271,7 @@ PRESENT, ABSENT
 
     public void closeKeySearch() {
         if (!(this.keySearchInit()))
-            return ;
+            return;
 
         this.closeKeySearchDependants();
         this.searchState = null;
@@ -4729,7 +4729,7 @@ PRESENT, ABSENT
                     break newValueDoesNotFit;
                 } 
                 relocation(newValue, newEntrySize);
-                return ;
+                return;
             } else if (newSizeInChunks < (entrySizeInChunks())) {
                 this.freeExtraGuarded(pos(), entrySizeInChunks(), newSizeInChunks);
             } 

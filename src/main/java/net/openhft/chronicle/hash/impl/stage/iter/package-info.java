@@ -12,4 +12,3 @@
  * use the public iterator and query APIs rather than these stages.
  */
 package net.openhft.chronicle.hash.impl.stage.iter;
-

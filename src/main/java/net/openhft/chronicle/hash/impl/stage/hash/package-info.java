@@ -13,4 +13,3 @@
  * invariants change.
  */
 package net.openhft.chronicle.hash.impl.stage.hash;
-

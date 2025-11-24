@@ -13,4 +13,3 @@
  * mechanisms unless distributed semantics are needed.
  */
 package net.openhft.chronicle.map.locks;
-

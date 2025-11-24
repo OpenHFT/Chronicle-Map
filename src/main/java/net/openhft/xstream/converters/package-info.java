@@ -9,4 +9,3 @@
  * serialisation, primarily for tests and tooling.
  */
 package net.openhft.xstream.converters;
-

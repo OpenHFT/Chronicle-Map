@@ -13,4 +13,3 @@
  * the public Chronicle-Map or Chronicle-Set APIs.
  */
 package net.openhft.chronicle.hash.impl.stage.entry;
-
