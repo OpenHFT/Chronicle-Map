@@ -41,7 +41,7 @@ public abstract class ThreadLocalState {
     }
 
     public boolean iterationContextLockedInThisThread;
-    private final int contextLock = CONTEXT_UNLOCKED;
+    private volatile int contextLock = CONTEXT_UNLOCKED;
 
     /**
      * Returns {@code true} if this is the outer context lock in this thread, {@code false} if this

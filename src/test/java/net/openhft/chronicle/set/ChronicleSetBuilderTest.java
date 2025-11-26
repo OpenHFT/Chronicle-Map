@@ -4,12 +4,10 @@
 package net.openhft.chronicle.set;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class ChronicleSetBuilderTest {
 
-    @Ignore("see https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
     @Test
     public void test() {
 

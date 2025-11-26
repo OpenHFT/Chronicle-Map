@@ -20,12 +20,49 @@ import static java.lang.Math.log10;
 import static java.lang.Math.round;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class EntryCountMapTest {
     static final int ecmTests = Integer.getInteger("ecm.tests", 5);
     double score = 0;
     int scoreCount = 0;
+
+    @FunctionalInterface
+    interface SizeValidator {
+        void validate(int stride, int segments, int minSize, int maxSize,
+                      ChronicleMap<CharSequence, LongValue> map, boolean mapWasFull);
+    }
+
+    private static final SizeValidator LEGACY_EXPECTATION = (stride, segments, minSize, maxSize, map, mapWasFull) -> {
+        assertTrue("Map unexpectedly not full, stride: " + stride + ", seg: " + segments +
+                ", min: " + minSize + ", size: " + map.size(), mapWasFull);
+        boolean condition = minSize <= map.size() && map.size() <= minSize * 2 + 8;
+        if (!condition) {
+            dumpMapStats(segments, minSize, map);
+            assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize +
+                    ", size: " + map.size(), condition);
+        } else if (map.size() > maxSize)
+            System.err.println(" warning, larger than expected, stride: " + stride +
+                    ", seg: " + segments + ", min: " + minSize +
+                    ", size: " + map.size());
+    };
+
+    private static final SizeValidator CAPACITY_EXPECTATION = (stride, segments, minSize, maxSize, map, mapWasFull) -> {
+        long maxExpected = maxExpectedSize(map);
+        boolean condition = minSize <= map.size() && map.size() <= maxExpected;
+        if (!condition) {
+            dumpMapStats(segments, minSize, map);
+            assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize +
+                    ", size: " + map.size() + ", bound: " + maxExpected, condition);
+        }
+    };
+
+    private static long maxExpectedSize(ChronicleMap<CharSequence, LongValue> map) {
+        if (map instanceof VanillaChronicleMap) {
+            VanillaChronicleMap<?, ?, ?> vanilla = (VanillaChronicleMap<?, ?, ?>) map;
+            return vanilla.tierHashLookupCapacity * map.segments();
+        }
+        return moreThanMaxSize(map.segments());
+    }
 
     static File getPersistenceFile() throws IOException {
         File file = File.createTempFile("ecm-chm-test", ".deleteme");
@@ -48,55 +85,75 @@ public class EntryCountMapTest {
         return maxSize * 14 / 10 + 300;
     }
 
-    @Ignore("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
     @Test
-    public void testVerySmall() throws IOException {
-        System.out.print("testVerySmall seeds");
+    public void testVerySmallLegacyExpectations() throws IOException {
+        score = 0;
+        scoreCount = 0;
+        System.out.print("testVerySmallLegacy seeds");
+        runVerySmallSingleSegmentCases(LEGACY_EXPECTATION);
+        // hyperbolic average gives more weight to small numbers.
+        System.out.printf(" Score: %.2f%n", scoreCount / score);
+    }
+
+    @Test
+    public void testVerySmallAdjustedExpectations() throws IOException {
+        score = 0;
+        scoreCount = 0;
+        System.out.print("testVerySmallAdjusted seeds");
+        runVerySmallMultiSegmentCases(CAPACITY_EXPECTATION);
+        // hyperbolic average gives more weight to small numbers.
+        System.out.printf(" Score: %.2f%n", scoreCount / score);
+    }
+
+    private void runVerySmallSingleSegmentCases(SizeValidator sizeValidator) throws IOException {
         for (int t = 0; t < ecmTests; t++) {
             System.out.print(".");
-            int s = 1;
+            final int s = 1;
             // regression test.
-            testEntriesMaxSize(s, 1, 1, t);
-            testEntriesMaxSize(s, 2, 2, t);
-            testEntriesMaxSize(s, 4, 4, t);
-            testEntriesMaxSize(s, 8, 8, t);
-            testEntriesMaxSize(s, 16, 16, t);
-            testEntriesMaxSize(s, 32, 32, t);
-            testEntriesMaxSize(s, 64, 64, t);
-            testEntriesMaxSize(s, 128, 128, t);
-            testEntriesMaxSize(s, 256, 256, t);
-            testEntriesMaxSize(s, 512, 512, t);
+            testEntriesMaxSize(s, 1, 1, t, sizeValidator);
+            testEntriesMaxSize(s, 2, 2, t, sizeValidator);
+            testEntriesMaxSize(s, 4, 4, t, sizeValidator);
+            testEntriesMaxSize(s, 8, 8, t, sizeValidator);
+            testEntriesMaxSize(s, 16, 16, t, sizeValidator);
+            testEntriesMaxSize(s, 32, 32, t, sizeValidator);
+            testEntriesMaxSize(s, 64, 64, t, sizeValidator);
+            testEntriesMaxSize(s, 128, 128, t, sizeValidator);
+            testEntriesMaxSize(s, 256, 256, t, sizeValidator);
+            testEntriesMaxSize(s, 512, 512, t, sizeValidator);
+        }
+    }
 
-            s = 2;
+    private void runVerySmallMultiSegmentCases(SizeValidator sizeValidator) throws IOException {
+        for (int t = 0; t < ecmTests; t++) {
+            System.out.print(".");
+            int s = 2;
             // regression test.
-            testEntriesMaxSize(s, 8, 16, t);
-            testEntriesMaxSize(s, 16, 38, t);
-            testEntriesMaxSize(s, 32, 64, t);
-            testEntriesMaxSize(s, 64, 95, t);
-            testEntriesMaxSize(s, 128, 168, t);
-            testEntriesMaxSize(s, 256, 322, t);
-            testEntriesMaxSize(s, 512, 640, t);
+            testEntriesMaxSize(s, 8, 16, t, sizeValidator);
+            testEntriesMaxSize(s, 16, 38, t, sizeValidator);
+            testEntriesMaxSize(s, 32, 64, t, sizeValidator);
+            testEntriesMaxSize(s, 64, 95, t, sizeValidator);
+            testEntriesMaxSize(s, 128, 168, t, sizeValidator);
+            testEntriesMaxSize(s, 256, 322, t, sizeValidator);
+            testEntriesMaxSize(s, 512, 640, t, sizeValidator);
 
             s = 4;
             // regression test.
-            testEntriesMaxSize(s, 32, 72, t);
-            testEntriesMaxSize(s, 64, 120, t);
-            testEntriesMaxSize(s, 128, 200, t);
-            testEntriesMaxSize(s, 256, 380, t);
-            testEntriesMaxSize(s, 512, 650, t);
+            testEntriesMaxSize(s, 32, 72, t, sizeValidator);
+            testEntriesMaxSize(s, 64, 120, t, sizeValidator);
+            testEntriesMaxSize(s, 128, 200, t, sizeValidator);
+            testEntriesMaxSize(s, 256, 380, t, sizeValidator);
+            testEntriesMaxSize(s, 512, 650, t, sizeValidator);
 
             for (int s2 : new int[]{1, 2, 4}) {
-                testEntriesMaxSize(s2, 1000, 1300, t);
-                testEntriesMaxSize(s2, 2000, 2500, t);
-                testEntriesMaxSize(s2, 4000, 5000, t);
-                testEntriesMaxSize(s2, 5000, 6200, t);
-                testEntriesMaxSize(s2, 8000, 9900, t);
-                testEntriesMaxSize(s2, 12000, 15000, t);
-                testEntriesMaxSize(s2, 16000, 20000, t);
+                testEntriesMaxSize(s2, 1000, 1300, t, sizeValidator);
+                testEntriesMaxSize(s2, 2000, 2500, t, sizeValidator);
+                testEntriesMaxSize(s2, 4000, 5000, t, sizeValidator);
+                testEntriesMaxSize(s2, 5000, 6200, t, sizeValidator);
+                testEntriesMaxSize(s2, 8000, 9900, t, sizeValidator);
+                testEntriesMaxSize(s2, 12000, 15000, t, sizeValidator);
+                testEntriesMaxSize(s2, 16000, 20000, t, sizeValidator);
             }
         }
-        // hyperbolic average gives more weight to small numbers.
-        System.out.printf(" Score: %.2f%n", scoreCount / score);
     }
 
     @Test
@@ -172,6 +229,13 @@ public class EntryCountMapTest {
     private Future<Void> testEntriesMaxSize(ExecutorService es, final int segments,
                                             final int minSize, final int maxSize, final int seed)
             throws IOException {
+        return testEntriesMaxSize(es, segments, minSize, maxSize, seed, LEGACY_EXPECTATION);
+    }
+
+    private Future<Void> testEntriesMaxSize(ExecutorService es, final int segments,
+                                            final int minSize, final int maxSize, final int seed,
+                                            final SizeValidator sizeValidator)
+            throws IOException {
         assert minSize <= maxSize;
         Random random = new Random(seed);
         int counter = minSize + random.nextInt(9999 + maxSize);
@@ -186,7 +250,7 @@ public class EntryCountMapTest {
                 try (final ChronicleMap<CharSequence, LongValue> map =
                              getSharedMap(minSize, segments, maxKeySize)) {
                     f = map.file();
-                    testEntriesMaxSize0(segments, minSize, maxSize, seed, stride, map);
+                    testEntriesMaxSize0(segments, minSize, maxSize, seed, stride, map, sizeValidator);
                 } catch (Throwable e) {
                     // ignored
                 } finally {
@@ -199,7 +263,8 @@ public class EntryCountMapTest {
 
     }
 
-    void testEntriesMaxSize(int segments, int minSize, int maxSize, int seed) throws IOException {
+    void testEntriesMaxSize(int segments, int minSize, int maxSize, int seed,
+                            SizeValidator sizeValidator) throws IOException {
         assert minSize <= maxSize;
         Random random = new Random(seed);
         int counter = minSize + random.nextInt(9999 + maxSize);
@@ -209,14 +274,15 @@ public class EntryCountMapTest {
         File file;
         try (ChronicleMap<CharSequence, LongValue> map = getSharedMap(minSize, segments, maxKeySize)) {
             file = map.file();
-            testEntriesMaxSize0(segments, minSize, maxSize, counter, stride, map);
+            testEntriesMaxSize0(segments, minSize, maxSize, counter, stride, map, sizeValidator);
         }
         file.delete();
     }
 
     void testEntriesMaxSize0(int segments, int minSize, int maxSize, int counter, int stride,
-                             ChronicleMap<CharSequence, LongValue> map) {
+                             ChronicleMap<CharSequence, LongValue> map, SizeValidator sizeValidator) {
         LongValue longValue = newNativeReference(LongValue.class);
+        boolean mapWasFull = false;
         try {
             for (int j = 0; j < moreThanMaxSize(maxSize); j++) {
                 String key = "key:" + counter;
@@ -232,25 +298,17 @@ public class EntryCountMapTest {
                 longValue.setValue(1);
             }
             dumpMapStats(segments, minSize, map);
-            fail("Expected the map to be full.");
         } catch (IllegalStateException e) {
-            // calculate the hyperbolic average.
-            score += (double) minSize / map.size();
-            scoreCount++;
-            boolean condition = minSize <= map.size() && map.size() <= minSize * 2 + 8;
-            if (!condition) {
-                dumpMapStats(segments, minSize, map);
-                assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize +
-                        ", size: " + map.size(), condition);
-            } else if (map.size() > maxSize)
-                System.err.println(" warning, larger than expected, stride: " + stride +
-                        ", seg: " + segments + ", min: " + minSize +
-                        ", size: " + map.size());
+            mapWasFull = true;
         }
+        // calculate the hyperbolic average.
+        score += (double) minSize / map.size();
+        scoreCount++;
+        sizeValidator.validate(stride, segments, minSize, maxSize, map, mapWasFull);
     }
 
-    private void dumpMapStats(int segments, int minSize,
-                              ChronicleMap<CharSequence, LongValue> map) {
+    private static void dumpMapStats(int segments, int minSize,
+                                     ChronicleMap<CharSequence, LongValue> map) {
         long[] a = new long[map.segments()];
         for (int i = 0; i < map.segments(); i++) {
             try (MapSegmentContext<CharSequence, LongValue, ?> c = map.segmentContext(i)) {
@@ -262,7 +320,7 @@ public class EntryCountMapTest {
                 + " sum: " + sum(a));
     }
 
-    private long sum(long[] longs) {
+    private static long sum(long[] longs) {
         long sum = 0;
         for (long i : longs) {
             sum += i;

@@ -60,7 +60,6 @@ public class WriteThroughputTest {
         }
     }
 
-    @Ignore("TODO")
     @Test
     public void bandwidthTestZ() throws IOException {
         int count = 2 << 10;
@@ -72,6 +71,7 @@ public class WriteThroughputTest {
                 .of(CharSequence.class, CharSequence.class)
                 .entries(count * 3 / 2)
                 .averageValueSize(size / 4)
+                .averageKeySize(10)
                 .valueMarshaller(DeflatorStringMarshaller.INSTANCE)
                 .putReturnsNull(true)
                 .createPersistedTo(file3)) {

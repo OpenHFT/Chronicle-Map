@@ -3,14 +3,16 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Ignore;
+import net.openhft.chronicle.core.Jvm;
 import org.junit.Test;
+
+import static org.junit.Assume.assumeFalse;
 
 public class OverflowAllocationDuringIterationTest {
 
-    @Ignore("https://teamcity.chronicle.software/viewLog.html?buildId=639359&buildTypeId=Chronicle_ChronicleMap_SnapshotARM")
     @Test
     public void testOverflowAllocationDuringIteration() {
+        assumeFalse(Jvm.isArm());
         int entries = 10000;
         String x = "x";
         try (ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder
