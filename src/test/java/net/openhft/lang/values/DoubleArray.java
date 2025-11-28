@@ -14,7 +14,7 @@ import java.nio.channels.FileLock;
 /**
  * Created by peter.lawrey on 23/04/2015.
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation", "removal"})
 public class DoubleArray implements Byteable, Copyable<DoubleArray>, DynamicallySized {
     static boolean HACK = true;
     private static final int CAPACITY = 0; // assume a 32-bit size.

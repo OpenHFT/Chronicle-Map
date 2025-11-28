@@ -12,7 +12,7 @@ import java.nio.channels.FileLock;
 /**
  *
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation", "removal"})
 public class StateMachineData implements Byteable {
     private BytesStore<?, ?> bs;
     private long offset;

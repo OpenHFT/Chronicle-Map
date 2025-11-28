@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 
+@SuppressWarnings({"deprecation", "removal"})
 public enum ZeroBytesStore implements BytesStore<ZeroBytesStore, Void> {
     INSTANCE;
 
