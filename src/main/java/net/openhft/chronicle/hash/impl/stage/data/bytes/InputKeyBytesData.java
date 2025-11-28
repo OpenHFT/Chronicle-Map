@@ -18,7 +18,6 @@
  */
 package net.openhft.chronicle.hash.impl.stage.data.bytes;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.bytes.VanillaBytes;

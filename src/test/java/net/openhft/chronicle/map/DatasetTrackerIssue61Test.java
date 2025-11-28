@@ -55,7 +55,7 @@ public class DatasetTrackerIssue61Test {
         }
 
         @Override
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        public void readExternal(ObjectInput in) throws IOException {
             value = in.readUTF();
         }
     }

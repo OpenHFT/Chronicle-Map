@@ -5,12 +5,9 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.Assume.assumeFalse;
@@ -24,7 +21,7 @@ public class DirtyReadVictimTest {
     }
 
     @Test
-    public void mainOptimisticNegative() throws IOException {
+    public void mainOptimisticNegative() {
         try {
             System.out.println("\n*****   Optimistic (-) Test\n");
 
@@ -36,7 +33,7 @@ public class DirtyReadVictimTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp;
             System.out.println(
@@ -77,8 +74,8 @@ public class DirtyReadVictimTest {
                 Thread.sleep(20_000);
 
             } finally {
-                boolean r;
-                if ((r = offHeapLock.validate(stamp))) {
+                boolean r = offHeapLock.validate(stamp);
+                if (r) {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
                                     " DirtyReadVictim OPTIMISTICALLY_READ coupon=" +
@@ -133,7 +130,7 @@ public class DirtyReadVictimTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;
             System.out.println(

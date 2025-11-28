@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
 public class Issue354bTest {
 
     @Rule
-    public TemporaryFolder testFolder = new TemporaryFolder();
+    public final TemporaryFolder testFolder = new TemporaryFolder();
 
     @Test
     public void build_toFile() throws IOException {

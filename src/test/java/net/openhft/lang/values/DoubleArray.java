@@ -8,7 +8,6 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.DynamicallySized;
 import net.openhft.chronicle.values.Copyable;
 
-import java.io.IOException;
 import java.nio.channels.FileLock;
 
 /**
@@ -54,12 +53,12 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
     }
 
     @Override
-    public FileLock lock(boolean shared) throws IOException {
+    public FileLock lock(boolean shared) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public FileLock tryLock(boolean shared) throws IOException {
+    public FileLock tryLock(boolean shared) {
         throw new UnsupportedOperationException();
     }
 

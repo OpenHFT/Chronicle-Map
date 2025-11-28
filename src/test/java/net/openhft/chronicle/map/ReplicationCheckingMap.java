@@ -25,8 +25,8 @@ import java.util.function.Predicate;
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
 
-    ChronicleMap<K, V> map1;
-    ChronicleMap<K, V> map2;
+    final ChronicleMap<K, V> map1;
+    final ChronicleMap<K, V> map2;
 
     public ReplicationCheckingMap(ChronicleMap map1, ChronicleMap map2) {
         this.map1 = map1;

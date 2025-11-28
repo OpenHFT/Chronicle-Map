@@ -7,12 +7,10 @@ import net.openhft.chronicle.core.OS;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-
 public class Issue42Test {
 
     @Test
-    public void crashJVMWindowsTest() throws IOException {
+    public void crashJVMWindowsTest() {
 
         if (!OS.isWindows())
             return;

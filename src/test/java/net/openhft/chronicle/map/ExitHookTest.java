@@ -36,7 +36,7 @@ public class ExitHookTest {
     private static AtomicReference<ChronicleMap<Integer, Integer>> mapReference;
 
     @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    public final TemporaryFolder folder = new TemporaryFolder();
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -232,7 +232,7 @@ public class ExitHookTest {
         Runtime.getRuntime().exec("kill -SIGINT " + pidOfProcess);
     }
 
-    private Process startOtherProcess(File mapFile, File lockingFile, File outputFile, boolean skipCloseOnExitHook) throws IOException {
+    private Process startOtherProcess(File mapFile, File lockingFile, File outputFile, boolean skipCloseOnExitHook) {
         return JavaProcessBuilder.create(ExitHookTest.class)
                 //.inheritingIO()
                 .withProgramArguments(mapFile.getAbsolutePath(),

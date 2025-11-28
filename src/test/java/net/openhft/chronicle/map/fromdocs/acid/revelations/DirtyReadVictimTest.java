@@ -17,11 +17,11 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 public class DirtyReadVictimTest {
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
     }
 
     @Test
@@ -34,7 +34,7 @@ public class DirtyReadVictimTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;
             System.out.println(
@@ -45,7 +45,7 @@ public class DirtyReadVictimTest {
                     OS.getTarget() + "/OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -78,8 +78,8 @@ public class DirtyReadVictimTest {
                     );
                     // THIS Test will pass when ChronicleStampedLock is GA
                     Assert.assertEquals(
-                            offHeapLock.chmW.get("WriterCount ").getVolatileValue(),
-                            0L
+                            0L,
+                            offHeapLock.chmW.get("WriterCount ").getVolatileValue()
                     );
                 } else {
                     System.out.println(

@@ -25,7 +25,7 @@ public class BigData {
             ChronicleMapBuilder.of(Long.class, BigDataStuff.class);
     //run 1st test with no map, and Highwatermark set to 0
     //then switch to Highwatermark set to MAXSIZE for subsequent test repeats
-    static AtomicInteger highWatermark = new AtomicInteger((int) MAXSIZE);
+    static final AtomicInteger highWatermark = new AtomicInteger((int) MAXSIZE);
     static Map<Long, BigDataStuff> theMap;
 
     //    static AtomicInteger Highwatermark = new AtomicInteger(0);
@@ -77,7 +77,7 @@ public class BigData {
         System.out.printf("End to end took %.1f%n", time / 1e3);
     }
 
-    public static void initialbuild() throws IOException, InterruptedException {
+    public static void initialbuild() throws InterruptedException {
         System.out.println("building an empty map");
         long start = System.currentTimeMillis();
         Thread t1 = new Thread("test 1") {
@@ -126,15 +126,11 @@ public class BigData {
     public static void runTest() {
         // improves logging of these threads.
         Affinity.setThreadId();
-        try {
-            runPerformanceIteration();
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        runPerformanceIteration();
+
     }
 
-    public static void runPerformanceIteration() throws IOException {
+    public static void runPerformanceIteration() {
         //do a sequence 1m of each of insert/read/update
         //inserts
         long loopCount = 100 * 1000L;
@@ -189,6 +185,9 @@ class BigDataStuff implements Externalizable {
 
     public BigDataStuff(long x) {
         this.x = x;
+    }
+
+    public BigDataStuff() {
     }
 
     @Override

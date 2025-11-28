@@ -31,7 +31,7 @@ class WriterToo implements Runnable {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            Assert.assertNotEquals(offHeapLock, null);
+            Assert.assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);

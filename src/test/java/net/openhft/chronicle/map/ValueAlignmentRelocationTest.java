@@ -94,7 +94,7 @@ public class ValueAlignmentRelocationTest {
                 }
                 //                System.out.println("firstKeySize=" + firstKeySize + ",second key=" + secondKeySize);
                 Assert.assertEquals(Arrays.toString(map.get(firstKey)), Arrays.toString(thirdValue));
-                Assert.assertTrue(Arrays.equals(map.get(firstKey), thirdValue));
+                Assert.assertArrayEquals(map.get(firstKey), thirdValue);
             }
         }
     }

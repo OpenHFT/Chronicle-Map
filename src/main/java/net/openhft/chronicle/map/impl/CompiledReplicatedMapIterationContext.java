@@ -345,7 +345,8 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
     }
 
     enum EntriesToTest {
-PRESENT, ALL;    }
+        PRESENT, ALL;
+    }
 
     private long _MapEntryStages_countValueSizeOffset() {
         return keyEnd();
@@ -1672,7 +1673,8 @@ PRESENT, ALL;    }
     }
 
     public enum SearchState {
-PRESENT, ABSENT;    }
+        PRESENT, ABSENT;
+    }
 
     private long _HashEntryStages_entryEnd() {
         return keyEnd();

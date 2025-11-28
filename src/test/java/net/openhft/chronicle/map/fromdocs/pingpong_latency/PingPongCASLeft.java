@@ -72,7 +72,7 @@ public class PingPongCASLeft {
         }
     }
 
-    static ChronicleMap<String, BondVOInterface> acquireCHM() throws IOException {
+    static ChronicleMap<String, BondVOInterface> acquireCHM() {
         // ensure thread ids are globally unique.
         Affinity.setThreadId();
         return ChronicleMapBuilder.of(String.class, BondVOInterface.class)

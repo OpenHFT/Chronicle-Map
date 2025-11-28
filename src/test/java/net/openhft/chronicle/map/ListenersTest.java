@@ -173,9 +173,9 @@ public class ListenersTest {
     }
 
     static class CountingEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
-        AtomicInteger removeCount = new AtomicInteger();
-        AtomicInteger insertCount = new AtomicInteger();
-        AtomicInteger replaceValueCount = new AtomicInteger();
+        final AtomicInteger removeCount = new AtomicInteger();
+        final AtomicInteger insertCount = new AtomicInteger();
+        final AtomicInteger replaceValueCount = new AtomicInteger();
 
         @Override
         public Void remove(@NotNull MapEntry<K, V> entry) {

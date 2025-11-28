@@ -3,7 +3,6 @@
  */
 package net.openhft.chronicle.hash.serialization.impl;
 
-import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.RandomDataInput;
 import net.openhft.chronicle.bytes.VanillaBytes;
