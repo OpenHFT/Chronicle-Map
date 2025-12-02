@@ -126,10 +126,10 @@
         </dependency>
 
         <!-- optional dependencies -->
-
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
+            <version>1.4.20</version>
             <optional>true</optional>
         </dependency>
 
