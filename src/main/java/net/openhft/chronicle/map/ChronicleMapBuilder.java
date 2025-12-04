@@ -3,6 +3,7 @@
  */
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.Bytes;
@@ -148,7 +149,7 @@ public final class ChronicleMapBuilder<K, V> implements
             corruption -> {
                 Jvm.error().on(ChronicleMapBuilder.class, corruption.message(), corruption.exception());
             };
-    private static final int MAX_BOOTSTRAPPING_HEADER_SIZE = 16 << 10;
+    private static final int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
     private static final boolean MAP_CREATION_DEBUG = Jvm.getBoolean("chronicle.map.creation.debug");
     private static final int FILE_LOCK_TIMEOUT = Jvm.getInteger("chronicle.map.file.lock.timeout.secs", 10);
 
