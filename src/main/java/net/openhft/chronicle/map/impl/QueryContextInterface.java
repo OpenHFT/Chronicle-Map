@@ -43,4 +43,6 @@ public interface QueryContextInterface<K, V, R> extends ExternalMapQueryContext<
     void initSegmentIndex(int segmentIndex);
 
     boolean segmentIndexInit();
+
+    long entrySize(long keySize, long valueSize);
 }
