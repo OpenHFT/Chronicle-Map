@@ -37,36 +37,42 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
         s = map.keySet();
     }
 
+    @Override
     public void clear() {
         throwExceptionIfClosed();
 
         m.clear();
     }
 
+    @Override
     public int size() {
         throwExceptionIfClosed();
 
         return m.size();
     }
 
+    @Override
     public boolean isEmpty() {
         throwExceptionIfClosed();
 
         return m.isEmpty();
     }
 
+    @Override
     public boolean contains(Object o) {
         throwExceptionIfClosed();
 
         return m.containsKey(o);
     }
 
+    @Override
     public boolean remove(Object o) {
         throwExceptionIfClosed();
 
         return m.remove(o, DUMMY_VALUE);
     }
 
+    @Override
     public boolean add(E e) {
         throwExceptionIfClosed();
 
@@ -74,22 +80,26 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
     }
 
     @NotNull
+    @Override
     public Iterator<E> iterator() {
         throwExceptionIfClosed();
 
         return s.iterator();
     }
 
+    @Override
     public Object[] toArray() {
         throwExceptionIfClosed();
 
         return s.toArray();
     }
 
+    @Override
     public <T> T[] toArray(T[] a) {
         return s.toArray(a);
     }
 
+    @Override
     public String toString() {
         return s.toString();
     }
@@ -106,30 +116,35 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
                 "}";
     }
 
+    @Override
     public int hashCode() {
         throwExceptionIfClosed();
 
         return s.hashCode();
     }
 
+    @Override
     public boolean equals(Object o) {
         throwExceptionIfClosed();
 
         return o == this || s.equals(o);
     }
 
+    @Override
     public boolean containsAll(@NotNull Collection<?> c) {
         throwExceptionIfClosed();
 
         return s.containsAll(c);
     }
 
+    @Override
     public boolean removeAll(@NotNull Collection<?> c) {
         throwExceptionIfClosed();
 
         return s.removeAll(c);
     }
 
+    @Override
     public boolean retainAll(@NotNull Collection<?> c) {
         throwExceptionIfClosed();
 
@@ -208,7 +223,7 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
         throwExceptionIfClosed();
 
         Objects.requireNonNull(predicate);
-        return m.forEachEntryWhile(e -> predicate.test(((SetEntry<E>) e)));
+        return m.forEachEntryWhile(e -> predicate.test(e));
     }
 
     @Override
@@ -216,7 +231,7 @@ class SetFromMap<E> extends AbstractSet<E> implements ChronicleSet<E> {
         throwExceptionIfClosed();
 
         Objects.requireNonNull(action);
-        m.forEachEntry(e -> action.accept(((SetEntry<E>) e)));
+        m.forEachEntry(e -> action.accept(e));
     }
 
     @Override

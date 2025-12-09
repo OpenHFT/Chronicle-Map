@@ -11,10 +11,10 @@ import java.nio.ByteOrder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class ByteBufferDataAccessTest {
+class ByteBufferDataAccessTest {
 
     @Test
-    public void getUsingTest() {
+    void getUsingTest() {
         ByteBufferDataAccess bbDataAccess = new ByteBufferDataAccess();
         ByteBuffer bb1 = ByteBuffer.allocate(10);
         for (int i = 0; i < 10; i++) {
@@ -29,7 +29,7 @@ public class ByteBufferDataAccessTest {
     }
 
     @Test
-    public void shouldKeepOriginalOrder() {
+    void shouldKeepOriginalOrder() {
         ByteBufferDataAccess da = new ByteBufferDataAccess();
         ByteBuffer bb = ByteBuffer.allocateDirect(Long.BYTES);
         ByteOrder originalOrder = bb.order();

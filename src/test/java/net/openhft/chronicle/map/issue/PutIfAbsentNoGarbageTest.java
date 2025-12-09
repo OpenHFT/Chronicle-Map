@@ -9,7 +9,7 @@ import net.openhft.chronicle.values.Values;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class PutIfAbsentNoGarbageTest {
+class PutIfAbsentNoGarbageTest {
 
     static ChronicleMap<Long, LongValue> newShmLongLongValueUsing(int size, boolean putIfAbsentUsingValue) {
         return ChronicleMapBuilder.simpleMapOf(Long.class, LongValue.class)
@@ -17,7 +17,7 @@ public class PutIfAbsentNoGarbageTest {
     }
 
     @Test
-    public void testPutIfAbsentUsingValue() throws Throwable {
+    void testPutIfAbsentUsingValue() throws Throwable {
         try (ChronicleMap<Long, LongValue> map = newShmLongLongValueUsing(10, true)) {
             Long k = 1L;
 
@@ -39,7 +39,7 @@ public class PutIfAbsentNoGarbageTest {
     }
 
     @Test
-    public void testPutIfAbsentDefault() throws Throwable {
+    void testPutIfAbsentDefault() throws Throwable {
         try (ChronicleMap<Long, LongValue> map = newShmLongLongValueUsing(10, false)) {
             Long k = 1L;
 

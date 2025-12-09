@@ -65,7 +65,7 @@ public class DirtyReadOffender_WriterReaderTest {
                START
 
              */
-            long stamp = 0;
+            long stamp;
             System.out.println(
                     "                             " +
                             " @t=" + System.currentTimeMillis() +

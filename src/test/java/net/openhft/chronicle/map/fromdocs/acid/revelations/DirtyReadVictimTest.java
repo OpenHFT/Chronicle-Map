@@ -36,7 +36,7 @@ public class DirtyReadVictimTest {
                     );
             double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            long stamp = 0;
+            long stamp;
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
                             " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"

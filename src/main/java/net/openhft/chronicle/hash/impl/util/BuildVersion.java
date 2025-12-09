@@ -90,11 +90,7 @@ public final class BuildVersion {
             Model model = xpp3Reader.read(reader);
             return model.getVersion();
 
-        } catch (NoClassDefFoundError e) {
-            // if you want to get the version possibly in development add in to your pom
-            // pax-url-aether.jar
-            return null;
-        } catch (Exception e) {
+        } catch (NoClassDefFoundError | Exception e) {
             return null;
         }
     }

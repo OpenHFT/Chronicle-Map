@@ -9,6 +9,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 public class DoubleArrayTest {
@@ -42,12 +43,7 @@ public class DoubleArrayTest {
             assertEquals(i * 1.01, ds2[i], 0.0);
         }
 
-        try {
-            da.setData(ds2);
-            fail();
-        } catch (IllegalArgumentException expected) {
-            // expected
-        }
+        assertThrows(IllegalArgumentException.class, () -> da.setData(ds2));
         // free the memory.
         da.bytesStore().releaseLast();
     }

@@ -24,7 +24,7 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
  * NOTE:  This impl only provides off-Heap capability for the tryXXXXX() family of
  * j.u.c.l.StampedLock methosds.
  */
-@SuppressWarnings({"rawtypes", "unchecked", "serial"})
+@SuppressWarnings({"rawtypes", "unchecked", "serial", "PMD.UnusedAssignment"})
 public class ChronicleStampedLock extends StampedLock {
 
     ChronicleMap<String, ChronicleStampedLockVOInterface> chm;  //custody of StampedLock semantics

@@ -120,7 +120,7 @@ public class ChronicleMapTest {
     private ChronicleMap<Integer, CharSequence> getViewTestMap(int noOfElements) {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                        .entries(noOfElements * 2 + 100)
+                        .entries(noOfElements * 2L + 100)
                         .averageValueSize((noOfElements + "").length())
                         .putReturnsNull(true)
                         .removeReturnsNull(true).create();
@@ -604,7 +604,7 @@ public class ChronicleMapTest {
         int entries = 3/*00 * 1000*/;
         try (ChronicleMap<CharSequence, LongValue> map2 = ChronicleMapBuilder.of(CharSequence.class,
                         LongValue.class)
-                .entries((long) entries)
+                .entries(entries)
                 .minSegments(1)
                 .averageKeySize(10)
                 .entryAndValueOffsetAlignment(8)
@@ -638,7 +638,7 @@ public class ChronicleMapTest {
 
             try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence.class,
                             LongValue.class)
-                    .entries((long) entries)
+                    .entries(entries)
                     //                    .minSegments(1)
                     .averageKeySize(10)
                     //                    .entryAndValueOffsetAlignment(8)
@@ -672,7 +672,7 @@ public class ChronicleMapTest {
             }
             try (ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder.of(CharSequence
                             .class, LongValue.class)
-                    .entries((long) entries)
+                    .entries(entries)
                     .minSegments(1)
                     .averageKeySize(10)
                     .entryAndValueOffsetAlignment(8)
@@ -712,7 +712,7 @@ public class ChronicleMapTest {
         int entries = 1000 * 1000;
         try (ChronicleMap<CharSequence, LongValue> map2 = ChronicleMapBuilder.of(CharSequence.class,
                         LongValue.class)
-                .entries((long) entries)
+                .entries(entries)
                 .minSegments(128)
                 .averageKeySize(10)
                 .entryAndValueOffsetAlignment(1)
@@ -739,7 +739,7 @@ public class ChronicleMapTest {
 
             try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence
                             .class, LongValue.class)
-                    .entries((long) entries)
+                    .entries(entries)
                     .minSegments(128)
                     .averageKeySize(10)
                     .entryAndValueOffsetAlignment(4)
@@ -766,7 +766,7 @@ public class ChronicleMapTest {
 
                 try (ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder.of(CharSequence
                                 .class, LongValue.class)
-                        .entries((long) entries)
+                        .entries(entries)
                         .minSegments(128)
                         .averageKeySize(10)
                         .entryAndValueOffsetAlignment(8)
@@ -861,8 +861,7 @@ public class ChronicleMapTest {
                                         (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
                                 for (long k = i; k < entries; k++) {
                                     key.setLength(0);
-                                    key.append("us:");
-                                    key.append(k * factor);
+                                    key.append("us:").append(k * factor);
                                     // 75% reads, 25% writes.
                                     if (rand.nextInt(4) > 0) {
                                         map.getUsing(key, value);
@@ -948,8 +947,7 @@ public class ChronicleMapTest {
                                              j < entries + independence - 1;
                                              j += independence) {
                                             key.setLength(0);
-                                            key.append("us:");
-                                            key.append(j * factor);
+                                            key.append("us:").append(j * factor);
                                             // 75% reads, 25% writes.
                                             if (rand.nextInt(4) > 0) {
                                                 map.getUsing(key, value);
@@ -1032,9 +1030,7 @@ public class ChronicleMapTest {
                                 for (long j = t % independence; j < entries + independence - 1;
                                      j += independence) {
                                     sb.setLength(0);
-                                    sb.append("us:");
-                                    sb.append(j * factor);
-                                    long n;
+                                    sb.append("us:").append(j * factor);
                                     // 75% read
                                     if (rand.nextBoolean() || rand.nextBoolean()) {
                                         try (ExternalMapQueryContext<?, LongValue, ?> c =
@@ -1044,9 +1040,9 @@ public class ChronicleMapTest {
                                                 // Attempt to pass abstraction hierarchies
                                                 net.openhft.chronicle.hash.Data<LongValue> v =
                                                         entry.value();
-                                                n = v.bytes().readVolatileLong(v.offset()) + 1;
+                                                v.bytes().readVolatileLong(v.offset());
                                             } else {
-                                                n = 1;
+                                                // miss, nothing to read
                                             }
                                         }
                                     } else {
@@ -1056,11 +1052,10 @@ public class ChronicleMapTest {
                                             MapEntry<?, LongValue> entry = c.entry();
                                             if (entry != null) {
                                                 net.openhft.chronicle.hash.Data<LongValue> v = entry.value();
-                                                n = ((BytesStore<?, ?>) v.bytes()).addAndGetLong(
+                                                ((BytesStore<?, ?>) v.bytes()).addAndGetLong(
                                                         v.offset(), 1);
                                             } else {
                                                 c.insert(c.absentEntry(), c.wrapValueAsData(ONE));
-                                                n = 1;
                                             }
                                         }
                                     }
@@ -1183,8 +1178,7 @@ public class ChronicleMapTest {
                             int factor = Math.max(1, (int) ((10 * 1000 * 1000 * 1000L - 1) / entries));
                             for (long i = t % independence; i < entries; i += independence) {
                                 sb.setLength(0);
-                                sb.append("u:");
-                                sb.append(i * factor);
+                                sb.append("u:").append(i * factor);
                                 String key = sb.toString();
                                 AtomicInteger count = map.get(key);
                                 if (count == null) {
@@ -1211,8 +1205,7 @@ public class ChronicleMapTest {
 
     private CharSequence getUserCharSequence(int i) {
         sb.setLength(0);
-        sb.append("u:");
-        sb.append(i * 9876); // test 10 digit user numbers.
+        sb.append("u:").append(i * 9876); // test 10 digit user numbers.
         return sb;
     }
 

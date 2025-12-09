@@ -61,7 +61,7 @@ public class Issue58 {
 
             map.putAll(data);
             Map<UUID, String> reverse = data.keySet().stream()
-                    .collect(toMap(k -> data.get(k), k -> k));
+                    .collect(toMap(data::get, k -> k));
             reverseMap.putAll(reverse);
         }
     }

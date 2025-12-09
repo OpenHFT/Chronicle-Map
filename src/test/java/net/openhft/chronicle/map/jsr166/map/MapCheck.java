@@ -452,7 +452,7 @@ public class MapCheck {
         Object lastkey = kitTest(s2, size);
         Object hold = s2.get(lastkey);
 
-        timer.start("Traverse entry         ", size * 12); // 12 until finish
+        timer.start("Traverse entry         ", size * 12L); // 12 until finish
 
         int sum = 0;
         int sh1 = s.hashCode() - s2.hashCode();
@@ -491,7 +491,7 @@ public class MapCheck {
         timer.finish();
 
         int rmiss = 0;
-        timer.start("Remove Present         ", size * 2);
+        timer.start("Remove Present         ", size * 2L);
         Iterator s2i = s2.entrySet().iterator();
         Set es = s.entrySet();
         while (s2i.hasNext()) {
@@ -642,6 +642,7 @@ public class MapCheck {
         }
     }
 
+    @SuppressWarnings("PMD.UnusedAssignment") // k is incremented while building char array
     static void randomWords(Object[] ws, int origin, int size) {
         for (int i = origin; i < size; ++i) {
             int k = 0;
@@ -682,6 +683,7 @@ public class MapCheck {
         }
     }
 
+    @SuppressWarnings("PMD.TestClassWithoutTestCases")
     static final class TestTimer {
         static final java.util.TreeMap accum = new java.util.TreeMap();
         private String name;

@@ -225,7 +225,7 @@ public final class InternalMapFileAnalyzer {
             if (b > 0x20 && b < 0x7E) {
                 sb.append((char) b);
             } else {
-                sb.append(".");
+                sb.append('.');
             }
         }
         return sb.toString();
@@ -272,7 +272,7 @@ public final class InternalMapFileAnalyzer {
         final long pos = buffer.position();
         final byte val = buffer.get();
         output(pos, tag, val);
-        return (int) val;
+        return val;
     }
 
     static int output24u(ByteBuffer buffer, final String tag) {

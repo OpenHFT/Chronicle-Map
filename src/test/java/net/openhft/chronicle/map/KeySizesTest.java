@@ -21,18 +21,20 @@ public class KeySizesTest {
         Map<String, String> map = ChronicleMap.of(String.class, String.class)
                 .entries(100).averageKeySize(100).averageValueSize(100).create();
 
-        String k = "";
+        StringBuilder keyBuilder = new StringBuilder();
         for (int i = 0; i < 100; i++) {
+            String k = keyBuilder.toString();
             map.put(k, k);
             String k2 = map.get(k);
             assertEquals(k, k2);
-            k += "a";
+            keyBuilder.append('a');
         }
-        k = "";
+        keyBuilder.setLength(0);
         for (int i = 0; i < 100; i++) {
+            String k = keyBuilder.toString();
             String k2 = map.get(k);
             assertEquals(k, k2);
-            k += "a";
+            keyBuilder.append('a');
         }
 
         ((Closeable) map).close();

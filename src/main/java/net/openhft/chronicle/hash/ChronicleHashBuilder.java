@@ -53,7 +53,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *
      * @return a new clone of this builder
      */
-    B clone();
+    ChronicleHashBuilder<K, H, B> clone();
 
     /**
      * Specify the name which will be given to a ChronicleHash, created by this builder. It is

@@ -31,7 +31,7 @@ public class SerializableTest {
                     .create()) {
 
                 map.put(1, new Foo(i));
-                map.get(1);
+                assertNotNull(map.get(1));
                 map.put(2, new Foo(i + 1));
                 assertEquals(i + 2, map.get(2).x.length());
             }

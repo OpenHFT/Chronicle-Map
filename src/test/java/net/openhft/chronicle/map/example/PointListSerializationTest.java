@@ -18,6 +18,8 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.Assert.assertNotNull;
+
 public class PointListSerializationTest {
 
     @Test
@@ -36,7 +38,7 @@ public class PointListSerializationTest {
             b.text = "b";
             objectA.items.add(b);
             map.put("KEY1", objectA);
-            map.get("KEY1");
+            assertNotNull(map.get("KEY1"));
         }
     }
 

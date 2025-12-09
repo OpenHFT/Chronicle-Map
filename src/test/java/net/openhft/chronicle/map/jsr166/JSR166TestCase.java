@@ -78,7 +78,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * runs all JSR166 unit tests.</li>
  * </ul>
  */
-@SuppressWarnings({"rawtypes", "unchecked", "deprecation", "serial", "removal"})
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation", "serial", "removal", "PMD.TestClassWithoutTestCases"})
 public class JSR166TestCase {
 
     /**
@@ -159,10 +159,12 @@ public class JSR166TestCase {
         return new TrackedRunnable() {
             private volatile boolean done = false;
 
+            @Override
             public boolean isDone() {
                 return done;
             }
 
+            @Override
             public void run() {
                 delay(timeoutMillis);
                 done = true;
@@ -556,21 +558,26 @@ public class JSR166TestCase {
             perms = new Permissions();
         }
 
+        @Override
         public PermissionCollection getPermissions(CodeSource cs) {
             return perms;
         }
 
+        @Override
         public PermissionCollection getPermissions(ProtectionDomain pd) {
             return perms;
         }
 
+        @Override
         public boolean implies(ProtectionDomain pd, Permission p) {
             return perms.implies(p);
         }
 
+        @Override
         public void refresh() {
         }
 
+        @Override
         public String toString() {
             List<Permission> ps = new ArrayList<Permission>();
             for (Enumeration<Permission> e = perms.elements(); e.hasMoreElements(); )

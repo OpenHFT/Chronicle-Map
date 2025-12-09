@@ -54,7 +54,7 @@ class WriterToo implements Runnable {
              *  START
              *
              */
-            long stamp = 0;
+            long stamp;
             System.out.println(
                     "WRITER TOO" +
                             " @t=" + System.currentTimeMillis() +

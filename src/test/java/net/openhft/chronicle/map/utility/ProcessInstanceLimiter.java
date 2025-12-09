@@ -272,6 +272,7 @@ public class ProcessInstanceLimiter implements Runnable {
      * run() method for the ProcessInstanceLimiter which it starts in a thread
      * called "ProcessInstanceLimiter updater"
      */
+    @Override
     public void run() {
         //every timeUpdateInterval milliseconds, update the time
         while (true) {
@@ -573,29 +574,35 @@ public class ProcessInstanceLimiter implements Runnable {
             this.limiter = limiter;
         }
 
+        @Override
         public void tooManyProcessesOfType(String processType) {
             System.out.println("Sufficient processes (" + this.limiter.getMaxNumberOfProcessesAllowedFor(processType) + ") of type " + processType + " have already been started, so exiting this process");
             System.exit(0);
         }
 
+        @Override
         public void noDefinitionForProcessesOfType(String processType) {
             System.out.println("No definition for processes of type " + processType + " has been set, so exiting this process");
             System.exit(0);
         }
 
+        @Override
         public void anotherProcessHasHijackedThisSlot(String processType, int slot) {
             System.out.println("Another process of type " + processType + " has hijacked the slot (" + slot + "/" + this.limiter.getMaxNumberOfProcessesAllowedFor(processType) + ") allocated to this process, so exiting this process");
             System.exit(0);
         }
 
+        @Override
         public void thisProcessOfTypeHasStartedAtSlot(String processType, int slot) {
             System.out.println("This process of type " + processType + " has started at slot " + slot + "/" + this.limiter.getMaxNumberOfProcessesAllowedFor(processType));
         }
 
+        @Override
         public void anotherProcessHasStartedOnSlot(String processType, int slot, long startTime) {
             System.out.println("Another process of type " + processType + " has started at slot " + slot + "/" + this.limiter.getMaxNumberOfProcessesAllowedFor(processType) + " at time " + new Date(startTime));
         }
 
+        @Override
         public void lockConflictDetected(String processType, int slot) {
             System.out.println("The limiter lock has become conflicted for type " + processType + " on slot (" + slot + "/" + this.limiter.getMaxNumberOfProcessesAllowedFor(processType) + ") allocated to this process, so exiting this process");
             System.exit(0);

@@ -38,7 +38,9 @@ public interface ReplicatedGlobalMutableStateV2 extends VanillaGlobalMutableStat
     void setModificationIteratorInitAt(int index, boolean init);
 
     @Group(9)
+    @Override
     long getSegmentHeadersOffset();
 
+    @Override
     void setSegmentHeadersOffset(@Range(min = 0/*, max = 9223372036854775807L*/) long segmentHeadersOffset);
 }

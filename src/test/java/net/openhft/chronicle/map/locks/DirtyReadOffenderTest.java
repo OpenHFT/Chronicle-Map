@@ -12,6 +12,7 @@ import java.util.concurrent.locks.StampedLock;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.Assume.assumeFalse;
 
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
 class DirtyReadOffenderTest implements Runnable {
 
     @Before
@@ -19,6 +20,7 @@ class DirtyReadOffenderTest implements Runnable {
         assumeFalse(OS.isLinux());
     }
 
+    @Override
     public void run() {
 
         try {
@@ -57,7 +59,7 @@ class DirtyReadOffenderTest implements Runnable {
                START
 
              */
-            long stamp = 0;
+            long stamp;
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"

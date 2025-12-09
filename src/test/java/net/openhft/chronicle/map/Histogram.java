@@ -52,17 +52,14 @@ public class Histogram {
         // print in reverse order.
         StringBuilder sb = new StringBuilder();
         for (int i = FRACTIONS.length - 1; i >= 0; i--) {
-            sb.append(FRACTION_STR[i]).append("/");
+            sb.append(FRACTION_STR[i]).append('/');
         }
         sb.setLength(sb.length() - 1);
         sb.append(" : ");
         for (int i = FRACTIONS.length - 1; i >= 0; i--) {
             long time = times[i];
-            if (time < 10000)
-                sb.append(time / 100 / 10.0);
-            else
-                sb.append(time / 1000);
-            sb.append(" / ");
+            double value = time < 10000 ? time / 100 / 10.0 : time / 1000.0;
+            sb.append(value).append(" / ");
         }
         sb.setLength(sb.length() - 3);
         sb.append(tail);

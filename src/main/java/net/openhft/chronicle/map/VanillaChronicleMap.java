@@ -816,7 +816,7 @@ public class VanillaChronicleMap<K, V, R>
         checkValue(value);
         try (QueryContextInterface<K, V, R> q = queryContext(key)) {
 
-            InstanceReturnValue<V> returnValue = null;
+            InstanceReturnValue<V> returnValue;
             if (this.putIfAbsentUsingValue) {
                 q.usingReturnValue().initUsingReturnValue(value);
                 returnValue = q.usingReturnValue();

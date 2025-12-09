@@ -219,9 +219,10 @@ public class EntryCountMapTest {
         LongValue longValue = newNativeReference(LongValue.class);
         try {
             for (int j = 0; j < moreThanMaxSize(maxSize); j++) {
-                String key = "key:" + counter;
+                StringBuilder keyBuilder = new StringBuilder("key:").append(counter);
                 if (minSize > 10 && (counter & 15) == 7)
-                    key += "-oversized-key";
+                    keyBuilder.append("-oversized-key");
+                String key = keyBuilder.toString();
                 counter += stride;
                 // give a biased hashcode distribution.
                 if ((Integer.bitCount(key.hashCode()) & 7) != 0) {

@@ -34,7 +34,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 import static net.openhft.chronicle.hash.impl.VanillaChronicleHash.TIER_COUNTERS_AREA_SIZE;
 
 @Staged
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked", "PMD.UseStringBufferForStringAppends"}) // generated-style diagnostic strings
 public abstract class SegmentStages implements SegmentLock, LocksInterface {
 
     @Stage("Segment")
@@ -281,6 +281,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         rootContextLockedOnThisSegment.changeAndGetTotalWriteLockCount(1);
     }
 
+    @Override
     public abstract boolean locksInit();
 
     void initLocks() {

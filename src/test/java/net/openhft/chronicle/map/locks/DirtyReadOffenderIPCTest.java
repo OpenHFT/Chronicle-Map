@@ -20,6 +20,7 @@ public class DirtyReadOffenderIPCTest implements Runnable {
     }
 
     @Test
+    @Override
     public void run() {
 
         try {
@@ -58,7 +59,7 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                START
 
              */
-            long stamp = 0;
+            long stamp;
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"

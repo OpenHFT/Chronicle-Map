@@ -180,7 +180,7 @@ public interface Data<T> {
         try {
             return get().toString();
         } catch (Exception e) {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder(128);
             sb.append("failed to deserialize object from data with bytes: [");
             RandomDataInput bs = bytes();
             for (long off = offset(), lim = offset() + size(); off < lim; off++) {

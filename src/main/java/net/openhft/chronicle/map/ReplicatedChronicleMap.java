@@ -658,6 +658,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         return new CompiledReplicatedMapIterationContext<>(this);
     }
 
+    @Override
     public CompiledReplicatedMapIterationContext<K, V, R> iterationContext() {
         //noinspection unchecked
         return i().getContext(CompiledReplicatedMapIterationContext.class,
@@ -746,6 +747,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
             tierBitSetAddr = segmentBitSetsAddr; // + tierModIterBitSetOuterSize * segmentIndex = 0
         }
 
+        @Override
         public void setModificationNotifier(@NotNull final ModificationNotifier modificationNotifier) {
             throwExceptionIfClosed();
 

@@ -110,8 +110,7 @@ public class MemoryLeaksTest {
         }
         WeakReference<ChronicleMap<IntValue, String>> ref = new WeakReference<>(map);
         Assert.assertNotNull(ref.get());
-        //noinspection UnusedAssignment
-        map = null;
+        map = null; // NOPMD.UnusedAssignment - encourage GC of map
 
         // Wait until Map is collected by GC
         // Wait until Cleaner is called and memory is returned to the system

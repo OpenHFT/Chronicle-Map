@@ -10,6 +10,7 @@ import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Rob Austin.
@@ -35,7 +36,7 @@ public class IntValueMapTest {
 
             // this will fail
 
-            map.toString();
+            assertNotNull(map.toString());
         }
     }
 }

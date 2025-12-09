@@ -22,7 +22,7 @@ import java.util.Map;
 import static com.google.common.collect.testing.MapTestSuiteBuilder.using;
 import static com.google.common.collect.testing.features.MapFeature.*;
 
-@SuppressWarnings({"rawtypes", "unchecked", "serial"})
+@SuppressWarnings({"rawtypes", "unchecked", "serial", "PMD.TestClassWithoutTestCases"})
 public class GuavaTest extends TestCase {
 
     public static Test suite() {
@@ -55,6 +55,7 @@ public class GuavaTest extends TestCase {
 
         abstract Map<String, String> newMap();
 
+        @Override
         public String[] createKeyArray(int length) {
             return new String[length];
         }

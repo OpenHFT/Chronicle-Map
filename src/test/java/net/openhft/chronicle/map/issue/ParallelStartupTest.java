@@ -13,10 +13,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ParallelStartupTest {
+class ParallelStartupTest {
 
     @RepeatedTest(5)
-    public void test() {
+    void test() {
         try {
             final File file = IOTools.createTempFile("issue342");
             Thread[] thread = new Thread[16];

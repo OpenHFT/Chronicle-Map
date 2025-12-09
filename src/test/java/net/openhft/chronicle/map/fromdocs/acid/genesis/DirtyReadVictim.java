@@ -18,11 +18,7 @@ public class DirtyReadVictim implements Runnable {
     private StampedLock offHeapLock;
 
     DirtyReadVictim(String isoL) {
-        int isoLevel = ChronicleAcidIsolation.LOWEST_LATENCY;
-        if (isoL.equals("DIRTY_READ_INTOLERANT"))
-            isoLevel = ChronicleAcidIsolation.DIRTY_READ_INTOLERANT;
-        else if (isoL.equals("DIRTY_READ_OPTIMISTIC"))
-            isoLevel = ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC;
+        // isolation level currently unused; constructor retained for legacy signature
     }
 
     @Override
@@ -35,7 +31,7 @@ public class DirtyReadVictim implements Runnable {
              */
             double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            long stamp = 0;
+            long stamp;
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
                             " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"

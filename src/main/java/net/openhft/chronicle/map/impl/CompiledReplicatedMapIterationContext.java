@@ -46,7 +46,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 /**
  * Generated code
  */
-@SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
+@SuppressWarnings({"rawtypes", "unchecked", "this-escape", "PMD.UseStringBufferForStringAppends", "PMD.UnnecessaryReturn"})
 // CHECKSTYLE:OFF: GeneratedCode
 public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInterface implements AutoCloseable , ChecksumEntry , HashEntry<K> , HashSegmentContext<K, MapEntry<K, V>> , ReplicatedHashSegmentContext<K, MapEntry<K, V>> , SegmentLock , Alloc , KeyHashCode , LocksInterface , RemoteOperationContext<K> , ReplicableEntry , MapContext<K, V, R> , MapEntry<K, V> , IterationContext<K, V, R> , ReplicatedChronicleMapHolder<K, V, R> , ReplicatedIterationContext<K, V, R> , MapReplicableEntry<K, V> , SetContext<K, R> {
     public boolean readZeroGuarded() {
@@ -119,6 +119,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return segmentBytesForWrite();
     }
 
+    @Override
     public void close() {
         this.doCloseDelayedUpdateChecksum();
         this.doCloseKeySearch();
@@ -345,7 +346,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
     }
 
     enum EntriesToTest {
-        PRESENT, ALL;
+        PRESENT, ALL
     }
 
     private long _MapEntryStages_countValueSizeOffset() {
@@ -1036,8 +1037,8 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         }
 
         public void doCloseNext() {
-            if (!(this.nextInit()))
-                return ;
+            if (!(this.nextInit())) {
+            }
 
         }
 
@@ -1264,8 +1265,8 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         }
 
         public void doCloseNext() {
-            if (!(this.nextInit()))
-                return ;
+            if (!(this.nextInit())) {
+            }
 
         }
 
@@ -1673,7 +1674,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
     }
 
     public enum SearchState {
-        PRESENT, ABSENT;
+        PRESENT, ABSENT
     }
 
     private long _HashEntryStages_entryEnd() {
@@ -1747,7 +1748,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
     private void _SegmentStages_checkNestedContextsQueryDifferentKeys(LocksInterface innermostContextOnThisSegment) {
         if ((innermostContextOnThisSegment.getClass()) == (getClass())) {
             Data key = ((CompiledReplicatedMapIterationContext)(innermostContextOnThisSegment)).inputKey();
-            if (java.util.Objects.equals(key, ((CompiledReplicatedMapIterationContext)((Object)(this))).inputKey())) {
+            if (java.util.Objects.equals(key, ((CompiledReplicatedMapIterationContext) this).inputKey())) {
                 throw new IllegalStateException((((this.h().toIdentityString()) + ": Nested same-thread contexts cannot access the same key ") + key));
             } 
         } 
@@ -1912,6 +1913,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     final Thread owner;
 
+    @Override
     public Thread owner() {
         return this.owner;
     }
@@ -2192,7 +2194,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     public void checkAccessingFromOwnerThread() {
         if ((owner) != (Thread.currentThread())) {
-            throw new ConcurrentModificationException(((this.h().toIdentityString()) + ": Context shouldn\'t be accessed from multiple threads"));
+            throw new ConcurrentModificationException(((this.h().toIdentityString()) + ": Context shouldn't be accessed from multiple threads"));
         } 
     }
 
@@ -2480,6 +2482,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return (this.segmentIndex) >= 0;
     }
 
+    @Override
     public void initSegmentIndex(int segmentIndex) {
         boolean wasSegmentIndexInit = this.segmentIndexInit();
         this.segmentIndex = segmentIndex;
@@ -2488,6 +2491,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     }
 
+    @Override
     public int segmentIndex() {
         assert this.segmentIndexInit() : "SegmentIndex should be init";
         return this.segmentIndex;
@@ -2510,6 +2514,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     public SegmentHeader segmentHeader = null;
 
+    @Override
     public boolean segmentHeaderInit() {
         return (this.segmentHeader) != null;
     }
@@ -2523,6 +2528,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     }
 
+    @Override
     public long segmentHeaderAddress() {
         if (!(this.segmentHeaderInit()))
             this.initSegmentHeader();
@@ -2668,7 +2674,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     public void prevTier() {
         if ((tier()) == 0) {
-            throw new IllegalStateException(((this.h().toIdentityString()) + ": first tier doesn\'t have previous"));
+            throw new IllegalStateException(((this.h().toIdentityString()) + ": first tier doesn't have previous"));
         } 
         initSegmentTier(((tier()) - 1), prevTierIndex());
     }
@@ -2859,6 +2865,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         }
     }
 
+    @Override
     public long size() {
         goToFirstTier();
         long size = (tierEntries()) - (tierDeleted());
@@ -3020,6 +3027,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     }
 
+    @Override
     public long pos() {
         assert this.posInit() : "Pos should be init";
         return this.pos;
@@ -3079,6 +3087,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         this.closeDelayedUpdateChecksum();
     }
 
+    @Override
     public void readExistingEntry(long pos) {
         initPos(pos);
         Bytes segmentBytes = this.segmentBytesForReadGuarded();
@@ -3151,7 +3160,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return (this.valueSizeOffset) != (-1);
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void initValueSizeOffset() {
         boolean wasValueSizeOffsetInit = this.valueSizeOffsetInit();
         valueSizeOffset = countValueSizeOffset();
@@ -3360,6 +3369,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     }
 
+    @Override
     public ReplicatedChronicleMap<K, V, R> m() {
         assert this.mapInit() : "Map should be init";
         return this.m;
@@ -3397,7 +3407,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return (this.valueSize) != (-1);
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void initValueSize() {
         boolean wasValueSizeInit = this.valueSizeInit();
         Bytes segmentBytes = this.segmentBytesForReadGuarded();
@@ -3660,6 +3670,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return m().chronicleSet;
     }
 
+    @Override
     public ChronicleHash<K, ?, ?, ?> hash() {
         return (set()) != null ? set() : map();
     }
@@ -3687,11 +3698,11 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
     public void initReplicationUpdate(byte identifier, long timestamp, byte remoteNodeIdentifier) {
         innerRemoteTimestamp = timestamp;
         if (identifier == 0)
-            throw new IllegalStateException(((this.h().toIdentityString()) + ": identifier can\'t be 0"));
+            throw new IllegalStateException(((this.h().toIdentityString()) + ": identifier can't be 0"));
 
         innerRemoteIdentifier = identifier;
         if (remoteNodeIdentifier == 0) {
-            throw new IllegalStateException(((this.h().toIdentityString()) + ": remote node identifier can\'t be 0"));
+            throw new IllegalStateException(((this.h().toIdentityString()) + ": remote node identifier can't be 0"));
         } 
         innerRemoteNodeIdentifier = remoteNodeIdentifier;
     }
@@ -3774,7 +3785,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         int storedChecksum = this.checksumStrategy.storedChecksum();
         int checksumFromEntry = this.checksumStrategy.computeChecksum();
         if (storedChecksum != checksumFromEntry) {
-            ChronicleHashCorruptionImpl.report(corruptionListener, corruption, segmentIndex, () -> ChronicleHashCorruptionImpl.format(("Checksum doesn\'t match, stored: {}, should be from " + "the entry bytes: {}, key: {}, value: {}"), storedChecksum, checksumFromEntry, this.key(), this.value()));
+            ChronicleHashCorruptionImpl.report(corruptionListener, corruption, segmentIndex, () -> ChronicleHashCorruptionImpl.format(("Checksum doesn't match, stored: {}, should be from " + "the entry bytes: {}, key: {}, value: {}"), storedChecksum, checksumFromEntry, this.key(), this.value()));
             return -1;
         } 
         if (!(this.freeList().isRangeClear(entryPos, (entryPos + (this.entrySizeInChunks()))))) {
@@ -4026,7 +4037,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return this.used;
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void closeUsed() {
         if (!(this.usedInit()))
             return ;
@@ -4060,6 +4071,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     public LocksInterface rootContextLockedOnThisSegment = null;
 
+    @Override
     public boolean locksInit() {
         return (this.rootContextLockedOnThisSegment) != null;
     }
@@ -4094,6 +4106,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
 
     }
 
+    @Override
     public int latestSameThreadSegmentModCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -4101,6 +4114,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return this.latestSameThreadSegmentModCount;
     }
 
+    @Override
     public int totalReadLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -4108,6 +4122,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return this.totalReadLockCount;
     }
 
+    @Override
     public int totalUpdateLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -4115,6 +4130,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return this.totalUpdateLockCount;
     }
 
+    @Override
     public int totalWriteLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -4129,6 +4145,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return this.localLockState;
     }
 
+    @Override
     public LocksInterface nextNode() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -4136,6 +4153,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
         return this.nextNode;
     }
 
+    @Override
     public LocksInterface rootContextLockedOnThisSegment() {
         if (!(this.locksInit()))
             this.initLocks();

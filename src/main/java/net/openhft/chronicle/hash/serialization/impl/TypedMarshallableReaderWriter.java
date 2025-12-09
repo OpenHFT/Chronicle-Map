@@ -26,6 +26,7 @@ public class TypedMarshallableReaderWriter<V extends Marshallable>
         return wire.getValueIn().object(using, tClass());
     }
 
+    @Override
     protected void writeToWire(Wire wire, @NotNull V toWrite) {
         wire.getValueOut().object(toWrite);
     }

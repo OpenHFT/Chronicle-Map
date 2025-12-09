@@ -23,7 +23,7 @@ class ReaderToo implements Runnable {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            double coupon = 0.00;
+            double coupon;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class); //mock'd
             System.out.println(
@@ -42,7 +42,7 @@ class ReaderToo implements Runnable {
                             " DirtyReadIntolerant sleeping " + sleepMock + " seconds"
             );
             Thread.sleep(sleepMock * 1_000);
-            long stamp = 0;
+            long stamp;
             while ((stamp = offHeapLock.tryReadLock()) < 0) {
                 Thread.yield();
             }

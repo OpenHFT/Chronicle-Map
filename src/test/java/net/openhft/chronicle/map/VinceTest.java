@@ -12,6 +12,7 @@ import java.io.IOException;
 import static net.openhft.chronicle.algo.MemoryUnit.BYTES;
 import static net.openhft.chronicle.algo.MemoryUnit.MEGABYTES;
 
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class VinceTest {
     public static void main(String[] args) throws IOException {
         long count = 100_000_000L;

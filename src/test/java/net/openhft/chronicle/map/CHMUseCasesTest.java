@@ -140,7 +140,7 @@ interface IBean {
 /**
  * This test enumerates common use cases for keys and values.
  */
-@RunWith(value = Parameterized.class)
+@RunWith(Parameterized.class)
 @SuppressWarnings({"rawtypes", "unchecked", "try", "serial"})
 public class CHMUseCasesTest {
 
@@ -660,7 +660,7 @@ public class CHMUseCasesTest {
                 using.setValue(1);
             }
 
-            assertNull(map.get("1"));
+            assertNull(map.get(using));
             mapChecks();
         }
     }
@@ -2360,10 +2360,14 @@ public class CHMUseCasesTest {
                         entry.value().getUsing(list2));
             }
 
+            int keySum = 0;
+            int valueCount = 0;
             for (Map.Entry<String, Set<String>> entry : map.entrySet()) {
-                entry.getKey();
-                entry.getValue();
+                keySum += entry.getKey().length();
+                valueCount += entry.getValue().size();
             }
+            assertTrue(keySum > 0);
+            assertTrue(valueCount > 0);
 
             mapChecks();
         }
@@ -2505,7 +2509,7 @@ public class CHMUseCasesTest {
                 value.setText("value-" + i);
                 map.put(key, value);
                 // check the map is still valid.
-                map.entrySet().toString();
+                assertNotNull(map.entrySet().toString());
             }
         }
     }
@@ -2528,7 +2532,7 @@ public class CHMUseCasesTest {
                 value.setText("value-" + i);
                 map.put(key, value);
                 // check the map is still valid.
-                map.entrySet().toString();
+                assertNotNull(map.entrySet().toString());
             }
         }
     }
@@ -2552,7 +2556,7 @@ public class CHMUseCasesTest {
                 value.setText("value-" + i);
                 map.put(key, value);
                 // check the map is still valid.
-                map.entrySet().toString();
+                assertNotNull(map.entrySet().toString());
             }
         }
     }

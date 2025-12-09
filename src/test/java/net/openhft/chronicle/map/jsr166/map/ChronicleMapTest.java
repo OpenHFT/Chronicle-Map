@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd.
  */
 
-@SuppressWarnings({"rawtypes", "unchecked", "try"})
+@SuppressWarnings({"rawtypes", "unchecked", "try", "PMD.UselessPureMethodCall"})
 public class ChronicleMapTest extends JSR166TestCase {
 
     static ChronicleMap<Integer, CharSequence> newShmIntString(int size) {

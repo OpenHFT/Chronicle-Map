@@ -18,6 +18,7 @@ import static net.openhft.chronicle.hash.Data.bytesEquivalent;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.FAIL;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.SUCCESS;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 public class BiMapTest {
@@ -70,19 +71,9 @@ public class BiMapTest {
             q.entry().doRemove();
         }
 
-        try {
-            map1.remove(3);
-            throw new AssertionError("expected IllegalStateException");
-        } catch (IllegalStateException e) {
-            // expected
-        }
+        assertThrows(IllegalStateException.class, () -> map1.remove(3));
 
-        try {
-            map2.put("4", 6);
-            throw new AssertionError("expected IllegalArgumentException");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
+        assertThrows(IllegalArgumentException.class, () -> map2.put("4", 6));
 
         map2.put("4", 3); // recover
         verifyBiMapConsistent(map1, map2);

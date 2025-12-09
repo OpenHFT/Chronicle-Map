@@ -13,11 +13,11 @@ public class NoUpperBoundChunksPerEntryTest {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                         .averageValueSize(2).entries(10000L).actualSegments(1).create();
-        String ultraLargeValue = "";
+        StringBuilder ultraLargeValue = new StringBuilder();
         for (int i = 0; i < 100; i++) {
-            ultraLargeValue += "Hello";
+            ultraLargeValue.append("Hello");
         }
-        map.put(1, ultraLargeValue);
-        Assert.assertEquals(ultraLargeValue, map.get(1).toString());
+        map.put(1, ultraLargeValue.toString());
+        Assert.assertEquals(ultraLargeValue.toString(), map.get(1).toString());
     }
 }

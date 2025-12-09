@@ -49,7 +49,7 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
 
     @Override
     public long maxSize() {
-        return BASE + capacity * 8;
+        return BASE + capacity * 8L;
     }
 
     @Override
@@ -117,6 +117,7 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
             doubleArray.setDataAt(i, getDataAt(i));
     }
 
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("[ ");

@@ -144,14 +144,17 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
                 return AbstractChronicleMap.this.size();
             }
 
+            @Override
             public boolean isEmpty() {
                 return AbstractChronicleMap.this.isEmpty();
             }
 
+            @Override
             public void clear() {
                 AbstractChronicleMap.this.clear();
             }
 
+            @Override
             public boolean contains(Object k) {
                 return AbstractChronicleMap.this.containsKey(k);
             }

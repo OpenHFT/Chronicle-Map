@@ -37,7 +37,7 @@ public class DirtyReadIntolerant_ReaderReader_Test {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            double coupon = 0.00;
+            double coupon;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class); //mock'd
             System.out.println(
@@ -56,7 +56,7 @@ public class DirtyReadIntolerant_ReaderReader_Test {
                             " DirtyReadIntolerant sleeping " + sleepMock + " seconds"
             );
             Thread.sleep(sleepMock * 1_000);
-            long stamp = 0;
+            long stamp;
             while ((stamp = offHeapLock.tryReadLock()) < 0) {
                 Assert.assertEquals(Boolean.TRUE, false); // we failed!
             }

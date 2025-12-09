@@ -19,8 +19,8 @@ import static java.lang.annotation.ElementType.*;
  * This annotation is a copy of Guava's <a href="https://google.github.io/guava/releases/19.0/api/docs/com/google/common/annotations/Beta.html">
  * {@code Beta}</a>.
  */
-@Retention(value = RetentionPolicy.CLASS)
-@Target(value = {ANNOTATION_TYPE, CONSTRUCTOR, FIELD, METHOD, TYPE})
+@Retention(RetentionPolicy.CLASS)
+@Target({ANNOTATION_TYPE, CONSTRUCTOR, FIELD, METHOD, TYPE})
 @Documented
 @Beta
 public @interface Beta {

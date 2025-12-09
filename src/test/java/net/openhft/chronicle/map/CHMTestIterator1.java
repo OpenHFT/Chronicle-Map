@@ -31,13 +31,15 @@ public class CHMTestIterator1 {
                 chm.put("k" + alKey.incrementAndGet(), alValue.incrementAndGet());
             }
 
+            long keyHash = 0;
+            long valueSum = 0;
             long start = System.nanoTime();
             for (Map.Entry<String, Long> entry : chm.entrySet()) {
-                entry.getKey();
-                entry.getValue();
+                keyHash += entry.getKey().hashCode();
+                valueSum += entry.getValue();
             }
             long time = System.nanoTime() - start;
-            System.out.println("Average iteration time was " + time / runs / 1e3 + "us, for " + runs / 1e6 + "m entries");
+            System.out.println("Average iteration time was " + time / runs / 1e3 + "us, for " + runs / 1e6 + "m entries (hash=" + keyHash + ", sum=" + valueSum + ")");
         }
     }
 }

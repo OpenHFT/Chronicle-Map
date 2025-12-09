@@ -37,11 +37,13 @@ public class ProcessInstanceLimiterMain implements Runnable {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Callback callback = new Callback() {
+            @Override
             public void tooManyProcessesOfType(String processType) {
                 System.out.println("Too many processes of type " + processType + " have been started, so exiting this process");
                 System.exit(0);
             }
 
+            @Override
             public void noDefinitionForProcessesOfType(String processType) {
                 System.out.println("No definition for processes of type " + processType + " has been set, so exiting this process");
                 System.exit(0);
@@ -57,6 +59,7 @@ public class ProcessInstanceLimiterMain implements Runnable {
         ProcessInstanceLimiter.pause(pause);
     }
 
+    @Override
     public void run() {
         //every TIME_UPDATE_INTERVAL milliseconds, update the time
         while (true) {

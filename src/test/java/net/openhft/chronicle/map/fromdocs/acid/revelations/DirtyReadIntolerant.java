@@ -24,7 +24,7 @@ public class DirtyReadIntolerant {
                             args[3]
                                     + "OPERAND_CHRONICLE_MAP"
                     );
-            double coupon = 0.00;
+            double coupon;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class); //mock'd
             System.out.println(
@@ -41,7 +41,7 @@ public class DirtyReadIntolerant {
                             " DirtyReadIntolerant sleeping " + sleepMock + " seconds"
             );
             Thread.sleep(sleepMock * 1_000);
-            long stamp = 0;
+            long stamp;
             while ((stamp = offHeapLock.readLock()) < 0) {
                 // none
             }

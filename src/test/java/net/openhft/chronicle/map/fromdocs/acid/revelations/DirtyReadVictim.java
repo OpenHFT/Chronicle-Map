@@ -14,7 +14,6 @@ public class DirtyReadVictim {
 
     public static void main(String[] args) {
         try {
-            String isoLevel = args[0];
             long sleepMock = Long.parseLong(args[1]);
             long holdTime = Long.parseLong(args[2]);
             /*
@@ -43,12 +42,11 @@ public class DirtyReadVictim {
             );
 
             Thread.sleep(sleepMock * 1_000);
-            long stamp = 0;
+            long stamp;
             while ((stamp = offHeapLock.tryOptimisticRead()) < 0) {
                 System.out.println(
                         " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim waiting for unlockWrite()... " +
-                                ""
+                                " DirtyReadVictim waiting for unlockWrite()... "
                 );
                 Thread.sleep(1000);
             }

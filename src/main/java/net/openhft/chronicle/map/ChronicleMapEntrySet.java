@@ -18,10 +18,12 @@ class ChronicleMapEntrySet<K, V> extends AbstractSet<Map.Entry<K, V>> {
     }
 
     @NotNull
+    @Override
     public Iterator<Map.Entry<K, V>> iterator() {
         return new ChronicleMapIterator.OfEntries<>(map);
     }
 
+    @Override
     public final boolean contains(Object o) {
         if (!(o instanceof Map.Entry))
             return false;
@@ -34,6 +36,7 @@ class ChronicleMapEntrySet<K, V> extends AbstractSet<Map.Entry<K, V>> {
         }
     }
 
+    @Override
     public final boolean remove(Object o) {
         if (!(o instanceof Map.Entry))
             return false;
@@ -47,14 +50,17 @@ class ChronicleMapEntrySet<K, V> extends AbstractSet<Map.Entry<K, V>> {
         }
     }
 
+    @Override
     public final int size() {
         return map.size();
     }
 
+    @Override
     public final boolean isEmpty() {
         return map.isEmpty();
     }
 
+    @Override
     public final void clear() {
         map.clear();
     }

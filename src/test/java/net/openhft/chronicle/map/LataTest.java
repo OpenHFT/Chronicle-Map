@@ -6,6 +6,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
 
+@SuppressWarnings("PMD.TestClassWithoutTestCases")
 public class LataTest {
 
     private static final int max = 6000000;
@@ -13,8 +14,8 @@ public class LataTest {
     private static int currentRun = 0;
 
     public static void main(String[] args) {
-        long startTime = 0;
-        long endTime = 0;
+        long startTime;
+        long endTime;
 
         ChronicleMapBuilder<StringValue, IData> builder = ChronicleMapBuilder
                 .of(StringValue.class, IData.class)

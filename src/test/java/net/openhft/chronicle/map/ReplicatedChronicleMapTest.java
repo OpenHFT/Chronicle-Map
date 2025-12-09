@@ -19,7 +19,7 @@ import static org.junit.Assert.*;
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd. Then modified by the Open HFT team.
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked", "PMD.UnnecessaryReturn", "PMD.UselessPureMethodCall"}) // legacy JSR166-style tests use early returns in catch blocks
 public class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<Integer, CharSequence> newShmIntString() {
         ChronicleMapBuilder<Integer, CharSequence> builder = ChronicleMap
@@ -395,7 +395,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -410,7 +409,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -424,7 +422,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -438,7 +435,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -452,7 +448,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -466,7 +461,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -480,7 +474,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -494,7 +487,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -508,7 +500,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -522,7 +513,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -536,7 +526,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -551,7 +540,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 
@@ -566,7 +554,6 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             assertThrows();
         } catch (NullPointerException | IllegalArgumentException success) {
             // expected
-            return;
         }
     }
 

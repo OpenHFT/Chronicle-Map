@@ -9,6 +9,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 
 import java.sql.*;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -105,7 +106,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
     @Override
     public synchronized int getTransactionIsolation() {
 
-        return this.getTransactionIsolationMap().get(Thread.currentThread());
+        return this.getTransactionIsolationMap().get(Thread.currentThread().toString());
     }
 
     @Override
@@ -272,7 +273,7 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
 
     @Override
     public Map<String, Class<?>> getTypeMap() {
-        return null;
+        return Collections.emptyMap();
     }
 
     @Override
@@ -367,12 +368,12 @@ public class ChronicleAcidIsolationGovernor implements ChronicleAcidIsolation {
 
     @Override
     public String getClientInfo(String name) {
-        return null;
+        return "";
     }
 
     @Override
     public Properties getClientInfo() {
-        return null;
+        return new Properties();
     }
 
     @Override

@@ -42,7 +42,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 /**
  * Generated code
  */
-@SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
+@SuppressWarnings({"rawtypes", "unchecked", "this-escape", "PMD.UseStringBufferForStringAppends", "PMD.UnnecessaryReturn"})
 // CHECKSTYLE:OFF: GeneratedCode
 public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implements AutoCloseable , ChecksumEntry , HashEntry<K> , SegmentLock , Alloc , KeyHashCode , LocksInterface , ExternalMapQueryContext<K, V, R> , MapContext<K, V, R> , MapEntry<K, V> , QueryContextInterface<K, V, R> , VanillaChronicleMapHolder<K, V, R> , Absent<K, V> , MapAndSetContext<K, V, R> , ExternalSetQueryContext<K, R> , SetContext<K, R> , SetEntry<K> {
     public boolean readZeroGuarded() {
@@ -115,6 +115,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return segmentBytesForWrite();
     }
 
+    @Override
     public void close() {
         this.entryKey.doCloseCachedEntryKey();
         this.entryValue.doCloseCachedEntryValue();
@@ -1152,8 +1153,8 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         public void doCloseNext() {
-            if (!(this.nextInit()))
-                return ;
+            if (!(this.nextInit())) {
+            }
 
         }
 
@@ -1380,8 +1381,8 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         }
 
         public void doCloseNext() {
-            if (!(this.nextInit()))
-                return ;
+            if (!(this.nextInit())) {
+            }
 
         }
 
@@ -1789,11 +1790,11 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
     }
 
     public enum EntryPresence {
-        PRESENT, ABSENT;
+        PRESENT, ABSENT
     }
 
     public enum SearchState {
-        PRESENT, ABSENT;
+        PRESENT, ABSENT
     }
 
     private long _HashEntryStages_entryEnd() {
@@ -1935,6 +1936,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     final Thread owner;
 
+    @Override
     public Thread owner() {
         return this.owner;
     }
@@ -2099,7 +2101,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         private V usingReturnValue = ((V)(UsableReturnValue.USING_RETURN_VALUE_UNINIT));
 
         public boolean usingReturnValueInit() {
-            return (this.usingReturnValue) != ((V)(UsableReturnValue.USING_RETURN_VALUE_UNINIT));
+            return (this.usingReturnValue) != UsableReturnValue.USING_RETURN_VALUE_UNINIT;
         }
 
         @Override
@@ -2218,10 +2220,12 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     public final UsingReturnValue usingReturnValue;
 
+    @Override
     public UsingReturnValue usingReturnValue() {
         return this.usingReturnValue;
     }
 
+    @Override
     public AcquireHandle acquireHandle() {
         return this.acquireHandle;
     }
@@ -2259,6 +2263,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     public final DefaultReturnValue defaultReturnValue;
 
+    @Override
     public DefaultReturnValue defaultReturnValue() {
         return this.defaultReturnValue;
     }
@@ -2339,6 +2344,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return CompiledMapQueryContext.initUsedAndReturn(map, context);
     }
 
+    @Override
     public DataAccess<K> inputKeyDataAccess() {
         initInputKeyDataAccess();
         return innerInputKeyDataAccess;
@@ -2482,6 +2488,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return (this.inputKey) != null;
     }
 
+    @Override
     public void initInputKey(Data<K> inputKey) {
         boolean wasInputKeyInit = this.inputKeyInit();
         this.inputKey = inputKey;
@@ -2641,7 +2648,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return (this.valueSizeOffset) != (-1);
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void initValueSizeOffset() {
         boolean wasValueSizeOffsetInit = this.valueSizeOffsetInit();
         valueSizeOffset = countValueSizeOffset();
@@ -2702,6 +2709,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     }
 
+    @Override
     public VanillaChronicleMap<K, V, R> m() {
         assert this.mapInit() : "Map should be init";
         return this.m;
@@ -2753,6 +2761,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return m();
     }
 
+    @Override
     public ChronicleHash<K, ?, ?, ?> hash() {
         return (set()) != null ? set() : map();
     }
@@ -2784,7 +2793,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
     public void checkNestedContextsQueryDifferentKeys(LocksInterface innermostContextOnThisSegment) {
         if ((innermostContextOnThisSegment.getClass()) == (getClass())) {
             Data key = ((CompiledMapQueryContext)(innermostContextOnThisSegment)).inputKey();
-            if (java.util.Objects.equals(key, ((CompiledMapQueryContext)((Object)(this))).inputKey())) {
+            if (java.util.Objects.equals(key, ((CompiledMapQueryContext) this).inputKey())) {
                 throw new IllegalStateException((((this.h().toIdentityString()) + ": Nested same-thread contexts cannot access the same key ") + key));
             } 
         } 
@@ -2860,6 +2869,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     public int segmentIndex = -1;
 
+    @Override
     public boolean segmentIndexInit() {
         return (this.segmentIndex) >= 0;
     }
@@ -2872,6 +2882,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     }
 
+    @Override
     public void initSegmentIndex(int segmentIndex) {
         boolean wasSegmentIndexInit = this.segmentIndexInit();
         this.segmentIndex = segmentIndex;
@@ -2880,6 +2891,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     }
 
+    @Override
     public int segmentIndex() {
         if (!(this.segmentIndexInit()))
             this.initSegmentIndex();
@@ -2905,6 +2917,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     public SegmentHeader segmentHeader = null;
 
+    @Override
     public boolean segmentHeaderInit() {
         return (this.segmentHeader) != null;
     }
@@ -2918,6 +2931,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     }
 
+    @Override
     public long segmentHeaderAddress() {
         if (!(this.segmentHeaderInit()))
             this.initSegmentHeader();
@@ -3245,7 +3259,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return (this.valueSize) != (-1);
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void initValueSize() {
         boolean wasValueSizeInit = this.valueSizeInit();
         Bytes segmentBytes = this.segmentBytesForReadGuarded();
@@ -3444,7 +3458,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     public void prevTier() {
         if ((tier()) == 0) {
-            throw new IllegalStateException(((this.h().toIdentityString()) + ": first tier doesn\'t have previous"));
+            throw new IllegalStateException(((this.h().toIdentityString()) + ": first tier doesn't have previous"));
         } 
         initSegmentTier(((tier()) - 1), prevTierIndex());
     }
@@ -3533,7 +3547,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     public void checkAccessingFromOwnerThread() {
         if ((owner) != (Thread.currentThread())) {
-            throw new ConcurrentModificationException(((this.h().toIdentityString()) + ": Context shouldn\'t be accessed from multiple threads"));
+            throw new ConcurrentModificationException(((this.h().toIdentityString()) + ": Context shouldn't be accessed from multiple threads"));
         } 
     }
 
@@ -3576,7 +3590,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return this.used;
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void closeUsed() {
         if (!(this.usedInit()))
             return ;
@@ -3610,6 +3624,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
 
     public LocksInterface rootContextLockedOnThisSegment = null;
 
+    @Override
     public boolean locksInit() {
         return (this.rootContextLockedOnThisSegment) != null;
     }
@@ -3658,6 +3673,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return this.contextModCount;
     }
 
+    @Override
     public int latestSameThreadSegmentModCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3665,6 +3681,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return this.latestSameThreadSegmentModCount;
     }
 
+    @Override
     public int totalReadLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3672,6 +3689,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return this.totalReadLockCount;
     }
 
+    @Override
     public int totalUpdateLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3679,6 +3697,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return this.totalUpdateLockCount;
     }
 
+    @Override
     public int totalWriteLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3693,6 +3712,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return this.localLockState;
     }
 
+    @Override
     public LocksInterface nextNode() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3700,6 +3720,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return this.nextNode;
     }
 
+    @Override
     public LocksInterface rootContextLockedOnThisSegment() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -4118,6 +4139,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return wrapped.wrappedData();
     }
 
+    @Override
     public Data<K> queriedKey() {
         this.checkOnEachPublicOperation();
         return this.inputKey();
@@ -4152,6 +4174,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
     }
 
     @NotNull
+    @Override
     public Data<V> defaultValue() {
         this.checkOnEachPublicOperation();
         return this.zeroValueData;

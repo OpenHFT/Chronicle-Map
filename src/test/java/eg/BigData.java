@@ -50,16 +50,19 @@ public class BigData {
         System.out.println("Start highwatermark " + highWatermark.get());
         for (int i = 0; i < 10; i++) {
             Thread t1 = new Thread("test 1") {
+                @Override
                 public void run() {
                     runTest();
                 }
             };
             Thread t2 = new Thread("test 2") {
+                @Override
                 public void run() {
                     runTest();
                 }
             };
             Thread t3 = new Thread("test 3") {
+                @Override
                 public void run() {
                     runTest();
                 }
@@ -81,18 +84,21 @@ public class BigData {
         System.out.println("building an empty map");
         long start = System.currentTimeMillis();
         Thread t1 = new Thread("test 1") {
+            @Override
             public void run() {
                 populate(1);
             }
         };
         t1.start();
         Thread t2 = new Thread("test 2") {
+            @Override
             public void run() {
                 populate(2);
             }
         };
         t2.start();
         Thread t3 = new Thread("test 3") {
+            @Override
             public void run() {
                 populate(3);
             }

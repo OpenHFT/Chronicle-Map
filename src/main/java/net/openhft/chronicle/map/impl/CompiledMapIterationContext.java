@@ -39,7 +39,7 @@ import static net.openhft.chronicle.hash.impl.LocalLockState.UNLOCKED;
 /**
  * Generated code
  */
-@SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
+@SuppressWarnings({"rawtypes", "unchecked", "this-escape", "PMD.UseStringBufferForStringAppends", "PMD.UnnecessaryReturn"}) // generated-style code; string builders not performance-critical here
 public class CompiledMapIterationContext<K, V, R> extends ChainingInterface implements AutoCloseable, ChecksumEntry, HashEntry<K>, HashSegmentContext<K, MapEntry<K, V>>, SegmentLock, Alloc, KeyHashCode, LocksInterface, MapContext<K, V, R>, MapEntry<K, V>, IterationContext<K, V, R>, VanillaChronicleMapHolder<K, V, R>, SetContext<K, R> {
     public boolean readZeroGuarded() {
         if (!(this.locksInit()))
@@ -111,6 +111,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return segmentBytesForWrite();
     }
 
+    @Override
     public void close() {
         this.doCloseDelayedUpdateChecksum();
         this.doCloseKeySearch();
@@ -878,8 +879,8 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         }
 
         public void doCloseNext() {
-            if (!(this.nextInit()))
-                return;
+            if (!(this.nextInit())) {
+            }
 
         }
 
@@ -1106,8 +1107,8 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         }
 
         public void doCloseNext() {
-            if (!(this.nextInit()))
-                return;
+            if (!(this.nextInit())) {
+            }
 
         }
 
@@ -1515,7 +1516,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
     }
 
     public enum SearchState {
-        PRESENT, ABSENT;
+        PRESENT, ABSENT
     }
 
     private long _HashEntryStages_entryEnd() {
@@ -1562,7 +1563,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
     private void _SegmentStages_checkNestedContextsQueryDifferentKeys(LocksInterface innermostContextOnThisSegment) {
         if ((innermostContextOnThisSegment.getClass()) == (getClass())) {
             Data key = ((CompiledMapIterationContext) (innermostContextOnThisSegment)).inputKey();
-            if (java.util.Objects.equals(key, ((CompiledMapIterationContext) ((Object) (this))).inputKey())) {
+            if (java.util.Objects.equals(key, ((CompiledMapIterationContext) this).inputKey())) {
                 throw new IllegalStateException((((this.h().toIdentityString()) + ": Nested same-thread contexts cannot access the same key ") + key));
             }
         }
@@ -1688,6 +1689,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     final Thread owner;
 
+    @Override
     public Thread owner() {
         return this.owner;
     }
@@ -1800,17 +1802,17 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
     }
 
     public RuntimeException debugContextsAndLocks(InterProcessDeadLockException e) {
-        String message = (this.h().toIdentityString()) + ":\n";
-        message += "Contexts locked on this segment:\n";
+        StringBuilder message = new StringBuilder(this.h().toIdentityString())
+                .append(":\nContexts locked on this segment:\n");
         for (LocksInterface cxt = rootContextLockedOnThisSegment; cxt != null; cxt = cxt.nextNode()) {
-            message += (cxt.debugLocksState()) + "\n";
+            message.append(cxt.debugLocksState()).append('\n');
         }
-        message += "Current thread contexts:\n";
+        message.append("Current thread contexts:\n");
         for (int i = 0, size = this.contextChain.size(); i < size; i++) {
             LocksInterface cxt = this.contextAtIndexInChain(i);
-            message += (cxt.debugLocksState()) + "\n";
+            message.append(cxt.debugLocksState()).append('\n');
         }
-        throw new InterProcessDeadLockException(message, e);
+        throw new InterProcessDeadLockException(message.toString(), e);
     }
 
     final WrappedValueBytesData wrappedValueBytesData;
@@ -2054,6 +2056,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return (this.segmentIndex) >= 0;
     }
 
+    @Override
     public void initSegmentIndex(int segmentIndex) {
         boolean wasSegmentIndexInit = this.segmentIndexInit();
         this.segmentIndex = segmentIndex;
@@ -2062,6 +2065,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     }
 
+    @Override
     public int segmentIndex() {
         assert this.segmentIndexInit() : "SegmentIndex should be init";
         return this.segmentIndex;
@@ -2140,6 +2144,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     }
 
+    @Override
     public long pos() {
         assert this.posInit() : "Pos should be init";
         return this.pos;
@@ -2214,7 +2219,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return (this.valueSizeOffset) != (-1);
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void initValueSizeOffset() {
         boolean wasValueSizeOffsetInit = this.valueSizeOffsetInit();
         valueSizeOffset = countValueSizeOffset();
@@ -2275,6 +2280,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     }
 
+    @Override
     public VanillaChronicleMap<K, V, R> m() {
         assert this.mapInit() : "Map should be init";
         return this.m;
@@ -2326,6 +2332,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return m();
     }
 
+    @Override
     public ChronicleHash<K, ?, ?, ?> hash() {
         return (set()) != null ? set() : map();
     }
@@ -2419,6 +2426,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     public SegmentHeader segmentHeader = null;
 
+    @Override
     public boolean segmentHeaderInit() {
         return (this.segmentHeader) != null;
     }
@@ -2432,6 +2440,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     }
 
+    @Override
     public long segmentHeaderAddress() {
         if (!(this.segmentHeaderInit()))
             this.initSegmentHeader();
@@ -2654,7 +2663,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     public void prevTier() {
         if ((tier()) == 0) {
-            throw new IllegalStateException(((this.h().toIdentityString()) + ": first tier doesn\'t have previous"));
+            throw new IllegalStateException(((this.h().toIdentityString()) + ": first tier doesn't have previous"));
         }
         initSegmentTier(((tier()) - 1), prevTierIndex());
     }
@@ -2856,7 +2865,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return (this.valueSize) != (-1);
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void initValueSize() {
         boolean wasValueSizeInit = this.valueSizeInit();
         Bytes segmentBytes = this.segmentBytesForReadGuarded();
@@ -3078,6 +3087,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         }
     }
 
+    @Override
     public long size() {
         goToFirstTier();
         long size = (tierEntries()) - (tierDeleted());
@@ -3138,7 +3148,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     public void checkAccessingFromOwnerThread() {
         if ((owner) != (Thread.currentThread())) {
-            throw new ConcurrentModificationException(((this.h().toIdentityString()) + ": Context shouldn\'t be accessed from multiple threads"));
+            throw new ConcurrentModificationException(((this.h().toIdentityString()) + ": Context shouldn't be accessed from multiple threads"));
         }
     }
 
@@ -3278,7 +3288,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         int storedChecksum = this.checksumStrategy.storedChecksum();
         int checksumFromEntry = this.checksumStrategy.computeChecksum();
         if (storedChecksum != checksumFromEntry) {
-            ChronicleHashCorruptionImpl.report(corruptionListener, corruption, segmentIndex, () -> ChronicleHashCorruptionImpl.format(("Checksum doesn\'t match, stored: {}, should be from " + "the entry bytes: {}, key: {}, value: {}"), storedChecksum, checksumFromEntry, this.key(), this.value()));
+            ChronicleHashCorruptionImpl.report(corruptionListener, corruption, segmentIndex, () -> ChronicleHashCorruptionImpl.format(("Checksum doesn't match, stored: {}, should be from " + "the entry bytes: {}, key: {}, value: {}"), storedChecksum, checksumFromEntry, this.key(), this.value()));
             return -1;
         }
         if (!(this.freeList().isRangeClear(entryPos, (entryPos + (this.entrySizeInChunks()))))) {
@@ -3535,7 +3545,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return this.used;
     }
 
-    @SuppressWarnings(value = "unused")
+    @SuppressWarnings("unused")
     void closeUsed() {
         if (!(this.usedInit()))
             return;
@@ -3569,6 +3579,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     public LocksInterface rootContextLockedOnThisSegment = null;
 
+    @Override
     public boolean locksInit() {
         return (this.rootContextLockedOnThisSegment) != null;
     }
@@ -3603,6 +3614,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     }
 
+    @Override
     public int latestSameThreadSegmentModCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3610,6 +3622,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return this.latestSameThreadSegmentModCount;
     }
 
+    @Override
     public int totalReadLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3617,6 +3630,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return this.totalReadLockCount;
     }
 
+    @Override
     public int totalUpdateLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3624,6 +3638,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return this.totalUpdateLockCount;
     }
 
+    @Override
     public int totalWriteLockCount() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3638,6 +3653,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return this.localLockState;
     }
 
+    @Override
     public LocksInterface nextNode() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3645,6 +3661,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
         return this.nextNode;
     }
 
+    @Override
     public LocksInterface rootContextLockedOnThisSegment() {
         if (!(this.locksInit()))
             this.initLocks();
@@ -3819,26 +3836,26 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
 
     @Override
     public String debugLocksState() {
-        String s = (this) + ": ";
+        StringBuilder s = new StringBuilder(192).append(this).append(": ");
         if (!(this.usedInit())) {
-            s += "unused";
-            return s;
+            s.append("unused");
+            return s.toString();
         }
-        s += "used, ";
+        s.append("used, ");
         if (!(segmentIndexInit())) {
-            s += "segment uninitialized";
-            return s;
+            s.append("segment uninitialized");
+            return s.toString();
         }
-        s += ("segment " + (segmentIndex())) + ", ";
+        s.append("segment ").append(segmentIndex()).append(", ");
         if (!(locksInit())) {
-            s += "locks uninitialized";
-            return s;
+            s.append("locks uninitialized");
+            return s.toString();
         }
-        s += ("local state: " + (localLockState())) + ", ";
-        s += ("read lock count: " + (rootContextLockedOnThisSegment().totalReadLockCount())) + ", ";
-        s += ("update lock count: " + (rootContextLockedOnThisSegment().totalUpdateLockCount())) + ", ";
-        s += "write lock count: " + (rootContextLockedOnThisSegment().totalWriteLockCount());
-        return s;
+        s.append("local state: ").append(localLockState()).append(", ")
+                .append("read lock count: ").append(rootContextLockedOnThisSegment().totalReadLockCount()).append(", ")
+                .append("update lock count: ").append(rootContextLockedOnThisSegment().totalUpdateLockCount()).append(", ")
+                .append("write lock count: ").append(rootContextLockedOnThisSegment().totalWriteLockCount());
+        return s.toString();
     }
 
     @Override

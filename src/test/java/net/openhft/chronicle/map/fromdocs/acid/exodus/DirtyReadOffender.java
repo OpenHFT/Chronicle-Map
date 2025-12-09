@@ -41,7 +41,7 @@ public class DirtyReadOffender implements Runnable {
 
              */
 
-            long stamp = 0;
+            long stamp;
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"

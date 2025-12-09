@@ -65,12 +65,7 @@ public class RecoverTest {
             c.writeLock().lock();
         }).get();
 
-        try {
-            map.get(0);
-            throw new AssertionError("Expected dead lock exception");
-        } catch (Exception expected) {
-            // do nothing
-        }
+        assertThrows(Exception.class, () -> map.get(0));
 
         map.close();
 

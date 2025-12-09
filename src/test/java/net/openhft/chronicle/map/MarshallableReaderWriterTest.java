@@ -61,6 +61,7 @@ public class MarshallableReaderWriterTest {
             return Objects.hash(super.hashCode(), instrument, orderId);
         }
 
+        @Override
         public void writeMarshallable(@NotNull WireOut wire) {
             Wires.writeMarshallable(this, wire, false);
         }

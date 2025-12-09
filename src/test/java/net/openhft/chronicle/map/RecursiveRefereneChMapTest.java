@@ -40,11 +40,13 @@ public class RecursiveRefereneChMapTest {
 
     @SuppressWarnings("serial")
     public static class StupidCycle2 extends StupidCycle implements Externalizable {
+        @Override
         public void writeExternal(ObjectOutput out) throws IOException {
             out.writeInt(dummy);
             out.writeObject(cycle);
         }
 
+        @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
             dummy = in.readInt();
             cycle = (Object[]) in.readObject();
