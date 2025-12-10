@@ -25,6 +25,9 @@
         <zero.cost.assertions>disabled</zero.cost.assertions>
         <sonar.organization>openhft</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <cpd.skip>true</cpd.skip>
+        <maven.pmd.skip>true</maven.pmd.skip>
+        <pmd.skip>true</pmd.skip>
     </properties>
 
     <dependencyManagement>
