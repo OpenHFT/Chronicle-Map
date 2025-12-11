@@ -43,8 +43,7 @@ public final class ChronicleSetBuilder<K>
                 .valueSizeMarshaller(SizeMarshaller.constant(0));
         //noinspection deprecation,unchecked
         ChronicleSetBuilderPrivateAPI<K> privateAPI = new ChronicleSetBuilderPrivateAPI<>(
-                (ChronicleHashBuilderPrivateAPI<K, MapRemoteOperations<K, DummyValue, ?>>)
-                        Jvm.getValue(chronicleMapBuilder, "privateAPI"));
+                Jvm.getValue(chronicleMapBuilder, "privateAPI"));
     }
 
     /**
@@ -263,13 +262,16 @@ public final class ChronicleSetBuilder<K>
      * This affects behaviour of ordinary set.add(), set.remove(), calls, as well as removes
      * <i>during iterations</i>, updates during <i>remote calls</i> and
      * <i>internal replication operations</i>.
+     *
+     * @param entryOperations custom entry operations SPI
+     * @return this builder
      */
     public ChronicleSetBuilder<K> entryOperations(SetEntryOperations<K, ?> entryOperations) {
         chronicleMapBuilder.entryOperations(new MapEntryOperations<K, DummyValue, Object>() {
             @Override
             public Object remove(@NotNull MapEntry<K, DummyValue> entry) {
                 //noinspection unchecked
-                return entryOperations.remove((SetEntry<K>) entry);
+                return entryOperations.remove(entry);
             }
 
             @Override

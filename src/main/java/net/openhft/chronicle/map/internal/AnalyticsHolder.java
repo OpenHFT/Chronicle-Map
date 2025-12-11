@@ -6,6 +6,9 @@ package net.openhft.chronicle.map.internal;
 import net.openhft.chronicle.core.analytics.AnalyticsFacade;
 import net.openhft.chronicle.core.pom.PomProperties;
 
+/**
+ * Holds a lazily initialised analytics facade for Chronicle Map.
+ */
 public enum AnalyticsHolder {
     ; // none
 
@@ -18,6 +21,11 @@ public enum AnalyticsHolder {
             //.withUrl("https://www.google-analytics.com/debug/mp/collect")
             .build();
 
+    /**
+     * Returns the shared analytics facade.
+     *
+     * @return analytics facade
+     */
     public static AnalyticsFacade instance() {
         return ANALYTICS;
     }

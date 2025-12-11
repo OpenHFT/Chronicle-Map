@@ -5,11 +5,21 @@ package net.openhft.chronicle.hash.impl.util;
 
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Small utilities for comparing and hashing {@link CharSequence} implementations.
+ */
 public final class CharSequences {
 
     private CharSequences() {
     }
 
+    /**
+     * Compares two character sequences for content equality.
+     *
+     * @param a first sequence
+     * @param b second sequence
+     * @return true if they have identical characters
+     */
     public static boolean equivalent(@NotNull CharSequence a, @NotNull CharSequence b) {
         if (a.equals(b))
             return true;
@@ -27,6 +37,12 @@ public final class CharSequences {
         return true;
     }
 
+    /**
+     * Computes a hash code compatible with {@link String#hashCode()}.
+     *
+     * @param cs sequence to hash
+     * @return hash code
+     */
     public static int hash(@NotNull CharSequence cs) {
         if (cs instanceof String)
             return cs.hashCode();

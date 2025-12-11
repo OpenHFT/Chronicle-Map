@@ -3,12 +3,20 @@
  */
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+/**
+ * Hashing helpers for computing checksums over small byte ranges.
+ */
 public enum ChecksumHashing {
     ; // none
 
     /**
      * A smart procedure copied from CityHash/FarmHash, see the full implementation in
      * Zero-allocation-hashing or Chronicle-Algorithms
+     *
+     * @param len         length in bytes
+     * @param first8Bytes first 8 bytes as long
+     * @param last8Bytes  last 8 bytes as long
+     * @return 64-bit hash value
      */
     public static long hash8To16Bytes(long len, long first8Bytes, long last8Bytes) {
         long k2 = 0x9ae16a3b2f90404fL;

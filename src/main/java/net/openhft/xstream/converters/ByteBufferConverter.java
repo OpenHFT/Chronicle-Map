@@ -17,13 +17,19 @@ import java.nio.charset.*;
 import static java.nio.charset.StandardCharsets.*;
 
 /**
- * Created by Rob Austin
+ * XStream converter for {@link ByteBuffer} instances.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ByteBufferConverter implements Converter {
 
     private final Charset charset = ISO_8859_1;
     private final CharsetDecoder decoder = charset.newDecoder();
+
+    /**
+     * Creates a converter using ISO-8859-1 decoding.
+     */
+    public ByteBufferConverter() {
+    }
 
     @Override
     public void marshal(Object o, HierarchicalStreamWriter writer, MarshallingContext marshallingContext) {

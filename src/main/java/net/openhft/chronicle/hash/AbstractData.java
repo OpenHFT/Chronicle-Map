@@ -8,6 +8,8 @@ package net.openhft.chronicle.hash;
  * {@code toString()}. They should be default implementations in the {@code Data} interface itself,
  * but Java 8 doesn't allow to override {@code Object}'s methods by default implementations
  * in interfaces.
+ *
+ * @param <T> value type represented by this Data
  */
 public abstract class AbstractData<T> implements Data<T> {
 

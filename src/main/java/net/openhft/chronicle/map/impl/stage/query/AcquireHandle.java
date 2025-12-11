@@ -9,8 +9,20 @@ import net.openhft.chronicle.map.impl.stage.ret.UsingReturnValue;
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
+/**
+ * Stage that writes back the acquired value when the query context is closed.
+ *
+ * @param <K> key type
+ * @param <V> value type
+ */
 @Staged
 public class AcquireHandle<K, V> implements MapClosable {
+
+    /**
+     * Default constructor used by staged code generation.
+     */
+    public AcquireHandle() {
+    }
 
     @StageRef
     CheckOnEachPublicOperation checkOnEachPublicOperation;

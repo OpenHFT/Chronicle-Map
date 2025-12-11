@@ -20,6 +20,8 @@ import java.lang.reflect.Method;
 import java.util.NoSuchElementException;
 
 /**
+ * XStream converter for Chronicle Values, handling array and scalar fields.
+ *
  * @author Rob Austin.
  */
 @SuppressWarnings({"rawtypes", "unchecked", "deprecation"})

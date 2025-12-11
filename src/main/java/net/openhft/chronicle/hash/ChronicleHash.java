@@ -19,6 +19,11 @@ import java.util.function.Predicate;
 
 /**
  * Common base interface for {@link ChronicleMap} and {@link ChronicleSet}.
+ *
+ * @param <K> key type
+ * @param <E> hash entry view for the key
+ * @param <S> segment context type
+ * @param <Q> external query context type
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public interface ChronicleHash<K, E extends HashEntry<K>, S extends HashSegmentContext<K, ?>,
@@ -76,11 +81,15 @@ public interface ChronicleHash<K, E extends HashEntry<K>, S extends HashSegmentC
     long offHeapMemoryUsed();
 
     /**
+     * Returns the key class for this hash.
+     *
      * @return the class of {@code <K>}
      */
     Class<K> keyClass();
 
     /**
+     * Returns the key type, which may be unresolved at runtime.
+     *
      * @return Type as a Class or UnresolvedType if unknown.
      */
     Type keyType();
@@ -137,6 +146,8 @@ public interface ChronicleHash<K, E extends HashEntry<K>, S extends HashSegmentC
      * Returns a context of the segment with the given index. Segments are indexed from 0 to {@link #segments()}{@code - 1}.
      *
      * @see HashSegmentContext
+     * @param segmentIndex segment index starting at zero
+     * @return segment context
      */
     S segmentContext(int segmentIndex);
 

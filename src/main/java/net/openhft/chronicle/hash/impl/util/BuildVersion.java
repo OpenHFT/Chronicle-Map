@@ -11,7 +11,7 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 /**
- * gets the version of the current build
+ * Retrieves the Chronicle Map build version from packaged resources.
  */
 public final class BuildVersion {
 
@@ -20,12 +20,19 @@ public final class BuildVersion {
     private BuildVersion() {
     }
 
+    /**
+     * Prints the resolved Chronicle Map version to stdout.
+     *
+     * @param args ignored
+     */
     public static void main(String[] args) {
         System.out.println(version());
     }
 
     /**
-     * @return version of ChronicleMap being used, or NULL if its not known
+     * Returns the version of Chronicle Map in use.
+     *
+     * @return version string, or {@code null} if it cannot be determined
      */
     public static synchronized String version() {
 

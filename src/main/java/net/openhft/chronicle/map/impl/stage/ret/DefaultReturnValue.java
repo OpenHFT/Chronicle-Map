@@ -9,6 +9,9 @@ import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
 @Staged
+/**
+ * Base implementation of {@link InstanceReturnValue} that caches a default value from data.
+ */
 public abstract class DefaultReturnValue<V> implements InstanceReturnValue<V> {
     private V defaultReturnedValue = null;
 

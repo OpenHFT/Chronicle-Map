@@ -22,6 +22,8 @@ public interface MapEntry<K, V> extends SetEntry<K> {
 
     /**
      * Returns the entry value.
+     *
+     * @return value data
      */
     @NotNull
     Data<V> value();

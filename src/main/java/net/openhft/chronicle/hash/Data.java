@@ -65,6 +65,8 @@ public interface Data<T> {
      * cast the object, returned from this method, to {@link BytesStore}, and write into the
      * off-heap memory. You should only ensure that current context (e. g. {@link MapQueryContext})
      * is locked exclusively, in order to avoid data races.
+     *
+     * @return bytes store providing read access to the data
      */
     RandomDataInput bytes();
 
@@ -72,6 +74,8 @@ public interface Data<T> {
      * Returns the offset to the {@code Data}'s bytes sequence within the {@link RandomDataInput},
      * returned from {@link #bytes()} method. For example, the first byte of the bytes
      * representation of some {@code data} is {@code data.bytes().readByte(data.offset())}.
+     *
+     * @return offset into {@link #bytes()} where the data starts
      */
     long offset();
 
@@ -79,6 +83,8 @@ public interface Data<T> {
      * Returns the size of this {@code Data}'s bytes sequence. It spans from {@link #offset()} to
      * {@code offset() + size() - 1} bytes within the {@link RandomDataInput}, returned from
      * {@link #bytes()} method.
+     *
+     * @return length of the data in bytes
      */
     long size();
 
@@ -138,6 +144,8 @@ public interface Data<T> {
      * returned object could be reused, therefore it is <i>generally disallowed</i> to use the
      * object, returned from this method, <i>outside</i> some context, or a block, synchronized with
      * locks, or lambda, etc., which provided the access to this {@code Data} instance.
+     *
+     * @return deserialized object view of the data
      */
     T get();
 
@@ -148,6 +156,9 @@ public interface Data<T> {
      * internally cached and reused one, therefore it is <i>always allowed</i> to use the object,
      * returned from this method, <i>outside</i> some context, or a block, synchronized with locks,
      * or lambda, etc., which provided the access to this {@code Data} instance.
+     *
+     * @param using reusable instance or {@code null}
+     * @return deserialized object, possibly reusing {@code using}
      */
     T getUsing(@Nullable T using);
 
@@ -155,6 +166,8 @@ public interface Data<T> {
      * {@code Data} implementations should override {@link Object#hashCode()} with delegation to
      * this method. Computes {@code Data}'s hash code by applying a hash function to {@code Data}'s
      * <i>bytes</i> representation.
+     *
+     * @return hash code derived from the bytes
      */
     default int dataHashCode() {
         return (int) hash(LongHashFunction.xx_r39());
@@ -163,6 +176,9 @@ public interface Data<T> {
     /**
      * {@code Data} implementations should override {@link Object#equals(Object)} with delegation to
      * this method. Compares {@code Data}s' <i>bytes</i> representations.
+     *
+     * @param obj other object to compare with
+     * @return {@code true} if the bytes are equivalent
      */
     default boolean dataEquals(Object obj) {
         return obj != null &&
@@ -175,6 +191,8 @@ public interface Data<T> {
      * this method. Delegates to {@code Data}'s <i>object</i> {@code toString()}, i. e. equivalent
      * to calling {@code get().toString()} on this {@code Data} instance with some fallback, if
      * {@code get()} method throws an exception.
+     *
+     * @return string representation of the data or a diagnostic dump on failure
      */
     default String dataToString() {
         try {

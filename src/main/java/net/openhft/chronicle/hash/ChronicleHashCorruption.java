@@ -37,12 +37,16 @@ public interface ChronicleHashCorruption {
 
     /**
      * Returns the message, explaining this corruption.
+     *
+     * @return human-readable description
      */
     String message();
 
     /**
      * Returns the exception, associated with this corruption, if any, or {@code null} if there is
      * no exception.
+     *
+     * @return underlying exception or {@code null}
      */
     @Nullable
     Throwable exception();
@@ -54,6 +58,8 @@ public interface ChronicleHashCorruption {
      * index of the segment, in which the corrupted entry is stored. If the corruption is not
      * associated with a particular segment, returns -1, e. g. if this is a ChronicleHash
      * header corruption.
+     *
+     * @return segment index or -1 if not applicable
      */
     int segmentIndex();
 

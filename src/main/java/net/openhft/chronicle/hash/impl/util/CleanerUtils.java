@@ -8,6 +8,9 @@ import net.openhft.chronicle.core.Jvm;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Reflection-based helpers for creating JDK cleaners without a hard dependency on internal APIs.
+ */
 public class CleanerUtils {
 
     private static final Method CREATE_METHOD;
@@ -26,6 +29,13 @@ public class CleanerUtils {
         }
     }
 
+    /**
+     * Creates a cleaner for the given object and cleanup action.
+     *
+     * @param ob    object to associate
+     * @param thunk runnable invoked on clean
+     * @return cleaner wrapper
+     */
     public static Cleaner createCleaner(Object ob, Runnable thunk) {
         try {
             Object cleanerInstance = CREATE_METHOD.invoke(null, ob, thunk);

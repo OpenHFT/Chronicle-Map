@@ -10,7 +10,16 @@ import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
+/**
+ * XStream converter that handles {@link CharSequence} implementations.
+ */
 public class CharSequenceConverter implements Converter {
+
+    /**
+     * Creates a converter for {@link CharSequence} values.
+     */
+    public CharSequenceConverter() {
+    }
 
     @Override
     public void marshal(

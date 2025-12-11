@@ -11,11 +11,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 /**
+ * XStream converter that marshals entries of a {@link net.openhft.chronicle.map.ChronicleMap}.
+ *
+ * @param <K> key type
+ * @param <V> value type
  * @author Rob Austin.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class VanillaChronicleMapConverter<K, V> extends AbstractChronicleMapConverter<K, V> {
 
+    /**
+     * Creates a converter bound to the supplied map.
+     *
+     * @param map ChronicleMap to marshal
+     */
     public VanillaChronicleMapConverter(@NotNull Map<K, V> map) {
         super(map);
     }

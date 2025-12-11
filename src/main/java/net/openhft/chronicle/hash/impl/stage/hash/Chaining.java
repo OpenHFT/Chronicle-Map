@@ -11,21 +11,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 
+/**
+ * Maintains a chain of nested query/iteration contexts within a thread.
+ */
 @Staged
 @SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
 public abstract class Chaining extends ChainingInterface {
 
+    /**
+     * Ordered list of contexts for the current thread.
+     */
     public final List<ChainingInterface> contextChain;
+    /** Index of this context within the chain. */
     public final int indexInContextChain;
     /**
      * First context, ever created in this thread. rootContextInThisThread === contextChain.get(0).
      */
     public final ChainingInterface rootContextInThisThread;
     @Stage("Used")
+    /** Indicates whether this context has been initialised for use. */
     public boolean used;
     @Stage("Used")
     private boolean firstContextLockedInThisThread;
 
+    /**
+     * Creates the root context for a Chronicle Map thread.
+     *
+     * @param map owning map
+     */
     public Chaining(VanillaChronicleMap map) {
         contextChain = new ArrayList<>();
         contextChain.add(this);
@@ -34,6 +47,12 @@ public abstract class Chaining extends ChainingInterface {
         initMap(map);
     }
 
+    /**
+     * Creates a nested context chained to an existing root.
+     *
+     * @param rootContextInThisThread existing root context
+     * @param map                    owning map
+     */
     public Chaining(ChainingInterface rootContextInThisThread, VanillaChronicleMap map) {
         contextChain = rootContextInThisThread.getContextChain();
         indexInContextChain = contextChain.size();
@@ -63,6 +82,13 @@ public abstract class Chaining extends ChainingInterface {
         return contextChain;
     }
 
+    /**
+     * Returns the context at the given index in the chain.
+     *
+     * @param index position in chain
+     * @param <T>   expected context type
+     * @return context instance
+     */
     public <T> T contextAtIndexInChain(int index) {
         //noinspection unchecked
         return (T) contextChain.get(index);
@@ -87,6 +113,11 @@ public abstract class Chaining extends ChainingInterface {
      * <p>
      * So in order to break this chain at step 4), contexts store references to their owner
      * ChronicleMaps only when contexts are used.
+     */
+    /**
+     * Initialises the context with the owning map.
+     *
+     * @param map owning map
      */
     public abstract void initMap(VanillaChronicleMap map);
 

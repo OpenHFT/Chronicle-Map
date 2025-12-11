@@ -253,19 +253,27 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
         throw new UnsupportedOperationException("todo");
     }
 
+    /**
+     * Statistics describing occupancy of a single segment.
+     */
     class SegmentStats extends SelfDescribingMarshallable {
         long usedBytes;
         long sizeInBytes;
         int tiers;
 
+        /**
+         * @return number of tiers allocated in the segment.
+         */
         public int tiers() {
             return tiers;
         }
 
+        /** @return bytes currently used by entries. */
         public long usedBytes() {
             return usedBytes;
         }
 
+        /** @return total bytes reserved for the segment. */
         public long sizeInBytes() {
             return sizeInBytes;
         }

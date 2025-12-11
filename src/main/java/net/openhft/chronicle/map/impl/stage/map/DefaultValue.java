@@ -11,6 +11,9 @@ import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
 @Staged
+/**
+ * Supplies a default zero value for map entries when required.
+ */
 public abstract class DefaultValue<V> {
 
     @StageRef
@@ -19,6 +22,11 @@ public abstract class DefaultValue<V> {
     DummyValueZeroData<V> zeroValueData;
 
     @NotNull
+    /**
+     * Returns the default value data instance, after performing access checks.
+     *
+     * @return zero value data
+     */
     public Data<V> defaultValue() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
         return zeroValueData;

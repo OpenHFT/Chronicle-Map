@@ -3,6 +3,9 @@
  */
 package net.openhft.chronicle.hash.impl.stage.entry;
 
+/**
+ * Allocation primitive used by staged entry code to reserve chunked storage.
+ */
 public interface Alloc {
 
     /**

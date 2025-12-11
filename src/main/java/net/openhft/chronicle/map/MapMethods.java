@@ -16,6 +16,9 @@ import static net.openhft.chronicle.map.MapMethodsSupport.tryReturnCurrentValueI
 /**
  * SPI interface for customizing behaviour of the specific Map's methods with individual keys.
  *
+ * @param <K> key type
+ * @param <V> value type
+ * @param <R> return value holder type
  * @see ChronicleMapBuilder#mapMethods(MapMethods)
  */
 public interface MapMethods<K, V, R> {
@@ -25,6 +28,9 @@ public interface MapMethods<K, V, R> {
      * Note: the default implementation is equivalent to <pre>{@code
      * return q.entry() != null;
      * }</pre>
+     *
+     * @param q query context
+     * @return true if an entry is present
      */
     default boolean containsKey(MapQueryContext<K, V, R> q) {
         return q.entry() != null;
@@ -38,6 +44,9 @@ public interface MapMethods<K, V, R> {
      * if (entry != null)
      *     returnValue.returnValue(entry.value());
      * }</pre>
+     *
+     * @param q           query context
+     * @param returnValue holder to receive value if present
      */
     default void get(MapQueryContext<K, V, R> q, ReturnValue<V> returnValue) {
         returnCurrentValueIfPresent(q, returnValue);
@@ -58,6 +67,10 @@ public interface MapMethods<K, V, R> {
      * } else {
      *     q.insert(q.absentEntry(), value);
      * }}</pre>
+     *
+     * @param q           query context
+     * @param value       value to store
+     * @param returnValue holder to receive previous value if any
      */
     default void put(MapQueryContext<K, V, R> q, Data<V> value, ReturnValue<V> returnValue) {
         // We cannot read the previous value under read lock, because then we will need

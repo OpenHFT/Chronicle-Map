@@ -46,6 +46,7 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * which might be customized over the default.
      *
      * @see DefaultValueProvider#defaultValue(MapAbsentEntry)
+     * @return default value to insert
      */
     @NotNull
     Data<V> defaultValue();

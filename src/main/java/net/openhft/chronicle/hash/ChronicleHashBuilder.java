@@ -413,6 +413,10 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     /**
      * Shortcut for {@link #keyMarshallers(BytesReader, BytesWriter)
      * keyMarshallers(marshaller, marshaller)}.
+     *
+     * @param marshaller implementation providing both read and write behaviour
+     * @param <M>        marshaller type
+     * @return this builder back
      */
     <M extends BytesReader<K> & BytesWriter<? super K>> B keyMarshaller(@NotNull M marshaller);
 
@@ -433,6 +437,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *
      * @param sizedMarshaller implementation of both {@link SizedReader} and {@link SizedWriter}
      *                        interfaces
+     * @param <M>             marshaller type
      * @return this builder back
      */
     <M extends SizedReader<K> & SizedWriter<? super K>> B keyMarshaller(@NotNull M sizedMarshaller);
@@ -639,6 +644,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      *                                           instance) for the first time, and <b>with the same version of the Chronicle Map library</b>.
      *                                           In this case, the header of the file is overridden (with presumably the same configurations),
      *                                           protecting from {@link ChronicleHashRecoveryFailedException}, if the header is corrupted.
+     * @param corruptionListener listener notified when corruption is detected during recovery
      * @return a recovered Chronicle Hash instance, mapped to the given file
      * @throws NullPointerException                 if the given file or corruptionListener is null
      * @throws FileNotFoundException                if the file doesn't exist

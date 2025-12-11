@@ -21,6 +21,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+/**
+ * Manages JVM-wide canonical {@link RandomAccessFile} instances and file locks to avoid duplicate handles.
+ */
 public final class CanonicalRandomAccessFiles {
 
     /**
@@ -41,6 +44,13 @@ public final class CanonicalRandomAccessFiles {
     private CanonicalRandomAccessFiles() {
     }
 
+    /**
+     * Acquires (or reuses) a canonical random-access file for the given path.
+     *
+     * @param file file to open
+     * @return shared {@link RandomAccessFile}
+     * @throws FileNotFoundException if the file cannot be opened
+     */
     public static RandomAccessFile acquire(@NotNull final File file) throws FileNotFoundException {
         return acquire0(file, NO_OP).raf;
     }
@@ -68,6 +78,11 @@ public final class CanonicalRandomAccessFiles {
         });
     }
 
+    /**
+     * Releases a reference to the canonical random-access file for the given path.
+     *
+     * @param file file to release
+     */
     public static void release(@NotNull final File file) {
         release0(file, NO_OP);
     }
@@ -88,6 +103,12 @@ public final class CanonicalRandomAccessFiles {
         });
     }
 
+    /**
+     * Acquires (or increments) a shared lock on the given canonical file.
+     *
+     * @param canonicalFile canonical file reference
+     * @param channel       channel to lock
+     */
     public static void acquireSharedFileLock(@NotNull final File canonicalFile, @NotNull final FileChannel channel) {
         if (USE_SHARED_LOCKING)
             acquire0(canonicalFile, (rafReference) -> {
@@ -108,6 +129,12 @@ public final class CanonicalRandomAccessFiles {
             printWarningTheFirstTime();
     }
 
+    /**
+     * Acquires an exclusive lock on the given canonical file.
+     *
+     * @param canonicalFile canonical file reference
+     * @param channel       channel to lock
+     */
     public static void acquireExclusiveFileLock(@NotNull final File canonicalFile, @NotNull final FileChannel channel) {
         if (USE_EXCLUSIVE_LOCKING)
             acquire0(canonicalFile, (rafReference) -> {
@@ -126,6 +153,11 @@ public final class CanonicalRandomAccessFiles {
             printWarningTheFirstTime();
     }
 
+    /**
+     * Releases a shared lock on the given canonical file.
+     *
+     * @param canonicalFile canonical file reference
+     */
     public static void releaseSharedFileLock(@NotNull final File canonicalFile) {
         if (USE_SHARED_LOCKING)
             releaseFileLock0(canonicalFile);
@@ -133,6 +165,11 @@ public final class CanonicalRandomAccessFiles {
             printWarningTheFirstTime();
     }
 
+    /**
+     * Releases an exclusive lock on the given canonical file.
+     *
+     * @param canonicalFile canonical file reference
+     */
     public static void releaseExclusiveFileLock(@NotNull final File canonicalFile) {
         if (USE_EXCLUSIVE_LOCKING)
             releaseFileLock0(canonicalFile);
@@ -156,6 +193,8 @@ public final class CanonicalRandomAccessFiles {
      * Tries to execute a closure under exclusive file lock.
      * If USE_LOCKING is false, provides synchronization only within local JVM.
      *
+     * @param canonicalFile canonical file being locked
+     * @param fileChannel   channel used to acquire the lock
      * @param fileIOAction Closure to run, can throw {@link IOException}s.
      * @return {@code true} if the lock was successfully acquired and IO action was executed, {@code false} otherwise.
      */
@@ -206,6 +245,8 @@ public final class CanonicalRandomAccessFiles {
      * Executes a closure under exclusive file lock.
      * If USE_LOCKING is false, provides synchronization only within local JVM.
      *
+     * @param canonicalFile canonical file being locked
+     * @param fileChannel   channel used to acquire the lock
      * @param fileIOAction Closure to run, can throw {@link IOException}s.
      */
     public static void runExclusively(@NotNull final File canonicalFile,
@@ -253,21 +294,33 @@ public final class CanonicalRandomAccessFiles {
 
     // This class is not thread-safe but instances
     // are protected by means of the FILE_LOCKS map
+    /** Reference-counted wrapper around a {@link FileLock}. */
     public static final class FileLockReference {
         private final FileLock fileLock;
         private int refCount;
 
+        /**
+         * Creates a reference wrapper for the provided lock.
+         *
+         * @param fileLock file lock to manage
+         */
         FileLockReference(@NotNull final FileLock fileLock) {
             this.fileLock = fileLock;
             refCount = 1;
         }
 
+        /** Increments the lock reference count. */
         int reserve() {
             if (refCount == 0)
                 throw new IllegalStateException("Ref counter previously released");
             return ++refCount;
         }
 
+        /**
+         * Decrements the lock reference and releases the lock when it reaches zero.
+         *
+         * @return remaining reference count
+         */
         int release() {
             final int cnt = --refCount;
             if (cnt == 0) {
@@ -292,8 +345,16 @@ public final class CanonicalRandomAccessFiles {
         }
     }
 
+    /**
+     * Action that performs I/O with a checked exception.
+     */
     @FunctionalInterface
     public interface FileIOAction {
+        /**
+         * Executes the I/O action.
+         *
+         * @throws IOException if the action fails
+         */
         void fileIOAction() throws IOException;
     }
 

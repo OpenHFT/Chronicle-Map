@@ -19,11 +19,15 @@ import org.jetbrains.annotations.NotNull;
 public interface HashEntry<K> {
     /**
      * Returns the context, in which the entry is accessed.
+     *
+     * @return owning hash context
      */
     HashContext<K> context();
 
     /**
      * Returns the entry key.
+     *
+     * @return key data
      */
     @NotNull
     Data<K> key();

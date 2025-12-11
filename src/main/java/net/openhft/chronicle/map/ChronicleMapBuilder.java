@@ -812,6 +812,11 @@ public final class ChronicleMapBuilder<K, V> implements
         return valueBuilder.constantSize();
     }
 
+    /**
+     * Returns whether keys are stored with constant length metadata.
+     *
+     * @return true if keys have fixed serialized size
+     */
     public boolean constantlySizedKeys() {
         return keyBuilder.constantSizeMarshaller() || sampleKey != null;
     }
@@ -891,12 +896,17 @@ public final class ChronicleMapBuilder<K, V> implements
         if (constantlySizedEntries())
             return 1;
         final long actualChunksPerSegmentTier = actualChunksPerSegmentTier();
-        int result = (int) Math.min(actualChunksPerSegmentTier, (long) Integer.MAX_VALUE);
+        int result = (int) Math.min(actualChunksPerSegmentTier, Integer.MAX_VALUE);
         if (this.maxChunksPerEntry > 0)
             result = Math.min(this.maxChunksPerEntry, result);
         return result;
     }
 
+    /**
+     * Returns whether values are stored with constant length metadata.
+     *
+     * @return true if values have fixed serialized size
+     */
     public boolean constantlySizedValues() {
         return valueBuilder.constantSizeMarshaller() || sampleValue != null;
     }
@@ -937,6 +947,13 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    /**
+     * Validates that the provided chunk size aligns to the given boundary.
+     *
+     * @param ifSet           alignment toggle; validation runs only when > 0
+     * @param actualChunkSize chunk size to check
+     * @param alignment       required alignment
+     */
     public void validateAlignment(final int ifSet,
                                   final int actualChunkSize,
                                   final int alignment) {
@@ -1507,6 +1524,10 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * Shortcut for {@link #valueMarshallers(SizedReader, SizedWriter)
      * valueMarshallers(sizedMarshaller, sizedMarshaller)}.
+     *
+     * @param sizedMarshaller implementation of both sized reader and writer
+     * @param <M>             marshaller type
+     * @return this builder back
      */
     public <M extends SizedReader<V> & SizedWriter<? super V>> ChronicleMapBuilder<K, V> valueMarshaller(@NotNull final M sizedMarshaller) {
         return valueMarshallers(sizedMarshaller, sizedMarshaller);
@@ -1532,6 +1553,10 @@ public final class ChronicleMapBuilder<K, V> implements
     /**
      * Shortcut for {@link #valueMarshallers(BytesReader, BytesWriter)
      * valueMarshallers(marshaller, marshaller)}.
+     *
+     * @param marshaller implementation of both reader and writer
+     * @param <M>        marshaller type
+     * @return this builder back
      */
     public <M extends BytesReader<V> & BytesWriter<? super V>> ChronicleMapBuilder<K, V> valueMarshaller(@NotNull final M marshaller) {
         return valueMarshallers(marshaller, marshaller);
@@ -1569,6 +1594,12 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    /**
+     * Enables replication with the provided identifier.
+     *
+     * @param identifier unique replication id
+     * @return this builder
+     */
     public ChronicleMapBuilder<K, V> replication(final byte identifier) {
         if (identifier <= 0)
             throw new IllegalArgumentException("Identifier must be positive, " + identifier +
@@ -1577,6 +1608,12 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    /**
+     * Sets the implementation class name to use for replicated maps.
+     *
+     * @param replicatedMapClassName fully qualified class name
+     * @return this builder
+     */
     public ChronicleMapBuilder<K, V> replicatedMapClassName(final String replicatedMapClassName) {
         this.replicatedMapClassName = replicatedMapClassName;
         return this;
@@ -1593,6 +1630,11 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    /**
+     * Returns whether sparse files are enabled.
+     *
+     * @return true if sparse files may be used
+     */
     public boolean sparseFile() {
         return sparseFile;
     }
@@ -1649,6 +1691,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * <p>
      * This is a <a href="#jvm-configurations">JVM-level configuration</a>.
      *
+     * @param entryOperations entry operation hooks to apply
      * @return this builder back
      */
     public ChronicleMapBuilder<K, V> entryOperations(@NotNull final MapEntryOperations<K, V, ?> entryOperations) {
@@ -1665,6 +1708,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * <p>
      * This is a <a href="#jvm-configurations">JVM-level configuration</a>.
      *
+     * @param mapMethods SPI hooks for per-key operations
      * @return this builder back
      */
     public ChronicleMapBuilder<K, V> mapMethods(@NotNull final MapMethods<K, V, ?> mapMethods) {
