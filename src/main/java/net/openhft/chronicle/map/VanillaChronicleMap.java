@@ -38,6 +38,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -904,6 +905,27 @@ public class VanillaChronicleMap<K, V, R>
                     ? NullReturnValue.get()
                     : q.defaultReturnValue();
             methods.put(q, valueData, returnValue);
+            return returnValue.returnValue();
+        }
+    }
+
+    @Override
+    public V safePut(final K key, final V value, @NotNull BiConsumer<K, V> onFailCallback) {
+        Objects.requireNonNull(key);
+        throwExceptionIfClosed();
+
+        checkValue(value);
+        try (QueryContextInterface<K, V, R> q = queryContext(key)) {
+            final Data<V> valueData = q.inputValueDataAccess().getData(value);
+            final InstanceReturnValue<V> returnValue = putReturnsNull
+                    ? NullReturnValue.get()
+                    : q.defaultReturnValue();
+            long entrySize = q.entrySize(q.queriedKey().size(), q.inputValueDataAccess().getData(value).size());
+            if (inChunks(entrySize) > maxChunksPerEntry) {
+                onFailCallback.accept(key, value);
+            } else {
+                methods.put(q, valueData, returnValue);
+            }
             return returnValue.returnValue();
         }
     }

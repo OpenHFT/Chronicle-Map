@@ -18,6 +18,7 @@ import java.io.Serializable;
 import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.BiConsumer;
 
 /**
  * {@code ChronicleMap} provides concurrent access to a <i>Chronicle Map key-value store</i> from a
@@ -286,7 +287,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * The maximum number of times, the chronicle map is allowed to grow in size beyond
      * the configured number of entries.
      * <p>
-     * The default maximum bloat factor factor is {@code 1.0} - i. e. "no bloat is expected".
+     * The default maximum bloat factor is {@code 1.0} - i. e. "no bloat is expected".
      * <p>
      * It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
      * almost certainly, you either should configure {@code ChronicleHash}es completely differently,
@@ -297,4 +298,20 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     default double maxBloatFactor() {
         throw new UnsupportedOperationException("todo");
     }
+
+    /**
+     * Verifies if the key/value pair can be safely put in the map and puts it if possible.
+     * <p>
+     * If the key/value pair are not larger than the segment's tier, then this will perform the same action as {@link #put(Object, Object)}
+     * <p>
+     * Otherwise, if the key/value pair is too large, invokes the given {@code onFailCallback} with the given key and value
+     * as arguments and returns the default return value.
+     *
+     * @param key            the key to put
+     * @param value          the value to put
+     * @param onFailCallback the callback to invoke if the given key and value cannot be put
+     *                       into this map
+     * @return {@code value} if it was put into this map, the default return value otherwise
+     */
+    V safePut(final K key, final V value, @NotNull BiConsumer<K, V> onFailCallback);
 }
