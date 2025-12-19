@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.BytesMarshallable;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class BytesMarshallableValueTest {
 
@@ -17,7 +17,7 @@ public class BytesMarshallableValueTest {
                 .entries(10)
                 .create()) {
             map.put(1, new Value(1, "bar"));
-            Assert.assertEquals("bar", map.replace(1, new Value(2, "baz")).foo);
+            Assertions.assertEquals("bar", map.replace(1, new Value(2, "baz")).foo, "map.replace(1, new Value(2, <str>)).foo");
             map.remove(1);
         }
     }

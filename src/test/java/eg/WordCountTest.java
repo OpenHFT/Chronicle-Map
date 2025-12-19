@@ -8,7 +8,7 @@ import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,8 +21,8 @@ import java.util.zip.GZIPInputStream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.reducing;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class WordCountTest {
 
@@ -48,7 +48,7 @@ public class WordCountTest {
         }
     }
 
-    ///@Ignore("https://github.com/OpenHFT/Chronicle-Map/issues/376")
+    ///@Disabled("https://github.com/OpenHFT/Chronicle-Map/issues/376")
     @Test
     public void wordCountTest() {
         try (ChronicleMap<CharSequence, IntValue> map = ChronicleMap
@@ -60,14 +60,14 @@ public class WordCountTest {
 
             for (String word : words) {
                 try (Closeable ignored = map.acquireContext(word, v)) {
-                    assertNotNull(ignored);
+                    assertNotNull(ignored, "context should be successfully acquired for the word key");
                     v.addValue(1);
                 }
             }
 
-            assertEquals(expectedMap.size(), map.size());
+            assertEquals(expectedMap.size(), map.size(), "map.size()");
             expectedMap.forEach((key, value) ->
-                    assertEquals((int) value, map.get(key).getValue())
+                    assertEquals((int) value, map.get(key).getValue(), "map.get(key).getValue()")
             );
         }
     }

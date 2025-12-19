@@ -5,17 +5,17 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class DirtyReadVictimTest {
 
-    @Before
+    @BeforeEach
     public void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
@@ -68,7 +68,7 @@ public class DirtyReadVictimTest {
                                 " DirtyReadVictim sleeping 20 seconds"
                 );
                 Thread offendingWriter = new Thread(
-                        new DirtyReadOffenderTest()
+                        new DirtyReadOffenderRunner()
                 );
                 offendingWriter.start();
                 Thread.sleep(20_000);
@@ -82,10 +82,10 @@ public class DirtyReadVictimTest {
                                     coupon + " "
                     );
                     // THIS Test will/must FAIL. i.e. OPTIMISM tested (-) in this case
-                    Assert.assertEquals(
+                    Assertions.assertEquals(
                             Boolean.FALSE,
                             r
-                    );
+                    , "r");
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
@@ -93,7 +93,7 @@ public class DirtyReadVictimTest {
                                     " must apply PESSIMISTIC_POLICY (dirty read endured)" +
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
-                    Assert.assertNotEquals(
+                    Assertions.assertNotEquals(
                             Boolean.TRUE,
                             r
                     );
@@ -173,10 +173,10 @@ public class DirtyReadVictimTest {
                                     coupon + " "
                     );
                     // THIS Test will pass when ChronicleStampedLock is GA
-                    Assert.assertEquals(
+                    Assertions.assertEquals(
                             Boolean.TRUE,
                             true
-                    );
+                    , "true");
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
@@ -185,7 +185,7 @@ public class DirtyReadVictimTest {
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
                     // THIS Test will execute pass when ChronicleStampedLock is GA
-                    Assert.assertNotEquals(
+                    Assertions.assertNotEquals(
                             Boolean.TRUE,
                             false
                     );

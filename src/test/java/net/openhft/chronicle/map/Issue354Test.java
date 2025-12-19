@@ -4,12 +4,12 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.LongValue;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class Issue354Test {
 
@@ -24,7 +24,7 @@ public class Issue354Test {
                     .entries(5);
 
             try (ChronicleMap<LongValue, LongValue> map = builder.createPersistedTo(file)) {
-                assertNotNull(map);
+                assertNotNull(map, "map should be successfully created and persisted to file");
             }
 
         } finally {

@@ -5,48 +5,51 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class Issue229Test {
 
     private File mapFile;
 
-    @Before
+    @BeforeEach
     public void setup() {
         mapFile = new File("test_map");
     }
 
-    @After
+    @AfterEach
     public void cleanup() {
         mapFile.delete();
     }
 
-    @Test(expected = ChronicleHashRecoveryFailedException.class)
+    @Test
     public void assureExclusiveAccess() throws IOException {
-        Assume.assumeFalse(OS.isWindows());
+        Assumptions.assumeFalse(OS.isWindows());
 
         try (ChronicleMap<Long, Long> readMap = ChronicleMap
                 .of(Long.class, Long.class)
                 .entries(10)
                 .createPersistedTo(mapFile)) {
-            assertNotNull(readMap);
+            assertNotNull(readMap, "map should be successfully created and persisted to file");
 
             // It shall not be possible to recover since the
             // file is open by the readMap
-            try (ChronicleMap<Long, Long> recoverMap = ChronicleMap
-                    .of(Long.class, Long.class)
-                    .entries(10)
-                    .recoverPersistedTo(mapFile, true)) {
-                assertNotNull(recoverMap);
-            }
+            assertThrows(ChronicleHashRecoveryFailedException.class, () -> {
+                try (ChronicleMap<Long, Long> recoverMap = ChronicleMap
+                        .of(Long.class, Long.class)
+                        .entries(10)
+                        .recoverPersistedTo(mapFile, true)) {
+                    assertNotNull(recoverMap, "recovery should not succeed when file is already open");
+                }
+            });
         }
     }
 }

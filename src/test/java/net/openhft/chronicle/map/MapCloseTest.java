@@ -5,8 +5,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
@@ -23,19 +23,21 @@ public class MapCloseTest {
                 of(Integer.class, Integer.class).entries(1).create();
         ExternalMapQueryContext<Integer, Integer, ?> cxt = map.queryContext(1);
         map.close();
+        Assertions.assertThrows(ChronicleHashClosedException.class, () -> map.get(1),
+                "map.get after close should throw");
     }
 
-    @Test(expected = ChronicleHashClosedException.class)
+    @Test
     public void testGetAfterCloseThrowsChronicleHashClosedException() throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
                 of(Integer.class, Integer.class).entries(1).create();
         Thread t = new Thread(map::close);
         t.start();
         t.join();
-        map.get(1);
+        Assertions.assertThrows(ChronicleHashClosedException.class, () -> map.get(1));
     }
 
-    @Test(expected = ChronicleHashClosedException.class)
+    @Test
     public void testIterationAfterCloseThrowsChronicleHashClosedException()
             throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
@@ -43,11 +45,11 @@ public class MapCloseTest {
         Thread t = new Thread(map::close);
         t.start();
         t.join();
-        map.forEach((k, v) -> {
-        });
+        Assertions.assertThrows(ChronicleHashClosedException.class, () -> map.forEach((k, v) -> {
+        }));
     }
 
-    @Test(expected = ChronicleHashClosedException.class)
+    @Test
     public void testSizeAfterCloseThrowsChronicleHashClosedException()
             throws InterruptedException {
         ChronicleMap<Integer, Integer> map =
@@ -55,7 +57,7 @@ public class MapCloseTest {
         Thread t = new Thread(map::close);
         t.start();
         t.join();
-        map.size();
+        Assertions.assertThrows(ChronicleHashClosedException.class, map::size);
     }
 
     @Test
@@ -84,13 +86,14 @@ public class MapCloseTest {
         latch2.await();
         map.close();
         LOCK_TIMEOUT_SECONDS = 60;
+        Assertions.assertEquals(60, LOCK_TIMEOUT_SECONDS, "lock timeout should be restored to default value after test");
     }
 
-    @Test(expected = ChronicleHashClosedException.class)
+    @Test
     public void testRemainingAutoResizesAfterClose() {
         ChronicleMap<Integer, Integer> map = of(Integer.class, Integer.class).entries(1).create();
         map.close();
-        map.remainingAutoResizes();
+        Assertions.assertThrows(ChronicleHashClosedException.class, map::remainingAutoResizes);
     }
 
     @Test
@@ -117,14 +120,14 @@ public class MapCloseTest {
         t1.start();
         t2.start();
         latch.await();
-        Assert.assertEquals(2, map.allContexts().size());
+        Assertions.assertEquals(2, map.allContexts().size(), "context pool should contain one context per active thread");
         semaphore.release(2);
         t1.join();
         t2.join();
 
         map.get(1);
-        Assert.assertEquals(1, map.allContexts().size());
+        Assertions.assertEquals(1, map.allContexts().size(), "context pool should be reduced to single context after threads complete");
         ChainingInterface cxt = map.allContexts().get(0).get().get();
-        Assert.assertSame(cxt, map.queryContext(1));
+        Assertions.assertSame(cxt, map.queryContext(1), "query context should reuse the pooled context instance");
     }
 }

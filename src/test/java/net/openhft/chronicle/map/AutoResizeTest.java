@@ -4,22 +4,22 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.Jvm;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
 public class AutoResizeTest {
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() {
         Jvm.setExceptionHandlers(null, null, null);
     }
 
-    @AfterClass
+    @AfterAll
     public static void reset() {
         Jvm.resetExceptionHandlers();
     }
@@ -41,7 +41,7 @@ public class AutoResizeTest {
                 .createPersistedTo(cmap)) {
 
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0, actual);
+            Assertions.assertNotEquals(0, actual);
         }
 
         // if the file already exists  it will reuse the existing settings, set above
@@ -50,7 +50,7 @@ public class AutoResizeTest {
                 .of(String.class, String.class)
                 .createPersistedTo(cmap)) {
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0, actual);
+            Assertions.assertNotEquals(0, actual);
         }
     }
 
@@ -64,12 +64,13 @@ public class AutoResizeTest {
                 .create()) {
 
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0, actual);
+            Assertions.assertNotEquals(0, actual);
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNegativeReplication() {
-        ChronicleMapBuilder.of(String.class, String.class).replication((byte) -1);
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ChronicleMapBuilder.of(String.class, String.class).replication((byte) -1));
     }
 }

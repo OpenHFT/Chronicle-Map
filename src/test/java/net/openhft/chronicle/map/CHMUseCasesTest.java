@@ -20,11 +20,10 @@ import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Range;
 import net.openhft.chronicle.values.Values;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.Closeable;
 import java.io.File;
@@ -39,7 +38,7 @@ import static java.lang.Math.max;
 import static java.util.Arrays.asList;
 import static net.openhft.chronicle.core.Maths.divideRoundUp;
 import static net.openhft.chronicle.map.fromdocs.OpenJDKAndHashMapExamplesTest.parseYYYYMMDD;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 enum ToString implements SerializableFunction<Object, String> {
     INSTANCE;
@@ -140,30 +139,15 @@ interface IBean {
 /**
  * This test enumerates common use cases for keys and values.
  */
-@RunWith(Parameterized.class)
 @SuppressWarnings({"rawtypes", "unchecked", "try", "serial"})
 public class CHMUseCasesTest {
 
-    private final TypeOfMap typeOfMap;
+    private TypeOfMap typeOfMap;
     private final Collection<Closeable> closeables = new ArrayList<>();
     private ChronicleMap<?, ?> map1;
 
-    public CHMUseCasesTest(TypeOfMap typeOfMap) {
-        this.typeOfMap = typeOfMap;
-    }
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        return asList(new Object[][]{
-                {
-                        TypeOfMap.SIMPLE
-                },
-
-                {
-                        TypeOfMap.SIMPLE_PERSISTED
-                }
-        });
-
+    public static Collection<TypeOfMap> typeOfMaps() {
+        return asList(TypeOfMap.SIMPLE, TypeOfMap.SIMPLE_PERSISTED);
     }
 
     private static void appendMode(ByteBuffer valueA) {
@@ -182,7 +166,7 @@ public class CHMUseCasesTest {
         return ret;
     }
 
-    @After
+    @AfterEach
     public void after() {
         for (Closeable c : closeables) {
             try {
@@ -203,22 +187,22 @@ public class CHMUseCasesTest {
 
     private void assertArrayValueEquals(ChronicleMap<?, ?> map1, ChronicleMap<?, ?> map2) {
 
-        assertEquals(map1.size(), map2.size());
+        assertEquals(map1.size(), map2.size(), "deserialized map should have same size as original");
 
         for (Object key : map1.keySet()) {
 
             if (map1.valueClass() == byte[].class)
-                Assert.assertArrayEquals((byte[]) map1.get(key), (byte[]) map2.get(key));
+                Assertions.assertArrayEquals((byte[]) map1.get(key), (byte[]) map2.get(key), "deserialized byte array value should match original for key");
 
             else if (map1.valueClass() == char[].class)
-                Assert.assertArrayEquals((char[]) map1.get(key), (char[]) map2.get(key));
+                Assertions.assertArrayEquals((char[]) map1.get(key), (char[]) map2.get(key), "deserialized char array value should match original for key");
             else if (map1.valueClass() == byte[][].class) {
                 byte[][] o1 = (byte[][]) map1.get(key);
                 byte[][] o2 = (byte[][]) map2.get(key);
 
-                Assert.assertEquals(o1.length, o2.length);
+                Assertions.assertEquals(o1.length, o2.length, "deserialized 2d byte array should have same outer array length");
                 for (int i = 0; i < o1.length; i++) {
-                    Assert.assertArrayEquals(o1[i], o2[i]);
+                    Assertions.assertArrayEquals(o1[i], o2[i], "deserialized 2d byte array inner array should match at index");
                 }
             } else {
                 throw new IllegalStateException("unsupported type");
@@ -260,11 +244,11 @@ public class CHMUseCasesTest {
                         map1.valueClass() == byte[][].class) {
                     assertArrayValueEquals(map1, actual);
                 } else {
-                    Assert.assertEquals(map1, actual);
+                    Assertions.assertEquals(map1, actual, "deserialized map should equal original map after json roundtrip");
                 }
             }
         } catch (IOException e) {
-            Assert.fail();
+            Assertions.fail("fail");
         } finally {
             file.delete();
         }
@@ -288,7 +272,7 @@ public class CHMUseCasesTest {
                 try {
                     file0 = File.createTempFile("chronicle-map-", ".map");
                     // Be paranoid
-                    assertEquals(0, file0.length());
+                    assertEquals(0, file0.length(), "newly created temp file should be empty before map creation");
                 } catch (IOException e) {
                     e.printStackTrace();
                     fail(e.getMessage());
@@ -306,8 +290,11 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Test
-    public void testArrayOfString() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testArrayOfString(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, I1> builder = ChronicleMapBuilder
                 .of(CharSequence.class, I1.class)
@@ -332,15 +319,15 @@ public class CHMUseCasesTest {
             {
                 final I1 key = map.get("Key1");
 
-                assertEquals("Hello", key.getStrAt(1));
-                assertEquals("World", key.getStrAt(2));
+                assertEquals("Hello", key.getStrAt(1), "first string element in Key1 array should match expected value");
+                assertEquals("World", key.getStrAt(2), "second string element in Key1 array should match expected value");
             }
 
             {
                 final I1 key = map.get("Key2");
 
-                assertEquals("Hello2", key.getStrAt(1));
-                assertEquals("World2", key.getStrAt(2));
+                assertEquals("Hello2", key.getStrAt(1), "first string element in Key2 array should match expected value");
+                assertEquals("World2", key.getStrAt(2), "second string element in Key2 array should match expected value");
             }
 
             // todo not currently supported for arrays
@@ -348,8 +335,11 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Test
-    public void testCharArrayValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testCharArrayValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         int valueSize = 10;
 
@@ -364,14 +354,17 @@ public class CHMUseCasesTest {
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);
 
-            assertEquals(Chars.asList(expected), Chars.asList(map.get("Key")));
+            assertEquals(Chars.asList(expected), Chars.asList(map.get("Key")), "retrieved char array value should match expected characters after roundtrip");
             mapChecks();
         }
     }
 
-    @Test
-    public void testByteArrayArrayValue()
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testByteArrayArrayValue(TypeOfMap typeOfMap)
             throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<byte[], byte[][]> builder = ChronicleMapBuilder
                 .of(byte[].class, byte[][].class)
@@ -385,13 +378,24 @@ public class CHMUseCasesTest {
             byte[][] value = {bytes1, bytes2};
             map.put("Key".getBytes(), value);
 
-            assertArrayEquals(value, map.get("Key".getBytes()));
+            assertArrayEquals(value, map.get("Key".getBytes()), "retrieved 2d byte array value should match expected array after roundtrip");
             mapChecks();
         }
     }
 
-    @Test
-    public void bondExample() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void bondExample(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
+
+        long issueDate = parseYYYYMMDD("20130915");
+        long maturityDate = parseYYYYMMDD("20140915");
+        double coupon = 5.0 / 100; // 5.0%
+        double ask930 = 109.2;
+        double bid930 = 106.9;
+        double ask1030 = 109.7;
+        double bid1030 = 107.6;
 
         ChronicleMapBuilder<String, BondVOInterface> builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
                 .entries(1)
@@ -401,23 +405,36 @@ public class CHMUseCasesTest {
             BondVOInterface bondVO = Values.newNativeReference(BondVOInterface.class);
             try (net.openhft.chronicle.core.io.Closeable c =
                          chm.acquireContext("369604103", bondVO)) {
-                bondVO.setIssueDate(parseYYYYMMDD("20130915"));
-                bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
-                bondVO.setCoupon(5.0 / 100); // 5.0%
+                bondVO.setIssueDate(issueDate);
+                bondVO.setMaturityDate(maturityDate);
+                bondVO.setCoupon(coupon);
 
                 BondVOInterface.MarketPx mpx930 = bondVO.getMarketPxIntraDayHistoryAt(0);
-                mpx930.setAskPx(109.2);
-                mpx930.setBidPx(106.9);
+                mpx930.setAskPx(ask930);
+                mpx930.setBidPx(bid930);
 
                 BondVOInterface.MarketPx mpx1030 = bondVO.getMarketPxIntraDayHistoryAt(1);
-                mpx1030.setAskPx(109.7);
-                mpx1030.setBidPx(107.6);
+                mpx1030.setAskPx(ask1030);
+                mpx1030.setBidPx(bid1030);
             }
+            BondVOInterface bondRead = Values.newNativeReference(BondVOInterface.class);
+            BondVOInterface bond = chm.getUsing("369604103", bondRead);
+            assertNotNull(bond, "bond should be present");
+            assertEquals(issueDate, bond.getIssueDate(), "issue date");
+            assertEquals(maturityDate, bond.getMaturityDate(), "maturity date");
+            assertEquals(coupon, bond.getCoupon(), 0.0, "bond coupon should match the stored value");
+            assertEquals(ask930, bond.getMarketPxIntraDayHistoryAt(0).getAskPx(), 0.0, "ask 09:30");
+            assertEquals(bid930, bond.getMarketPxIntraDayHistoryAt(0).getBidPx(), 0.0, "bid 09:30");
+            assertEquals(ask1030, bond.getMarketPxIntraDayHistoryAt(1).getAskPx(), 0.0, "ask 10:30");
+            assertEquals(bid1030, bond.getMarketPxIntraDayHistoryAt(1).getBidPx(), 0.0, "bid 10:30");
         }
     }
 
-    @Test
-    public void testLargeCharSequenceValueWriteOnly() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testLargeCharSequenceValueWriteOnly(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         int valueSize = 1000000;
 
@@ -430,13 +447,17 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);
+            assertEquals(1, map.size(), "map should contain exactly one entry after put");
             mapChecks();
         }
     }
 
-    @Test
-    public void testEntrySpanningSeveralChunks()
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testEntrySpanningSeveralChunks(TypeOfMap typeOfMap)
             throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         int salefactor = 100;
         int valueSize = 10 * salefactor;
@@ -452,13 +473,17 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);
+            assertArrayEquals(expected, map.get("Key"), "large entry spanning multiple chunks should be retrieved correctly");
             mapChecks();
         }
     }
 
-    @Test
-    public void testKeyValueSizeBySample() throws
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testKeyValueSizeBySample(TypeOfMap typeOfMap) throws
             IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
@@ -468,13 +493,17 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, CharSequence> map = newInstance(builder)) {
             map.put("Key", "Value");
+            assertEquals("Value", map.get("Key").toString(), "string value should be retrieved correctly after roundtrip");
             mapChecks();
         }
     }
 
-    @Test
-    public void testLargeCharSequenceValue()
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testLargeCharSequenceValue(TypeOfMap typeOfMap)
             throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         int valueSize = 5_000_000;
 
@@ -487,13 +516,16 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<CharSequence, char[]> map = newInstance(builder)) {
             map.put("Key", expected);
-            Assert.assertArrayEquals(expected, map.get("Key"));
+            Assertions.assertArrayEquals(expected, map.get("Key"), "large char array value should be retrieved correctly");
         }
     }
 
-    @Test
-    public void testStringStringMap() throws
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testStringStringMap(TypeOfMap typeOfMap) throws
             IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
                 .of(String.class, String.class)
@@ -501,16 +533,19 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<String, String> map = newInstance(builder)) {
             map.put("Hello", "World");
-            assertEquals("World", map.get("Hello"));
+            assertEquals("World", map.get("Hello"), "string value should be retrieved correctly by key");
 
-            assertEquals("New World", map.getMapped("Hello", new PrefixStringFunction("New ")));
-            assertNull(map.getMapped("No key", new PrefixStringFunction("New ")));
+            assertEquals("New World", map.getMapped("Hello", new PrefixStringFunction("New ")), "getMapped should apply function and return transformed value");
+            assertNull(map.getMapped("No key", new PrefixStringFunction("New ")), "getMapped should return null for non-existent key");
             mapChecks();
         }
     }
 
-    @Test
-    public void testStringStringMapMutableValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testStringStringMapMutableValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
                 .of(String.class, String.class)
@@ -519,12 +554,16 @@ public class CHMUseCasesTest {
         try (ChronicleMap<String, String> map = newInstance(builder)) {
             map.put("Hello", "World");
             map.computeIfPresent("Hello", new StringPrefixUnaryOperator("New "));
+            assertEquals("New World", map.get("Hello"), "computeIfPresent should modify value in place");
             mapChecks();
         }
     }
 
-    @Test
-    public void testCharSequenceMixingKeyTypes() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testCharSequenceMixingKeyTypes(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
@@ -535,13 +574,16 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
             map.put(new StringBuilder("Hello"), "World2");
 
-            Assert.assertEquals("World2", map.get("Hello").toString());
+            Assertions.assertEquals("World2", map.get("Hello").toString(), "charsequence key should retrieve most recently stored value");
             mapChecks();
         }
     }
 
-    @Test
-    public void testCharSequenceMixingValueTypes() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testCharSequenceMixingValueTypes(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
@@ -551,8 +593,8 @@ public class CHMUseCasesTest {
             map.put("Hello", "World");
             map.put("Hello2", new StringBuilder("World2"));
 
-            Assert.assertEquals("World2", map.get("Hello2").toString());
-            Assert.assertEquals("World", map.get("Hello").toString());
+            Assertions.assertEquals("World2", map.get("Hello2").toString(), "charsequence value stored as StringBuilder should be retrieved correctly");
+            Assertions.assertEquals("World", map.get("Hello").toString(), "charsequence value stored as String should be retrieved correctly");
             mapChecks();
         }
     }
@@ -561,9 +603,12 @@ public class CHMUseCasesTest {
      * CharSequence is more efficient when object creation is avoided.
      * * The key can only be on heap and variable length serialised.
      */
-    @Test
-    public void testCharSequenceCharSequenceMap()
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testCharSequenceCharSequenceMap(TypeOfMap typeOfMap)
             throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
@@ -577,35 +622,38 @@ public class CHMUseCasesTest {
             StringBuilder value = new StringBuilder();
             value.append("value-").append(1);
             map.put(key, value);
-            assertEquals("value-1", map.get("key-1").toString());
+            assertEquals("value-1", map.get("key-1").toString(), "stringbuilder key and value should be stored and retrieved correctly");
 
-            assertEquals(value, map.getUsing(key, value));
-            assertEquals("value-1", value.toString());
+            assertEquals(value, map.getUsing(key, value), "getUsing should return same StringBuilder instance provided");
+            assertEquals("value-1", value.toString(), "getUsing should populate provided StringBuilder with correct value");
             map.remove("key-1");
-            assertNull(map.getUsing(key, value));
+            assertNull(map.getUsing(key, value), "getUsing should return null after key removal");
 
-            assertEquals("New World", map.getMapped("Hello", s -> "New " + s));
+            assertEquals("New World", map.getMapped("Hello", s -> "New " + s), "getMapped with lambda should transform existing value");
             assertNull(map.getMapped("No key",
-                    (SerializableFunction<CharSequence, CharSequence>) s -> "New " + s));
+                    (SerializableFunction<CharSequence, CharSequence>) s -> "New " + s), "getMapped should return null for missing key");
 
             assertEquals("New World !!", map.computeIfPresent("Hello", (k, s) -> {
                 ((StringBuilder) s).append(" !!");
                 return "New " + s;
-            }).toString());
+            }).toString(), "computeIfPresent should modify and return transformed value");
 
-            assertEquals("New World !!", map.get("Hello").toString());
+            assertEquals("New World !!", map.get("Hello").toString(), "value should be updated in map after computeIfPresent");
 
             assertEquals("New !!", map.compute("no-key", (k, s) -> {
-                assertNull(s);
+                assertNull(s, "value should be null for non-existent key in compute function");
                 return "New !!";
-            }).toString());
+            }).toString(), "compute should create and return new value for missing key");
 
             mapChecks();
         }
     }
 
-    @Test
-    public void testAcquireUsingWithCharSequence() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testAcquireUsingWithCharSequence(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
                 .of(CharSequence.class, CharSequence.class)
@@ -616,17 +664,20 @@ public class CHMUseCasesTest {
             CharSequence using = new StringBuilder();
 
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", using)) {
-                assertTrue(using instanceof StringBuilder);
+                assertTrue(using instanceof StringBuilder, "acquireContext should maintain StringBuilder type");
                 ((StringBuilder) using).append("Hello World");
             }
 
-            assertEquals("Hello World", map.get("1").toString());
+            assertEquals("Hello World", map.get("1").toString(), "value modified via acquireContext should be persisted in map");
             mapChecks();
         }
     }
 
-    @Test
-    public void testGetUsingWithIntValueNoValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testGetUsingWithIntValueNoValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
                 .of(CharSequence.class, IntValue.class)
@@ -635,16 +686,19 @@ public class CHMUseCasesTest {
         try (ChronicleMap<CharSequence, IntValue> map = newInstance(builder)) {
 
             try (ExternalMapQueryContext<CharSequence, IntValue, ?> c = map.queryContext("1")) {
-                assertNull(c.entry());
+                assertNull(c.entry(), "entry should be null when key does not exist");
             }
 
-            assertNull(map.get("1"));
+            assertNull(map.get("1"), "map should return null for non-existent key");
             mapChecks();
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testAcquireUsingImmutableUsing() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testAcquireUsingImmutableUsing(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)
@@ -655,28 +709,38 @@ public class CHMUseCasesTest {
             IntValue using = Values.newHeapInstance(IntValue.class);
             using.setValue(1);
 
-            try (Closeable c = map.acquireContext(using, "")) {
-                assertTrue(using instanceof IntValue);
-                using.setValue(1);
-            }
-
-            assertNull(map.get(using));
-            mapChecks();
+            assertThrows(IllegalArgumentException.class, () -> {
+                try (Closeable c = map.acquireContext(using, "")) {
+                    assertTrue(using instanceof IntValue, "acquireContext should maintain IntValue type for immutable key");
+                    using.setValue(1);
+                }
+            });
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testNegativeActualChunkSize() {
-        ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1);
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testNegativeActualChunkSize(TypeOfMap typeOfMap) {
+
+        this.typeOfMap = typeOfMap;
+        assertThrows(IllegalArgumentException.class,
+                () -> ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testActualChunksPerSegmentTier() {
-        ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testActualChunksPerSegmentTier(TypeOfMap typeOfMap) {
+
+        this.typeOfMap = typeOfMap;
+        assertThrows(IllegalArgumentException.class,
+                () -> ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0));
     }
 
-    @Test
-    public void testAcquireUsingWithIntValueKeyStringBuilderValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testAcquireUsingWithIntValueKeyStringBuilderValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, StringBuilder> builder = ChronicleMapBuilder
                 .of(IntValue.class, StringBuilder.class)
@@ -693,13 +757,16 @@ public class CHMUseCasesTest {
                 using.append("Hello");
             }
 
-            assertEquals("Hello", map.get(key).toString());
+            assertEquals("Hello", map.get(key).toString(), "value modified in acquireContext should be retrievable by IntValue key");
             mapChecks();
         }
     }
 
-    @Test
-    public void testAcquireUsingWithIntValueKey() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testAcquireUsingWithIntValueKey(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)
@@ -723,7 +790,7 @@ public class CHMUseCasesTest {
             }
 
             key.setValue(1);
-            assertEquals("Hello", map.get(key).toString());
+            assertEquals("Hello", map.get(key).toString(), "map should contain value stored with IntValue key 1");
             mapChecks();
         }
     }
@@ -731,8 +798,11 @@ public class CHMUseCasesTest {
     /**
      * StringValue represents any bean which contains a String Value
      */
-    @Test
-    public void testStringValueStringValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testStringValueStringValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<StringValue, StringValue> builder = ChronicleMapBuilder
                 .of(StringValue.class, StringValue.class)
@@ -747,73 +817,73 @@ public class CHMUseCasesTest {
             key1.setValue(new StringBuilder("1"));
             value1.setValue("11");
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             key2.setValue("2");
             value2.setValue(new StringBuilder("22"));
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             mapChecks();
 
             StringBuilder sb = new StringBuilder();
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key1)) {
                 MapEntry<StringValue, StringValue> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key1 in StringValue map after initial put");
                 StringValue v = entry.value().get();
-                assertEquals("11", v.getValue().toString());
+                assertEquals("11", v.getValue().toString(), "StringValue retrieved from entry should contain expected string content");
                 v.getUsingValue(sb);
-                assertEquals("11", sb.toString());
+                assertEquals("11", sb.toString(), "getUsingValue should populate StringBuilder with correct value");
             }
 
             mapChecks();
 
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key2)) {
                 MapEntry<StringValue, StringValue> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key2 in StringValue map after initial put");
                 StringValue v = entry.value().get();
-                assertEquals("22", v.getValue().toString());
+                assertEquals("22", v.getValue().toString(), "StringValue retrieved from entry should contain expected string content");
                 v.getUsingValue(sb);
-                assertEquals("22", sb.toString());
+                assertEquals("22", sb.toString(), "getUsingValue should populate StringBuilder with correct value");
             }
 
             mapChecks();
 
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key1)) {
                 MapEntry<StringValue, StringValue> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key1 on repeated query");
                 StringValue v = entry.value().get();
-                assertEquals("11", v.getValue().toString());
+                assertEquals("11", v.getValue().toString(), "StringValue retrieved from entry should contain expected string content");
                 v.getUsingValue(sb);
-                assertEquals("11", sb.toString());
+                assertEquals("11", sb.toString(), "getUsingValue should populate StringBuilder with correct value");
             }
 
             mapChecks();
 
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key2)) {
                 MapEntry<StringValue, StringValue> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key2 on repeated query");
                 StringValue v = entry.value().get();
-                assertEquals("22", v.getValue().toString());
+                assertEquals("22", v.getValue().toString(), "StringValue retrieved from entry should contain expected string content");
                 v.getUsingValue(sb);
-                assertEquals("22", sb.toString());
+                assertEquals("22", sb.toString(), "getUsingValue should populate StringBuilder with correct value");
             }
 
             key1.setValue("3");
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             key2.setValue("4");
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals("", value1.getValue().toString());
+                assertEquals("", value1.getValue().toString(), "newly acquired value should be empty before initialization");
                 value1.getUsingValue(sb);
-                assertEquals("", sb.toString());
+                assertEquals("", sb.toString(), "newly acquired value should populate StringBuilder as empty");
                 sb.append(123);
                 value1.setValue(sb);
             }
@@ -822,26 +892,26 @@ public class CHMUseCasesTest {
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals("123", value2.getValue().toString());
+                assertEquals("123", value2.getValue().toString(), "acquired value should contain previously set content");
                 value2.setValue(value2.getValue().toString() + '4');
-                assertEquals("1234", value2.getValue().toString());
+                assertEquals("1234", value2.getValue().toString(), "value should reflect modification after append operation");
             }
 
             mapChecks();
 
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key1)) {
                 MapEntry<StringValue, StringValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals("1234", entry.value().get().getValue().toString());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification");
+                assertEquals("1234", entry.value().get().getValue().toString(), "persisted value should match modified value from acquireContext");
             }
 
             mapChecks();
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals("", value2.getValue().toString());
+                assertEquals("", value2.getValue().toString(), "newly acquired value should be empty before initialization");
                 value2.getUsingValue(sb);
-                assertEquals("", sb.toString());
+                assertEquals("", sb.toString(), "newly acquired value should populate StringBuilder as empty");
                 sb.append(123);
                 value2.setValue(sb);
             }
@@ -850,26 +920,29 @@ public class CHMUseCasesTest {
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals("123", value1.getValue().toString());
+                assertEquals("123", value1.getValue().toString(), "acquired value should contain previously set content");
                 value1.setValue(value1.getValue().toString() + '4');
-                assertEquals("1234", value1.getValue().toString());
+                assertEquals("1234", value1.getValue().toString(), "value should reflect modification after append operation");
             }
 
             mapChecks();
 
             try (ExternalMapQueryContext<StringValue, StringValue, ?> c = map.queryContext(key2)) {
                 MapEntry<StringValue, StringValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals("1234", entry.value().get().getValue().toString());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification");
+                assertEquals("1234", entry.value().get().getValue().toString(), "persisted value should match modified value from acquireContext");
             }
 
             mapChecks();
         }
     }
 
-    @Test
-    public void testIntegerIntegerMap()
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testIntegerIntegerMap(TypeOfMap typeOfMap)
             throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<Integer, Integer> builder = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
@@ -877,7 +950,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<Integer, Integer> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
             Integer key1;
             final Integer key2;
             Integer value1;
@@ -886,17 +959,17 @@ public class CHMUseCasesTest {
             key1 = 1;
             value1 = 11;
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             key2 = 2;
             value2 = 22;
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
-            assertEquals((Integer) 11, map.get(key1));
-            assertEquals((Integer) 22, map.get(key2));
-            assertNull(map.get(3));
-            assertNull(map.get(4));
+            assertEquals((Integer) 11, map.get(key1), "integer value for key1 should be retrievable after puts");
+            assertEquals((Integer) 22, map.get(key2), "integer value for key2 should be retrievable after puts");
+            assertNull(map.get(3), "map should return null for non-existent key 3");
+            assertNull(map.get(4), "map should return null for non-existent key 4");
 
             mapChecks();
 
@@ -905,7 +978,7 @@ public class CHMUseCasesTest {
                 public Integer apply(Integer s) {
                     return 10 * s;
                 }
-            }));
+            }), "getMapped should apply transformation function to existing integer value");
 
             mapChecks();
 
@@ -914,22 +987,25 @@ public class CHMUseCasesTest {
                 public Integer apply(Integer s) {
                     return 10 * s;
                 }
-            }));
+            }), "getMapped should return null for non-existent integer key");
 
             mapChecks();
 
             try {
                 map.computeIfPresent(1, (k, s) -> s + 1);
             } catch (Exception todoMoreSpecificException) {
-                assertNotNull(todoMoreSpecificException);
+                assertNotNull(todoMoreSpecificException, "computeIfPresent should throw exception for unsupported operation");
             }
             mapChecks();
 
         }
     }
 
-    @Test
-    public void testLongLongMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testLongLongMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder
                 .of(Long.class, Long.class)
@@ -939,13 +1015,13 @@ public class CHMUseCasesTest {
             //            assertEquals(16, entrySize(map));
             //            assertEquals(1, ((VanillaChronicleMap) map).maxChunksPerEntry);
             map.put(1L, 11L);
-            assertEquals((Long) 11L, map.get(1L));
+            assertEquals((Long) 11L, map.get(1L), "long value for key 1 should be retrievable after puts");
 
             map.put(2L, 22L);
-            assertEquals((Long) 22L, map.get(2L));
+            assertEquals((Long) 22L, map.get(2L), "long value for key 2 should be retrievable after puts");
 
-            assertNull(map.get(3L));
-            assertNull(map.get(4L));
+            assertNull(map.get(3L), "map should return null for non-existent key 3");
+            assertNull(map.get(4L), "map should return null for non-existent key 4");
 
             mapChecks();
 
@@ -954,23 +1030,26 @@ public class CHMUseCasesTest {
                 public Long apply(Long s) {
                     return 10 * s;
                 }
-            }));
-            assertNull(map.getMapped(-1L, (SerializableFunction<Long, Long>) s -> 10 * s));
+            }), "getMapped should apply transformation function to existing long value");
+            assertNull(map.getMapped(-1L, (SerializableFunction<Long, Long>) s -> 10 * s), "getMapped should return null for non-existent long key");
 
             mapChecks();
 
             try {
                 map.computeIfPresent(1L, (k, s) -> s + 1);
             } catch (Exception todoMoreSpecificException) {
-                assertNotNull(todoMoreSpecificException);
+                assertNotNull(todoMoreSpecificException, "computeIfPresent should throw exception for unsupported operation");
             }
 
             mapChecks();
         }
     }
 
-    @Test
-    public void testDoubleDoubleMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testDoubleDoubleMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<Double, Double> builder = ChronicleMapBuilder
                 .of(Double.class, Double.class)
@@ -978,36 +1057,39 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<Double, Double> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
             map.put(1.0, 11.0);
-            assertEquals((Double) 11.0, map.get(1.0));
+            assertEquals((Double) 11.0, map.get(1.0), "double value for key 1.0 should be retrievable after puts");
 
             map.put(2.0, 22.0);
-            assertEquals((Double) 22.0, map.get(2.0));
+            assertEquals((Double) 22.0, map.get(2.0), "double value for key 2.0 should be retrievable after puts");
 
-            assertNull(map.get(3.0));
-            assertNull(map.get(4.0));
+            assertNull(map.get(3.0), "map should return null for non-existent key 3.0");
+            assertNull(map.get(4.0), "map should return null for non-existent key 4.0");
 
             assertEquals((Double) 110.0, map.getMapped(1.0, new SerializableFunction<Double, Double>() {
                 @Override
                 public Double apply(Double s) {
                     return 10 * s;
                 }
-            }));
-            assertNull(map.getMapped(-1.0, (SerializableFunction<Double, Double>) s -> 10 * s));
+            }), "getMapped should apply transformation function to existing double value");
+            assertNull(map.getMapped(-1.0, (SerializableFunction<Double, Double>) s -> 10 * s), "getMapped should return null for non-existent double key");
 
             try {
                 map.computeIfPresent(1.0, (k, s) -> s + 1);
 
             } catch (Exception todoMoreSpecificException) {
-                assertNotNull(todoMoreSpecificException);
+                assertNotNull(todoMoreSpecificException, "computeIfPresent should throw exception for unsupported operation");
             }
         }
     }
 
-    @Test
-    public void testByteArrayByteArrayMap()
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testByteArrayByteArrayMap(TypeOfMap typeOfMap)
             throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<byte[], byte[]> builder = ChronicleMapBuilder
                 .of(byte[].class, byte[].class).averageKeySize(4).averageValueSize(4)
@@ -1018,10 +1100,10 @@ public class CHMUseCasesTest {
             final byte[] key2 = {2, 2, 2, 2};
             byte[] value1 = {11, 11, 11, 11};
             final byte[] value2 = {22, 22, 22, 22};
-            assertNull(map.put(key1, value1));
-            assertArrayEquals(value1, map.put(key1, value2));
-            assertArrayEquals(value2, map.get(key1));
-            assertNull(map.get(key2));
+            assertNull(map.put(key1, value1), "put should return null for new key insertion");
+            assertArrayEquals(value1, map.put(key1, value2), "put should return previous value when replacing existing key");
+            assertArrayEquals(value2, map.get(key1), "byte array value should match most recently stored value for key1");
+            assertNull(map.get(key2), "map should return null for non-existent key2");
 
             map.put(key1, value1);
 
@@ -1030,29 +1112,32 @@ public class CHMUseCasesTest {
                 public byte[] apply(byte[] s) {
                     return Arrays.copyOf(s, 2);
                 }
-            }));
+            }), "getMapped should apply transformation function to byte array value");
             assertNull(map.getMapped(key2, new SerializableFunction<byte[], byte[]>() {
                 @Override
                 public byte[] apply(byte[] s) {
                     return Arrays.copyOf(s, 2);
                 }
-            }));
+            }), "getMapped should return null for non-existent byte array key");
 
             assertArrayEquals(new byte[]{12, 10}, map.computeIfPresent(key1, (k, s) -> {
                 s[0]++;
                 s[1]--;
                 return Arrays.copyOf(s, 2);
-            }));
+            }), "computeIfPresent should modify byte array in-place and return result");
 
             byte[] a2 = map.get(key1);
-            assertArrayEquals(new byte[]{12, 10}, a2);
+            assertArrayEquals(new byte[]{12, 10}, a2, "persisted byte array should reflect computeIfPresent modifications");
 
         }
     }
 
-    @Test
-    public void testByteBufferByteBufferDefaultKeyValueMarshaller() throws
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testByteBufferByteBufferDefaultKeyValueMarshaller(TypeOfMap typeOfMap) throws
             IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -1066,10 +1151,10 @@ public class CHMUseCasesTest {
             final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
             final ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11});
             final ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22});
-            assertNull(map.put(key1, value1));
+            assertNull(map.put(key1, value1), "put should return null for new key insertion");
             assertBBEquals(value1, map.put(key1, value2));
             assertBBEquals(value2, map.get(key1));
-            assertNull(map.get(key2));
+            assertNull(map.get(key2), "map should return null for non-existent key2");
 
             map.put(key1, value1);
 
@@ -1077,9 +1162,12 @@ public class CHMUseCasesTest {
         }
     }
 
-    @Test
-    public void testByteBufferByteBufferMap()
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testByteBufferByteBufferMap(TypeOfMap typeOfMap)
             throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -1093,10 +1181,10 @@ public class CHMUseCasesTest {
             final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2}).order(ByteOrder.nativeOrder());
             ByteBuffer value1 = ByteBuffer.wrap(new byte[]{11, 11, 11, 11}).order(ByteOrder.nativeOrder());
             final ByteBuffer value2 = ByteBuffer.wrap(new byte[]{22, 22, 22, 22}).order(ByteOrder.nativeOrder());
-            assertNull(map.put(key1, value1));
+            assertNull(map.put(key1, value1), "put should return null for new key insertion");
             assertBBEquals(value1, map.put(key1, value2));
             assertBBEquals(value2, map.get(key1));
-            assertNull(map.get(key2));
+            assertNull(map.get(key2), "map should return null for non-existent key2");
 
             final SerializableFunction<ByteBuffer, ByteBuffer> function =
                     new SerializableFunction<ByteBuffer, ByteBuffer>() {
@@ -1110,7 +1198,7 @@ public class CHMUseCasesTest {
 
             map.put(key1, value1);
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
-            assertNull(map.getMapped(key2, function));
+            assertNull(map.getMapped(key2, function), "getMapped should return null for non-existent key");
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
                     map.computeIfPresent(key1, (k, s) -> {
@@ -1130,23 +1218,23 @@ public class CHMUseCasesTest {
             //            assertBBEquals(value1, valueA);
             try (ExternalMapQueryContext<ByteBuffer, ByteBuffer, ?> c = map.queryContext(key1)) {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key1 in ByteBuffer map using valueA");
                 assertBBEquals(value1, entry.value().getUsing(valueA));
             }
             try (ExternalMapQueryContext<ByteBuffer, ByteBuffer, ?> c = map.queryContext(key2)) {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key2 in ByteBuffer map using valueA");
                 assertBBEquals(value2, entry.value().getUsing(valueA));
             }
 
             try (ExternalMapQueryContext<ByteBuffer, ByteBuffer, ?> c = map.queryContext(key1)) {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key1 in ByteBuffer map using valueB");
                 assertBBEquals(value1, entry.value().getUsing(valueB));
             }
             try (ExternalMapQueryContext<ByteBuffer, ByteBuffer, ?> c = map.queryContext(key2)) {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key2 in ByteBuffer map using valueB");
                 assertBBEquals(value2, entry.value().getUsing(valueB));
             }
 
@@ -1173,7 +1261,7 @@ public class CHMUseCasesTest {
 
             try (ExternalMapQueryContext<ByteBuffer, ByteBuffer, ?> c = map.queryContext(key1)) {
                 MapEntry<ByteBuffer, ByteBuffer> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modifications in ByteBuffer map");
 
                 ByteBuffer bb1 = ByteBuffer.allocate(8).order(ByteOrder.nativeOrder());
                 bb1.put(value1);
@@ -1187,9 +1275,12 @@ public class CHMUseCasesTest {
     }
 
     @SuppressWarnings("cast")
-    @Test
-    public void testByteBufferDirectByteBufferMap()
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testByteBufferDirectByteBufferMap(TypeOfMap typeOfMap)
             throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
                 .of(ByteBuffer.class, ByteBuffer.class)
@@ -1221,11 +1312,11 @@ public class CHMUseCasesTest {
                     .flip())
                     .asReadOnlyBuffer();
 
-            assertNull(map.put(key1, value1));
+            assertNull(map.put(key1, value1), "put should return null for new key insertion");
             assertBBEquals(value1, map.put(key1, value2));
             assertBBEquals(value2, map.get(key1));
 
-            assertNull(map.get(key2));
+            assertNull(map.get(key2), "map should return null for non-existent key2");
             assertBBEquals(value2, map.put(key1, value1));
             assertBBEquals(value1, map.get(key1));
 
@@ -1238,7 +1329,7 @@ public class CHMUseCasesTest {
                         return slice;
                     };
             assertBBEquals(ByteBuffer.wrap(new byte[]{11, 11}), map.getMapped(key1, function));
-            assertNull(map.getMapped(key2, function));
+            assertNull(map.getMapped(key2, function), "getMapped should return null for non-existent key");
             mapChecks();
             assertBBEquals(ByteBuffer.wrap(new byte[]{12, 10}),
                     map.computeIfPresent(key1, (k, s) -> {
@@ -1253,13 +1344,16 @@ public class CHMUseCasesTest {
     }
 
     private void assertBBEquals(ByteBuffer bb1, ByteBuffer bb2) {
-        assertEquals(bb1.remaining(), bb2.remaining());
+        assertEquals(bb1.remaining(), bb2.remaining(), "bytebuffers should have same number of remaining bytes");
         for (int i = 0; i < bb1.remaining(); i++)
-            assertEquals(bb1.get(bb1.position() + i), bb2.get(bb2.position() + i));
+            assertEquals(bb1.get(bb1.position() + i), bb2.get(bb2.position() + i), "bytebuffer bytes should match at each position");
     }
 
-    @Test
-    public void testIntValueIntValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testIntValueIntValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, IntValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, IntValue.class)
@@ -1268,7 +1362,7 @@ public class CHMUseCasesTest {
         try (ChronicleMap<IntValue, IntValue> map = newInstance(builder)) {
             // this may change due to alignment
             //            assertEquals(8, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
             final IntValue key1 = Values.newHeapInstance(IntValue.class);
             final IntValue key2 = Values.newHeapInstance(IntValue.class);
             final IntValue value1 = Values.newHeapInstance(IntValue.class);
@@ -1277,78 +1371,78 @@ public class CHMUseCasesTest {
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             key2.setValue(2);
             value2.setValue(22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key1)) {
                 MapEntry<IntValue, IntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 in IntValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             // TODO review -- the previous version of this block:
             // acquiring for value1, comparing value2 -- as intended?
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key2)) {
                 MapEntry<IntValue, IntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 in IntValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key1)) {
                 MapEntry<IntValue, IntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 on repeated query in IntValue map");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key2)) {
                 MapEntry<IntValue, IntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 on repeated query in IntValue map");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(0, value1.getValue());
+                assertEquals(0, value1.getValue(), "newly acquired value should be initialized to zero");
                 value1.addValue(123);
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
                 value2.addValue(1230 - 123);
-                assertEquals(1230, value2.getValue());
+                assertEquals(1230, value2.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key1)) {
                 MapEntry<IntValue, IntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in IntValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(0, value2.getValue());
+                assertEquals(0, value2.getValue(), "newly acquired value should be initialized to zero");
                 value2.addValue(123);
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
                 value1.addValue(1230 - 123);
-                assertEquals(1230, value1.getValue());
+                assertEquals(1230, value1.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<IntValue, IntValue, ?> c = map.queryContext(key2)) {
                 MapEntry<IntValue, IntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in IntValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
             mapChecks();
 
@@ -1358,8 +1452,11 @@ public class CHMUseCasesTest {
     /**
      * For unsigned int -> unsigned int entries, the key can be on heap or off heap.
      */
-    @Test
-    public void testUnsignedIntValueUnsignedIntValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testUnsignedIntValueUnsignedIntValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<UnsignedIntValue, UnsignedIntValue> builder = ChronicleMapBuilder
                 .of(UnsignedIntValue.class, UnsignedIntValue.class)
@@ -1367,14 +1464,14 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<UnsignedIntValue, UnsignedIntValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
             UnsignedIntValue key1 = Values.newHeapInstance(UnsignedIntValue.class);
             UnsignedIntValue value1 = Values.newHeapInstance(UnsignedIntValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             key1 = Values.newHeapInstance(UnsignedIntValue.class);
             value1 = Values.newHeapInstance(UnsignedIntValue.class);
@@ -1382,7 +1479,7 @@ public class CHMUseCasesTest {
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             UnsignedIntValue key2 = Values.newHeapInstance(UnsignedIntValue.class);
             UnsignedIntValue value2 = Values.newHeapInstance(UnsignedIntValue.class);
@@ -1390,80 +1487,80 @@ public class CHMUseCasesTest {
             key2.setValue(2);
             value2.setValue(22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key1)) {
                 MapEntry<UnsignedIntValue, UnsignedIntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 in UnsignedIntValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             // TODO review suspicious block
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key2)) {
                 MapEntry<UnsignedIntValue, UnsignedIntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 in UnsignedIntValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key1)) {
                 MapEntry<UnsignedIntValue, UnsignedIntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 on repeated query in UnsignedIntValue map");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key2)) {
                 MapEntry<UnsignedIntValue, UnsignedIntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 on repeated query in UnsignedIntValue map");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(0, value1.getValue());
+                assertEquals(0, value1.getValue(), "newly acquired value should be initialized to zero");
                 value1.addValue(123);
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
                 value2.addValue(1230 - 123);
-                assertEquals(1230, value2.getValue());
+                assertEquals(1230, value2.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key1)) {
                 MapEntry<UnsignedIntValue, UnsignedIntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in UnsignedIntValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(0, value2.getValue());
+                assertEquals(0, value2.getValue(), "newly acquired value should be initialized to zero");
                 value2.addValue(123);
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
                 value1.addValue(1230 - 123);
-                assertEquals(1230, value1.getValue());
+                assertEquals(1230, value1.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<UnsignedIntValue, UnsignedIntValue, ?> c =
                          map.queryContext(key2)) {
                 MapEntry<UnsignedIntValue, UnsignedIntValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in UnsignedIntValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
             mapChecks();
         }
@@ -1472,8 +1569,11 @@ public class CHMUseCasesTest {
     /**
      * For int values, the key can be on heap or off heap.
      */
-    @Test
-    public void testIntValueShortValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testIntValueShortValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, ShortValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, ShortValue.class)
@@ -1493,17 +1593,17 @@ public class CHMUseCasesTest {
             key1.setValue(1);
             value1.setValue((short) 11);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             key2.setValue(2);
             value2.setValue((short) 22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<?, ShortValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, ShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 in ShortValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             // TODO the same as above.
             //            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
@@ -1512,64 +1612,64 @@ public class CHMUseCasesTest {
             //            }
             try (ExternalMapQueryContext<?, ShortValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, ShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 in ShortValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             try (ExternalMapQueryContext<?, ShortValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, ShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 on repeated query in ShortValue map");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             try (ExternalMapQueryContext<?, ShortValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, ShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 on repeated query in ShortValue map");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, ShortValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<?, ShortValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(0, value1.getValue());
+                assertEquals(0, value1.getValue(), "newly acquired value should be initialized to zero");
                 value1.addValue((short) 123);
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
                 value2.addValue((short) (1230 - 123));
-                assertEquals(1230, value2.getValue());
+                assertEquals(1230, value2.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<?, ShortValue, ?> c =
                          map.queryContext(key1)) {
                 MapEntry<?, ShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in ShortValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(0, value2.getValue());
+                assertEquals(0, value2.getValue(), "newly acquired value should be initialized to zero");
                 value2.addValue((short) 123);
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
                 value1.addValue((short) (1230 - 123));
-                assertEquals(1230, value1.getValue());
+                assertEquals(1230, value1.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<?, ShortValue, ?> c =
                          map.queryContext(key2)) {
                 MapEntry<?, ShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in ShortValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
             mapChecks();
         }
@@ -1578,8 +1678,11 @@ public class CHMUseCasesTest {
     /**
      * For int -> unsigned short values, the key can be on heap or off heap.
      */
-    @Test
-    public void testIntValueUnsignedShortValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testIntValueUnsignedShortValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, UnsignedShortValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedShortValue.class)
@@ -1589,14 +1692,14 @@ public class CHMUseCasesTest {
 
             // this may change due to alignment
             // assertEquals(8, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             UnsignedShortValue value1 = Values.newHeapInstance(UnsignedShortValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             UnsignedShortValue value2 = Values.newHeapInstance(UnsignedShortValue.class);
@@ -1604,73 +1707,73 @@ public class CHMUseCasesTest {
             key2.setValue(2);
             value2.setValue(22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, UnsignedShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 in UnsignedShortValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             // TODO the same as above.
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, UnsignedShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 in UnsignedShortValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, UnsignedShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 on repeated query in UnsignedShortValue map");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, UnsignedShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 on repeated query in UnsignedShortValue map");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(0, value1.getValue());
+                assertEquals(0, value1.getValue(), "newly acquired value should be initialized to zero");
                 value1.addValue(123);
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
                 value2.addValue(1230 - 123);
-                assertEquals(1230, value2.getValue());
+                assertEquals(1230, value2.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c =
                          map.queryContext(key1)) {
                 MapEntry<?, UnsignedShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in UnsignedShortValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(0, value2.getValue());
+                assertEquals(0, value2.getValue(), "newly acquired value should be initialized to zero");
                 value2.addValue(123);
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
                 value1.addValue(1230 - 123);
-                assertEquals(1230, value1.getValue());
+                assertEquals(1230, value1.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<?, UnsignedShortValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, UnsignedShortValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in UnsignedShortValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
             mapChecks();
         }
@@ -1679,8 +1782,11 @@ public class CHMUseCasesTest {
     /**
      * For int values, the key can be on heap or off heap.
      */
-    @Test
-    public void testIntValueCharValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testIntValueCharValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, CharValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, CharValue.class)
@@ -1688,14 +1794,14 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, CharValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             CharValue value1 = Values.newHeapInstance(CharValue.class);
 
             key1.setValue(1);
             value1.setValue((char) 11);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             CharValue value2 = Values.newHeapInstance(CharValue.class);
@@ -1703,71 +1809,71 @@ public class CHMUseCasesTest {
             key2.setValue(2);
             value2.setValue((char) 22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<?, CharValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, CharValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 in CharValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             // TODO The same as above
             try (ExternalMapQueryContext<?, CharValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, CharValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 in CharValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             try (ExternalMapQueryContext<?, CharValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, CharValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 on repeated query in CharValue map");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             try (ExternalMapQueryContext<?, CharValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, CharValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 on repeated query in CharValue map");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, CharValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<?, CharValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals('\0', value1.getValue());
+                assertEquals('\0', value1.getValue(), "acquired char value should be null character when key does not exist");
                 value1.setValue('@');
-                assertEquals('@', value1.getValue());
+                assertEquals('@', value1.getValue(), "char value should be '@' after setting");
             }
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext(key1, value2)) {
-                assertEquals('@', value2.getValue());
+                assertEquals('@', value2.getValue(), "acquired char value should be '@' matching previously stored value");
                 value2.setValue('#');
-                assertEquals('#', value2.getValue());
+                assertEquals('#', value2.getValue(), "char value should be '#' after updating");
             }
             try (ExternalMapQueryContext<IntValue, CharValue, ?> c = map.queryContext(key1)) {
                 MapEntry<IntValue, CharValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals('#', entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in IntValue-CharValue map");
+                assertEquals('#', entry.value().get().getValue(), "key1 charvalue should contain '#' character after modification");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals('\0', value2.getValue());
+                assertEquals('\0', value2.getValue(), "acquired char value should be null character when key does not exist");
                 value2.setValue(';');
-                assertEquals(';', value2.getValue());
+                assertEquals(';', value2.getValue(), "char value should be ';' after setting");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(';', value1.getValue());
+                assertEquals(';', value1.getValue(), "acquired char value should be ';' matching previously stored value");
                 value1.setValue('[');
-                assertEquals('[', value1.getValue());
+                assertEquals('[', value1.getValue(), "char value should be '[' after updating");
             }
             try (ExternalMapQueryContext<IntValue, CharValue, ?> c = map.queryContext(key2)) {
                 MapEntry<IntValue, CharValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals('[', entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in IntValue-CharValue map");
+                assertEquals('[', entry.value().get().getValue(), "key2 charvalue should contain '[' character after modification");
             }
         }
     }
@@ -1775,8 +1881,11 @@ public class CHMUseCasesTest {
     /**
      * For int-> byte entries, the key can be on heap or off heap.
      */
-    @Test
-    public void testIntValueUnsignedByteMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testIntValueUnsignedByteMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, UnsignedByteValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, UnsignedByteValue.class)
@@ -1787,7 +1896,7 @@ public class CHMUseCasesTest {
             // TODO should be 5, but shorter fields based on range doesn't seem to be implemented
             // on data value generation level yet
             //assertEquals(8, entrySize(map)); this may change due to alignmented
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
 
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             UnsignedByteValue value1 = Values.newHeapInstance(UnsignedByteValue.class);
@@ -1795,7 +1904,7 @@ public class CHMUseCasesTest {
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             UnsignedByteValue value2 = Values.newHeapInstance(UnsignedByteValue.class);
@@ -1803,72 +1912,72 @@ public class CHMUseCasesTest {
             key2.setValue(2);
             value2.setValue(22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, UnsignedByteValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 in UnsignedByteValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             // TODO the same as above
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, UnsignedByteValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 in UnsignedByteValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, UnsignedByteValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 on repeated query in UnsignedByteValue map");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, UnsignedByteValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 on repeated query in UnsignedByteValue map");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(0, value1.getValue());
+                assertEquals(0, value1.getValue(), "newly acquired value should be initialized to zero");
                 value1.addValue(234);
-                assertEquals(234, value1.getValue());
+                assertEquals(234, value1.getValue(), "unsigned byte value should be 234 after adding 234");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(234, value2.getValue());
+                assertEquals(234, value2.getValue(), "acquired unsigned byte value should be 234 matching previously stored value");
                 value2.addValue(-100);
-                assertEquals(134, value2.getValue());
+                assertEquals(134, value2.getValue(), "unsigned byte value should be 134 after subtracting 100");
             }
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, UnsignedByteValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(134, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in UnsignedByteValue map");
+                assertEquals(134, entry.value().get().getValue(), "key1 unsigned byte value should be 134 after subtraction operation");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(0, value2.getValue());
+                assertEquals(0, value2.getValue(), "newly acquired value should be initialized to zero");
                 value2.addValue((byte) 123);
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
                 value1.addValue((byte) -111);
-                assertEquals(12, value1.getValue());
+                assertEquals(12, value1.getValue(), "unsigned byte value should be 12 after subtracting 111");
             }
             try (ExternalMapQueryContext<?, UnsignedByteValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, UnsignedByteValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(12, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in UnsignedByteValue map");
+                assertEquals(12, entry.value().get().getValue(), "key2 unsigned byte value should be 12 after subtraction operation");
             }
             mapChecks();
         }
@@ -1877,8 +1986,11 @@ public class CHMUseCasesTest {
     /**
      * For int values, the key can be on heap or off heap.
      */
-    @Test
-    public void testIntValueBooleanValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testIntValueBooleanValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, BooleanValue> builder = ChronicleMapBuilder
                 .of(IntValue.class, BooleanValue.class)
@@ -1886,7 +1998,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<IntValue, BooleanValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
 
             IntValue key1 = Values.newHeapInstance(IntValue.class);
             BooleanValue value1 = Values.newHeapInstance(BooleanValue.class);
@@ -1894,7 +2006,7 @@ public class CHMUseCasesTest {
             key1.setValue(1);
             value1.setValue(true);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             IntValue key2 = Values.newHeapInstance(IntValue.class);
             BooleanValue value2 = Values.newHeapInstance(BooleanValue.class);
@@ -1902,72 +2014,72 @@ public class CHMUseCasesTest {
             key2.setValue(2);
             value2.setValue(false);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
-                assertNotNull(entry);
-                assertTrue(entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 in BooleanValue map after initial put");
+                assertTrue(entry.value().get().getValue(), "key1 boolean value should be true as initially stored");
             }
             // TODO the same as above. copy paste, copy paste, copy-paste...
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
-                assertNotNull(entry);
-                assertFalse(entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 in BooleanValue map after initial put");
+                assertFalse(entry.value().get().getValue(), "key2 boolean value should be false as initially stored");
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
-                assertNotNull(entry);
-                assertTrue(entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 on repeated query in BooleanValue map");
+                assertTrue(entry.value().get().getValue(), "key1 boolean value should remain true on repeated query");
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
-                assertNotNull(entry);
-                assertFalse(entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 on repeated query in BooleanValue map");
+                assertFalse(entry.value().get().getValue(), "key2 boolean value should remain false on repeated query");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertFalse(value1.getValue());
+                assertFalse(value1.getValue(), "acquired boolean value should be false for new key");
                 value1.setValue(true);
-                assertTrue(value1.getValue());
+                assertTrue(value1.getValue(), "boolean value should be true after setting");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertTrue(value2.getValue());
+                assertTrue(value2.getValue(), "acquired boolean value should be true matching previously stored value");
                 value2.setValue(false);
-                assertFalse(value2.getValue());
+                assertFalse(value2.getValue(), "boolean value should be false after updating");
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
-                assertNotNull(entry);
-                assertFalse(entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in BooleanValue map");
+                assertFalse(entry.value().get().getValue(), "key1 boolean value should be false after last modification");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertFalse(value2.getValue());
+                assertFalse(value2.getValue(), "acquired boolean value should be false for new key");
                 value2.setValue(true);
-                assertTrue(value2.getValue());
+                assertTrue(value2.getValue(), "boolean value should be true after setting");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertTrue(value1.getValue());
+                assertTrue(value1.getValue(), "acquired boolean value should be true matching previously stored value");
                 value1.setValue(false);
-                assertFalse(value1.getValue());
+                assertFalse(value1.getValue(), "boolean value should be false after updating");
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
-                assertNotNull(entry);
-                assertFalse(entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in BooleanValue map");
+                assertFalse(entry.value().get().getValue(), "key2 boolean value should be false after last modification");
             }
             mapChecks();
         }
@@ -1976,8 +2088,11 @@ public class CHMUseCasesTest {
     /**
      * For float values, the key can be on heap or off heap.
      */
-    @Test
-    public void testFloatValueFloatValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testFloatValueFloatValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<FloatValue, FloatValue> builder = ChronicleMapBuilder
                 .of(FloatValue.class, FloatValue.class)
@@ -1985,7 +2100,7 @@ public class CHMUseCasesTest {
 
         try (ChronicleMap<FloatValue, FloatValue> map = newInstance(builder)) {
 
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
 
             FloatValue key1 = Values.newHeapInstance(FloatValue.class);
             FloatValue value1 = Values.newHeapInstance(FloatValue.class);
@@ -1993,7 +2108,7 @@ public class CHMUseCasesTest {
             key1.setValue(1);
             value1.setValue(11);
             map.put(key1, value1);
-            assertEquals(value1, map.get(key1));
+            assertEquals(value1, map.get(key1), "value retrieved for key1 should match stored value");
 
             FloatValue key2 = Values.newHeapInstance(FloatValue.class);
             FloatValue value2 = Values.newHeapInstance(FloatValue.class);
@@ -2001,72 +2116,72 @@ public class CHMUseCasesTest {
             key2.setValue(2);
             value2.setValue(22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, FloatValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key1 in FloatValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), 0, "key1 float value should be 11 as initially stored");
             }
             // TODO see above
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, FloatValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key2 in FloatValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), 0, "key2 float value should be 22 as initially stored");
             }
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, FloatValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key1 on repeated query in FloatValue map");
+                assertEquals(11, entry.value().get().getValue(), 0, "key1 float value should remain 11 on repeated query");
             }
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, FloatValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key2 on repeated query in FloatValue map");
+                assertEquals(22, entry.value().get().getValue(), 0, "key2 float value should remain 22 on repeated query");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(0, value1.getValue(), 0);
+                assertEquals(0, value1.getValue(), 0, "acquired float value should be zero for new key");
                 value1.addValue(123);
-                assertEquals(123, value1.getValue(), 0);
+                assertEquals(123, value1.getValue(), 0, "float value should be 123 after adding 123");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(123, value2.getValue(), 0);
+                assertEquals(123, value2.getValue(), 0, "acquired float value should be 123 matching previously stored value");
                 value2.addValue(1230 - 123);
-                assertEquals(1230, value2.getValue(), 0);
+                assertEquals(1230, value2.getValue(), 0, "float value should be 1230 after adding 1107");
             }
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, FloatValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in FloatValue map");
+                assertEquals(1230, entry.value().get().getValue(), 0, "key1 float value should be 1230 after addition operations");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(0, value2.getValue(), 0);
+                assertEquals(0, value2.getValue(), 0, "acquired float value should be zero for new key");
                 value2.addValue(123);
-                assertEquals(123, value2.getValue(), 0);
+                assertEquals(123, value2.getValue(), 0, "float value should be 123 after adding 123");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(123, value1.getValue(), 0);
+                assertEquals(123, value1.getValue(), 0, "acquired float value should be 123 matching previously stored value");
                 value1.addValue(1230 - 123);
-                assertEquals(1230, value1.getValue(), 0);
+                assertEquals(1230, value1.getValue(), 0, "float value should be 1230 after adding 1107");
             }
             try (ExternalMapQueryContext<?, FloatValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, FloatValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in FloatValue map");
+                assertEquals(1230, entry.value().get().getValue(), 0, "key2 float value should be 1230 after addition operations");
             }
             mapChecks();
         }
@@ -2075,8 +2190,11 @@ public class CHMUseCasesTest {
     /**
      * For double values, the key can be on heap or off heap.
      */
-    @Test
-    public void testDoubleValueDoubleValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testDoubleValueDoubleValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<DoubleValue, DoubleValue> builder = ChronicleMapBuilder
                 .of(DoubleValue.class, DoubleValue.class)
@@ -2087,18 +2205,18 @@ public class CHMUseCasesTest {
             // this may change due to alignment
             //assertEquals(16, entrySize(map));
 
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
 
             DoubleValue key1 = Values.newHeapInstance(DoubleValue.class);
             DoubleValue value1 = Values.newHeapInstance(DoubleValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
-            assertNull(map.get(key1));
+            assertNull(map.get(key1), "map should return null after removing key1");
 
             map.put(key1, value1);
             DoubleValue v2 = map.get(key1);
-            assertEquals(value1, v2);
+            assertEquals(value1, v2, "v2");
 
             DoubleValue key2 = Values.newHeapInstance(DoubleValue.class);
             DoubleValue value2 = Values.newHeapInstance(DoubleValue.class);
@@ -2106,71 +2224,71 @@ public class CHMUseCasesTest {
             key2.setValue(2);
             value2.setValue(22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, DoubleValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key1 in DoubleValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), 0, "key1 double value should be 11 as initially stored");
             }
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, DoubleValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key2 in DoubleValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), 0, "key2 double value should be 22 as initially stored");
             }
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, DoubleValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key1 on repeated query in DoubleValue map");
+                assertEquals(11, entry.value().get().getValue(), 0, "key1 double value should remain 11 on repeated query");
             }
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, DoubleValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key2 on repeated query in DoubleValue map");
+                assertEquals(22, entry.value().get().getValue(), 0, "key2 double value should remain 22 on repeated query");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(0, value1.getValue(), 0);
+                assertEquals(0, value1.getValue(), 0, "acquired double value should be zero for new key");
                 value1.addValue(123);
-                assertEquals(123, value1.getValue(), 0);
+                assertEquals(123, value1.getValue(), 0, "double value should be 123 after adding 123");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(123, value2.getValue(), 0);
+                assertEquals(123, value2.getValue(), 0, "acquired double value should be 123 matching previously stored value");
                 value2.addValue(1230 - 123);
-                assertEquals(1230, value2.getValue(), 0);
+                assertEquals(1230, value2.getValue(), 0, "double value should be 1230 after adding 1107");
             }
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, DoubleValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in DoubleValue map");
+                assertEquals(1230, entry.value().get().getValue(), 0, "key1 double value should be 1230 after addition operations");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(0, value2.getValue(), 0);
+                assertEquals(0, value2.getValue(), 0, "acquired double value should be zero for new key");
                 value2.addValue(123);
-                assertEquals(123, value2.getValue(), 0);
+                assertEquals(123, value2.getValue(), 0, "double value should be 123 after adding 123");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(123, value1.getValue(), 0);
+                assertEquals(123, value1.getValue(), 0, "acquired double value should be 123 matching previously stored value");
                 value1.addValue(1230 - 123);
-                assertEquals(1230, value1.getValue(), 0);
+                assertEquals(1230, value1.getValue(), 0, "double value should be 1230 after adding 1107");
             }
             try (ExternalMapQueryContext<?, DoubleValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, DoubleValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue(), 0);
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in DoubleValue map");
+                assertEquals(1230, entry.value().get().getValue(), 0, "key2 double value should be 1230 after addition operations");
             }
             mapChecks();
         }
@@ -2179,8 +2297,11 @@ public class CHMUseCasesTest {
     /**
      * For long values, the key can be on heap or off heap.
      */
-    @Test
-    public void testLongValueLongValueMap() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testLongValueLongValueMap(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<LongValue, LongValue> builder = ChronicleMapBuilder
                 .of(LongValue.class, LongValue.class)
@@ -2190,14 +2311,14 @@ public class CHMUseCasesTest {
 
             // this may change due to alignment
             // assertEquals(16, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry, "constant-sized entries should require only one chunk per entry");
 
             LongValue key1 = Values.newHeapInstance(LongValue.class);
             LongValue value1 = Values.newHeapInstance(LongValue.class);
 
             key1.setValue(1);
             value1.setValue(11);
-            assertNull(map.get(key1));
+            assertNull(map.get(key1), "map should return null after removing key1");
             map.put(key1, value1);
 
             LongValue key2 = Values.newHeapInstance(LongValue.class);
@@ -2206,79 +2327,82 @@ public class CHMUseCasesTest {
             key2.setValue(2);
             value2.setValue(22);
             map.put(key2, value2);
-            assertEquals(value2, map.get(key2));
+            assertEquals(value2, map.get(key2), "value retrieved for key2 should match stored value");
 
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, LongValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 in LongValue map after initial put");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             // TODO see above
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, LongValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 in LongValue map after initial put");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, LongValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(11, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 on repeated query in LongValue map");
+                assertEquals(11, entry.value().get().getValue(), "value retrieved from entry should equal 11");
             }
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, LongValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(22, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 on repeated query in LongValue map");
+                assertEquals(22, entry.value().get().getValue(), "value retrieved from entry should equal 22");
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key1)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
             key2.setValue(4);
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key2)) {
-                assertNotNull(c.absentEntry());
+                assertNotNull(c.absentEntry(), "absentEntry should be available for non-existent key");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(0, value1.getValue());
+                assertEquals(0, value1.getValue(), "newly acquired value should be initialized to zero");
                 value1.addValue(123);
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
                 value2.addValue(1230 - 123);
-                assertEquals(1230, value2.getValue());
+                assertEquals(1230, value2.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, LongValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key1 after acquireContext modification in LongValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(0, value2.getValue());
+                assertEquals(0, value2.getValue(), "newly acquired value should be initialized to zero");
                 value2.addValue(123);
-                assertEquals(123, value2.getValue());
+                assertEquals(123, value2.getValue(), "acquired value should contain previously stored content");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(123, value1.getValue());
+                assertEquals(123, value1.getValue(), "acquired value should contain previously stored content");
                 value1.addValue(1230 - 123);
-                assertEquals(1230, value1.getValue());
+                assertEquals(1230, value1.getValue(), "value should reflect in-place modification after multiplication");
             }
             try (ExternalMapQueryContext<?, LongValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, LongValue> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(1230, entry.value().get().getValue());
+                assertNotNull(entry, "entry should exist for key2 after acquireContext modification in LongValue map");
+                assertEquals(1230, entry.value().get().getValue(), "persisted value should reflect modifications from acquireContext");
             }
             mapChecks();
         }
     }
 
-    @Test
-    public void testListValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testListValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<String, List<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<List<String>>) (Class) List.class)
@@ -2293,39 +2417,42 @@ public class CHMUseCasesTest {
             List<String> list1 = new ArrayList<>();
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", list1)) {
                 list1.add("one");
-                assertEquals(Collections.singletonList("one"), list1);
+                assertEquals(Collections.singletonList("one"), list1, "list should contain newly added value after acquireContext modification");
             }
             List<String> list2 = new ArrayList<>();
             try (ExternalMapQueryContext<String, List<String>, ?> c = map.queryContext("1")) {
                 MapEntry<String, List<String>> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(Collections.singletonList("one"), entry.value().getUsing(list2));
+                assertNotNull(entry, "entry should exist for key '1' in List value map after initial put");
+                assertEquals(Collections.singletonList("one"), entry.value().getUsing(list2), "entry value should match expected list when retrieved using getUsing");
             }
 
             try (ExternalMapQueryContext<String, List<String>, ?> c = map.queryContext("2")) {
                 MapEntry<String, List<String>> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key '2' in List value map in read context");
                 entry.value().getUsing(list2);
                 list2.add("two-B");     // this is not written as it only a read context
-                assertEquals(asList("two-A", "two-B"), list2);
+                assertEquals(asList("two-A", "two-B"), list2, "list should contain both original and newly added values in read context");
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext("2", list1)) {
                 list1.add("two-C");
-                assertEquals(asList("two-A", "two-C"), list1);
+                assertEquals(asList("two-A", "two-C"), list1, "list should contain original value and newly added value after acquireContext modification");
             }
 
             try (ExternalMapQueryContext<String, List<String>, ?> c = map.queryContext("2")) {
                 MapEntry<String, List<String>> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(asList("two-A", "two-C"), entry.value().getUsing(list2));
+                assertNotNull(entry, "entry should exist for key '2' after acquireContext modification in List value map");
+                assertEquals(asList("two-A", "two-C"), entry.value().getUsing(list2), "entry value should contain modified list values when retrieved using getUsing");
             }
         }
     }
 
-    @Test
-    public void testSetValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testSetValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
         ChronicleMapBuilder<String, Set<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
                 .entries(10)
@@ -2339,25 +2466,25 @@ public class CHMUseCasesTest {
             Set<String> list1 = new LinkedHashSet<>();
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", list1)) {
                 list1.add("two");
-                assertEquals(new LinkedHashSet<>(Collections.singletonList("two")), list1);
+                assertEquals(new LinkedHashSet<>(Collections.singletonList("two")), list1, "set should contain newly added value after acquireContext modification");
             }
             Set<String> list2 = new LinkedHashSet<>();
             try (ExternalMapQueryContext<String, Set<String>, ?> c = map.queryContext("1")) {
                 MapEntry<String, Set<String>> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(new LinkedHashSet<>(Collections.singletonList("two")), entry.value().getUsing(list2));
+                assertNotNull(entry, "entry should exist for key '1' after acquireContext modification in Set value map");
+                assertEquals(new LinkedHashSet<>(Collections.singletonList("two")), entry.value().getUsing(list2), "entry value should match expected set when retrieved using getUsing");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext("2", list1)) {
                 list1.add("three");
-                assertEquals(new LinkedHashSet<String>(asList("one", "three")), list1);
+                assertEquals(new LinkedHashSet<String>(asList("one", "three")), list1, "set should contain original and newly added values after acquireContext modification");
             }
             try (ExternalMapQueryContext<String, Set<String>, ?> c =
                          map.queryContext("2")) {
                 MapEntry<String, Set<String>> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "entry should exist for key '2' after acquireContext modification in Set value map");
                 assertEquals(new LinkedHashSet<>(asList("one", "three")),
-                        entry.value().getUsing(list2));
+                        entry.value().getUsing(list2), "entry value should contain both original and added set values when retrieved using getUsing");
             }
 
             int keySum = 0;
@@ -2366,15 +2493,18 @@ public class CHMUseCasesTest {
                 keySum += entry.getKey().length();
                 valueCount += entry.getValue().size();
             }
-            assertTrue(keySum > 0);
-            assertTrue(valueCount > 0);
+            assertTrue(keySum > 0, "keySum > 0");
+            assertTrue(valueCount > 0, "valueCount > 0");
 
             mapChecks();
         }
     }
 
-    @Test
-    public void testMapStringStringValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testMapStringStringValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         MapMarshaller<String, String> valueMarshaller = new MapMarshaller<>(new StringBytesReader(), CharSequenceBytesWriter.INSTANCE,
                 new StringBytesReader(), CharSequenceBytesWriter.INSTANCE);
@@ -2390,32 +2520,35 @@ public class CHMUseCasesTest {
             Map<String, String> map1 = new LinkedHashMap<>();
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", map1)) {
                 map1.put("two", "bi");
-                assertEquals(mapOf("two", "bi"), map1);
+                assertEquals(mapOf("two", "bi"), map1, "map should contain newly added key-value pair after acquireContext modification");
             }
             Map<String, String> map2 = new LinkedHashMap<>();
             try (ExternalMapQueryContext<String, Map<String, String>, ?> c =
                          map.queryContext("1")) {
                 MapEntry<String, Map<String, String>> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(mapOf("two", "bi"), entry.value().getUsing(map2));
+                assertNotNull(entry, "entry should exist for key '1' after acquireContext modification in Map<String,String> value");
+                assertEquals(mapOf("two", "bi"), entry.value().getUsing(map2), "entry value should match expected map contents when retrieved using getUsing");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext("2", map1)) {
                 map1.put("three", "tri");
-                assertEquals(mapOf("one", "uni", "three", "tri"), map1);
+                assertEquals(mapOf("one", "uni", "three", "tri"), map1, "map should contain both original and newly added key-value pairs after acquireContext modification");
             }
             try (ExternalMapQueryContext<String, Map<String, String>, ?> c =
                          map.queryContext("2")) {
                 MapEntry<String, Map<String, String>> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(mapOf("one", "uni", "three", "tri"), entry.value().getUsing(map2));
+                assertNotNull(entry, "entry should exist for key '2' after acquireContext modification in Map<String,String> value");
+                assertEquals(mapOf("one", "uni", "three", "tri"), entry.value().getUsing(map2), "entry value should contain both original and added key-value pairs when retrieved using getUsing");
             }
             mapChecks();
         }
     }
 
-    @Test
-    public void testMapStringIntegerValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testMapStringIntegerValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         MapMarshaller<String, Integer> valueMarshaller = new MapMarshaller<>(
                 new StringBytesReader(), CharSequenceBytesWriter.INSTANCE,
@@ -2432,32 +2565,35 @@ public class CHMUseCasesTest {
             Map<String, Integer> map1 = new LinkedHashMap<>();
             try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("1", map1)) {
                 map1.put("two", 2);
-                assertEquals(mapOf("two", 2), map1);
+                assertEquals(mapOf("two", 2), map1, "map should contain newly added String-Integer pair after acquireContext modification");
             }
             Map<String, Integer> map2 = new LinkedHashMap<>();
             try (ExternalMapQueryContext<String, Map<String, Integer>, ?> c =
                          map.queryContext("1")) {
                 MapEntry<String, Map<String, Integer>> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(mapOf("two", 2), entry.value().getUsing(map2));
+                assertNotNull(entry, "entry should exist for key '1' after acquireContext modification in Map<String,Integer> value");
+                assertEquals(mapOf("two", 2), entry.value().getUsing(map2), "entry value should match expected String-Integer map when retrieved using getUsing");
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext("2", map1)) {
                 map1.put("three", 3);
-                assertEquals(mapOf("one", 1, "three", 3), map1);
+                assertEquals(mapOf("one", 1, "three", 3), map1, "map should contain both original and newly added String-Integer pairs after acquireContext modification");
             }
             try (ExternalMapQueryContext<String, Map<String, Integer>, ?> c =
                          map.queryContext("2")) {
                 MapEntry<String, Map<String, Integer>> entry = c.entry();
-                assertNotNull(entry);
-                assertEquals(mapOf("one", 1, "three", 3), entry.value().getUsing(map2));
+                assertNotNull(entry, "entry should exist for key '2' after acquireContext modification in Map<String,Integer> value");
+                assertEquals(mapOf("one", 1, "three", 3), entry.value().getUsing(map2), "entry value should contain both original and added String-Integer pairs when retrieved using getUsing");
             }
             mapChecks();
         }
     }
 
-    @Test
-    public void testMapStringIntegerValueWithoutListMarshallers() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testMapStringIntegerValueWithoutListMarshallers(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
                 .averageKey("2")
@@ -2467,13 +2603,16 @@ public class CHMUseCasesTest {
             map.put("1", Collections.emptyMap());
             map.put("2", mapOf("two", 2));
 
-            assertEquals(mapOf("two", 2), map.get("2"));
+            assertEquals(mapOf("two", 2), map.get("2"), "retrieved map value should contain expected key-value pair");
             mapChecks();
         }
     }
 
-    @Test
-    public void testGeneratedDataValue() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testGeneratedDataValue(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<String, IBean> builder = ChronicleMapBuilder
                 .of(String.class, IBean.class).averageKeySize(5).entries(1000);
@@ -2488,14 +2627,17 @@ public class CHMUseCasesTest {
                 innerAt.setMessage("Hello world");
             }
 
-            assertEquals(2, map.get("1").getLong());
-            assertEquals("Hello world", map.get("1").getInnerAt(1).getMessage());
+            assertEquals(2, map.get("1").getLong(), "long field of retrieved bean should match expected value");
+            assertEquals("Hello world", map.get("1").getInnerAt(1).getMessage(), "nested bean message should match expected value");
             mapChecks();
         }
     }
 
-    @Test
-    public void testBytesMarshallable() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testBytesMarshallable(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
         ChronicleMapBuilder<IData, IData> builder = ChronicleMapBuilder
                 .of(IData.class, IData.class)
                 .entries(1000);
@@ -2509,13 +2651,16 @@ public class CHMUseCasesTest {
                 value.setText("value-" + i);
                 map.put(key, value);
                 // check the map is still valid.
-                assertNotNull(map.entrySet().toString());
+                assertNotNull(map.entrySet().toString(), "entrySet toString should not be null");
             }
         }
     }
 
-    @Test
-    public void testBytesMarshallable2() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testBytesMarshallable2(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
         ChronicleMapBuilder<IData.Data, IData.Data> builder = ChronicleMapBuilder
                 .of(IData.Data.class, IData.Data.class)
                 .keyReaderAndDataAccess(new DataReader(), new DataDataAccess())
@@ -2532,13 +2677,16 @@ public class CHMUseCasesTest {
                 value.setText("value-" + i);
                 map.put(key, value);
                 // check the map is still valid.
-                assertNotNull(map.entrySet().toString());
+                assertNotNull(map.entrySet().toString(), "entrySet toString should not be null");
             }
         }
     }
 
-    @Test
-    public void testBytesMarshallable3() throws IOException {
+    @ParameterizedTest
+    @MethodSource("typeOfMaps")
+    public void testBytesMarshallable3(TypeOfMap typeOfMap) throws IOException {
+
+        this.typeOfMap = typeOfMap;
         BytesMarshallableReaderWriter<IData.Data> bmwr = new BytesMarshallableReaderWriter<>(IData.Data.class);
         ChronicleMapBuilder<IData.Data, IData.Data> builder = ChronicleMapBuilder
                 .of(IData.Data.class, IData.Data.class)
@@ -2556,7 +2704,7 @@ public class CHMUseCasesTest {
                 value.setText("value-" + i);
                 map.put(key, value);
                 // check the map is still valid.
-                assertNotNull(map.entrySet().toString());
+                assertNotNull(map.entrySet().toString(), "entrySet toString should not be null");
             }
         }
     }

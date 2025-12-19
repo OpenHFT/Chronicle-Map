@@ -11,7 +11,7 @@ import net.openhft.chronicle.values.Values;
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Created by peter.lawrey on 28/02/14.
@@ -97,7 +97,7 @@ public class CHMLatencyTestMain {
                         key.setValue(i);
                         LongValue using = countersMap.getUsing(key, value2);
                         if (using == null)
-                            assertNotNull(using);
+                            assertNotNull(using, "value should be retrieved successfully from the map");
                         value2.addAtomicValue(1);
 
                         // calculate the time using the time it should have started, not when it was able.

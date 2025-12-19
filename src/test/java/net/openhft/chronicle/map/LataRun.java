@@ -6,8 +6,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
 
-@SuppressWarnings("PMD.TestClassWithoutTestCases")
-public class LataTest {
+public class LataRun {
 
     private static final int max = 6000000;
     private static final int run = 100;

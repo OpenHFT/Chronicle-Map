@@ -3,8 +3,8 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Rob Austin.
@@ -19,7 +19,7 @@ public class BooleanValuesTest {
         try (ChronicleMap<Integer, Boolean> map = ChronicleMap.of(Integer.class, Boolean.class)
                 .entries(1).create()) {
             map.put(7, true);
-            Assert.assertEquals(true, map.get(7));
+            Assertions.assertEquals(true, map.get(7), "map.get(7)");
         }
     }
 }

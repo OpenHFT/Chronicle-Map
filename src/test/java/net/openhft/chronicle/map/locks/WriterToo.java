@@ -5,7 +5,7 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
@@ -31,7 +31,7 @@ class WriterToo implements Runnable {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            Assert.assertNotEquals(null, offHeapLock);
+            Assertions.assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);

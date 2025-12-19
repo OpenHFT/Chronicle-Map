@@ -6,7 +6,7 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +17,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.samskivert.util.CollectionUtil.selectRandomSubset;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Issue24ChronicleSetTest {
 
@@ -41,18 +42,20 @@ public class Issue24ChronicleSetTest {
 
     @Test
     public void issue24ChronicleSetTest() throws IOException {
-        ChronicleSet<String> set = initSet(String.class, 1_000_000, 30);
-        ExecutorService executor = Executors.newFixedThreadPool(5,
-                new NamedThreadFactory("test"));
-        for (int i = 0; i < 10; i++) {
-            Runnable worker = new WorkerThread(set);
-            executor.execute(worker);
+        try (ChronicleSet<String> set = initSet(String.class, 1_000_000, 30)) {
+            ExecutorService executor = Executors.newFixedThreadPool(5,
+                    new NamedThreadFactory("test"));
+            for (int i = 0; i < 10; i++) {
+                Runnable worker = new WorkerThread(set);
+                executor.execute(worker);
+            }
+            executor.shutdown();
+            while (!executor.isTerminated()) {
+                Thread.yield();
+            }
+            assertTrue(executor.isTerminated(), "executor terminated");
+            System.out.println("Finished all threads");
         }
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-            Thread.yield();
-        }
-        System.out.println("Finished all threads");
 
     }
 

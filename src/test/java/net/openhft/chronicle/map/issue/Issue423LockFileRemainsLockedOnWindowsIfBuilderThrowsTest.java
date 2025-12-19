@@ -6,7 +6,7 @@ package net.openhft.chronicle.map.issue;
 import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +14,8 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Issue423LockFileRemainsLockedOnWindowsIfBuilderThrowsTest {
 
@@ -38,12 +38,12 @@ public class Issue423LockFileRemainsLockedOnWindowsIfBuilderThrowsTest {
 
             try (FileLock lock = fileChannel.tryLock()) {
                 // Make sure we can lock (hence the file was not previously locked)
-                assertNotNull(lock);
+                assertNotNull(lock, "file lock should be acquired successfully indicating file is not locked");
             }
         }
 
         // Make sure the file can be deleted despite an Exception was thrown by the builder
-        assertTrue(file.delete());
+        assertTrue(file.delete(), "file.delete()");
 
     }
 }

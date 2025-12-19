@@ -9,11 +9,11 @@ import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.set.Builder;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class Issue43Test {
 
@@ -29,7 +29,7 @@ public class Issue43Test {
                 .valueMarshaller(ArrayMarshaller.INSTANCE)
                 .constantValueSizeBySample(new ValueWrapper(new double[128]))
                 .createPersistedTo(Builder.getPersistenceFile());
-        assertNotNull(map);
+        assertNotNull(map, "map should be successfully created with custom marshaller");
     }
 
     private static class ValueWrapper {

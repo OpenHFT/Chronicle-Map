@@ -13,12 +13,12 @@ import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class PointListSerializationTest {
 
@@ -38,7 +38,7 @@ public class PointListSerializationTest {
             b.text = "b";
             objectA.items.add(b);
             map.put("KEY1", objectA);
-            assertNotNull(map.get("KEY1"));
+            assertNotNull(map.get("KEY1"), "map.get(<str>)");
         }
     }
 

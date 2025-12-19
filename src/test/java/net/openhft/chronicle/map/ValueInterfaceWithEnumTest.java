@@ -5,9 +5,10 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.util.stream.IntStream;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author ges
@@ -24,22 +25,28 @@ public class ValueInterfaceWithEnumTest {
         LongValue longValue = Values.newHeapInstance(LongValue.class);
         SimpleValueInterface simpleValueInterface = Values.newHeapInstance(SimpleValueInterface.class);
 
-        ChronicleMap<LongValue, SimpleValueInterface> map = ChronicleMapBuilder.of(LongValue.class, SimpleValueInterface.class).entries(50).create();
+        try (ChronicleMap<LongValue, SimpleValueInterface> map = ChronicleMapBuilder
+                .of(LongValue.class, SimpleValueInterface.class)
+                .entries(50)
+                .create()) {
+            for (int value = 1; value < 20; value++) {
+                longValue.setValue(value);
+                simpleValueInterface.setId(value);
+                simpleValueInterface.setTruth(false);
+                simpleValueInterface.setSVIEnum(SimpleValueInterface.SVIEnum.SIX);
 
-        IntStream.range(1, 20).forEach(value -> {
-            longValue.setValue(value);
-            simpleValueInterface.setId(value);
-            simpleValueInterface.setTruth(false);
-            simpleValueInterface.setSVIEnum(SimpleValueInterface.SVIEnum.SIX);
+                map.put(longValue, simpleValueInterface);
+            }
 
-            map.put(longValue, simpleValueInterface);
-        });
+            assertEquals(19, map.size(), "map size after insert");
 
-        IntStream.range(1, 10).forEach(value -> {
-            longValue.setValue(value);
-            SimpleValueInterface simpleValueInterface1 = map.get(longValue);
-            System.out.println(simpleValueInterface1.getId());
-        });
+            for (int value = 1; value < 10; value++) {
+                longValue.setValue(value);
+                SimpleValueInterface simpleValueInterface1 = map.get(longValue);
+                assertNotNull(simpleValueInterface1, "map.get should return value for key=" + value);
+                assertEquals(value, simpleValueInterface1.getId(), "id should match key=" + value);
+            }
+        }
     }
 
     public interface SimpleValueInterface {

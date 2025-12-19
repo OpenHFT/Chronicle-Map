@@ -6,13 +6,13 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.impl.NullReturnValue;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ListenersTest {
 
@@ -30,7 +30,7 @@ public class ListenersTest {
         map.remove(1); // removeCount 1
 
         map.put(1, 1);
-        assertFalse(map.remove(1, 2));
+        assertFalse(map.remove(1, 2), "map.remove(1, 2)");
         map.remove(1, 1); // removeCount 2
 
         map.put(1, 1);
@@ -41,7 +41,7 @@ public class ListenersTest {
         it.next();
         it.remove(); // removeCount 4
 
-        assertEquals(4, removeCounting.removeCount.get());
+        assertEquals(4, removeCounting.removeCount.get(), "removeCounting.removeCount.get()");
     }
 
     @Test
@@ -63,8 +63,8 @@ public class ListenersTest {
 
         map.compute(2, (k, v) -> 1); // insert 2
 
-        assertEquals(3, putCounting.replaceValueCount.get());
-        assertEquals(2, putCounting.insertCount.get());
+        assertEquals(3, putCounting.replaceValueCount.get(), "putCounting.replaceValueCount.get()");
+        assertEquals(2, putCounting.insertCount.get(), "putCounting.insertCount.get()");
     }
 
     @Test
@@ -84,14 +84,14 @@ public class ListenersTest {
                         })
                         .create();
 
-        assertFalse(map.containsKey(1)); // 1
+        assertFalse(map.containsKey(1), "map.containsKey(1)"); // 1
         map.put(1, 1);
-        assertTrue(map.containsKey(1)); // 2
+        assertTrue(map.containsKey(1), "map.containsKey(1)"); // 2
 
         map.put(2, 2);
-        assertFalse(map.containsKey(2));
+        assertFalse(map.containsKey(2), "map.containsKey(2)");
 
-        assertEquals(2, c.get());
+        assertEquals(2, c.get(), "custom containsKey method should be invoked exactly twice for non-key-2 entries");
     }
 
     @Test
@@ -114,14 +114,14 @@ public class ListenersTest {
                         })
                         .create();
 
-        assertNull(map.get(1)); // 1
+        assertNull(map.get(1), "map.get(1)"); // 1
         map.put(1, 1);
-        assertEquals(1, map.get(1).intValue()); // 2
+        assertEquals(1, map.get(1).intValue(), "map.get(1).intValue()"); // 2
 
         map.put(2, 2);
-        assertEquals(42, map.get(2).intValue());
+        assertEquals(42, map.get(2).intValue(), "map.get(2).intValue()");
 
-        assertEquals(2, c.get());
+        assertEquals(2, c.get(), "custom get method should be invoked exactly twice for non-key-2 entries");
     }
 
     @Test
@@ -150,26 +150,26 @@ public class ListenersTest {
                         })
                         .create();
 
-        assertNull(map.put(1, 1)); // 1
-        assertEquals(1, map.put(1, 2).intValue()); // 2
+        assertNull(map.put(1, 1), "map.put(1, 1)"); // 1
+        assertEquals(1, map.put(1, 2).intValue(), "map.put(1, 2).intValue()"); // 2
 
-        assertNull(map.put(2, 1));
-        assertNull(map.put(2, 2));
+        assertNull(map.put(2, 1), "map.put(2, 1)");
+        assertNull(map.put(2, 2), "map.put(2, 2)");
 
-        assertNull(map.put(3, 1));
-        assertEquals(2, map.get(3).intValue());
+        assertNull(map.put(3, 1), "map.put(3, 1)");
+        assertEquals(2, map.get(3).intValue(), "map.get(3).intValue()");
 
-        assertEquals(2, c.get());
+        assertEquals(2, c.get(), "custom put method should be invoked exactly twice for non-special-key entries");
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testRemoveTwice() {
         ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class).entries(100).create();
         map.put(1, 1);
         Iterator<Map.Entry<Integer, Integer>> it = map.entrySet().iterator();
         it.next();
         it.remove();
-        it.remove();
+        assertThrows(IllegalStateException.class, it::remove);
     }
 
     static class CountingEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {

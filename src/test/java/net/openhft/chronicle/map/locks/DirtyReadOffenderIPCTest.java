@@ -5,16 +5,17 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public class DirtyReadOffenderIPCTest implements Runnable {
-    @Before
+    @BeforeEach
     public void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
@@ -107,8 +108,8 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                END
 
              */
-        } catch (Exception throwables) {
-            throwables.printStackTrace();
+        } catch (Exception e) {
+            fail("run: unexpected exception", e);
         } finally {
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +

@@ -4,29 +4,28 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.LongValue;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Issue354bTest {
 
-    @Rule
-    public final TemporaryFolder testFolder = new TemporaryFolder();
+    @TempDir
+    Path testFolder;
 
     @Test
     public void build_toFile() throws IOException {
-        String baseDirectory = testFolder.getRoot().toString();
-        File file = new File(baseDirectory, "chronicle.dat");
+        File file = testFolder.resolve("chronicle.dat").toFile();
         ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder.of(LongValue.class, LongValue.class)
                 .name("test")
                 .entries(5)
                 .createPersistedTo(file);
 
-        assertTrue(file.isFile());
+        assertTrue(file.isFile(), "file.isFile()");
     }
 }

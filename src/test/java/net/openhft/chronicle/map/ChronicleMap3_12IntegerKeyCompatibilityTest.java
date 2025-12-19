@@ -5,15 +5,15 @@ package net.openhft.chronicle.map;
 
 import com.google.common.io.Files;
 import net.openhft.chronicle.set.Builder;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Ignore("As per https://github.com/OpenHFT/Chronicle-Map/issues/324, there is no compatibility anymore")
+@Disabled("As per https://github.com/OpenHFT/Chronicle-Map/issues/324, there is no compatibility anymore")
 public class ChronicleMap3_12IntegerKeyCompatibilityTest {
 
     @Test
@@ -27,9 +27,9 @@ public class ChronicleMap3_12IntegerKeyCompatibilityTest {
                 .averageValue("1")
                 .entries(1)
                 .recoverPersistedTo(persistenceFile, false)) {
-            assertEquals(2, map.size());
-            assertEquals("1", map.get(1));
-            assertEquals("-1", map.get(-1));
+            assertEquals(2, map.size(), "map.size()");
+            assertEquals("1", map.get(1), "map.get(1)");
+            assertEquals("-1", map.get(-1), "map.get(-1)");
         }
     }
 
@@ -45,9 +45,9 @@ public class ChronicleMap3_12IntegerKeyCompatibilityTest {
                 .entries(1)
                 .checksumEntries(false)
                 .recoverPersistedTo(persistenceFile, false)) {
-            assertEquals(2, map.size());
-            assertEquals("1", map.get(1));
-            assertEquals("-1", map.get(-1));
+            assertEquals(2, map.size(), "map.size()");
+            assertEquals("1", map.get(1), "map.get(1)");
+            assertEquals("-1", map.get(-1), "map.get(-1)");
         }
     }
 }

@@ -4,18 +4,20 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.util.Time;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.stream.IntStream;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Created by Peter Lawrey on 12/05/15.
  */
 public class WriteThroughputTest {
-    @Ignore("Long running")
+    @Disabled("Long running")
     @Test
     public void bandwidthTest() throws IOException {
         int count = 2000;
@@ -30,6 +32,7 @@ public class WriteThroughputTest {
 
             System.out.println("ChronicleMap.put to memory");
             doTest(count, size, map);
+            assertTrue(map.size() > 0, "map should contain entries after puts");
         }
 
         File file = new File("bandwidthTest" + Time.uniqueId() + ".deleteme");
@@ -60,7 +63,7 @@ public class WriteThroughputTest {
         }
     }
 
-    @Ignore("TODO")
+    @Disabled("TODO")
     @Test
     public void bandwidthTestZ() throws IOException {
         int count = 2 << 10;
@@ -78,6 +81,7 @@ public class WriteThroughputTest {
 
             System.out.println("ChronicleMap.put to deflator disk");
             doTest(count, size, map);
+            assertTrue(map.size() > 0, "map should contain entries after puts");
         }
     }
 

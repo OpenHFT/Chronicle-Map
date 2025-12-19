@@ -8,7 +8,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.core.util.SerializableFunction;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -87,12 +87,12 @@ public class ReplicationCheckingMap<K, V> implements ChronicleMap<K, V> {
             }
         }
 
-        Assert.assertEquals(map1, map2);
+        Assertions.assertEquals(map1, map2, "map2");
         System.out.print(map1);
         System.out.print(map2);
 
         if (r1 != null)
-            Assert.assertEquals(r1.toString(), r2.toString());
+            Assertions.assertEquals(r1.toString(), r2.toString(), "r2.toString()");
 
         return r1;
     }

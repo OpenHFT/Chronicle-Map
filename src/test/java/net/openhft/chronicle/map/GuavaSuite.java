@@ -8,12 +8,10 @@ import com.google.common.collect.testing.SampleElements;
 import com.google.common.collect.testing.TestMapGenerator;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
-import junit.framework.Test;
-import junit.framework.TestCase;
-import junit.framework.TestSuite;
 import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.List;
@@ -22,21 +20,30 @@ import java.util.Map;
 import static com.google.common.collect.testing.MapTestSuiteBuilder.using;
 import static com.google.common.collect.testing.features.MapFeature.*;
 
-@SuppressWarnings({"rawtypes", "unchecked", "serial", "PMD.TestClassWithoutTestCases"})
-public class GuavaTest extends TestCase {
+@SuppressWarnings({"rawtypes", "unchecked", "serial"})
+public class GuavaSuite {
 
-    public static Test suite() {
+    @Test
+    public void runGuavaMapTestSuite() {
+        junit.framework.Test suite = suite();
+        junit.framework.TestResult result = new junit.framework.TestResult();
+        suite.run(result);
+        Assertions.assertEquals(0, result.failureCount(), "guava suite: failures");
+        Assertions.assertEquals(0, result.errorCount(), "guava suite: errors");
+    }
+
+    public static junit.framework.Test suite() {
         MapTestSuiteBuilder<String, String> chmSuite = using(new CHMTestGenerator());
         configureSuite(chmSuite);
-        TestSuite chmTests = chmSuite.named("Guava tests of Chronicle Map").createTestSuite();
+        junit.framework.TestSuite chmTests = chmSuite.named("Guava tests of Chronicle Map").createTestSuite();
 
         MapTestSuiteBuilder<String, String> backed = using(new BackedUpMapGenerator());
         configureSuite(backed);
-        TestSuite backedTests = backed
+        junit.framework.TestSuite backedTests = backed
                 .named("Guava tests tests of Chronicle Map, backed with HashMap")
                 .createTestSuite();
 
-        TestSuite tests = new TestSuite();
+        junit.framework.TestSuite tests = new junit.framework.TestSuite();
         tests.addTest(chmTests);
         // TODO
         //tests.addTest(backedTests);
@@ -118,7 +125,7 @@ public class GuavaTest extends TestCase {
             builder.entryOperations(new MapEntryOperations<String, String, Void>() {
                 @Override
                 public Void remove(@NotNull MapEntry<String, String> entry) {
-                    Assert.assertEquals(m, entry.context().map());
+                    Assertions.assertEquals(m, entry.context().map(), "entry.context().map()");
                     m.remove(entry.key().get());
                     return MapEntryOperations.super.remove(entry);
                 }
@@ -126,7 +133,7 @@ public class GuavaTest extends TestCase {
                 @Override
                 public Void replaceValue(@NotNull MapEntry<String, String> entry,
                                          net.openhft.chronicle.hash.Data<String> newValue) {
-                    Assert.assertEquals(m, entry.context().map());
+                    Assertions.assertEquals(m, entry.context().map(), "entry.context().map()");
                     m.put(entry.key().get(), newValue.get());
                     return MapEntryOperations.super.replaceValue(entry, newValue);
                 }
@@ -134,7 +141,7 @@ public class GuavaTest extends TestCase {
                 @Override
                 public Void insert(@NotNull MapAbsentEntry<String, String> absentEntry,
                                    Data<String> value) {
-                    Assert.assertEquals(m, absentEntry.context().map());
+                    Assertions.assertEquals(m, absentEntry.context().map(), "absentEntry.context().map()");
                     m.put(absentEntry.absentKey().get(), value.get());
                     return MapEntryOperations.super.insert(absentEntry, value);
                 }

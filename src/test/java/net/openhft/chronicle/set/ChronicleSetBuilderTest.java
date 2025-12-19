@@ -3,13 +3,13 @@
  */
 package net.openhft.chronicle.set;
 
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 public class ChronicleSetBuilderTest {
 
-    @Ignore("see https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
+    @Disabled("see https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
     @Test
     public void test() {
 
@@ -18,8 +18,8 @@ public class ChronicleSetBuilderTest {
                 integers.add(i);
             }
 
-            Assert.assertTrue(integers.contains(5));
-            Assert.assertEquals(10, integers.size());
+            Assertions.assertTrue(integers.contains(5), "integers.contains(5)");
+            Assertions.assertEquals(10, integers.size(), "integers.size()");
         }
     }
 }

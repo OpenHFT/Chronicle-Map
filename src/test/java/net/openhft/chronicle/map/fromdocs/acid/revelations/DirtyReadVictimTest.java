@@ -6,21 +6,21 @@ package net.openhft.chronicle.map.fromdocs.acid.revelations;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class DirtyReadVictimTest {
 
-    @Before
+    @BeforeEach
     public void setUp() {
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
     }
 
@@ -77,10 +77,10 @@ public class DirtyReadVictimTest {
                                     coupon + " "
                     );
                     // THIS Test will pass when ChronicleStampedLock is GA
-                    Assert.assertEquals(
+                    Assertions.assertEquals(
                             0L,
                             offHeapLock.chmW.get("WriterCount ").getVolatileValue()
-                    );
+                    , "offHeapLock.chmW.get(<str>).getVolatileValue()");
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
@@ -89,7 +89,7 @@ public class DirtyReadVictimTest {
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
                     // THIS Test will execute pass when ChronicleStampedLock is GA
-                    Assert.assertNotEquals(
+                    Assertions.assertNotEquals(
                             stamp,
                             offHeapLock.lastWriterT.getEntryLockState()
                     );

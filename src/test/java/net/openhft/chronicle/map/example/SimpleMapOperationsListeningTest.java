@@ -8,33 +8,35 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.values.Values;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingDefaultValueProvider.simpleLoggingDefaultValueProvider;
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingMapEntryOperations.simpleLoggingMapEntryOperations;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class SimpleMapOperationsListeningTest {
 
     @Test
     public void simpleLoggingTest() {
-        ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
+        try (ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
                 .of(Integer.class, IntValue.class)
                 .entries(100)
                 .entryOperations(simpleLoggingMapEntryOperations())
                 .defaultValueProvider(simpleLoggingDefaultValueProvider())
-                .create();
+                .create()) {
 
-        IntValue value = Values.newHeapInstance(IntValue.class);
-        value.setValue(2);
-        map.put(1, value);
-        map.remove(1);
-        map.acquireUsing(3, Values.newNativeReference(IntValue.class)).addAtomicValue(1);
-        IntValue value2 = Values.newHeapInstance(IntValue.class);
-        value2.setValue(5);
-        map.forEachEntry(e -> e.context().replaceValue(e, e.context().wrapValueAsData(value2)));
-        map.forEachEntry(e -> e.context().remove(e));
-
+            IntValue value = Values.newHeapInstance(IntValue.class);
+            value.setValue(2);
+            map.put(1, value);
+            map.remove(1);
+            map.acquireUsing(3, Values.newNativeReference(IntValue.class)).addAtomicValue(1);
+            IntValue value2 = Values.newHeapInstance(IntValue.class);
+            value2.setValue(5);
+            map.forEachEntry(e -> e.context().replaceValue(e, e.context().wrapValueAsData(value2)));
+            map.forEachEntry(e -> e.context().remove(e));
+            assertEquals(0, map.size(), "map should be empty after removals");
+        }
     }
 
     static class SimpleLoggingMapEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {

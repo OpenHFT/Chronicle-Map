@@ -5,16 +5,16 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public class DirtyReadOffender_WriterWriterTest {
 
-    @Before
+    @BeforeEach
     public void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
@@ -42,7 +42,7 @@ public class DirtyReadOffender_WriterWriterTest {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            Assert.assertNotEquals(null, offHeapLock);
+            Assertions.assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
@@ -82,7 +82,7 @@ public class DirtyReadOffender_WriterWriterTest {
                 );
 
             }
-            Assert.assertNotEquals(0, blockedByHoldingWriterCount);
+            Assertions.assertNotEquals(0, blockedByHoldingWriterCount);
             System.out.println(
                     "                             " +
                             " @t=" + System.currentTimeMillis() +

@@ -11,8 +11,8 @@ import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.chronicle.values.Values;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Rob Austin.
@@ -48,7 +48,7 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<String, String> actual = builder.create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                Assertions.assertEquals(expected, actual, "imported string map should match exported map");
             }
         } finally {
             file.delete();
@@ -77,7 +77,7 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<String, Map> actual = builder.create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                Assertions.assertEquals(expected, actual, "imported map with Map values should match exported map");
             }
         } finally {
             file.delete();
@@ -107,7 +107,7 @@ public class ChronicleMapImportExportTest {
                     .create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                Assertions.assertEquals(expected, actual, "imported map with nested Map values should match exported map");
             }
         } finally {
             file.delete();
@@ -130,7 +130,7 @@ public class ChronicleMapImportExportTest {
                     .entries(1).create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                Assertions.assertEquals(expected, actual, "imported Integer-Double map should match exported map");
             }
         } finally {
             file.delete();
@@ -158,7 +158,7 @@ public class ChronicleMapImportExportTest {
                     .create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                Assertions.assertEquals(expected, actual, "imported CharSequence map should match exported map");
             }
         } finally {
             file.delete();
@@ -195,9 +195,9 @@ public class ChronicleMapImportExportTest {
             expected.getAll(file2);
             expected.putAll(file2);
 
-            Assert.assertEquals(2, expected.size());
-            Assert.assertEquals("one", expected.get(1));
-            Assert.assertEquals("two", expected.get(2));
+            Assertions.assertEquals(2, expected.size(), "map size should be 2 after round-trip export and import");
+            Assertions.assertEquals("one", expected.get(1), "value for key 1 should be 'one' after round-trip");
+            Assertions.assertEquals("two", expected.get(2), "value for key 2 should be 'two' after round-trip");
         }
 
         file.deleteOnExit();
@@ -220,7 +220,7 @@ public class ChronicleMapImportExportTest {
             // this will add the entry
             try (Closeable c =
                          expected.acquireContext("one", value)) {
-                assertEquals(0, value.getValue());
+                assertEquals(0, value.getValue(), "newly acquired LongValue should have initial value of 0");
                 value.addValue(1);
             }
 
@@ -230,7 +230,7 @@ public class ChronicleMapImportExportTest {
 
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                Assertions.assertEquals(expected, actual, "imported LongValue map should match exported map");
             }
         } finally {
             file.delete();
@@ -267,8 +267,8 @@ public class ChronicleMapImportExportTest {
 
                 actual.putAll(file);
 
-                Assert.assertEquals(expected.get("one").getCoupon(),
-                        actual.get("one").getCoupon(), 0);
+                Assertions.assertEquals(expected.get("one").getCoupon(),
+                        actual.get("one").getCoupon(), 0, "actual.get(<str>).getCoupon()");
             }
         } finally {
             file.delete();

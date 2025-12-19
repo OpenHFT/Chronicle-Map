@@ -5,17 +5,21 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.core.OS;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class MarkTest {
 
@@ -41,14 +45,17 @@ public class MarkTest {
         System.out.println(System.currentTimeMillis() - ms);
     }
 
-    @Ignore("often out of time, that is a parf issue, not a bug")
-    @Test(timeout = 25000)
+    @Disabled("often out of time, that is a parf issue, not a bug")
+    @Timeout(value = 25000, unit = TimeUnit.MILLISECONDS)
+    @Test
     public void inMemoryTest() {
-        test(ChronicleMapBuilder::create);
+        assertDoesNotThrow(() -> test(ChronicleMapBuilder::create),
+                "in-memory mark test should not throw");
     }
 
-    @Ignore("ignored because it take too long and times out")
-    @Test(timeout = 25000)
+    @Disabled("ignored because it take too long and times out")
+    @Timeout(value = 25000, unit = TimeUnit.MILLISECONDS)
+    @Test
     public void persistedTest() {
         int rnd = new Random().nextInt();
         final File db = Paths.get(OS.getTarget(), "mark" + rnd).toFile();
@@ -63,15 +70,16 @@ public class MarkTest {
                 }
             });
             System.out.println(MemoryUnit.BYTES.toMegabytes(db.length()) + " MB");
-            assertTrue("ChronicleMap of 25 million int-int entries should be lesser than 400MB",
-                    db.length() < MemoryUnit.MEGABYTES.toBytes(400));
+            assertTrue(db.length() < MemoryUnit.MEGABYTES.toBytes(400),
+                    "ChronicleMap of 25 million int-int entries should be lesser than 400MB");
         } finally {
             db.delete();
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNegativeEntriesPerSegment() {
-        ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
+        assertThrows(IllegalArgumentException.class,
+                () -> ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1));
     }
 }

@@ -5,12 +5,12 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.util.Time;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.util.Map;
 
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class RecursiveRefereneChMapTest {
@@ -27,9 +27,9 @@ public class RecursiveRefereneChMapTest {
         map.put("Test", new StupidCycle());
         map.put("Test2", new StupidCycle2());
         StupidCycle cycle = map.get("Test");
-        assertSame(cycle, cycle.cycle[0]);
+        assertSame(cycle, cycle.cycle[0], "cycle.cycle[0]");
         StupidCycle cycle2 = map.get("Test2");
-        assertSame(cycle2, cycle2.cycle[0]);
+        assertSame(cycle2, cycle2.cycle[0], "cycle2.cycle[0]");
     }
 
     @SuppressWarnings("serial")

@@ -24,8 +24,8 @@ class ByteBufferDataAccessTest {
         Data<ByteBuffer> data1 = bbDataAccess.getData(bb1);
         ByteBuffer bb2 = ByteBuffer.allocate(2);
         data1.getUsing(bb2);
-        assertEquals(3, bb2.get(0));
-        assertEquals(4, bb2.get(1));
+        assertEquals(3, bb2.get(0), "bb2.get(0)");
+        assertEquals(4, bb2.get(1), "bb2.get(1)");
     }
 
     @Test
@@ -37,7 +37,7 @@ class ByteBufferDataAccessTest {
         bb.putLong(1L);
         Data<ByteBuffer> data = da.getData(bb);
 
-        assertEquals(originalOrder, data.get().order());
-        assertEquals(1L, data.get().getLong(0));
+        assertEquals(originalOrder, data.get().order(), "data.get().order()");
+        assertEquals(1L, data.get().getLong(0), "data.get().getLong(0)");
     }
 }

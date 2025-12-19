@@ -3,11 +3,11 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ChronicleMapEqualsTest {
 
@@ -22,6 +22,6 @@ public class ChronicleMapEqualsTest {
         HashMap<String, String> refMap = new HashMap<>();
         refMap.put("a", "b");
         map.putAll(refMap);
-        assertEquals(map, refMap);
+        assertEquals(map, refMap, "ChronicleMap should equal HashMap with same entries");
     }
 }

@@ -3,13 +3,13 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Created by peter.lawrey on 28/02/14.
@@ -26,14 +26,14 @@ public class KeySizesTest {
             String k = keyBuilder.toString();
             map.put(k, k);
             String k2 = map.get(k);
-            assertEquals(k, k2);
+            assertEquals(k, k2, "retrieved value should match the key stored in the map");
             keyBuilder.append('a');
         }
         keyBuilder.setLength(0);
         for (int i = 0; i < 100; i++) {
             String k = keyBuilder.toString();
             String k2 = map.get(k);
-            assertEquals(k, k2);
+            assertEquals(k, k2, "retrieved value should match the key for all stored keys");
             keyBuilder.append('a');
         }
 

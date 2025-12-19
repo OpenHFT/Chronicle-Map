@@ -28,12 +28,12 @@ class PutIfAbsentNoGarbageTest {
             v2.setValue(1L);
 
             LongValue r = map.putIfAbsent(k, v1);
-            Assertions.assertNull(r);
-            Assertions.assertTrue(map.containsKey(k));
+            Assertions.assertNull(r, "first putIfAbsent should return null when key does not exist");
+            Assertions.assertTrue(map.containsKey(k), "map.containsKey(k)");
 
             LongValue s = map.putIfAbsent(k, v2);
-            Assertions.assertTrue(map.containsKey(k));
-            Assertions.assertEquals(s, v1);
+            Assertions.assertTrue(map.containsKey(k), "map.containsKey(k)");
+            Assertions.assertEquals(s, v1, "second putIfAbsent should return the existing value when key already exists");
             Assertions.assertSame(v2, s, "should be same object");
         }
     }
@@ -50,12 +50,12 @@ class PutIfAbsentNoGarbageTest {
             v2.setValue(1L);
 
             LongValue r = map.putIfAbsent(k, v1);
-            Assertions.assertNull(r);
-            Assertions.assertTrue(map.containsKey(k));
+            Assertions.assertNull(r, "first putIfAbsent should return null when key does not exist");
+            Assertions.assertTrue(map.containsKey(k), "map.containsKey(k)");
 
             LongValue s = map.putIfAbsent(k, v2);
-            Assertions.assertTrue(map.containsKey(k));
-            Assertions.assertEquals(s, v1);
+            Assertions.assertTrue(map.containsKey(k), "map.containsKey(k)");
+            Assertions.assertEquals(s, v1, "second putIfAbsent should return the existing value when key already exists");
             Assertions.assertNotSame(v2, s, "should be same object");
         }
     }

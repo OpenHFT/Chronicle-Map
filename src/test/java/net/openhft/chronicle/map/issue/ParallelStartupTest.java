@@ -46,10 +46,10 @@ class ParallelStartupTest {
 
             for (Thread value : thread) value.join();
 
-            Assertions.assertEquals(thread.length, succ.get());
+            Assertions.assertEquals(thread.length, succ.get(), "succ.get()");
         } catch (Exception ex) {
             ex.printStackTrace();
-            Assertions.fail();
+            Assertions.fail("fail");
         }
     }
 

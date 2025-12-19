@@ -9,8 +9,8 @@ import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Objects;
 
@@ -35,10 +35,10 @@ public class MarshallableReaderWriterTest {
             map.put("1", myOrder);
 
             MyOrder retrieved = map.get("1");
-            Assert.assertEquals(myOrder, retrieved);
+            Assertions.assertEquals(myOrder, retrieved, "retrieved order should match the stored order");
 
             retrieved = map.get("1");
-            Assert.assertEquals(myOrder, retrieved);
+            Assertions.assertEquals(myOrder, retrieved, "retrieved order should consistently match the stored order on subsequent retrieval");
         }
     }
 

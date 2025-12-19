@@ -9,13 +9,13 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 // From https://github.com/OpenHFT/Chronicle-Map/issues/183
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
@@ -31,9 +31,9 @@ public class SerializableTest {
                     .create()) {
 
                 map.put(1, new Foo(i));
-                assertNotNull(map.get(1));
+                assertNotNull(map.get(1), "Foo value should be retrievable after insertion");
                 map.put(2, new Foo(i + 1));
-                assertEquals(i + 2, map.get(2).x.length());
+                assertEquals(i + 2, map.get(2).x.length(), "Retrieved Foo string length should match expected size");
             }
         }
     }
@@ -52,7 +52,7 @@ public class SerializableTest {
         map.put(1, value);
         String actual = map.get(1).x;
 
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, "Serializable Foo string content should be preserved through serialization round-trip");
     }
 
     @Test
@@ -67,11 +67,11 @@ public class SerializableTest {
 
         Bar value = new Bar(expected);
         map.put(1, value);
-        assertFalse(value.usesSelfDescribingMessage());
-        assertFalse(value.writeMarshallableWireOutCalled);
+        assertFalse(value.usesSelfDescribingMessage(), "BytesInBinaryMarshallable should not use self-describing message format");
+        assertFalse(value.writeMarshallableWireOutCalled, "BytesInBinaryMarshallable writeMarshallable should not be called with simpleMapOf");
         String actual = map.get(1).x;
 
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, "BytesInBinaryMarshallable string content should be preserved through simpleMapOf serialization round-trip");
     }
 
     @Test
@@ -86,11 +86,11 @@ public class SerializableTest {
 
         Bar2 value = new Bar2(expected);
         map.put(1, value);
-        assertTrue(value.usesSelfDescribingMessage());
-        assertFalse("we call bytes marshallable in this case", value.writeMarshallableWireOutCalled);
+        assertTrue(value.usesSelfDescribingMessage(), "SelfDescribingMarshallable should use self-describing message format");
+        assertFalse(value.writeMarshallableWireOutCalled, "bytes marshallable called instead of writeMarshallable for simpleMapOf");
         String actual = map.get(1).x;
 
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, "SelfDescribingMarshallable string content should be preserved through simpleMapOf serialization round-trip");
     }
 
     @Test
@@ -106,12 +106,12 @@ public class SerializableTest {
 
         Bar2 value = new Bar2(expected);
         map.put(1, value);
-        assertTrue(value.usesSelfDescribingMessage());
-        assertTrue(value.writeMarshallableWireOutCalled);
+        assertTrue(value.usesSelfDescribingMessage(), "SelfDescribingMarshallable should use self-describing format with Marshallable type");
+        assertTrue(value.writeMarshallableWireOutCalled, "writeMarshallable should be called when using Marshallable type");
         Bar2 bar2 = (Bar2) map.get(1);
         String actual = bar2.x;
 
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, "SelfDescribingMarshallable string content should be preserved through Marshallable type serialization round-trip");
     }
 
     @Test
@@ -127,11 +127,11 @@ public class SerializableTest {
 
         Bar value = new Bar(expected);
         map.put(1, value);
-        assertFalse(value.usesSelfDescribingMessage());
-        assertFalse(value.writeMarshallableWireOutCalled);
+        assertFalse(value.usesSelfDescribingMessage(), "BytesInBinaryMarshallable should not use self-describing with CommonMarshallableReaderWriter");
+        assertFalse(value.writeMarshallableWireOutCalled, "BytesInBinaryMarshallable writeMarshallable not called with CommonMarshallableReaderWriter");
         String actual = map.get(1).x;
 
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, "BytesInBinaryMarshallable string content should be preserved through CommonMarshallableReaderWriter serialization round-trip");
     }
     @Test
     public void test2f() {
@@ -146,11 +146,11 @@ public class SerializableTest {
 
         Bar2 value = new Bar2(expected);
         map.put(1, value);
-        assertTrue(value.usesSelfDescribingMessage());
-        assertTrue(value.writeMarshallableWireOutCalled);
+        assertTrue(value.usesSelfDescribingMessage(), "SelfDescribingMarshallable should use self-describing with CommonMarshallableReaderWriter");
+        assertTrue(value.writeMarshallableWireOutCalled, "writeMarshallable should be called with CommonMarshallableReaderWriter");
         String actual = map.get(1).x;
 
-        assertEquals(expected, actual);
+        assertEquals(expected, actual, "SelfDescribingMarshallable string content should be preserved through CommonMarshallableReaderWriter serialization round-trip");
     }
 
     @NotNull

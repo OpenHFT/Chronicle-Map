@@ -6,9 +6,9 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DataKeyValueTest {
 
@@ -24,16 +24,16 @@ public class DataKeyValueTest {
         heapKey.setValue(1);
         heapValue.setValue(1);
         map.put(heapKey, heapValue);
-        assertEquals(1, map.get(heapKey).getValue());
-        assertEquals(1, map.getUsing(heapKey, heapValue).getValue());
+        assertEquals(1, map.get(heapKey).getValue(), "map.get(heapKey).getValue()");
+        assertEquals(1, map.getUsing(heapKey, heapValue).getValue(), "map.getUsing(heapKey, heapValue).getValue()");
 
         heapKey.setValue(1);
         map.getUsing(heapKey, directValue).addValue(1);
-        assertEquals(2, map.getUsing(heapKey, heapValue).getValue());
+        assertEquals(2, map.getUsing(heapKey, heapValue).getValue(), "map.getUsing(heapKey, heapValue).getValue()");
 
         heapKey.setValue(2);
         heapValue.setValue(3);
         map.put(heapKey, heapValue);
-        assertEquals(3, map.get(heapKey).getValue());
+        assertEquals(3, map.get(heapKey).getValue(), "map.get(heapKey).getValue()");
     }
 }

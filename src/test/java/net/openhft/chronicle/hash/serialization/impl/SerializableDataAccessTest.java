@@ -4,12 +4,12 @@
 package net.openhft.chronicle.hash.serialization.impl;
 
 import net.openhft.chronicle.map.SerializableTest;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SerializableDataAccessTest {
 
@@ -25,6 +25,6 @@ public class SerializableDataAccessTest {
         SerializableTest.Foo value = new SerializableTest.Foo(expected);
         sda.getData(value);
         SerializableTest.Foo foo = sda.getUsing(null);
-        assertEquals(expected, foo.x);
+        assertEquals(expected, foo.x, "foo.x");
     }
 }

@@ -7,10 +7,10 @@ import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Rob Austin.
@@ -32,11 +32,11 @@ public class IntValueMapTest {
             map.put(value, expected);
 
             final CharSequence actual = map.get(value);
-            assertEquals(expected, actual.toString());
+            assertEquals(expected, actual.toString(), "actual.toString()");
 
             // this will fail
 
-            assertNotNull(map.toString());
+            assertNotNull(map.toString(), "map.toString()");
         }
     }
 }

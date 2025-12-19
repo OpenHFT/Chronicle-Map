@@ -9,14 +9,14 @@ import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.json.JSONException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.File;
 import java.io.IOException;
 
-import static junit.framework.TestCase.assertSame;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class ArrayTest {
 
@@ -50,7 +50,7 @@ public class ArrayTest {
                 "  ]\n" +
                 "}\n", m.toString());
         MovingAverageArray m2 = mapRead.getUsing(2L, m);
-        assertSame(m, m2); // object is recycled, so no objects are created.
+        assertSame(m, m2, "m2"); // object is recycled, so no objects are created.
         assertJSONEqualsAfterPrefix("!MovingAverageArray {\n" +
                 "  values: [\n" +
                 "    { movingAverage: 0.2, high: 0.2, low: 0.2, stdDev: 0.2 },\n" +
@@ -73,7 +73,7 @@ public class ArrayTest {
     private void assertJSONEqualsAfterPrefix(String s1, String s2) throws JSONException {
         String[] a1 = s1.split(" ", 2);
         String[] a2 = s2.split(" ", 2);
-        assertEquals(a1[0], a2[0]);
+        assertEquals(a1[0], a2[0], "a2[0]");
         JSONAssert.assertEquals(a1[1], a2[1], false);
     }
 }

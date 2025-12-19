@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.set.Builder;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 
@@ -31,7 +31,7 @@ public class DatasetTrackerIssue61Test {
             datasetMap.put(key, new Value("value"));
 
             Value saved = (Value) datasetMap.get(key);
-            Assert.assertEquals("value", saved.value);
+            Assertions.assertEquals("value", saved.value, "saved.value");
         }
     }
 

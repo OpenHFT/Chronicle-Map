@@ -5,12 +5,12 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * This Test efforts to ensure that a READERS-only set of requests to access the CSL
@@ -19,7 +19,7 @@ import static org.junit.Assume.assumeFalse;
 
 public class DirtyReadIntolerant_ReaderReader_Test {
 
-    @Before
+    @BeforeEach
     public void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
@@ -58,9 +58,9 @@ public class DirtyReadIntolerant_ReaderReader_Test {
             Thread.sleep(sleepMock * 1_000);
             long stamp;
             while ((stamp = offHeapLock.tryReadLock()) < 0) {
-                Assert.assertEquals(Boolean.TRUE, false); // we failed!
+                Assertions.assertEquals(Boolean.TRUE, false, "read lock should be acquired successfully for concurrent readers"); // we failed!
             }
-            Assert.assertEquals(Boolean.TRUE, true); // we passed!
+            Assertions.assertEquals(Boolean.TRUE, true, "read lock acquisition should succeed without blocking for readers"); // we passed!
             System.out.println(
                     "                             " +
                             " ,,@t=" + System.currentTimeMillis() +

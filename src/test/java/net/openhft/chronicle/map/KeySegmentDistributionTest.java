@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.hashing.LongHashFunction;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
@@ -14,17 +14,20 @@ public class KeySegmentDistributionTest {
 
     @Test
     public void keySegmentDistributionTestOneSegment() {
-        keySegmentDistributionTest(1000, 1);
+        Assertions.assertDoesNotThrow(() -> keySegmentDistributionTest(1000, 1),
+                "key segment distribution (1 segment)");
     }
 
     @Test
     public void keySegmentDistributionTestPowerOfTwoSegments() {
-        keySegmentDistributionTest(1000, 4);
+        Assertions.assertDoesNotThrow(() -> keySegmentDistributionTest(1000, 4),
+                "key segment distribution (power-of-two segments)");
     }
 
     @Test
     public void keySegmentDistributionTestOddSegments() {
-        keySegmentDistributionTest(1000, 5);
+        Assertions.assertDoesNotThrow(() -> keySegmentDistributionTest(1000, 5),
+                "key segment distribution (odd segments)");
     }
 
     public void keySegmentDistributionTest(int size, int segments) {
@@ -61,11 +64,11 @@ public class KeySegmentDistributionTest {
                 }
             } else {
                 if (ascendingDirection) {
-                    Assert.assertTrue(entrySegment >= currentSegment);
+                    Assertions.assertTrue(entrySegment >= currentSegment, "entrySegment >= currentSegment");
                     currentSegment = entrySegment;
                 } else {
                     // descending iteration direction
-                    Assert.assertTrue(entrySegment <= currentSegment);
+                    Assertions.assertTrue(entrySegment <= currentSegment, "entrySegment <= currentSegment");
                     currentSegment = entrySegment;
                 }
             }

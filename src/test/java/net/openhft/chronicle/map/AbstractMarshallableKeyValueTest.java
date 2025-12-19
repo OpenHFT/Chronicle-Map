@@ -6,7 +6,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.impl.TypedMarshallableReaderWriter;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -20,7 +20,7 @@ public final class AbstractMarshallableKeyValueTest {
 
         map.put(new Key(), new Value());
 
-        assertThat(map.get(new Key()).number, is(new Value().number));
+        assertThat("map.get(new Key()).number", map.get(new Key()).number, is(new Value().number));
     }
 
     @Test
@@ -33,7 +33,7 @@ public final class AbstractMarshallableKeyValueTest {
         map.put(new Key(), new Value());
 
         Value value = (Value) map.get(new Key());
-        assertThat(value.number, is(new Value().number));
+        assertThat("value.number", value.number, is(new Value().number));
     }
 
     private static final class Key extends SelfDescribingMarshallable {

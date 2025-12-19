@@ -10,7 +10,7 @@ import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesReader;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesWriter;
 import net.openhft.chronicle.set.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,8 +23,8 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class Issue63Test {
@@ -330,7 +330,7 @@ public class Issue63Test {
         final ChronicleMap<CharSequence, List<CharSequence>> knownItems2 =
                 knownItemsBuilder.recoverPersistedTo(mapFile, true);
 
-        assertEquals(5, knownItems2.size());
+        assertEquals(5, knownItems2.size(), "knownItems2.size()");
         /* ids.forEach((id) -> {
              System.out.println(knownItems2.get(id.subSequence(0, id.length())));
          });*/

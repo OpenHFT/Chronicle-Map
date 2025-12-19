@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -30,6 +30,10 @@ public class CustomCharSequenceEncodingTest {
                 .create()) {
             map.put("Russian", "Всем нравится субботний вечерок");
             map.put("", "Quick brown fox jumps over the lazy dog");
+            Assertions.assertEquals("Всем нравится субботний вечерок", map.get("Russian").toString(),
+                    "UTF-8 Russian roundtrip");
+            Assertions.assertEquals("Quick brown fox jumps over the lazy dog", map.get("").toString(),
+                    "UTF-8 English roundtrip");
         }
     }
 
@@ -52,8 +56,10 @@ public class CustomCharSequenceEncodingTest {
             englishToChinese.put("hello", "你好");
             englishToChinese.put("bye", "再见");
 
-            Assert.assertEquals("你好", englishToChinese.get("hello").toString());
-            Assert.assertEquals("再见", englishToChinese.get("bye").toString());
+            Assertions.assertEquals("你好", englishToChinese.get("hello").toString(),
+                    "GBK hello roundtrip");
+            Assertions.assertEquals("再见", englishToChinese.get("bye").toString(),
+                    "GBK bye roundtrip");
         }
     }
 }

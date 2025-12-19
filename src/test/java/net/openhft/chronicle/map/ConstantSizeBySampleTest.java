@@ -6,14 +6,14 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.impl.ExternalizableDataAccess;
 import net.openhft.chronicle.hash.serialization.impl.ExternalizableReader;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class ConstantSizeBySampleTest {
@@ -27,14 +27,14 @@ public class ConstantSizeBySampleTest {
 
             byte[] zero = ByteBuffer.allocate(8).putLong(0L).array();
             map.put(zero, 0L);
-            assertEquals(0L, (long) map.get(zero));
+            assertEquals(0L, (long) map.get(zero), "(long) map.get(zero)");
 
             byte[] one = ByteBuffer.allocate(8).putLong(1L).array();
             map.put(one, 1L);
-            assertEquals(1L, (long) map.get(one));
+            assertEquals(1L, (long) map.get(one), "(long) map.get(one)");
 
             map.put(one, 0L);
-            assertEquals(0L, (long) map.get(one));
+            assertEquals(0L, (long) map.get(one), "(long) map.get(one)");
         }
     }
 
@@ -49,7 +49,7 @@ public class ConstantSizeBySampleTest {
 
             value[42] = 1;
             map.put(1L, value);
-            Assert.assertArrayEquals(map.get(1L), value);
+            Assertions.assertArrayEquals(map.get(1L), value, "large constant-size byte array should be stored and retrieved correctly");
         }
     }
 
@@ -66,7 +66,7 @@ public class ConstantSizeBySampleTest {
             ExternalizableData value = new ExternalizableData();
             value.data[42] = 1;
             map.put(1L, value);
-            Assert.assertEquals(map.get(1L), value);
+            Assertions.assertEquals(map.get(1L), value, "large constant-size externalizable object should be stored and retrieved correctly");
         }
     }
 
@@ -81,7 +81,7 @@ public class ConstantSizeBySampleTest {
             SerializableData value = new SerializableData();
             value.data[42] = 1;
             map.put(1L, value);
-            Assert.assertEquals(map.get(1L), value);
+            Assertions.assertEquals(map.get(1L), value, "large constant-size serializable object should be stored and retrieved correctly");
         }
     }
 

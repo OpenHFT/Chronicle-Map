@@ -3,8 +3,8 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class NoUpperBoundChunksPerEntryTest {
 
@@ -18,6 +18,6 @@ public class NoUpperBoundChunksPerEntryTest {
             ultraLargeValue.append("Hello");
         }
         map.put(1, ultraLargeValue.toString());
-        Assert.assertEquals(ultraLargeValue.toString(), map.get(1).toString());
+        Assertions.assertEquals(ultraLargeValue.toString(), map.get(1).toString(), "map.get(1).toString()");
     }
 }

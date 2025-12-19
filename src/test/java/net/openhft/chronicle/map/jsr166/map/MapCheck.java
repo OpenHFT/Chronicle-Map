@@ -29,7 +29,7 @@ public class MapCheck {
     static final String MISSING = "MISSING";
     static final LoopHelpers.SimpleRandom srng = new LoopHelpers.SimpleRandom();
     static final Random rng = new Random(3152688);
-    static final TestTimer timer = new TestTimer();
+    static final MapTimer timer = new MapTimer();
     static Class<?> eclass;
     static volatile int checkSum;
     static int counter = 0;
@@ -99,7 +99,7 @@ public class MapCheck {
             }
         }
 
-        TestTimer.printStats();
+        MapTimer.printStats();
 
         checkNullKey();
 
@@ -683,8 +683,7 @@ public class MapCheck {
         }
     }
 
-    @SuppressWarnings("PMD.TestClassWithoutTestCases")
-    static final class TestTimer {
+    static final class MapTimer {
         static final java.util.TreeMap accum = new java.util.TreeMap();
         private String name;
         private long numOps;

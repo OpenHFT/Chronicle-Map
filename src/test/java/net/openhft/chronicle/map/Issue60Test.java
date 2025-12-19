@@ -3,8 +3,8 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class Issue60Test {
 
@@ -35,19 +35,21 @@ public class Issue60Test {
                     failedGet++;
                 }
             }
-            Assert.assertEquals(0, failedGet);
+            Assertions.assertEquals(0, failedGet, "failedGet");
             //System.out.println("failedGet " + failedGet);
             //System.out.println("map " + map);
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void maxBloatFactorShouldBeLessThan1000() {
-        ChronicleMapBuilder.of(String.class, String.class).maxBloatFactor(1000.01);
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ChronicleMapBuilder.of(String.class, String.class).maxBloatFactor(1000.01));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testIllegalMaxBloatFactor() {
-        ChronicleMapBuilder.of(Object.class, Object.class).maxBloatFactor(0.0);
+        Assertions.assertThrows(IllegalArgumentException.class,
+                () -> ChronicleMapBuilder.of(Object.class, Object.class).maxBloatFactor(0.0));
     }
 }

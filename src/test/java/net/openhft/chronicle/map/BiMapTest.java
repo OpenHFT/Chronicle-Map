@@ -5,7 +5,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,16 +17,16 @@ import java.util.function.BiFunction;
 import static net.openhft.chronicle.hash.Data.bytesEquivalent;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.FAIL;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.SUCCESS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BiMapTest {
 
     private static <K, V> void verifyBiMapConsistent(Map<K, V> m1, Map<V, K> m2) {
-        assertEquals(m1.size(), m2.size());
+        assertEquals(m1.size(), m2.size(), "m2.size()");
         for (Entry<K, V> e : m1.entrySet()) {
-            assertEquals(e.getKey(), m2.get(e.getValue()));
+            assertEquals(e.getKey(), m2.get(e.getValue()), "m2.get(e.getValue())");
         }
     }
 
@@ -59,7 +59,7 @@ public class BiMapTest {
         verifyBiMapConsistent(map1, map2);
 
         map2.remove("1");
-        assertTrue(map2.isEmpty());
+        assertTrue(map2.isEmpty(), "map2.isEmpty()");
         verifyBiMapConsistent(map1, map2);
 
         map1.put(3, "4");

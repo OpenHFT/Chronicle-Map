@@ -5,10 +5,12 @@ package eg;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapSegmentContext;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.LongSummaryStatistics;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class AverageValueSizeTest {
 
@@ -30,7 +32,8 @@ public class AverageValueSizeTest {
 
     @Test
     public void averageValueSizeTest() {
-        System.out.println(averageValueSize(String.class,
-                Arrays.asList("banana", "apple", "watermelon")));
+        double average = averageValueSize(String.class, Arrays.asList("banana", "apple", "watermelon"));
+        assertTrue(average > 0, "averageValueSize should be positive");
+        System.out.println(average);
     }
 }

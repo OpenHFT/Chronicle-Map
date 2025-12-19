@@ -6,9 +6,9 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleFileLockException;
 import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,14 +16,14 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FileLockUtilTest {
 
     private File canonicalFile;
     private FileChannel fileChannel;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         canonicalFile = new File("file.lock").getCanonicalFile();
         canonicalFile.delete();
@@ -32,7 +32,7 @@ public class FileLockUtilTest {
         fileChannel = raf.getChannel();
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws IOException {
         fileChannel.close();
         CanonicalRandomAccessFiles.release(canonicalFile);
@@ -40,20 +40,24 @@ public class FileLockUtilTest {
 
     @Test
     public void testShared() {
-        if (!OS.isWindows()) {
-            CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
-            CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
-            CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
-            CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
-        }
+        assertDoesNotThrow(() -> {
+            if (!OS.isWindows()) {
+                CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
+                CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
+                CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
+                CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
+            }
+        }, "shared lock acquire/release");
     }
 
     @Test
     public void testExclusiveNormalCase() {
-        CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
-        CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
-        CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
-        CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
+        assertDoesNotThrow(() -> {
+            CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
+            CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
+            CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
+            CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
+        }, "exclusive lock acquire/release (normal case)");
     }
 
     @Test
@@ -62,9 +66,9 @@ public class FileLockUtilTest {
             CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
             try {
                 CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
-                fail();
+                fail("fail");
             } catch (ChronicleFileLockException e) {
-                assertNotNull(e);
+                assertNotNull(e, "exception should be thrown when acquiring exclusive lock while shared lock is held");
             }
             CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
         }
@@ -76,9 +80,9 @@ public class FileLockUtilTest {
             CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
             try {
                 CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
-                fail();
+                fail("fail");
             } catch (ChronicleFileLockException e) {
-                assertNotNull(e);
+                assertNotNull(e, "exception should be thrown when acquiring shared lock while exclusive lock is held");
             }
             CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
         }
@@ -86,23 +90,25 @@ public class FileLockUtilTest {
 
     @Test
     public void testComplicated() {
-        if (!OS.isWindows()) {
-            CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
-            CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
-            CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
-            CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
-            CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
-            CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
-            CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
-            CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
-        }
+        assertDoesNotThrow(() -> {
+            if (!OS.isWindows()) {
+                CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
+                CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
+                CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
+                CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
+                CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
+                CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
+                CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
+                CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
+            }
+        }, "mixed lock sequence");
     }
 
     @Test
     public void testRunExclusively() {
         final AtomicInteger cnt = new AtomicInteger();
         CanonicalRandomAccessFiles.runExclusively(canonicalFile, fileChannel, cnt::incrementAndGet);
-        assertEquals(1, cnt.get());
+        assertEquals(1, cnt.get(), "runnable should be executed exactly once when run exclusively");
     }
 
     @Test
@@ -112,10 +118,10 @@ public class FileLockUtilTest {
             try {
                 CanonicalRandomAccessFiles.runExclusively(canonicalFile, fileChannel, () -> {
                 });
-                fail();
+                fail("fail");
             } catch (ChronicleFileLockException e) {
                 CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
-                assertNotNull(e);
+                assertNotNull(e, "exception should be thrown when attempting to run exclusively while file is locked");
             }
         }
     }
@@ -128,14 +134,14 @@ public class FileLockUtilTest {
             boolean lockedAndRun = CanonicalRandomAccessFiles.tryRunExclusively(canonicalFile, fileChannel, () -> {
             });
 
-            assertFalse(lockedAndRun);
+            assertFalse(lockedAndRun, "tryRunExclusively should return false when file is already locked");
 
             CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
 
             lockedAndRun = CanonicalRandomAccessFiles.tryRunExclusively(canonicalFile, fileChannel, () -> {
             });
 
-            assertTrue(lockedAndRun);
+            assertTrue(lockedAndRun, "tryRunExclusively should return true when file is not locked");
         }
     }
 }

@@ -10,9 +10,9 @@ import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.map.ChronicleMapTest.getPersistenceFile;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RecoverTest {
 
@@ -35,7 +35,7 @@ public class RecoverTest {
 
     ReplicatedChronicleMap<Integer, Integer, ?> map;
 
-    @Ignore("HCOLL-422")
+    @Disabled("HCOLL-422")
     @Test
     public void recoverTest() throws IOException, ExecutionException, InterruptedException {
         File mapFile = File.createTempFile("recoverTestFile", ".map");
@@ -55,7 +55,7 @@ public class RecoverTest {
         map.acquireModificationIterator((byte) 2);
 
         // acquires read lock successfully
-        assertNull(map.get(0));
+        assertNull(map.get(0), "map should not contain entry for key 0 before insertion");
 
         ExecutorService executorService = Executors.newSingleThreadExecutor(
                 new NamedThreadFactory("recoverTest"));
@@ -73,9 +73,7 @@ public class RecoverTest {
                 builder.recoverPersistedTo(mapFile, true);
 
         // acquires read lock successfully
-        assertNull(map.get(0));
-
-        map.put(1, 1);
+        assertNull(map.get(0), "recovered map should not contain entry for key 0");
         map.put(2, 2);
         map.remove(1);
 
@@ -123,9 +121,9 @@ public class RecoverTest {
                 // Update lock required for calling ChecksumEntry.checkSum()
                 c.updateLock().lock();
                 MapEntry<Integer, LongValue> entry = c.entry();
-                assertNotNull(entry);
+                assertNotNull(entry, "map entry should exist for the inserted key");
                 ChecksumEntry checksumEntry = (ChecksumEntry) entry;
-                assertTrue(checksumEntry.checkSum());
+                assertTrue(checksumEntry.checkSum(), "checksumEntry.checkSum()");
 
                 // to access off-heap bytes, should call value().getUsing() with Native value
                 // provided. Simple get() return Heap value by default
@@ -134,7 +132,7 @@ public class RecoverTest {
                 // This value bytes update bypass Chronicle Map internals, so checksum is not
                 // updated automatically
                 nativeValue.setValue(43);
-                Assert.assertFalse(checksumEntry.checkSum());
+                Assertions.assertFalse(checksumEntry.checkSum(), "checksumEntry.checkSum()");
             }
         }
 
@@ -146,8 +144,8 @@ public class RecoverTest {
                 .of(Integer.class, LongValue.class)
                 .entries(1)
                 .recoverPersistedTo(file, true, corruptionListener)) {
-            assertNotNull(ignore);
+            assertNotNull(ignore, "recovered map should be successfully created despite corruptions");
         }
-        assertTrue(corruptionCounter.get() > 0);
+        assertTrue(corruptionCounter.get() > 0, "corruptionCounter.get() > 0");
     }
 }

@@ -8,10 +8,13 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.wire.BytesInBinaryMarshallable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ForEachSegmentTest {
     static {
@@ -33,6 +36,7 @@ public class ForEachSegmentTest {
                     return true;
                 });
             }
+            assertEquals(1, map.size(), "map size after forEachSegmentEntryWhile");
             System.out.println("Done");
         }
     }
@@ -45,12 +49,14 @@ public class ForEachSegmentTest {
         File tmp = new File(OS.TMP, "stressTest-" + Time.uniqueId());
         Thread t = null;
         try (ChronicleMap<Integer, MyDto> map = builder.createPersistedTo(tmp)) {
+            AtomicInteger puts = new AtomicInteger();
             try {
                 t = new Thread(() -> {
                     try {
                         for (int i = 0; i < 100; i++) {
                             System.out.println("put " + i);
                             map.put(i, new MyDto());
+                            puts.incrementAndGet();
                             Thread.sleep(10);
                         }
                     } catch (InterruptedException e) {
@@ -76,6 +82,7 @@ public class ForEachSegmentTest {
                     t.interrupt();
                     t.join();
                 }
+                assertEquals(puts.get(), map.size(), "map size equals number of successful puts");
             }
         }
     }

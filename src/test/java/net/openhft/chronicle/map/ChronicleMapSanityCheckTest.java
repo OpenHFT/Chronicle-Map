@@ -7,7 +7,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Created by Borislav Ivanov on 5/29/15.
@@ -102,14 +104,16 @@ public class ChronicleMapSanityCheckTest {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            producerExecutor.shutdown();
-            try {
-                producerExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
+	            producerExecutor.shutdown();
+	            try {
+	                producerExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+	            } catch (InterruptedException e) {
+	                throw new RuntimeException(e);
+	            }
+	            assertTrue(consumerExecutor.isTerminated(), "consumer executor terminated");
+	            assertTrue(producerExecutor.isTerminated(), "producer executor terminated");
+	        }
+	    }
 
     enum DummyValue {
         DUMMY_VALUE

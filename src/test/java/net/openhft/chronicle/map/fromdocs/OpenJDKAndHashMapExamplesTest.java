@@ -9,7 +9,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ExternalMapQueryContext;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
 import java.io.File;
@@ -17,8 +17,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * These code fragments will appear in an article on OpenHFT. These tests to ensure that the examples compile
@@ -52,7 +52,7 @@ public class OpenJDKAndHashMapExamplesTest {
         BondVOInterface bondVO = Values.newNativeReference(BondVOInterface.class);
         try (net.openhft.chronicle.core.io.Closeable c =
                      chm.acquireContext("369604103", bondVO)) {
-            assertNotNull(c);
+            assertNotNull(c, "context should be successfully acquired for the bond key");
             bondVO.setIssueDate(parseYYYYMMDD("20130915"));
             bondVO.setMaturityDate(parseYYYYMMDD("20140915"));
             bondVO.setCoupon(5.0 / 100); // 5.0%
@@ -76,22 +76,22 @@ public class OpenJDKAndHashMapExamplesTest {
                      chmB.queryContext("369604103")) {
             BondVOInterface bond = c.entry().value().get();
             if (bond != null) {
-                assertEquals(5.0 / 100, bond.getCoupon(), 0.0);
+                assertEquals(5.0 / 100, bond.getCoupon(), 0.0, "bond.getCoupon()");
 
                 BondVOInterface.MarketPx mpx930B = bond.getMarketPxIntraDayHistoryAt(0);
-                assertEquals(109.2, mpx930B.getAskPx(), 0.0);
-                assertEquals(106.9, mpx930B.getBidPx(), 0.0);
+                assertEquals(109.2, mpx930B.getAskPx(), 0.0, "mpx930B.getAskPx()");
+                assertEquals(106.9, mpx930B.getBidPx(), 0.0, "mpx930B.getBidPx()");
 
                 BondVOInterface.MarketPx mpx1030B = bond.getMarketPxIntraDayHistoryAt(1);
-                assertEquals(109.7, mpx1030B.getAskPx(), 0.0);
-                assertEquals(107.6, mpx1030B.getBidPx(), 0.0);
+                assertEquals(109.7, mpx1030B.getAskPx(), 0.0, "mpx1030B.getAskPx()");
+                assertEquals(107.6, mpx1030B.getBidPx(), 0.0, "mpx1030B.getBidPx()");
             }
         }
 
         BondVOInterface bond = Values.newNativeReference(BondVOInterface.class);
         // lookup the key and give me a reference I can update in a thread safe way.
         try (Closeable c = chm.acquireContext("369604103", bond)) {
-            assertNotNull(c);
+            assertNotNull(c, "context should be successfully acquired for thread-safe updates");
             // found a key and bond has been set
             // get directly without touching the rest of the record.
             bond.getMaturityDate();

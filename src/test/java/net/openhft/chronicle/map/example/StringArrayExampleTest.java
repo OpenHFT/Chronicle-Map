@@ -8,7 +8,9 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * an example of using a chronicle map with a string array like structure
@@ -19,28 +21,25 @@ public class StringArrayExampleTest {
 
     @Test
     public void examplePutAndGet() {
-        ChronicleMap<Integer, CharSequenceArray> map = ChronicleMapBuilder
+        try (ChronicleMap<Integer, CharSequenceArray> map = ChronicleMapBuilder
                 .of(Integer.class, CharSequenceArray.class)
                 .entries(100)
-                .create();
-        {
+                .create()) {
             CharSequenceArray charSequenceArray = Values.newHeapInstance(CharSequenceArray.class);
             map.put(1, charSequenceArray);
-        }
-        {
+
             // compute - change the value in the array
             map.compute(1, this::setToHello);
-        }
 
-        {
             // get - read the value
-            CharSequence charSequence = map.getUsing(1, charSequenceArray).getCharSequenceWrapperAt(1).getCharSequence();
+            CharSequence charSequence = map.getUsing(1, this.charSequenceArray)
+                    .getCharSequenceWrapperAt(1)
+                    .getCharSequence();
+            assertEquals("hello", charSequence.toString(), "expected computed value");
             System.out.println(charSequence);
-        }
 
-        {
             // to string all the values
-            System.out.println(map.getUsing(1, charSequenceArray).toString());
+            System.out.println(map.getUsing(1, this.charSequenceArray).toString());
         }
     }
 

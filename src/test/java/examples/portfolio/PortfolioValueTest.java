@@ -10,12 +10,14 @@ import net.openhft.chronicle.map.MapSegmentContext;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
 import org.apache.commons.lang3.mutable.MutableDouble;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class PortfolioValueTest {
@@ -24,11 +26,11 @@ public class PortfolioValueTest {
     private static final int nThreads = Runtime.getRuntime().availableProcessors();
     private static final int nRepetitions = 11; // 10 for computing average, throwing away the first one (warmup)
 
-    private static void computeValue(final ChronicleMap<LongValue, PortfolioAssetInterface> cache) throws ExecutionException, InterruptedException {
-        computeValueUsingIterator(cache);
+    private static double computeValue(final ChronicleMap<LongValue, PortfolioAssetInterface> cache) throws ExecutionException, InterruptedException {
+        return computeValueUsingIterator(cache);
     }
 
-    private static void computeValueUsingIterator(final ChronicleMap<LongValue, PortfolioAssetInterface> cache) throws ExecutionException, InterruptedException {
+    private static double computeValueUsingIterator(final ChronicleMap<LongValue, PortfolioAssetInterface> cache) throws ExecutionException, InterruptedException {
         long startTime = System.currentTimeMillis();
 
         ExecutorService executor = Executors.newFixedThreadPool(nThreads,
@@ -62,6 +64,7 @@ public class PortfolioValueTest {
 
         long elapsedTime = (System.currentTimeMillis() - startTime);
         System.out.println("Total Portfolio Value: " + total + " for " + cache.longSize() + ", computed in " + elapsedTime + " ms, using " + (useIterator ? "Iterator" : "Keys"));
+        return total;
     }
 
     protected static double computeTotalUsingIterator(final ChronicleMap<LongValue, PortfolioAssetInterface> cache, int start, int end) {
@@ -99,9 +102,11 @@ public class PortfolioValueTest {
             createData(cache);
 
             // Compute multiple times to get an reasonable average compute time
+            double total = 0.0;
             for (int i = 0; i < nRepetitions; i++) {
-                computeValue(cache);
+                total = computeValue(cache);
             }
+            assertEquals(nAssets * 2.0, total, 0.0, "total portfolio value");
         }
     }
 

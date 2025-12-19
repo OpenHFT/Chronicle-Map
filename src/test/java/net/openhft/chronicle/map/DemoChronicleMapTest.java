@@ -6,15 +6,16 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 interface DemoOrderVOInterface {
     CharSequence getSymbol();
@@ -59,8 +60,8 @@ public class DemoChronicleMapTest {
                 value.addAtomicOrderQty(1000);
 
                 map.getUsing(key, value2);
-                assertEquals("IBM-" + i, value.getSymbol().toString());
-                assertEquals(1000, value.getOrderQty(), 0.0);
+                assertEquals("IBM-" + i, value.getSymbol().toString(), "value.getSymbol().toString()");
+                assertEquals(1000, value.getOrderQty(), 0.0, "value.getOrderQty()");
             }
 
             for (Map.Entry<IntValue, DemoOrderVOInterface> entry : map.entrySet()) {
@@ -68,7 +69,7 @@ public class DemoChronicleMapTest {
                 DemoOrderVOInterface v = entry.getValue();
 
                 //                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
-                assertNotNull(v);
+                assertNotNull(v, "entry value should not be null when iterating over populated map");
             }
         }
 
@@ -98,7 +99,7 @@ public class DemoChronicleMapTest {
 
                 try (net.openhft.chronicle.core.io.Closeable c =
                              map.acquireContext(key, value)) {
-                    assertNotNull(c);
+                    assertNotNull(c, "acquired context should not be null for valid key");
                     value.setSymbol("IBM-" + i);
                     value.addAtomicOrderQty(1000);
                 }
@@ -116,19 +117,21 @@ public class DemoChronicleMapTest {
                 DemoOrderVOInterface v = entry.getValue();
 
                 //                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
-                assertNotNull(v);
+                assertNotNull(v, "entry value should not be null when iterating over locked map entries");
             }
         }
         file.delete();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNegativeIllegalAlignment() {
-        ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(-1);
+        assertThrows(IllegalArgumentException.class,
+                () -> ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(-1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNotPowerOfTwoIllegalAlignment() {
-        ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13);
+        assertThrows(IllegalArgumentException.class,
+                () -> ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13));
     }
 }

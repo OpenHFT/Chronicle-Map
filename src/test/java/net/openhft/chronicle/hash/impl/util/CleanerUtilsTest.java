@@ -3,12 +3,12 @@
  */
 package net.openhft.chronicle.hash.impl.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CleanerUtilsTest {
 
@@ -20,6 +20,6 @@ public class CleanerUtilsTest {
 
         cleaner.clean();
 
-        assertTrue(latch.await(1, TimeUnit.SECONDS));
+        assertTrue(latch.await(1, TimeUnit.SECONDS), "latch.await(1, TimeUnit.SECONDS)");
     }
 }

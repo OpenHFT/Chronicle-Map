@@ -16,7 +16,7 @@ import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import net.openhft.chronicle.wire.Wire;
 import net.openhft.chronicle.wire.WireType;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class DefaultValueTest {
@@ -41,6 +42,7 @@ public class DefaultValueTest {
 
         final Object object = wire.getValueIn().object();
 
+        assertNotNull(object, "wire object should roundtrip");
         System.out.println(object);
     }
 
@@ -93,11 +95,11 @@ public class DefaultValueTest {
                             absentEntry.context().wrapValueAsData(defaultValue))
                     .createPersistedTo(file)) {
                 ArrayList<Integer> using = new ArrayList<Integer>();
-                assertEquals(defaultValue, map.acquireUsing("a", using));
-                assertEquals(1, map.size());
+                assertEquals(defaultValue, map.acquireUsing("a", using), "map.acquireUsing(<str>, using)");
+                assertEquals(1, map.size(), "map.size()");
 
                 map.put("b", Arrays.asList(1, 2));
-                assertEquals(Arrays.asList(1, 2), map.acquireUsing("b", using));
+                assertEquals(Arrays.asList(1, 2), map.acquireUsing("b", using), "map.acquireUsing(<str>, using)");
             }
 
             ArrayList<Integer> using = new ArrayList<Integer>();
@@ -106,7 +108,7 @@ public class DefaultValueTest {
                     .defaultValueProvider(absentEntry ->
                             absentEntry.context().wrapValueAsData(defaultValue))
                     .createPersistedTo(file)) {
-                assertEquals(defaultValue, map.acquireUsing("c", using));
+                assertEquals(defaultValue, map.acquireUsing("c", using), "map.acquireUsing(<str>, using)");
             }
         } finally {
             file.delete();
