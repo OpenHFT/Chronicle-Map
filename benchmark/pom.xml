@@ -16,7 +16,7 @@
     </parent>
 
     <artifactId>chronicle-map-benchmarks</artifactId>
-    <version>2026.0-SNAPSHOT</version>
+    <version>2.27ea-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map/Benchmarks</name>
     <description>Chronicle-Map-Benchmarks</description>
 
@@ -37,7 +37,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>2026.0-SNAPSHOT</version>
+                <version>2.27ea-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
