@@ -36,6 +36,8 @@ public interface SizeMarshaller extends Marshallable {
      * values' sizes in Chronicle Map, unless Chronicle Map could figure out (or hinted in {@code
      * ChronicleMapBuilder}) that keys or values are constant-sized, in which case {@link
      * #constant(long)} {@code SizeMarshaller} is used.
+     *
+     * @return stop-bit size marshaller
      */
     static SizeMarshaller stopBit() {
         return StopBitSizeMarshaller.INSTANCE;

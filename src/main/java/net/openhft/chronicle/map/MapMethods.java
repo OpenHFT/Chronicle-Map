@@ -109,6 +109,13 @@ public interface MapMethods<K, V, R> {
      * q.insert(q.absentEntry(), value);
      * }</pre>
      */
+    /**
+     * Backing {@link ChronicleMap#putIfAbsent(Object, Object)} method.
+     *
+     * @param q           query context
+     * @param value       value to insert when absent
+     * @param returnValue holder to receive existing value if present
+     */
     default void putIfAbsent(MapQueryContext<K, V, R> q,
                              Data<V> value, ReturnValue<V> returnValue) {
         if (tryReturnCurrentValueIfPresent(q, returnValue))
@@ -142,6 +149,9 @@ public interface MapMethods<K, V, R> {
      * // difference -- what bytes to refer. Consider map.acquireUsing(...).incrementValue();
      * returnValue.returnValue(q.entry().value());
      * }</pre>
+     *
+     * @param q           query context
+     * @param returnValue holder to receive existing or default value
      */
     default void acquireUsing(MapQueryContext<K, V, R> q, ReturnValue<V> returnValue) {
         if (tryReturnCurrentValueIfPresent(q, returnValue))
@@ -177,6 +187,10 @@ public interface MapMethods<K, V, R> {
      * q.insert(q.absentEntry(), q.wrapValueAsData(mappingFunction.apply(q.queriedKey().get())));
      * returnValue.returnValue(q.entry().value());
      * }</pre>
+     *
+     * @param q                query context
+     * @param mappingFunction  function to compute new value
+     * @param returnValue      holder to receive value
      */
     default void computeIfAbsent(MapQueryContext<K, V, R> q,
                                  Function<? super K, ? extends V> mappingFunction,
@@ -207,6 +221,12 @@ public interface MapMethods<K, V, R> {
      *     q.remove(entry);
      * }}</pre>
      */
+    /**
+     * Backing {@link ChronicleMap#remove(Object)} method.
+     *
+     * @param q           query context
+     * @param returnValue holder to receive existing value if removed
+     */
     default void remove(MapQueryContext<K, V, R> q, ReturnValue<V> returnValue) {
         // We cannot read the previous value under read lock, because then we will need
         // to release the read lock -> acquire write lock, the value might be updated in
@@ -235,6 +255,8 @@ public interface MapMethods<K, V, R> {
      *     return false;
      * }}</pre>
      *
+     * @param q     query context
+     * @param value expected value
      * @return if the entry was removed
      */
     default boolean remove(MapQueryContext<K, V, R> q, Data<V> value) {
@@ -264,6 +286,11 @@ public interface MapMethods<K, V, R> {
      *     q.replaceValue(entry, value);
      * }}</pre>
      */
+    /**
+     * @param q           query context
+     * @param value       new value
+     * @param returnValue holder for previous value
+     */
     default void replace(MapQueryContext<K, V, R> q,
                          Data<V> value, ReturnValue<V> returnValue) {
         // replace(key, value) should find the key & put the value most of the time,
@@ -292,6 +319,9 @@ public interface MapMethods<K, V, R> {
      *     return false;
      * }}</pre>
      *
+     * @param q        query context
+     * @param oldValue expected current value
+     * @param newValue value to store
      * @return if the entry was replaced
      */
     default boolean replace(MapQueryContext<K, V, R> q,
@@ -328,6 +358,10 @@ public interface MapMethods<K, V, R> {
      * } else if (entry != null) {
      *     q.remove(entry);
      * }}</pre>
+     *
+     * @param q                 query context
+     * @param remappingFunction remapping function
+     * @param returnValue       holder to receive computed value
      */
     default void compute(MapQueryContext<K, V, R> q,
                          BiFunction<? super K, ? super V, ? extends V> remappingFunction,
@@ -367,6 +401,10 @@ public interface MapMethods<K, V, R> {
      *         q.remove(entry);
      *     }
      * }}</pre>
+     *
+     * @param q                 query context
+     * @param remappingFunction remapping function
+     * @param returnValue       holder to receive computed value
      */
     default void computeIfPresent(MapQueryContext<K, V, R> q,
                                   BiFunction<? super K, ? super V, ? extends V> remappingFunction,
@@ -407,6 +445,11 @@ public interface MapMethods<K, V, R> {
      * }
      * returnValue.returnValue(entry.value());
      * }</pre>
+     *
+     * @param q                 query context
+     * @param value             value to merge
+     * @param remappingFunction merge function
+     * @param returnValue       holder to receive merged value
      */
     default void merge(MapQueryContext<K, V, R> q, Data<V> value,
                        BiFunction<? super V, ? super V, ? extends V> remappingFunction,

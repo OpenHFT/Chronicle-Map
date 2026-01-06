@@ -10,16 +10,22 @@ import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
-@Staged
 /**
  * Supplies a default zero value for map entries when required.
  */
+@Staged
 public abstract class DefaultValue<V> {
 
     @StageRef
     CheckOnEachPublicOperation checkOnEachPublicOperation;
     @StageRef
     DummyValueZeroData<V> zeroValueData;
+
+    /**
+     * Protected constructor for staged subclasses.
+     */
+    protected DefaultValue() {
+    }
 
     @NotNull
     /**

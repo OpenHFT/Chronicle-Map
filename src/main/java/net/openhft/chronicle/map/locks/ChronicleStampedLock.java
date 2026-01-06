@@ -92,6 +92,9 @@ public class ChronicleStampedLock extends StampedLock {
                 );
     }
 
+    /**
+     * Closes the underlying chronicle maps used by this lock.
+     */
     public void closeChronicle() {
         //chm.close();
         //chmR.close();

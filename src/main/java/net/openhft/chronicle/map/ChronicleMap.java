@@ -222,11 +222,15 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
     void putAll(File fromFile) throws IOException;
 
     /**
+     * Returns the value class for this map.
+     *
      * @return the class of {@code <V>}
      */
     Class<V> valueClass();
 
     /**
+     * Returns the value type, which may be unresolved at runtime.
+     *
      * @return the value Class or UnresolvedType if unknown.
      */
     Type valueType();
@@ -262,24 +266,42 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
         int tiers;
 
         /**
-         * @return number of tiers allocated in the segment.
+         * Creates an empty segment stats instance.
+         */
+        public SegmentStats() {
+        }
+
+        /**
+         * Returns number of tiers allocated in the segment.
+         *
+         * @return tier count
          */
         public int tiers() {
             return tiers;
         }
 
-        /** @return bytes currently used by entries. */
+        /**
+         * Returns bytes currently used by entries.
+         *
+         * @return used bytes
+         */
         public long usedBytes() {
             return usedBytes;
         }
 
-        /** @return total bytes reserved for the segment. */
+        /**
+         * Returns total bytes reserved for the segment.
+         *
+         * @return reserved bytes
+         */
         public long sizeInBytes() {
             return sizeInBytes;
         }
     }
 
     /**
+     * Returns how many further automatic resizes remain for each segment.
+     *
      * @return the number of times in the future the map can expand its capacity of each segment ( by expending its capacity we mean expending the maximum number of possible entries that
      * can be stored into the map), the map will expand automatically. However, there is an upper limit to the number of times the map can expand.
      * This limit is set via the {@code net.openhft.chronicle.map.ChronicleMapBuilder#maxBloatFactor} if the {@code remainingAutoResizes} drops to zero,

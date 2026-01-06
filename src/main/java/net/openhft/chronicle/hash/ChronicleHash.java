@@ -156,6 +156,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, S extends HashSegmentC
      *
      * @see ChronicleHashBuilder#minSegments(int)
      * @see ChronicleHashBuilder#actualSegments(int)
+     * @return segment count
      */
     int segments();
 

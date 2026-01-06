@@ -32,6 +32,8 @@ public interface MapContext<K, V, R>
 
     /**
      * Returns the accessed {@code ChronicleMap}. Synonym to {@link #hash()}.
+     *
+     * @return map instance
      */
     ChronicleMap<K, V> map();
 

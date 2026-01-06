@@ -22,6 +22,9 @@ public interface DefaultValueProvider<K, V> {
      * operation implementation, i. e. {@link MapMethods#acquireUsing}.
      * <p>
      * The default implementation simply delegates to {@link MapAbsentEntry#defaultValue()}.
+     *
+     * @param absentEntry context of the missing entry
+     * @return default value to insert
      */
     Data<V> defaultValue(@NotNull MapAbsentEntry<K, V> absentEntry);
 }

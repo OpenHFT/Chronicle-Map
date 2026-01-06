@@ -30,6 +30,12 @@ public class CleanerUtils {
     }
 
     /**
+     * Utility class.
+     */
+    private CleanerUtils() {
+    }
+
+    /**
      * Creates a cleaner for the given object and cleanup action.
      *
      * @param ob    object to associate

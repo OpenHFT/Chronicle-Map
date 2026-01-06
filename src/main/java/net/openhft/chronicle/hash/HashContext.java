@@ -11,6 +11,8 @@ package net.openhft.chronicle.hash;
 public interface HashContext<K> {
     /**
      * Returns the accessed {@code ChronicleHash}.
+     *
+     * @return hash instance
      */
     ChronicleHash<K, ?, ?, ?> hash();
 }

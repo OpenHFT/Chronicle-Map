@@ -111,7 +111,8 @@ public interface MapEntryOperations<K, V, R> {
      * Note: default implementation calls {@link MapEntry#doReplaceValue(Data)
      * entry.doReplaceValue(newValue)} and returns {@code null}.
      *
-     * @param entry the entry to replace the value in
+     * @param entry    the entry to replace the value in
+     * @param newValue value to store
      * @return result of operation, understandable by higher-level SPIs, e. g. custom
      * {@link MapMethods} implementation
      * @throws IllegalStateException if some locking/state conditions required to perform replace
@@ -130,6 +131,8 @@ public interface MapEntryOperations<K, V, R> {
      * Note: default implementation calls {@link MapAbsentEntry#doInsert(Data)
      * absentEntry.doInsert(value)} and returns {@code null}.
      *
+     * @param absentEntry insertion context
+     * @param value       value to insert
      * @return result of operation, understandable by higher-level SPIs, e. g. custom
      * {@link MapMethods} implementation
      * @throws IllegalStateException if some locking/state conditions required to perform insertion

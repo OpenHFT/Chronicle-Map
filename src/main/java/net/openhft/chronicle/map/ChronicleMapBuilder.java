@@ -1339,6 +1339,11 @@ public final class ChronicleMapBuilder<K, V> implements
         return this;
     }
 
+    /**
+     * Returns the configured maximum bloat factor.
+     *
+     * @return max bloat factor
+     */
     public double maxBloatFactor() {
         return maxBloatFactor;
     }

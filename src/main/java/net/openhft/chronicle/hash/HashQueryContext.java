@@ -155,6 +155,8 @@ public interface HashQueryContext<K> extends HashContext<K>, SegmentLock {
 
     /**
      * Returns the queried key as a {@code Data}.
+     *
+     * @return queried key data
      */
     Data<K> queriedKey();
 
@@ -163,6 +165,8 @@ public interface HashQueryContext<K> extends HashContext<K>, SegmentLock {
      * in the {@code ChronicleHash}, returns {@code null} is the entry is <i>absent</i>.
      * Might acquire {@link #readLock} before searching for the key, if the context
      * is not locked yet.
+     *
+     * @return present entry or {@code null} if absent
      */
     HashEntry<K> entry();
 
@@ -171,6 +175,8 @@ public interface HashQueryContext<K> extends HashContext<K>, SegmentLock {
      * is <i>absent</i> in the hash, returns {@code null}, if the entry is <i>present</i>.
      * Might acquire {@link #readLock} before searching for the key, if the context
      * is not locked yet.
+     *
+     * @return absent entry wrapper or {@code null} if present
      */
     @Nullable
     HashAbsentEntry<K> absentEntry();

@@ -15,7 +15,15 @@ import java.util.function.BiFunction;
 public abstract class ChainingInterface extends ThreadLocalState {
 
     /**
+     * Protected constructor for subclasses.
+     */
+    protected ChainingInterface() {
+    }
+
+    /**
      * Returns the ordered list of contexts for this thread.
+     *
+     * @return context chain
      */
     public abstract List<ChainingInterface> getContextChain();
 

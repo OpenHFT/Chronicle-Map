@@ -8,12 +8,18 @@ import net.openhft.chronicle.map.impl.ret.InstanceReturnValue;
 import net.openhft.sg.Staged;
 import org.jetbrains.annotations.NotNull;
 
-@Staged
 /**
  * Base implementation of {@link InstanceReturnValue} that caches a default value from data.
  */
+@Staged
 public abstract class DefaultReturnValue<V> implements InstanceReturnValue<V> {
     private V defaultReturnedValue = null;
+
+    /**
+     * Protected constructor for staged subclasses.
+     */
+    protected DefaultReturnValue() {
+    }
 
     abstract boolean defaultReturnedValueInit();
 

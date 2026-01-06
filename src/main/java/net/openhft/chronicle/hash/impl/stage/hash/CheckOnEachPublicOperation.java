@@ -10,14 +10,20 @@ import net.openhft.chronicle.map.impl.stage.query.QueryCheckOnEachPublicOperatio
 import net.openhft.sg.StageRef;
 import net.openhft.sg.Staged;
 
-@Staged
 /**
  * Ensures public Chronicle Map operations are invoked from the owner thread.
  */
+@Staged
 public abstract class CheckOnEachPublicOperation {
 
     @StageRef
     OwnerThreadHolder holder;
+
+    /**
+     * Creates a checker for owner-thread enforcement.
+     */
+    protected CheckOnEachPublicOperation() {
+    }
 
     /**
      * Performs owner-thread check for each public API call.

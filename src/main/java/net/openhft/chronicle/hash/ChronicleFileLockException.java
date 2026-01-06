@@ -29,6 +29,12 @@ public final class ChronicleFileLockException extends RuntimeException {
         super(message);
     }
 
+    /**
+     * Creates an exception with the given message and cause.
+     *
+     * @param message detail message
+     * @param cause   underlying cause
+     */
     public ChronicleFileLockException(String message, Throwable cause) {
         super(message, cause);
     }

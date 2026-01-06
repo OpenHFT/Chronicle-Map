@@ -37,6 +37,7 @@ public interface SetEntryOperations<K, R> {
      * Note: default implementation calls {@link SetAbsentEntry#doInsert()} and returns
      * {@code null}.
      *
+     * @param absentEntry insertion context for the absent key
      * @return result of operation, understandable by higher-level SPIs
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      *                               operation are not met

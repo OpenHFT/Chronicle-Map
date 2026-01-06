@@ -9,10 +9,10 @@ import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
 /**
  * XStream converter that handles {@link CharSequence} implementations.
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class CharSequenceConverter implements Converter {
 
     /**

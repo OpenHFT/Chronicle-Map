@@ -8,18 +8,22 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.SOURCE)
-@Target({ElementType.TYPE})
 /**
  * Marks staged types with their top-level and nested context classes.
  */
+@Retention(RetentionPolicy.SOURCE)
+@Target({ElementType.TYPE})
 public @interface Context {
     /**
+     * Top-level context classes.
+     *
      * @return top-level context classes
      */
     Class<?>[] topLevel();
 
     /**
+     * Nested context classes.
+     *
      * @return nested context classes
      */
     Class<?>[] nested();
