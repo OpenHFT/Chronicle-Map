@@ -57,3 +57,4 @@ local.properties
 file.lock
 
 issue423
+logs/
