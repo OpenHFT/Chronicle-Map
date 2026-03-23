@@ -5,7 +5,7 @@ package eg;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapSegmentContext;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.LongSummaryStatistics;

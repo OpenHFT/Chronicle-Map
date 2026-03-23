@@ -9,17 +9,17 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.Values;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class OffHeapByteArrayExampleTest {
 
     public static final char EXPECTED = 'b';
     private static ChronicleMap<LongValue, ByteArray> chm;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         chm = ChronicleMapBuilder
                 .of(LongValue.class, ByteArray.class)
@@ -27,7 +27,7 @@ public class OffHeapByteArrayExampleTest {
                 .create();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         if (chm != null)
             chm.close();
@@ -55,11 +55,11 @@ public class OffHeapByteArrayExampleTest {
 
         chm.getUsing(key, value);
 
-        Assert.assertEquals(0, value.getByteValueAt(2).getValue());
-        Assert.assertEquals(0, value.getByteValueAt(3).getValue());
+        assertEquals(0, value.getByteValueAt(2).getValue());
+        assertEquals(0, value.getByteValueAt(3).getValue());
 
         byte actual = value.getByteValueAt(1).getValue();
-        Assert.assertEquals(EXPECTED, actual);
+        assertEquals(EXPECTED, actual);
 
     }
 
