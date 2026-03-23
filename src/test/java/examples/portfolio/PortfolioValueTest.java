@@ -10,7 +10,7 @@ import net.openhft.chronicle.map.MapSegmentContext;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
 import org.apache.commons.lang3.mutable.MutableDouble;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;

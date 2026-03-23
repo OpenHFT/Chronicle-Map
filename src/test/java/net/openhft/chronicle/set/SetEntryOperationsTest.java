@@ -4,10 +4,10 @@
 package net.openhft.chronicle.set;
 
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class SetEntryOperationsTest {
 
@@ -40,8 +40,8 @@ public class SetEntryOperationsTest {
             fruits.remove("banana");
             fruits.remove("grapes");
 
-            Assert.assertEquals(2, insertCounter.get());
-            Assert.assertEquals(1, remoteCounter.get());
+            assertEquals(2, insertCounter.get());
+            assertEquals(1, remoteCounter.get());
         }
     }
 }

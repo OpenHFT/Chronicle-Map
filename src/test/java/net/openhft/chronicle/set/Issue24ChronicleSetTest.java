@@ -6,7 +6,7 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;

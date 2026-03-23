@@ -5,11 +5,10 @@ package net.openhft.lang.values;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DoubleArrayTest {
 
@@ -74,7 +73,7 @@ public class DoubleArrayTest {
     }
 
     @Test
-    @Ignore("TODO What is HACK???")
+    @Disabled("TODO What is HACK???")
     public void addToAMap2() {
         DoubleArray.HACK = false;
         DoubleArray a = new DoubleArray(10);

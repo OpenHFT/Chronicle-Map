@@ -3,60 +3,81 @@
  */
 package net.openhft.chronicle.hash.impl.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 public class ThrowablesTest {
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testPropagateNull() {
-        Throwables.propagate(null);
+        assertThrows(NullPointerException.class, () -> {
+            Throwables.propagate(null);
+        });
     }
 
-    @Test(expected = AssertionError.class)
+    @Test
     public void testPropagateError() {
-        Throwables.propagate(new AssertionError());
+        assertThrows(AssertionError.class, () -> {
+            Throwables.propagate(new AssertionError());
+        });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testPropagateUncheckedException() {
-        Throwables.propagate(new IllegalStateException());
+        assertThrows(IllegalStateException.class, () -> {
+            Throwables.propagate(new IllegalStateException());
+        });
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testPropagateCheckedException() {
-        Throwables.propagate(new IOException());
+        assertThrows(RuntimeException.class, () -> {
+            Throwables.propagate(new IOException());
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testPropagateNotWrappingNull() throws IOException {
-        Throwables.propagateNotWrapping(null, IOException.class);
+        assertThrows(NullPointerException.class, () -> {
+            Throwables.propagateNotWrapping(null, IOException.class);
+        });
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testPropagateNotWrappingNullWrappingType() throws Throwable {
-        Throwables.propagateNotWrapping(new IOException(), null);
+        assertThrows(NullPointerException.class, () -> {
+            Throwables.propagateNotWrapping(new IOException(), null);
+        });
     }
 
-    @Test(expected = AssertionError.class)
+    @Test
     public void testPropagateNotWrappingError() throws IOException {
-        Throwables.propagateNotWrapping(new AssertionError(), IOException.class);
+        assertThrows(AssertionError.class, () -> {
+            Throwables.propagateNotWrapping(new AssertionError(), IOException.class);
+        });
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testPropagateNotWrappingUncheckedException() throws IOException {
-        Throwables.propagateNotWrapping(new IllegalStateException(), IOException.class);
+        assertThrows(IllegalStateException.class, () -> {
+            Throwables.propagateNotWrapping(new IllegalStateException(), IOException.class);
+        });
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testPropagateNotWrappingNotWrappingEException() throws IOException {
-        Throwables.propagateNotWrapping(new IOException(), IOException.class);
+        assertThrows(IOException.class, () -> {
+            Throwables.propagateNotWrapping(new IOException(), IOException.class);
+        });
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void testPropagateNotWrappingCheckedException() throws IOException {
-        Throwables.propagateNotWrapping(new Exception(), IOException.class);
+        assertThrows(RuntimeException.class, () -> {
+            Throwables.propagateNotWrapping(new Exception(), IOException.class);
+        });
     }
 }
