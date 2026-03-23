@@ -14,8 +14,8 @@ import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.set.Builder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -27,8 +27,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.stream.Collectors.toSet;
-import static org.junit.Assert.*;
-@org.junit.Ignore("flaky test see - https://teamcity.chronicle.software/repository/download/OpenHFT_ReleaseJob_ReleaseByArtifact/643179:id/ReleaseAutomation/projects/chronicle-map-runTests-1642011539698.log")
+import static org.junit.jupiter.api.Assertions.*;
+@Disabled("flaky test see - https://teamcity.chronicle.software/repository/download/OpenHFT_ReleaseJob_ReleaseByArtifact/643179:id/ReleaseAutomation/projects/chronicle-map-runTests-1642011539698.log")
 @SuppressWarnings({"rawtypes", "unchecked", "ResultOfMethodCallIgnored", "try"})
 public class ChronicleMapTest {
 
@@ -83,8 +83,7 @@ public class ChronicleMapTest {
     static void assertMap(Map<Integer, CharSequence> map, int[] expectedKeys, CharSequence[] expectedValues) {
         assertEquals(expectedKeys.length, map.size());
         for (int i = 0; i < expectedKeys.length; i++) {
-            assertEquals("On position " + i,
-                    expectedValues[i].toString(), map.get(expectedKeys[i]).toString());
+            assertEquals(expectedValues[i].toString(), map.get(expectedKeys[i]).toString(), "On position " + i);
         }
     }
 
@@ -283,7 +282,6 @@ public class ChronicleMapTest {
             map.put(key, value); // should succeed
         }
     }
-
 
     @Test
     public void testEqualsByteArray() {
@@ -566,7 +564,7 @@ public class ChronicleMapTest {
 
             assertFalse(wasRemoved1);
 
-            assertEquals(null, map.get("key1").toString(), "one");
+            assertEquals("one", map.get("key1").toString());
             assertEquals("two", map.get("key2").toString(), "two");
 
             map.put("key1", "one");
@@ -657,13 +655,13 @@ public class ChronicleMapTest {
                     CharSequence userCS2 = getUserCharSequence(i2);
 
                     if (j2 > 1) {
-                        assertNotNull(userCS2.toString(), map2.getUsing(userCS2, value4));
+                        assertNotNull(map2.getUsing(userCS2, value4), userCS2.toString());
                     } else {
                         map2.acquireUsing(userCS2, value4);
                     }
                     if (i2 >= 1)
-                        assertTrue(userCS2.toString(), map2.containsKey(getUserCharSequence(1)));
-                    assertEquals(userCS2.toString(), j2 - 1, value4.getValue());
+                        assertTrue(map2.containsKey(getUserCharSequence(1)), userCS2.toString());
+                    assertEquals(j2 - 1, value4.getValue(), userCS2.toString());
 
                     value4.addAtomicValue(1);
 
@@ -691,13 +689,13 @@ public class ChronicleMapTest {
                         CharSequence userCS1 = getUserCharSequence(i1);
 
                         if (j1 > 1) {
-                            assertNotNull(userCS1.toString(), map1.getUsing(userCS1, value1));
+                            assertNotNull(map1.getUsing(userCS1, value1), userCS1.toString());
                         } else {
                             map1.acquireUsing(userCS1, value1);
                         }
                         if (i1 >= 1)
-                            assertTrue(userCS1.toString(), map1.containsKey(getUserCharSequence(1)));
-                        assertEquals(userCS1.toString(), j1 - 1, value1.getValue());
+                            assertTrue(map1.containsKey(getUserCharSequence(1)), userCS1.toString());
+                        assertEquals(j1 - 1, value1.getValue(), userCS1.toString());
 
                         value1.addAtomicValue(1);
 
@@ -725,13 +723,13 @@ public class ChronicleMapTest {
                         CharSequence userCS = getUserCharSequence(i);
 
                         if (j > 1) {
-                            assertNotNull(userCS.toString(), map.getUsing(userCS, value));
+                            assertNotNull(map.getUsing(userCS, value), userCS.toString());
                         } else {
                             map.acquireUsing(userCS, value);
                         }
                         if (i >= 1)
-                            assertTrue(userCS.toString(), map.containsKey(getUserCharSequence(1)));
-                        assertEquals(userCS.toString(), j - 1, value.getValue());
+                            assertTrue(map.containsKey(getUserCharSequence(1)), userCS.toString());
+                        assertEquals(j - 1, value.getValue(), userCS.toString());
 
                         value.addAtomicValue(1);
 
@@ -773,8 +771,7 @@ public class ChronicleMapTest {
                 threads2[t2].join();
             }
 
-            assertEquals(noOfThreads2 * iterations2,
-                    map2.acquireUsing(key2, Values.newNativeReference(LongValue.class)).getValue());
+            assertEquals(noOfThreads2 * iterations2, map2.acquireUsing(key2, Values.newNativeReference(LongValue.class)).getValue());
 
             try (ChronicleMap<CharSequence, LongValue> map1 = ChronicleMapBuilder.of(CharSequence
                             .class, LongValue.class)
@@ -800,8 +797,7 @@ public class ChronicleMapTest {
                     threads1[t1].join();
                 }
 
-                assertEquals(noOfThreads1 * iterations1,
-                        map1.acquireUsing(key1, Values.newNativeReference(LongValue.class)).getValue());
+                assertEquals(noOfThreads1 * iterations1, map1.acquireUsing(key1, Values.newNativeReference(LongValue.class)).getValue());
 
                 try (ChronicleMap<CharSequence, LongValue> map = ChronicleMapBuilder.of(CharSequence
                                 .class, LongValue.class)
@@ -827,8 +823,7 @@ public class ChronicleMapTest {
                         threads[t].join();
                     }
 
-                    assertEquals(noOfThreads * iterations,
-                            map.acquireUsing(key, Values.newNativeReference(LongValue.class)).getValue());
+                    assertEquals(noOfThreads * iterations, map.acquireUsing(key, Values.newNativeReference(LongValue.class)).getValue());
 
                 }
             }
@@ -858,7 +853,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore("Performance test")
+    @Disabled("Performance test")
     public void testAcquirePerf256()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -938,7 +933,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore("Performance test")
+    @Disabled("Performance test")
     public void testAcquirePerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -1030,7 +1025,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore("Performance test")
+    @Disabled("Performance test")
     public void testAcquireLockedPerf()
             throws IOException, InterruptedException, ExecutionException {
 //        int runs = Integer.getInteger("runs", 10);
@@ -1127,7 +1122,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore("Performance test")
+    @Disabled("Performance test")
     public void testAcquireLockedLLPerf()
             throws IOException, ClassNotFoundException, IllegalAccessException,
             InstantiationException, InterruptedException, ExecutionException {
@@ -1200,7 +1195,7 @@ public class ChronicleMapTest {
     }
 
     @Test
-    @Ignore("Performance test")
+    @Disabled("Performance test")
     public void testCHMAcquirePerf() throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException, InterruptedException {
         for (int runs : new int[]{10, 50, 250, 500, 1000, 2500}) {
             System.out.println("Testing " + runs + " million entries");
@@ -1557,10 +1552,10 @@ public class ChronicleMapTest {
             Collection<CharSequence> values = map.values();
 
             entrySet.clear();
-            org.junit.Assert.assertTrue(map.isEmpty());
-            org.junit.Assert.assertTrue(entrySet.isEmpty());
-            org.junit.Assert.assertTrue(keySet.isEmpty());
-            org.junit.Assert.assertTrue(values.isEmpty());
+            assertTrue(map.isEmpty());
+            assertTrue(entrySet.isEmpty());
+            assertTrue(keySet.isEmpty());
+            assertTrue(values.isEmpty());
 
         }
     }
@@ -1573,10 +1568,10 @@ public class ChronicleMapTest {
             Collection<CharSequence> values = map.values();
 
             keySet.clear();
-            org.junit.Assert.assertTrue(map.isEmpty());
-            org.junit.Assert.assertTrue(entrySet.isEmpty());
-            org.junit.Assert.assertTrue(keySet.isEmpty());
-            org.junit.Assert.assertTrue(values.isEmpty());
+            assertTrue(map.isEmpty());
+            assertTrue(entrySet.isEmpty());
+            assertTrue(keySet.isEmpty());
+            assertTrue(values.isEmpty());
 
         }
     }
@@ -1589,10 +1584,10 @@ public class ChronicleMapTest {
             Collection<CharSequence> values = map.values();
 
             values.clear();
-            org.junit.Assert.assertTrue(map.isEmpty());
-            org.junit.Assert.assertTrue(entrySet.isEmpty());
-            org.junit.Assert.assertTrue(keySet.isEmpty());
-            org.junit.Assert.assertTrue(values.isEmpty());
+            assertTrue(map.isEmpty());
+            assertTrue(entrySet.isEmpty());
+            assertTrue(keySet.isEmpty());
+            assertTrue(values.isEmpty());
 
         }
     }
@@ -1637,13 +1632,15 @@ public class ChronicleMapTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testRemoveWhenNextIsNotCalled() throws IOException {
 
         ChronicleMap<Integer, CharSequence> map = getViewTestMap(2);
 
-        Iterator<Integer> iterator = map.keySet().iterator();
-        iterator.remove();
+        assertThrows(IllegalStateException.class, () -> {
+            Iterator<Integer> iterator = map.keySet().iterator();
+            iterator.remove();
+        });
     }
 
     @Test
@@ -1785,25 +1782,26 @@ public class ChronicleMapTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testAcquireUsingLockedWithString() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
+                    .of(CharSequence.class, String.class)
+                    .averageKey("one").averageValue("")
+                    .entries(1000);
 
-        ChronicleMapBuilder<CharSequence, String> builder = ChronicleMapBuilder
-                .of(CharSequence.class, String.class)
-                .averageKey("one").averageValue("")
-                .entries(1000);
+            try (final ChronicleMap<CharSequence, String> map = builder.create()) {
 
-        try (final ChronicleMap<CharSequence, String> map = builder.create()) {
+                // Apparently, Java 17 does a better job internalizing/de-duplicating strings so, we have to explicitly create
+                // a new empty string
+                final String newEmptyString = new String("");
 
-            // Apparently, Java 17 does a better job internalizing/de-duplicating strings so, we have to explicitly create
-            // a new empty string
-            final String newEmptyString = new String("");
-
-            // this will add the entry
-            try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("one", newEmptyString)) {
-                // do nothing
+                // this will add the entry
+                try (net.openhft.chronicle.core.io.Closeable c = map.acquireContext("one", newEmptyString)) {
+                    // do nothing
+                }
             }
-        }
+        });
     }
 
     @Test
@@ -1895,16 +1893,18 @@ public class ChronicleMapTest {
         tmpFile.delete();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testBytesMarshallableMustBeConcreteValueType() {
-        try (ChronicleMap<CharSequence, BMSUper> map = ChronicleMapBuilder
-                .of(CharSequence.class, BMSUper.class)
-                .entries(1)
-                .averageKey("hello")
-                .averageValue(new BMClass())
-                .create()) {
-            map.put("hi", new BMClass());
-        }
+        assertThrows(IllegalArgumentException.class, () -> {
+            try (ChronicleMap<CharSequence, BMSUper> map = ChronicleMapBuilder
+                    .of(CharSequence.class, BMSUper.class)
+                    .entries(1)
+                    .averageKey("hello")
+                    .averageValue(new BMClass())
+                    .create()) {
+                map.put("hi", new BMClass());
+            }
+        });
     }
 
     interface BMSUper {

@@ -9,7 +9,7 @@ import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.set.Builder;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class Issue43Test {
 

@@ -6,10 +6,10 @@ import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Values;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PutIfAbsentNoGarbageTest {
 
@@ -30,13 +30,13 @@ public class PutIfAbsentNoGarbageTest {
             v2.setValue(1L);
 
             LongValue r = map.putIfAbsent(k, v1);
-            Assertions.assertNull(r);
-            Assertions.assertTrue(map.containsKey(k));
+            assertNull(r);
+            assertTrue(map.containsKey(k));
 
             LongValue s = map.putIfAbsent(k, v2);
-            Assertions.assertTrue(map.containsKey(k));
-            Assertions.assertEquals(s, v1);
-            Assertions.assertSame(v2, s, "should be same object");
+            assertTrue(map.containsKey(k));
+            assertEquals(s, v1);
+            assertSame(v2, s, "should be same object");
         }
     }
 
@@ -52,13 +52,13 @@ public class PutIfAbsentNoGarbageTest {
             v2.setValue(1L);
 
             LongValue r = map.putIfAbsent(k, v1);
-            Assertions.assertNull(r);
-            Assertions.assertTrue(map.containsKey(k));
+            assertNull(r);
+            assertTrue(map.containsKey(k));
 
             LongValue s = map.putIfAbsent(k, v2);
-            Assertions.assertTrue(map.containsKey(k));
-            Assertions.assertEquals(s, v1);
-            Assertions.assertNotSame(v2, s, "should be same object");
+            assertTrue(map.containsKey(k));
+            assertEquals(s, v1);
+            assertNotSame(v2, s, "should be same object");
         }
     }
 }

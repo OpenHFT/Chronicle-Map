@@ -10,7 +10,7 @@ import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesReader;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesWriter;
 import net.openhft.chronicle.set.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,8 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class Issue63Test {

@@ -3,9 +3,9 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NestedContextsInIterationContextTest {
 
@@ -20,15 +20,17 @@ public class NestedContextsInIterationContextTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testNestedPutsInIterationContextForbidden() {
-        try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
-                .of(Integer.class, Integer.class)
-                .entries(100)
-                .create()) {
-            map.put(42, 42);
-            map.forEachEntry(e -> map.put(0, 0));
-        }
+        assertThrows(IllegalStateException.class, () -> {
+            try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
+                    .of(Integer.class, Integer.class)
+                    .entries(100)
+                    .create()) {
+                map.put(42, 42);
+                map.forEachEntry(e -> map.put(0, 0));
+            }
+        });
     }
 
     @Test
@@ -154,17 +156,19 @@ public class NestedContextsInIterationContextTest {
         }
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testNestedIterationInIterationContextForbidden() {
-        try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
-                .of(Integer.class, Integer.class)
-                .entries(100)
-                .create()) {
-            map.put(42, 42);
-            try (MapSegmentContext<Integer, Integer, ?> cxt = map.segmentContext(0)) {
-                cxt.forEachSegmentEntry(e -> map.segmentContext(1).forEachSegmentEntry(e2 -> {
-                }));
+        assertThrows(IllegalStateException.class, () -> {
+            try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
+                    .of(Integer.class, Integer.class)
+                    .entries(100)
+                    .create()) {
+                map.put(42, 42);
+                try (MapSegmentContext<Integer, Integer, ?> cxt = map.segmentContext(0)) {
+                    cxt.forEachSegmentEntry(e -> map.segmentContext(1).forEachSegmentEntry(e2 -> {
+                    }));
+                }
             }
-        }
+        });
     }
 }

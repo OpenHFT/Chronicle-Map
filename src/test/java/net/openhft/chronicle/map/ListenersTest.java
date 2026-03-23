@@ -6,13 +6,13 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.impl.NullReturnValue;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ListenersTest {
 
@@ -162,14 +162,16 @@ public class ListenersTest {
         assertEquals(2, c.get());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testRemoveTwice() {
-	ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class).entries(100).create();
-	map.put(1, 1);
-	Iterator<Map.Entry<Integer, Integer>> it = map.entrySet().iterator();
-	it.next();
-	it.remove();
-	it.remove();
+	assertThrows(IllegalStateException.class, () -> {
+	    ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class).entries(100).create();
+	    map.put(1, 1);
+	    Iterator<Map.Entry<Integer, Integer>> it = map.entrySet().iterator();
+	    it.next();
+	    it.remove();
+	    it.remove();
+	});
     }
 
     static class CountingEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {

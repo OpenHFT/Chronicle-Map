@@ -6,7 +6,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.impl.TypedMarshallableReaderWriter;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;

@@ -11,7 +11,7 @@ import net.openhft.chronicle.values.Values;
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by peter.lawrey on 28/02/14.

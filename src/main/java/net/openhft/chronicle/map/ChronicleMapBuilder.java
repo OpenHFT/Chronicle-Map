@@ -41,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.HashMap;
@@ -356,7 +357,10 @@ public final class ChronicleMapBuilder<K, V> implements
                                          final int headerSize) throws IOException {
         //noinspection PointlessBitwiseExpression
         headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
-        headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
+        final Buffer headerView = headerBuffer;
+        headerView.clear();
+        headerView.position(SIZE_WORD_OFFSET);
+        headerView.limit(SIZE_WORD_OFFSET + 4);
         writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
 
@@ -388,11 +392,12 @@ public final class ChronicleMapBuilder<K, V> implements
         headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
 
         // Write the size-prefixed blob to the file
-        headerBuffer.position(0);
-        headerBuffer.limit(headerLimit);
+        final Buffer headerView = headerBuffer;
+        headerView.position(0);
+        headerView.limit(headerLimit);
         writeFully(fileChannel, 0, headerBuffer);
 
-        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        headerView.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
         return headerBuffer;
     }
 
@@ -406,7 +411,10 @@ public final class ChronicleMapBuilder<K, V> implements
 
         //noinspection PointlessBitwiseExpression
         headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
-        headerBuffer.clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
+        final Buffer headerView = headerBuffer;
+        headerView.clear();
+        headerView.position(SIZE_WORD_OFFSET);
+        headerView.limit(SIZE_WORD_OFFSET + 4);
         writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
 
@@ -446,7 +454,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 throw new IOException("file=" + file + ": sizeWord is not ready: " + sizeWord);
             }
         }
-        headerBuffer.position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
+        ((Buffer) headerBuffer).position(SELF_BOOTSTRAPPING_HEADER_OFFSET);
         return headerBuffer;
     }
 
@@ -1789,7 +1797,7 @@ public final class ChronicleMapBuilder<K, V> implements
         for (int attempt = 0; attempt < attempts; attempt++) {
             if (raf.length() >= SELF_BOOTSTRAPPING_HEADER_OFFSET) {
 
-                sizeWordBuffer.clear();
+                ((Buffer) sizeWordBuffer).clear();
                 readFully(fileChannel, SIZE_WORD_OFFSET, sizeWordBuffer);
                 if (sizeWordBuffer.remaining() == 0) {
                     int sizeWord = sizeWordBuffer.getInt(0);

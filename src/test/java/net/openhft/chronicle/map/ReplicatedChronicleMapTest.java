@@ -6,12 +6,12 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /*
  * Originally written by Doug Lea with assistance from members of JCP JSR-166
@@ -324,18 +324,16 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
             Iterator it = s.iterator();
             while (it.hasNext()) {
                 Map.Entry<Integer, CharSequence> e = (Map.Entry<Integer, CharSequence>) it.next();
-                assertTrue(
-                        (e.getKey().equals(JSR166TestCase.one) &&
-                                "A".contentEquals(e.getValue())) ||
-                                (e.getKey().equals(JSR166TestCase.two) &&
-                                        "B".contentEquals(e.getValue())) ||
-                                (e.getKey().equals(JSR166TestCase.three) &&
-                                        "C".contentEquals(e.getValue())) ||
-                                (e.getKey().equals(JSR166TestCase.four) &&
-                                        "D".contentEquals(e.getValue())) ||
-                                (e.getKey().equals(JSR166TestCase.five) &&
-                                        "E".contentEquals(e.getValue()))
-                );
+                assertTrue((e.getKey().equals(JSR166TestCase.one) &&
+                        "A".contentEquals(e.getValue())) ||
+                        (e.getKey().equals(JSR166TestCase.two) &&
+                                "B".contentEquals(e.getValue())) ||
+                        (e.getKey().equals(JSR166TestCase.three) &&
+                                "C".contentEquals(e.getValue())) ||
+                        (e.getKey().equals(JSR166TestCase.four) &&
+                                "D".contentEquals(e.getValue())) ||
+                        (e.getKey().equals(JSR166TestCase.five) &&
+                                "E".contentEquals(e.getValue())));
             }
         }
     }

@@ -5,7 +5,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -17,8 +17,7 @@ import java.util.function.BiFunction;
 import static net.openhft.chronicle.hash.Data.bytesEquivalent;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.FAIL;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.SUCCESS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BiMapTest {
 

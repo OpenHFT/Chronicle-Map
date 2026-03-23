@@ -4,12 +4,12 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.LongValue;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class Issue354Test {
 

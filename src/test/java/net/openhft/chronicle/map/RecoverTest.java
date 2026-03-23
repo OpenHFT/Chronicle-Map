@@ -10,9 +10,8 @@ import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ChronicleHashCorruption;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.openhft.chronicle.map.ChronicleMapTest.getPersistenceFile;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RecoverTest {
 
@@ -35,7 +34,7 @@ public class RecoverTest {
 
     ReplicatedChronicleMap<Integer, Integer, ?> map;
 
-    @Ignore("HCOLL-422")
+    @Disabled("HCOLL-422")
     @Test
     public void recoverTest() throws IOException, ExecutionException, InterruptedException {
         File mapFile = File.createTempFile("recoverTestFile", ".map");
@@ -139,7 +138,7 @@ public class RecoverTest {
                 // This value bytes update bypass Chronicle Map internals, so checksum is not
                 // updated automatically
                 nativeValue.setValue(43);
-                Assert.assertFalse(checksumEntry.checkSum());
+                assertFalse(checksumEntry.checkSum());
             }
         }
 

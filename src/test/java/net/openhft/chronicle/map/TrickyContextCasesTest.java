@@ -3,10 +3,11 @@
  */
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.algo.hashing.LongHashFunction;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -15,57 +16,60 @@ import java.util.concurrent.Executors;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static net.openhft.chronicle.algo.hashing.LongHashFunction.xx_r39;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class TrickyContextCasesTest {
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void nestedContextsSameKeyTest() {
-        ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
-                .of(Integer.class, IntValue.class)
-                .entries(1).create();
+        assertThrows(IllegalStateException.class, () -> {
+            ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
+                    .of(Integer.class, IntValue.class)
+                    .entries(1).create();
 
-        IntValue v = Values.newHeapInstance(IntValue.class);
-        v.setValue(2);
-        map.put(1, v);
-        try (ExternalMapQueryContext<Integer, IntValue, ?> q = map.queryContext(1)) {
-            q.writeLock().lock();
-            // assume the value is 2
-            IntValue v2 = q.entry().value().get();
-            // this call should throw ISE, as accessing the key 1 in a nested context, but if not...
-            map.remove(1);
-            v.setValue(3);
-            map.put(2, v);
-            // prints 3
-            System.out.println(v2.getValue());
-        }
+            IntValue v = Values.newHeapInstance(IntValue.class);
+            v.setValue(2);
+            map.put(1, v);
+            try (ExternalMapQueryContext<Integer, IntValue, ?> q = map.queryContext(1)) {
+                q.writeLock().lock();
+                // assume the value is 2
+                IntValue v2 = q.entry().value().get();
+                // this call should throw ISE, as accessing the key 1 in a nested context, but if not...
+                map.remove(1);
+                v.setValue(3);
+                map.put(2, v);
+                // prints 3
+                System.out.println(v2.getValue());
+            }
+        });
     }
 
-    @Test(expected = Exception.class)
-    public void testPutShouldBeWriteLocked() throws ExecutionException, InterruptedException {
-        ChronicleMap<Integer, byte[]> map = ChronicleMapBuilder
-                .of(Integer.class, byte[].class)
-                .averageValue(new byte[1])
-                .entries(100).actualSegments(1).create();
-        map.put(1, new byte[]{1});
-        map.put(2, new byte[]{2});
-        try (ExternalMapQueryContext<Integer, byte[], ?> q = map.queryContext(1)) {
-            MapEntry<Integer, byte[]> entry = q.entry(); // acquires read lock implicitly
-            assertNotNull(entry);
-            Executors.newFixedThreadPool(1,
-                    new NamedThreadFactory("test"))
-                    .submit(() -> {
-                        // this call should try to acquire write lock, that should lead to dead lock
-                        // but if not...
-                        // relocates the entry for the key 1 after the entry for 2, under update lock
-                        map.put(1, new byte[]{1, 2, 3, 4, 5});
-                        // puts the entry for 3 at the place of the entry for the key 1, under update lock
-                        map.put(3, new byte[]{3});
-                    }).get();
-            // prints [3]
-            System.out.println(Arrays.toString(entry.value().get()));
-        }
+    @Test
+    public void testPutShouldBeWriteLocked() {
+        assertThrows(Exception.class, () -> {
+            ChronicleMap<Integer, byte[]> map = ChronicleMapBuilder
+                    .of(Integer.class, byte[].class)
+                    .averageValue(new byte[1])
+                    .entries(100).actualSegments(1).create();
+            map.put(1, new byte[]{1});
+            map.put(2, new byte[]{2});
+            try (ExternalMapQueryContext<Integer, byte[], ?> q = map.queryContext(1)) {
+                MapEntry<Integer, byte[]> entry = q.entry(); // acquires read lock implicitly
+                assertNotNull(entry);
+                Executors.newFixedThreadPool(1,
+                        new NamedThreadFactory("test"))
+                        .submit(() -> {
+                            // this call should try to acquire write lock, that should lead to dead lock
+                            // but if not...
+                            // relocates the entry for the key 1 after the entry for 2, under update lock
+                            map.put(1, new byte[]{1, 2, 3, 4, 5});
+                            // puts the entry for 3 at the place of the entry for the key 1, under update lock
+                            map.put(3, new byte[]{3});
+                        }).get();
+                // prints [3]
+                System.out.println(Arrays.toString(entry.value().get()));
+            }
+        });
     }
 
     @Test

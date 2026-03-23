@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CharSequenceArraySerializationTest {
 
@@ -20,8 +20,8 @@ public class CharSequenceArraySerializationTest {
                 .create()) {
             map.put("fruits", new CharSequence[]{"banana", "pineapple"});
             map.put("vegetables", new CharSequence[]{"carrot", "potato"});
-            Assert.assertEquals(2, map.get("fruits").length);
-            Assert.assertEquals(2, map.get("vegetables").length);
+            assertEquals(2, map.get("fruits").length);
+            assertEquals(2, map.get("vegetables").length);
         }
     }
 }

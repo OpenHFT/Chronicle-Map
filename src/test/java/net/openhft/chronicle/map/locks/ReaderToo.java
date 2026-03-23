@@ -44,9 +44,9 @@ class ReaderToo implements Runnable {
             );
             Thread.sleep(sleepMock * 1_000);
             while ((stamp = offHeapLock.tryReadLock()) < 0) {
-                //Assert.assertEquals(Boolean.TRUE, false); // we failed!;
+                //assertEquals(Boolean.TRUE, false); // we failed!;
             }
-            //Assert.assertEquals(Boolean.TRUE, true); // we passed
+            //assertEquals(Boolean.TRUE, true); // we passed
             System.out.println(
                     "READER_TOO " +
                             " ,,@t=" + System.currentTimeMillis() +

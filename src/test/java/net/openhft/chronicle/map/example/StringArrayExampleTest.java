@@ -8,7 +8,7 @@ import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * an example of using a chronicle map with a string array like structure

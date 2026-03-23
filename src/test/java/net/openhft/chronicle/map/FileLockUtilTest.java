@@ -6,9 +6,9 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleFileLockException;
 import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FileLockUtilTest {
 
@@ -24,7 +24,7 @@ public class FileLockUtilTest {
     private RandomAccessFile raf;
     private FileChannel fileChannel;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         canonicalFile = new File("file.lock").getCanonicalFile();
         canonicalFile.delete();
@@ -33,7 +33,7 @@ public class FileLockUtilTest {
         fileChannel = raf.getChannel();
     }
 
-    @After
+    @AfterEach
     public void cleanup() throws IOException {
         fileChannel.close();
         CanonicalRandomAccessFiles.release(canonicalFile);

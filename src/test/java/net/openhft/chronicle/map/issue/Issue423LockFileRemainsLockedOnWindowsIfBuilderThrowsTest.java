@@ -6,7 +6,7 @@ package net.openhft.chronicle.map.issue;
 import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,8 +14,7 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class Issue423LockFileRemainsLockedOnWindowsIfBuilderThrowsTest {
 

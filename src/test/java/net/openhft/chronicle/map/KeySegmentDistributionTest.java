@@ -4,11 +4,11 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.hashing.LongHashFunction;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class KeySegmentDistributionTest {
 
@@ -61,11 +61,11 @@ public class KeySegmentDistributionTest {
                 }
             } else {
                 if (ascendingDirection) {
-                    Assert.assertTrue(entrySegment >= currentSegment);
+                    assertTrue(entrySegment >= currentSegment);
                     currentSegment = entrySegment;
                 } else {
                     // descending iteration direction
-                    Assert.assertTrue(entrySegment <= currentSegment);
+                    assertTrue(entrySegment <= currentSegment);
                     currentSegment = entrySegment;
                 }
             }

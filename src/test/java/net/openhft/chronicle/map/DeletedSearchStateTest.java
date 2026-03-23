@@ -3,8 +3,8 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class DeletedSearchStateTest {
 
@@ -20,6 +20,6 @@ public class DeletedSearchStateTest {
             q.insert(q.absentEntry(), q.wrapValueAsData(2));
         }
 
-        Assert.assertEquals((Integer) 2, map.get(42));
+        assertEquals((Integer) 2, map.get(42));
     }
 }

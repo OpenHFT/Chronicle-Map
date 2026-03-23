@@ -5,7 +5,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,8 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class NestedContextsTest {
@@ -195,8 +194,8 @@ public class NestedContextsTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void negativeEntriesTest() {
-	ChronicleMap.of(Integer.class, Set.class).entries(-1L).create();
+	assertThrows(IllegalArgumentException.class, () -> ChronicleMap.of(Integer.class, Set.class).entries(-1L).create());
     }
 }

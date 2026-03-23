@@ -4,10 +4,10 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Rob Austin.
@@ -17,7 +17,7 @@ public class BuildVersionTest {
     @Test
     public void test() throws IOException, InterruptedException {
         // checks that we always get a version
-        Assert.assertNotNull(BuildVersion.version());
+        assertNotNull(BuildVersion.version());
     }
 
     /**
@@ -32,7 +32,7 @@ public class BuildVersionTest {
             expected.put(1, 1.0);
 
             String version = ((VanillaChronicleMap<?, ?, ?>) expected).persistedDataVersion();
-            Assert.assertNotNull(BuildVersion.version(), version);
+            assertNotNull(version, BuildVersion.version());
 
         }
     }

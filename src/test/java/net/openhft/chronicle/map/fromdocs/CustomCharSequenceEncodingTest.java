@@ -4,11 +4,11 @@
 package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class CustomCharSequenceEncodingTest {
 
@@ -52,8 +52,8 @@ public class CustomCharSequenceEncodingTest {
             englishToChinese.put("hello", "你好");
             englishToChinese.put("bye", "再见");
 
-            Assert.assertEquals("你好", englishToChinese.get("hello").toString());
-            Assert.assertEquals("再见", englishToChinese.get("bye").toString());
+            assertEquals("你好", englishToChinese.get("hello").toString());
+            assertEquals("再见", englishToChinese.get("bye").toString());
         }
     }
 }

@@ -5,12 +5,12 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.util.Time;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.util.Map;
 
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class RecursiveRefereneChMapTest {

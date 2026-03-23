@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.beans.XMLEncoder;
 import java.io.ByteArrayOutputStream;
@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by peter.lawrey on 06/12/14.
@@ -83,7 +83,7 @@ public class LargeEntriesTest {
     }
 
     @Test
-    @Ignore("Performance Test")
+    @Disabled("Performance Test")
     public void testLargeStringsPerf() throws ExecutionException, InterruptedException, IOException {
         doLargeEntryPerf(10000, 100 * 1024);
         doLargeEntryPerf(1000000, 1024);
@@ -167,10 +167,10 @@ public class LargeEntriesTest {
 
             map.put(key, value);
             object = map.get(key);
-            assertTrue(key, map.containsKey(key));
+            assertTrue(map.containsKey(key), key);
 
-            assertNotNull(key, object);
-            assertEquals(key, entrySize, object.length());
+            assertNotNull(object, key);
+            assertEquals(entrySize, object.length(), key);
         }
 //        monitor.interrupt();
 
@@ -180,8 +180,8 @@ public class LargeEntriesTest {
 
             String object = map.get(key);
 
-            assertNotNull(key, object);
-            assertEquals(key, entrySize, object.length());
+            assertNotNull(object, key);
+            assertEquals(entrySize, object.length(), key);
         }
     }
 

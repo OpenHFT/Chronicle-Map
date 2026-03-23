@@ -3,8 +3,7 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,19 +11,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by catst01 on 24/10/2018.
  */
 public class MissSizedMapsTest {
 
-    @Test(timeout = 60000)
+    @Test
+
+    @org.junit.jupiter.api.Timeout(value = 60000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testSmallEntries() throws IOException, URISyntaxException {
 
         try (ChronicleMap<String, String> actual = ChronicleMapBuilder.of(String.class, String.class)
@@ -51,18 +50,18 @@ public class MissSizedMapsTest {
             }
         }
 
-        Assert.assertEquals(actual.size(), expected.size());
-        Assert.assertEquals(actual.keySet().size(), expected.keySet().size());
+        assertEquals(actual.size(), expected.size());
+        assertEquals(actual.keySet().size(), expected.keySet().size());
 
         for (String key : actual.keySet()) {
             if (!expected.containsKey(key)) {
-                Assert.fail(key + " not in key set but in map expected");
+                fail(key + " not in key set but in map expected");
             }
         }
 
         for (String key : expected.keySet()) {
             if (!actual.containsKey(key)) {
-                Assert.fail(key + " not in key set but in map actual");
+                fail(key + " not in key set but in map actual");
             }
         }
     }

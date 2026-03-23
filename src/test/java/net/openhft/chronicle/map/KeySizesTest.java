@@ -3,13 +3,13 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by peter.lawrey on 28/02/14.

@@ -9,13 +9,13 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Serializable;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 // From https://github.com/OpenHFT/Chronicle-Map/issues/183
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
@@ -87,7 +87,7 @@ public class SerializableTest {
         Bar2 value = new Bar2(expected);
         map.put(1, value);
         assertTrue(value.usesSelfDescribingMessage());
-        assertFalse("we call bytes marshallable in this case", value.writeMarshallableWireOutCalled);
+        assertFalse(value.writeMarshallableWireOutCalled, "we call bytes marshallable in this case");
         String actual = map.get(1).x;
 
         assertEquals(expected, actual);

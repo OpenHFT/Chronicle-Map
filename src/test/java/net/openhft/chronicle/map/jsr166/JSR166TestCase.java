@@ -3,12 +3,11 @@
  */
 package net.openhft.chronicle.map.jsr166;
 
-import junit.framework.AssertionFailedError;
+import org.opentest4j.AssertionFailedError;
 import net.openhft.chronicle.core.Jvm;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -21,19 +20,20 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Base class for JSR166 Junit TCK tests.  Defines some constants,
  * utility methods and classes, as well as a simple framework for
  * helping to make sure that assertions Assert.failing in generated threads
- * cause the associated test that generated them to itself Assert.fail (which
+ * cause the associated test that generated them to itself fail (which
  * JUnit does not otherwise arrange).  The rules for creating such
  * tests are:
  * <ol>
  * <li> All assertions in code running in generated threads must use
  * the forms {@link #threadFail}, {@link #threadAssertTrue}, {@link
  * #threadAssertEquals}, or {@link #threadAssertNull}, (not
- * {@code Assert.fail}, {@code Assert.assertTrue}, etc.) It is OK (but not
+ * {@code fail}, {@code assertTrue}, etc.) It is OK (but not
  * particularly recommended) for other code to use these forms too.
  * Only the most typically used JUnit assertion methods are defined
  * this way, but enough to live with.</li>
@@ -52,7 +52,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * but even so, if there is ever any doubt, they can all be increased
  * in one spot to rerun tests on slower platforms.</li>
  * <li> All threads generated must be joined inside each test case
- * method (or {@code Assert.fail} to do so) before returning from the
+ * method (or {@code fail} to do so) before returning from the
  * method. The {@code joinPool} method can be used to do this when
  * using Executors.</li>
  * </ol>
@@ -222,7 +222,7 @@ public class JSR166TestCase {
         threadFailure.compareAndSet(null, t);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         setDelays();
     }
@@ -238,7 +238,7 @@ public class JSR166TestCase {
      * <p>
      * Triggers test case Assert.failure if interrupt status is set in the main thread.
      */
-    @After
+    @AfterEach
     public void tearDown() throws InterruptedException {
         Throwable t = threadFailure.getAndSet(null);
         if (t != null) {
@@ -286,27 +286,27 @@ public class JSR166TestCase {
     }
 
     /**
-     * Just like Assert.fail(reason), but additionally recording (using
+     * Just like fail(reason), but additionally recording (using
      * threadRecordFailure) any AssertionFailedError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadFail(String reason) {
         try {
-            Assert.fail(reason);
+            fail(reason);
         } catch (AssertionFailedError t) {
             threadRecordFailure(t);
-            Assert.fail(reason);
+            fail(reason);
         }
     }
 
     /**
-     * Just like Assert.assertTrue(b), but additionally recording (using
+     * Just like assertTrue(b), but additionally recording (using
      * threadRecordFailure) any AssertionFailedError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertTrue(boolean b) {
         try {
-            Assert.assertTrue(b);
+            assertTrue(b);
         } catch (AssertionFailedError t) {
             threadRecordFailure(t);
             throw t;
@@ -316,11 +316,11 @@ public class JSR166TestCase {
     /**
      * Just like assertFalse(b), but additionally recording (using
      * threadRecordFailure) any AssertionFailedError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertFalse(boolean b) {
         try {
-            Assert.assertFalse(b);
+            assertFalse(b);
         } catch (AssertionFailedError t) {
             threadRecordFailure(t);
             throw t;
@@ -330,11 +330,11 @@ public class JSR166TestCase {
     /**
      * Just like assertNull(x), but additionally recording (using
      * threadRecordFailure) any AssertionFailedError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertNull(Object x) {
         try {
-            Assert.assertNull(x);
+            assertNull(x);
         } catch (AssertionFailedError t) {
             threadRecordFailure(t);
             throw t;
@@ -344,11 +344,11 @@ public class JSR166TestCase {
     /**
      * Just like assertEquals(x, y), but additionally recording (using
      * threadRecordFailure) any AssertionFailedError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertEquals(long x, long y) {
         try {
-            Assert.assertEquals(x, y);
+            assertEquals(x, y);
         } catch (AssertionFailedError t) {
             threadRecordFailure(t);
             throw t;
@@ -358,11 +358,11 @@ public class JSR166TestCase {
     /**
      * Just like assertEquals(x, y), but additionally recording (using
      * threadRecordFailure) any AssertionFailedError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertEquals(Object x, Object y) {
         try {
-            Assert.assertEquals(x, y);
+            assertEquals(x, y);
         } catch (AssertionFailedError t) {
             threadRecordFailure(t);
             throw t;
@@ -374,11 +374,11 @@ public class JSR166TestCase {
     /**
      * Just like assertSame(x, y), but additionally recording (using
      * threadRecordFailure) any AssertionFailedError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertSame(Object x, Object y) {
         try {
-            Assert.assertSame(x, y);
+            assertSame(x, y);
         } catch (AssertionFailedError t) {
             threadRecordFailure(t);
             throw t;
@@ -425,12 +425,11 @@ public class JSR166TestCase {
     protected void joinPool(ExecutorService exec) {
         try {
             exec.shutdown();
-            Assert.assertTrue("ExecutorService did not terminate in a timely manner",
-                    exec.awaitTermination(2 * LONG_DELAY_MS, MILLISECONDS));
+            assertTrue(exec.awaitTermination(2 * LONG_DELAY_MS, MILLISECONDS), "ExecutorService did not terminate in a timely manner");
         } catch (SecurityException ok) {
             // Allowed in case test doesn't have privs
         } catch (InterruptedException ie) {
-            Assert.fail("Unexpected InterruptedException");
+            fail("Unexpected InterruptedException");
         }
     }
 
@@ -449,9 +448,9 @@ public class JSR166TestCase {
         try {
             // No need to optimize the Assert.failing case via Thread.join.
             delay(millis);
-            Assert.assertTrue(thread.isAlive());
+            assertTrue(thread.isAlive());
         } catch (InterruptedException ie) {
-            Assert.fail("Unexpected InterruptedException");
+            fail("Unexpected InterruptedException");
         }
     }
 
@@ -471,9 +470,9 @@ public class JSR166TestCase {
             // No need to optimize the Assert.failing case via Thread.join.
             delay(millis);
             for (Thread thread : threads)
-                Assert.assertTrue(thread.isAlive());
+                assertTrue(thread.isAlive());
         } catch (InterruptedException ie) {
-            Assert.fail("Unexpected InterruptedException");
+            fail("Unexpected InterruptedException");
         }
     }
 
@@ -499,21 +498,21 @@ public class JSR166TestCase {
         } finally {
             future.cancel(true);
         }
-        Assert.assertTrue(millisElapsedSince(startTime) >= timeoutMillis);
+        assertTrue(millisElapsedSince(startTime) >= timeoutMillis);
     }
 
     /**
      * Fails with message "should throw exception".
      */
     public void shouldThrow() {
-        Assert.fail("Should throw exception");
+        fail("Should throw exception");
     }
 
     /**
      * Fails with message "should throw " + exceptionName.
      */
     public void shouldThrow(String exceptionName) {
-        Assert.fail("Should throw " + exceptionName);
+        fail("Should throw " + exceptionName);
     }
 
     /**
@@ -570,7 +569,7 @@ public class JSR166TestCase {
                     s == Thread.State.TIMED_WAITING)
                 return;
             else if (s == Thread.State.TERMINATED)
-                Assert.fail("Unexpected thread termination");
+                fail("Unexpected thread termination");
             else if (millisElapsedSince(startTime) > timeoutMillis) {
                 threadAssertTrue(thread.isAlive());
                 return;
@@ -619,7 +618,7 @@ public class JSR166TestCase {
         } finally {
             if (t.getState() != Thread.State.TERMINATED) {
                 t.interrupt();
-                Assert.fail("Test timed out");
+                fail("Test timed out");
             }
         }
     }
@@ -657,7 +656,7 @@ public class JSR166TestCase {
 
     public void await(CountDownLatch latch) {
         try {
-            Assert.assertTrue(latch.await(LONG_DELAY_MS, MILLISECONDS));
+            assertTrue(latch.await(LONG_DELAY_MS, MILLISECONDS));
         } catch (Throwable t) {
             threadUnexpectedException(t);
         }
@@ -665,7 +664,7 @@ public class JSR166TestCase {
 
     public void await(Semaphore semaphore) {
         try {
-            Assert.assertTrue(semaphore.tryAcquire(LONG_DELAY_MS, MILLISECONDS));
+            assertTrue(semaphore.tryAcquire(LONG_DELAY_MS, MILLISECONDS));
         } catch (Throwable t) {
             threadUnexpectedException(t);
         }
@@ -684,14 +683,14 @@ public class JSR166TestCase {
 
     protected void checkEmpty(BlockingQueue q) {
         try {
-            Assert.assertTrue(q.isEmpty());
-            Assert.assertEquals(0, q.size());
-            Assert.assertNull(q.peek());
-            Assert.assertNull(q.poll());
-            Assert.assertNull(q.poll(0, MILLISECONDS));
-            Assert.assertEquals(q.toString(), "[]");
-            Assert.assertTrue(Arrays.equals(q.toArray(), new Object[0]));
-            Assert.assertFalse(q.iterator().hasNext());
+            assertTrue(q.isEmpty());
+            assertEquals(0, q.size());
+            assertNull(q.peek());
+            assertNull(q.poll());
+            assertNull(q.poll(0, MILLISECONDS));
+            assertEquals(q.toString(), "[]");
+            assertTrue(Arrays.equals(q.toArray(), new Object[0]));
+            assertFalse(q.iterator().hasNext());
             try {
                 q.element();
                 shouldThrow();
@@ -713,11 +712,11 @@ public class JSR166TestCase {
     }
 
     void assertSerialEquals(Object x, Object y) {
-        Assert.assertTrue(Arrays.equals(serialBytes(x), serialBytes(y)));
+        assertTrue(Arrays.equals(serialBytes(x), serialBytes(y)));
     }
 
     void assertNotSerialEquals(Object x, Object y) {
-        Assert.assertFalse(Arrays.equals(serialBytes(x), serialBytes(y)));
+        assertFalse(Arrays.equals(serialBytes(x), serialBytes(y)));
     }
 
     byte[] serialBytes(Object o) {
@@ -740,7 +739,7 @@ public class JSR166TestCase {
             ObjectInputStream ois = new ObjectInputStream
                     (new ByteArrayInputStream(serialBytes(o)));
             T clone = (T) ois.readObject();
-            Assert.assertSame(o.getClass(), clone.getClass());
+            assertSame(o.getClass(), clone.getClass());
             return clone;
         } catch (Throwable t) {
             threadUnexpectedException(t);

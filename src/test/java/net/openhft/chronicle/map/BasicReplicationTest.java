@@ -7,7 +7,7 @@ import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import org.hamcrest.CoreMatchers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.util.*;

@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.set.ChronicleSet;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class ChronicleMapNameTest {
 
@@ -16,7 +16,7 @@ public class ChronicleMapNameTest {
                 .entries(1)
                 .name("foo")
                 .create();
-        Assert.assertTrue(map.toIdentityString().contains("foo"));
+        assertTrue(map.toIdentityString().contains("foo"));
     }
 
     @Test
@@ -26,6 +26,6 @@ public class ChronicleMapNameTest {
                 .entries(1)
                 .name("foo")
                 .create();
-        Assert.assertTrue(set.toIdentityString().contains("foo"));
+        assertTrue(set.toIdentityString().contains("foo"));
     }
 }

@@ -5,16 +5,16 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.*;
 
 class DirtyReadOffenderTest implements Runnable {
 
-    @Before
+    @BeforeEach
     public void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }

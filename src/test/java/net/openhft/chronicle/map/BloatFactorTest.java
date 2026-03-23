@@ -5,11 +5,11 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.map.example.StringArrayExampleTest;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BloatFactorTest {
 
@@ -31,7 +31,7 @@ public class BloatFactorTest {
                 .createPersistedTo(cmap)) {
 
             double maxBloatFactor = Jvm.getValue(map, "maxBloatFactor");
-            Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
+            assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
 
         }
 
@@ -42,7 +42,7 @@ public class BloatFactorTest {
                 .createPersistedTo(cmap)) {
 
             double maxBloatFactor = Jvm.getValue(map, "maxBloatFactor");
-            Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
+            assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
 
         }
     }

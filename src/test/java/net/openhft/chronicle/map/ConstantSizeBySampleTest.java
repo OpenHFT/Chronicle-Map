@@ -6,14 +6,13 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.impl.ExternalizableDataAccess;
 import net.openhft.chronicle.hash.serialization.impl.ExternalizableReader;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class ConstantSizeBySampleTest {
@@ -49,7 +48,7 @@ public class ConstantSizeBySampleTest {
 
             value[42] = 1;
             map.put(1L, value);
-            Assert.assertTrue(Arrays.equals(map.get(1L), value));
+            assertTrue(Arrays.equals(map.get(1L), value));
         }
     }
 
@@ -66,7 +65,7 @@ public class ConstantSizeBySampleTest {
             ExternalizableData value = new ExternalizableData();
             value.data[42] = 1;
             map.put(1L, value);
-            Assert.assertEquals(map.get(1L), value);
+            assertEquals(map.get(1L), value);
         }
     }
 
@@ -81,7 +80,7 @@ public class ConstantSizeBySampleTest {
             SerializableData value = new SerializableData();
             value.data[42] = 1;
             map.put(1L, value);
-            Assert.assertEquals(map.get(1L), value);
+            assertEquals(map.get(1L), value);
         }
     }
 

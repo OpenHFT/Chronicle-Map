@@ -5,13 +5,13 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.IOTools;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 public class HugeSparseMapTest {
 
@@ -45,13 +45,15 @@ public class HugeSparseMapTest {
         }
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void hugeAllocatedMap() throws IOException {
         assumeTrue(OS.isLinux() && isTeamCityAgent());
-        try (ChronicleMap<CharSequence, CharSequence> map = createMap(false)) {
-            map.put("hi", "there");
-            assertEquals("there", map.get("hi").toString());
-        }
+        assertThrows(IOException.class, () -> {
+            try (ChronicleMap<CharSequence, CharSequence> map = createMap(false)) {
+                map.put("hi", "there");
+                assertEquals("there", map.get("hi").toString());
+            }
+        });
     }
 
     // Only run under TC as GH agents cannot run these tests
