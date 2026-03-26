@@ -6,7 +6,6 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.bytes.Bytes;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -18,9 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 class BasicReplicationTest {
@@ -80,16 +77,16 @@ class BasicReplicationTest {
             waitForFinish(processorTwo);
             waitForFinish(processorThree);
 
-            assertThat(mapOne.size(), is(equalTo(mapTwo.size())));
-            assertThat(mapOne.size(), is(equalTo(mapThree.size())));
+            assertEquals(mapTwo.size(), mapOne.size());
+            assertEquals(mapThree.size(), mapOne.size());
 
             for (String key : mapOne.keySet()) {
                 final String mapOneValue = mapOne.get(key);
                 final String mapTwoValue = mapTwo.get(key);
                 final String mapThreeValue = mapThree.get(key);
 
-                assertThat(mapOneValue, CoreMatchers.equalTo(mapTwoValue));
-                assertThat(mapOneValue, CoreMatchers.equalTo(mapThreeValue));
+                assertEquals(mapTwoValue, mapOneValue);
+                assertEquals(mapThreeValue, mapOneValue);
             }
         }
     }

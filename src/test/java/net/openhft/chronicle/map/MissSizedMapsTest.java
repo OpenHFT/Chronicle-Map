@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Timeout;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by catst01 on 24/10/2018.
@@ -24,7 +26,7 @@ class MissSizedMapsTest {
 
     @Test
 
-    @org.junit.jupiter.api.Timeout(value = 60000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
+    @Timeout(value = 60000, unit = TimeUnit.MILLISECONDS)
     void testSmallEntries() throws IOException, URISyntaxException {
 
         try (ChronicleMap<String, String> actual = ChronicleMapBuilder.of(String.class, String.class)

@@ -9,6 +9,7 @@ import com.google.common.collect.testing.TestMapGenerator;
 import com.google.common.collect.testing.features.CollectionFeature;
 import com.google.common.collect.testing.features.CollectionSize;
 import junit.framework.Test;
+import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
@@ -22,7 +23,7 @@ import static com.google.common.collect.testing.features.MapFeature.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
-class GuavaTest {
+public class GuavaTest extends TestCase {
 
     public static Test suite() {
         MapTestSuiteBuilder<String, String> chmSuite = using(new CHMTestGenerator());

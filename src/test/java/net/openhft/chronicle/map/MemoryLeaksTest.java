@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +76,7 @@ class MemoryLeaksTest {
     @MethodSource("data")
     void testChronicleMapCollectedAndDirectMemoryReleased(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) throws IOException {
         assumeFalse(OS.isMacOSX());
+        assumePersistedMapSupport(persisted);
         ChronicleMapBuilder<IntValue, String> builder = createBuilder(replicated);
         // This test is flaky in Linux and Mac OS apparently because some native memory from
         // running previous/concurrent tests is released during this test, that infers with
@@ -117,7 +120,7 @@ class MemoryLeaksTest {
             System.out.println(serializerCount.get() + " <=> " + serializersBeforeMap);
         }
         if (nativeMemoryUsedBeforeMap < nativeMemoryUsed(persisted)) {
-            long actual = nativeMemoryUsed(persisted);
+            long actual = waitForNativeMemoryAtMost(persisted, nativeMemoryUsedBeforeMap + 4096);
             if (actual != nativeMemoryUsedBeforeMap + 4096) {
                 assertEquals(nativeMemoryUsedBeforeMap, actual);
             }
@@ -133,11 +136,22 @@ class MemoryLeaksTest {
         }
     }
 
+    private long waitForNativeMemoryAtMost(boolean persisted, long maxAllowed) {
+        long actual = nativeMemoryUsed(persisted);
+        for (int i = 1; actual > maxAllowed && i <= 40; i++) {
+            System.gc();
+            Jvm.pause(i * 25L);
+            actual = nativeMemoryUsed(persisted);
+        }
+        return actual;
+    }
+
     @Timeout(value = 60, unit = TimeUnit.SECONDS)
     @ParameterizedTest
     @MethodSource("data")
     void testExplicitChronicleMapCloseReleasesMemory(String testType, boolean replicated, boolean persisted, boolean closeWithinContext)
             throws IOException, InterruptedException {
+        assumePersistedMapSupport(persisted);
         ChronicleMapBuilder<IntValue, String> builder = createBuilder(replicated);
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed(persisted);
         int serializersBeforeMap = serializerCount.get();
@@ -163,7 +177,7 @@ class MemoryLeaksTest {
                 // Fails because of https://github.com/OpenHFT/Chronicle-Map/issues/153
                 return;
             } else {
-                long actual = nativeMemoryUsed(persisted);
+                long actual = waitForNativeMemoryAtMost(persisted, nativeMemoryUsedBeforeMap + 4096);
                 if (actual != 16_000)
                     assertEquals(nativeMemoryUsedBeforeMap, actual);
             }
@@ -211,6 +225,27 @@ class MemoryLeaksTest {
             map.put(key, "string" + i);
         }
         return map;
+    }
+
+    private void assumePersistedMapSupport(boolean persisted) {
+        if (!persisted) {
+            return;
+        }
+        assumeTrue(isUnmapSupportAvailable(),
+                "Skipping persisted variants because chronicle-core unmap support is unavailable in this JVM");
+    }
+
+    private boolean isUnmapSupportAvailable() {
+        try {
+            Method getUnmapp0Mh = OS.class.getDeclaredMethod("getUnmapp0Mh");
+            getUnmapp0Mh.setAccessible(true);
+            getUnmapp0Mh.invoke(null);
+            return true;
+        } catch (NoSuchMethodException | IllegalAccessException e) {
+            throw new AssertionError("Unable to probe unmap support", e);
+        } catch (InvocationTargetException | LinkageError e) {
+            return false;
+        }
     }
 
     private void tryCloseFromContext(ChronicleMap<IntValue, String> map, boolean closeWithinContext) {

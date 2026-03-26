@@ -1987,7 +1987,7 @@ class CHMUseCasesTest {
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(true, entry.value().get().getValue());
+                assertTrue(entry.value().get().getValue());
             }
             // TODO the same as above. copy paste, copy paste, copy-paste...
 //            try (ReadContext rc = map.getUsingLocked(key2, value1)) {
@@ -1997,17 +1997,17 @@ class CHMUseCasesTest {
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(false, entry.value().get().getValue());
+                assertFalse(entry.value().get().getValue());
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(true, entry.value().get().getValue());
+                assertTrue(entry.value().get().getValue());
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(false, entry.value().get().getValue());
+                assertFalse(entry.value().get().getValue());
             }
             key1.setValue(3);
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
@@ -2020,38 +2020,38 @@ class CHMUseCasesTest {
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value1)) {
-                assertEquals(false, value1.getValue());
+                assertFalse(value1.getValue());
                 value1.setValue(true);
-                assertEquals(true, value1.getValue());
+                assertTrue(value1.getValue());
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key1, value2)) {
-                assertEquals(true, value2.getValue());
+                assertTrue(value2.getValue());
                 value2.setValue(false);
-                assertEquals(false, value2.getValue());
+                assertFalse(value2.getValue());
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key1)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(false, entry.value().get().getValue());
+                assertFalse(entry.value().get().getValue());
             }
 
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value2)) {
-                assertEquals(false, value2.getValue());
+                assertFalse(value2.getValue());
                 value2.setValue(true);
-                assertEquals(true, value2.getValue());
+                assertTrue(value2.getValue());
             }
             try (net.openhft.chronicle.core.io.Closeable c =
                          map.acquireContext(key2, value1)) {
-                assertEquals(true, value1.getValue());
+                assertTrue(value1.getValue());
                 value1.setValue(false);
-                assertEquals(false, value1.getValue());
+                assertFalse(value1.getValue());
             }
             try (ExternalMapQueryContext<?, BooleanValue, ?> c = map.queryContext(key2)) {
                 MapEntry<?, BooleanValue> entry = c.entry();
                 assertNotNull(entry);
-                assertEquals(false, entry.value().get().getValue());
+                assertFalse(entry.value().get().getValue());
             }
             mapChecks();
         }

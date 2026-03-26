@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
+import org.junit.jupiter.api.Timeout;
+import java.util.concurrent.TimeUnit;
 
 class DirtyReadOffender_ReaderWriterTest {
 
@@ -21,7 +23,7 @@ class DirtyReadOffender_ReaderWriterTest {
 
     @Test
 
-    @org.junit.jupiter.api.Timeout(value = 60_000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
+    @Timeout(value = 60_000, unit = TimeUnit.MILLISECONDS)
     void main() {
         try {
             long sleepT = Long.parseLong("8");

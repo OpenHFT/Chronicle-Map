@@ -22,7 +22,7 @@ class BooleanValuesTest {
         try (ChronicleMap<Integer, Boolean> map = ChronicleMap.of(Integer.class, Boolean.class)
                 .entries(1).create()) {
             map.put(7, true);
-            assertEquals(true, map.get(7));
+            assertTrue(map.get(7));
         }
     }
 }

@@ -487,7 +487,7 @@ class ChronicleMapTest {
 
             final boolean result = map.replace("key1", "one", "newValue");
 
-            assertEquals(true, result);
+            assertTrue(result);
 
             assertEquals("newValue", map.get("key1").toString());
             assertEquals("two", map.get("key2").toString());
@@ -502,14 +502,14 @@ class ChronicleMapTest {
 
             final boolean result2 = map.replace("key2", "two", "newValue2");
 
-            assertEquals(true, result2);
+            assertTrue(result2);
             assertEquals("newValue2", map.get("key2").toString());
 
             final boolean result3 = map.replace("newKey", "", "newValue");
-            assertEquals(false, result3);
+            assertFalse(result3);
 
             final boolean result4 = map.replace("key2", "newValue2", "newValue2");
-            assertEquals(true, result4);
+            assertTrue(result4);
 
         }
     }

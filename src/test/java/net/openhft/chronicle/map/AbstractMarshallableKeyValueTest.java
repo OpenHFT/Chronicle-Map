@@ -8,8 +8,7 @@ import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 final class AbstractMarshallableKeyValueTest {
 
@@ -20,7 +19,7 @@ final class AbstractMarshallableKeyValueTest {
 
         map.put(new Key(), new Value());
 
-        assertThat(map.get(new Key()).number, is(new Value().number));
+        assertEquals(new Value().number, map.get(new Key()).number);
     }
 
     @Test
@@ -33,7 +32,7 @@ final class AbstractMarshallableKeyValueTest {
         map.put(new Key(), new Value());
 
         Value value = (Value) map.get(new Key());
-        assertThat(value.number, is(new Value().number));
+        assertEquals(new Value().number, value.number);
     }
 
     private static final class Key extends SelfDescribingMarshallable {
