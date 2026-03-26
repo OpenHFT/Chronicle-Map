@@ -16,10 +16,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Rob Austin.
  */
-public class IntValueMapTest {
+class IntValueMapTest {
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
 
         try (final ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)

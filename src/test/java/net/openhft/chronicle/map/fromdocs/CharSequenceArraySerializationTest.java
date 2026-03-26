@@ -5,12 +5,13 @@ package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CharSequenceArraySerializationTest {
+class CharSequenceArraySerializationTest {
 
     @Test
-    public void charSequenceArraySerializationTest() {
+    void charSequenceArraySerializationTest() {
         try (ChronicleMap<String, CharSequence[]> map = ChronicleMap
                 .of(String.class, CharSequence[].class)
                 .averageKey("fruits")

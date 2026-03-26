@@ -16,10 +16,10 @@ import java.nio.channels.FileLock;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class Issue423LockFileRemainsLockedOnWindowsIfBuilderThrowsTest {
+class Issue423LockFileRemainsLockedOnWindowsIfBuilderThrowsTest {
 
     @Test
-    public void reproduce() throws IOException {
+    void reproduce() throws IOException {
         final File file = new File("issue423");
 
         try {

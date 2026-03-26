@@ -13,13 +13,13 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class Issue354bTest {
+class Issue354bTest {
 
     @TempDir
     Path testFolder;
 
     @Test
-    public void build_toFile() throws IOException {
+    void build_toFile() throws IOException {
         String baseDirectory = testFolder.toString();
         File file = new File(baseDirectory, "chronicle.dat");
         ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder.of(LongValue.class, LongValue.class)

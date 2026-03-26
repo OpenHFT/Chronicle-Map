@@ -19,10 +19,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by peter.lawrey on 06/12/14.
  */
-public class LargeEntriesTest {
+class LargeEntriesTest {
 
     @Test
-    public void testLargeStrings() throws ExecutionException, InterruptedException, IOException {
+    void testLargeStrings() throws ExecutionException, InterruptedException, IOException {
         final int ENTRIES = 250;
         final int ENTRY_SIZE = 100 * 1024;
 
@@ -84,7 +84,7 @@ public class LargeEntriesTest {
 
     @Test
     @Disabled("Performance Test")
-    public void testLargeStringsPerf() throws ExecutionException, InterruptedException, IOException {
+    void testLargeStringsPerf() throws ExecutionException, InterruptedException, IOException {
         doLargeEntryPerf(10000, 100 * 1024);
         doLargeEntryPerf(1000000, 1024);
         doLargeEntryPerf(100000, 10 * 1024);

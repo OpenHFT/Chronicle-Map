@@ -20,7 +20,7 @@ import java.util.Random;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
-public class ValueAlignmentRelocationTest {
+class ValueAlignmentRelocationTest {
 
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -40,7 +40,7 @@ public class ValueAlignmentRelocationTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testValueAlignmentRelocation(String name, boolean persisted, int alignment, int chunk) throws IOException {
+    void testValueAlignmentRelocation(String name, boolean persisted, int alignment, int chunk) throws IOException {
 
         File file = Files.createTempFile("test", ".cm3").toFile();
         file.deleteOnExit();
@@ -90,7 +90,7 @@ public class ValueAlignmentRelocationTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testValueAlignmentRelocationNoRandomTest(String name, boolean persisted, int alignment, int chunk) throws IOException {
+    void testValueAlignmentRelocationNoRandomTest(String name, boolean persisted, int alignment, int chunk) throws IOException {
         File file = Files.createTempFile("test", ".cm3").toFile();
         file.deleteOnExit();
 

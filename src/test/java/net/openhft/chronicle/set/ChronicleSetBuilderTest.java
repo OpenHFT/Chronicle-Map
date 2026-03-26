@@ -5,13 +5,14 @@ package net.openhft.chronicle.set;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ChronicleSetBuilderTest {
+class ChronicleSetBuilderTest {
 
     @Disabled("see https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
     @Test
-    public void test() {
+    void test() {
 
         try (ChronicleSet<Integer> integers = ChronicleSet.of(Integer.class).entries(10).create()) {
             for (int i = 0; i < 10; i++) {

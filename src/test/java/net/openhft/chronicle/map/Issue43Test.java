@@ -11,14 +11,14 @@ import net.openhft.chronicle.set.Builder;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-public class Issue43Test {
+class Issue43Test {
 
     public static void main(String[] args) {
         new Issue43Test().testIssue43();
     }
 
     @Test
-    public void testIssue43() {
+    void testIssue43() {
         try {
             ChronicleMap<Long, ValueWrapper> map = ChronicleMapBuilder
                     .of(Long.class, ValueWrapper.class)

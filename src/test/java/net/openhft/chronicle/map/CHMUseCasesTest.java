@@ -134,11 +134,12 @@ interface IBean {
 
     }
 }
+
 /**
  * This test enumerates common use cases for keys and values.
  */
 @SuppressWarnings({"rawtypes", "unchecked", "try", "serial"})
-public class CHMUseCasesTest {
+class CHMUseCasesTest {
 
     private TypeOfMap typeOfMap;
     private final Collection<Closeable> closeables = new ArrayList<>();
@@ -174,7 +175,7 @@ public class CHMUseCasesTest {
     }
 
     @AfterEach
-    public void after() {
+    void after() {
         for (Closeable c : closeables) {
             try {
                 c.close();
@@ -288,7 +289,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testArrayOfString(TypeOfMap typeOfMap) throws IOException {
+    void testArrayOfString(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, I1> builder = ChronicleMapBuilder
@@ -332,7 +333,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testCharArrayValue(TypeOfMap typeOfMap) throws IOException {
+    void testCharArrayValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         int valueSize = 10;
@@ -355,7 +356,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testByteArrayArrayValue(TypeOfMap typeOfMap) throws IOException {
+    void testByteArrayArrayValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<byte[], byte[][]> builder = ChronicleMapBuilder
@@ -377,7 +378,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void bondExample(TypeOfMap typeOfMap) throws IOException {
+    void bondExample(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<String, BondVOInterface> builder = ChronicleMapBuilder.of(String.class, BondVOInterface.class)
@@ -405,7 +406,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testLargeCharSequenceValueWriteOnly(TypeOfMap typeOfMap) throws IOException {
+    void testLargeCharSequenceValueWriteOnly(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         int valueSize = 1000000;
@@ -425,7 +426,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testEntrySpanningSeveralChunks(TypeOfMap typeOfMap) throws IOException {
+    void testEntrySpanningSeveralChunks(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         int salefactor = 100;
@@ -448,7 +449,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testKeyValueSizeBySample(TypeOfMap typeOfMap) throws
+    void testKeyValueSizeBySample(TypeOfMap typeOfMap) throws
             IOException {
         this.typeOfMap = typeOfMap;
 
@@ -466,7 +467,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testLargeCharSequenceValue(TypeOfMap typeOfMap) throws IOException {
+    void testLargeCharSequenceValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         int valueSize = 5_000_000;
@@ -486,7 +487,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testStringStringMap(TypeOfMap typeOfMap) throws
+    void testStringStringMap(TypeOfMap typeOfMap) throws
             IOException {
         this.typeOfMap = typeOfMap;
 
@@ -506,7 +507,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testStringStringMapMutableValue(TypeOfMap typeOfMap) throws IOException {
+    void testStringStringMapMutableValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<String, String> builder = ChronicleMapBuilder
@@ -522,7 +523,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testCharSequenceMixingKeyTypes(TypeOfMap typeOfMap) throws IOException {
+    void testCharSequenceMixingKeyTypes(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
@@ -541,7 +542,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testCharSequenceMixingValueTypes(TypeOfMap typeOfMap) throws IOException {
+    void testCharSequenceMixingValueTypes(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
@@ -565,8 +566,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testCharSequenceCharSequenceMap(TypeOfMap typeOfMap) throws IOException {
+    void testCharSequenceCharSequenceMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -611,7 +611,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testAcquireUsingWithCharSequence(TypeOfMap typeOfMap) throws IOException {
+    void testAcquireUsingWithCharSequence(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, CharSequence> builder = ChronicleMapBuilder
@@ -634,7 +634,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testGetUsingWithIntValueNoValue(TypeOfMap typeOfMap) throws IOException {
+    void testGetUsingWithIntValueNoValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<CharSequence, IntValue> builder = ChronicleMapBuilder
@@ -654,7 +654,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testAcquireUsingImmutableUsing(TypeOfMap typeOfMap) throws IOException {
+    void testAcquireUsingImmutableUsing(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
         assertThrows(IllegalArgumentException.class, () -> {
             ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
@@ -679,25 +679,25 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testNegativeActualChunkSize(TypeOfMap typeOfMap){
+    void testNegativeActualChunkSize(TypeOfMap typeOfMap) {
         this.typeOfMap = typeOfMap;
         assertThrows(IllegalArgumentException.class, () -> {
-    	ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1);
+            ChronicleMapBuilder.of(String.class, String.class).actualChunkSize(-1);
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testActualChunksPerSegmentTier(TypeOfMap typeOfMap){
+    void testActualChunksPerSegmentTier(TypeOfMap typeOfMap) {
         this.typeOfMap = typeOfMap;
         assertThrows(IllegalArgumentException.class, () -> {
-    	ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
+            ChronicleMapBuilder.of(String.class, String.class).actualChunksPerSegmentTier(0);
         });
     }
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testAcquireUsingWithIntValueKeyStringBuilderValue(TypeOfMap typeOfMap) throws IOException {
+    void testAcquireUsingWithIntValueKeyStringBuilderValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, StringBuilder> builder = ChronicleMapBuilder
@@ -722,7 +722,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testAcquireUsingWithIntValueKey(TypeOfMap typeOfMap) throws IOException {
+    void testAcquireUsingWithIntValueKey(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, CharSequence> builder = ChronicleMapBuilder
@@ -758,8 +758,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testStringValueStringValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testStringValueStringValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -898,7 +897,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testIntegerIntegerMap(TypeOfMap typeOfMap) throws IOException {
+    void testIntegerIntegerMap(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<Integer, Integer> builder = ChronicleMapBuilder
@@ -959,7 +958,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testLongLongMap(TypeOfMap typeOfMap) throws IOException {
+    void testLongLongMap(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<Long, Long> builder = ChronicleMapBuilder
@@ -1001,7 +1000,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testDoubleDoubleMap(TypeOfMap typeOfMap) throws IOException {
+    void testDoubleDoubleMap(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<Double, Double> builder = ChronicleMapBuilder
@@ -1038,7 +1037,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testByteArrayByteArrayMap(TypeOfMap typeOfMap) throws IOException {
+    void testByteArrayByteArrayMap(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<byte[], byte[]> builder = ChronicleMapBuilder
@@ -1086,7 +1085,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testByteBufferByteBufferDefaultKeyValueMarshaller(TypeOfMap typeOfMap) throws
+    void testByteBufferByteBufferDefaultKeyValueMarshaller(TypeOfMap typeOfMap) throws
             IOException {
         this.typeOfMap = typeOfMap;
 
@@ -1115,7 +1114,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testByteBufferByteBufferMap(TypeOfMap typeOfMap) throws IOException {
+    void testByteBufferByteBufferMap(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<ByteBuffer, ByteBuffer> builder = ChronicleMapBuilder
@@ -1227,8 +1226,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testByteBufferDirectByteBufferMap(TypeOfMap typeOfMap) throws IOException {
+    void testByteBufferDirectByteBufferMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -1301,7 +1299,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testIntValueIntValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testIntValueIntValueMap(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<IntValue, IntValue> builder = ChronicleMapBuilder
@@ -1408,8 +1406,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testUnsignedIntValueUnsignedIntValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testUnsignedIntValueUnsignedIntValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -1530,8 +1527,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testIntValueShortValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testIntValueShortValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -1641,8 +1637,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testIntValueUnsignedShortValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testIntValueUnsignedShortValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -1750,8 +1745,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testIntValueCharValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testIntValueCharValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -1854,8 +1848,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testIntValueUnsignedByteMap(TypeOfMap typeOfMap) throws IOException {
+    void testIntValueUnsignedByteMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -1964,8 +1957,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testIntValueBooleanValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testIntValueBooleanValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -2071,8 +2063,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testFloatValueFloatValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testFloatValueFloatValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -2178,8 +2169,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testDoubleValueDoubleValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testDoubleValueDoubleValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -2290,8 +2280,7 @@ public class CHMUseCasesTest {
     @ParameterizedTest
 
     @MethodSource("data")
-
-    public void testLongValueLongValueMap(TypeOfMap typeOfMap) throws IOException {
+    void testLongValueLongValueMap(TypeOfMap typeOfMap) throws IOException {
 
         this.typeOfMap = typeOfMap;
 
@@ -2395,7 +2384,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testListValue(TypeOfMap typeOfMap) throws IOException {
+    void testListValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<String, List<String>> builder = ChronicleMapBuilder
@@ -2444,7 +2433,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testSetValue(TypeOfMap typeOfMap) throws IOException {
+    void testSetValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
         ChronicleMapBuilder<String, Set<String>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Set<String>>) (Class) Set.class)
@@ -2491,7 +2480,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testMapStringStringValue(TypeOfMap typeOfMap) throws IOException {
+    void testMapStringStringValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         MapMarshaller<String, String> valueMarshaller = new MapMarshaller<>(new StringBytesReader(), CharSequenceBytesWriter.INSTANCE,
@@ -2534,7 +2523,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testMapStringIntegerValue(TypeOfMap typeOfMap) throws IOException {
+    void testMapStringIntegerValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         MapMarshaller<String, Integer> valueMarshaller = new MapMarshaller<>(
@@ -2578,7 +2567,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testMapStringIntegerValueWithoutListMarshallers(TypeOfMap typeOfMap) throws IOException {
+    void testMapStringIntegerValueWithoutListMarshallers(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
         ChronicleMapBuilder<String, Map<String, Integer>> builder = ChronicleMapBuilder
                 .of(String.class, (Class<Map<String, Integer>>) (Class) Map.class)
@@ -2596,7 +2585,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testGeneratedDataValue(TypeOfMap typeOfMap) throws IOException {
+    void testGeneratedDataValue(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
 
         ChronicleMapBuilder<String, IBean> builder = ChronicleMapBuilder
@@ -2620,7 +2609,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testBytesMarshallable(TypeOfMap typeOfMap) throws IOException {
+    void testBytesMarshallable(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
         ChronicleMapBuilder<IData, IData> builder = ChronicleMapBuilder
                 .of(IData.class, IData.class)
@@ -2642,7 +2631,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testBytesMarshallable2(TypeOfMap typeOfMap) throws IOException {
+    void testBytesMarshallable2(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
         ChronicleMapBuilder<IData.Data, IData.Data> builder = ChronicleMapBuilder
                 .of(IData.Data.class, IData.Data.class)
@@ -2667,7 +2656,7 @@ public class CHMUseCasesTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void testBytesMarshallable3(TypeOfMap typeOfMap) throws IOException {
+    void testBytesMarshallable3(TypeOfMap typeOfMap) throws IOException {
         this.typeOfMap = typeOfMap;
         BytesMarshallableReaderWriter<IData.Data> bmwr = new BytesMarshallableReaderWriter<>(IData.Data.class);
         ChronicleMapBuilder<IData.Data, IData.Data> builder = ChronicleMapBuilder

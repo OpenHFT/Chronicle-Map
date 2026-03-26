@@ -29,10 +29,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class DefaultValueTest {
+class DefaultValueTest {
 
     @Test
-    public void test1() {
+    void test1() {
         Bytes<byte[]> bytes = Bytes.allocateElasticOnHeap();
 
         final Wire wire = WireType.BINARY.apply(bytes);
@@ -81,7 +81,7 @@ public class DefaultValueTest {
     }
 
     @Test
-    public void test() throws IllegalAccessException, InstantiationException, IOException {
+    void test() throws IllegalAccessException, InstantiationException, IOException {
         File file = Builder.getPersistenceFile();
         try {
 

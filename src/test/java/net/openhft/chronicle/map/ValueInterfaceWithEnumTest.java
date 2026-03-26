@@ -13,14 +13,14 @@ import java.util.stream.IntStream;
  * @author ges
  * @since 3/2/16.
  */
-public class ValueInterfaceWithEnumTest {
+class ValueInterfaceWithEnumTest {
 
     /**
      * This test will throw an {@link ArrayIndexOutOfBoundsException}. This seems to occur only with Enums having even number of
      * values
      */
     @Test
-    public void testValueInterface() {
+    void testValueInterface() {
         LongValue longValue = Values.newHeapInstance(LongValue.class);
         SimpleValueInterface simpleValueInterface = Values.newHeapInstance(SimpleValueInterface.class);
 

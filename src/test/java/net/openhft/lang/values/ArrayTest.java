@@ -17,10 +17,10 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ArrayTest {
+class ArrayTest {
 
     @Test
-    public void test0() throws IOException, JSONException {
+    void test0() throws IOException, JSONException {
         ClassAliasPool.CLASS_ALIASES.addAlias(MovingAverageArray.class);
 
         File file = new File(OS.getTarget() + "/pf-PosistionsAndClose-" + Time.uniqueId());

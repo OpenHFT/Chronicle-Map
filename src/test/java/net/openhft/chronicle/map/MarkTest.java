@@ -17,7 +17,7 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MarkTest {
+class MarkTest {
 
     static int ENTRIES = 25_000_000;
 
@@ -44,14 +44,14 @@ public class MarkTest {
     @Disabled("often out of time, that is a parf issue, not a bug")
     @Test
     @org.junit.jupiter.api.Timeout(value = 25000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
-    public void inMemoryTest() {
+    void inMemoryTest() {
         test(ChronicleMapBuilder::create);
     }
 
     @Disabled("ignored because it take too long and times out")
     @Test
     @org.junit.jupiter.api.Timeout(value = 25000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
-    public void persistedTest() {
+    void persistedTest() {
         int rnd = new Random().nextInt();
         final File db = Paths.get(OS.getTarget(), "mark" + rnd).toFile();
         if (db.exists())
@@ -72,9 +72,9 @@ public class MarkTest {
     }
 
     @Test
-    public void testNegativeEntriesPerSegment() {
+    void testNegativeEntriesPerSegment() {
         assertThrows(IllegalArgumentException.class, () -> {
-    	ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
+            ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
         });
     }
 }

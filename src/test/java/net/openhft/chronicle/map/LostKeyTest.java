@@ -9,13 +9,14 @@ import org.junit.jupiter.api.Test;
 import shaded.org.apache.commons.codec.binary.Hex;
 
 import java.io.File;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class LostKeyTest {
+class LostKeyTest {
 
     // See https://github.com/OpenHFT/Chronicle-Map/issues/233
     @Test
-    public void lostkeysTest() throws Exception {
+    void lostkeysTest() throws Exception {
 
         File storagetmp = new File("./tmp.dat");
         if (storagetmp.exists()) {

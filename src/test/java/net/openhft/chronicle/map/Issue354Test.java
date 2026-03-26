@@ -11,10 +11,10 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class Issue354Test {
+class Issue354Test {
 
     @Test
-    public void reproduce() throws IOException {
+    void reproduce() throws IOException {
 
         final File file = new File("issue354-map");
         file.delete();

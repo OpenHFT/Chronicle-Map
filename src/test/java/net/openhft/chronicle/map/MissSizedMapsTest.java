@@ -14,17 +14,18 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by catst01 on 24/10/2018.
  */
-public class MissSizedMapsTest {
+class MissSizedMapsTest {
 
     @Test
 
     @org.junit.jupiter.api.Timeout(value = 60000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
-    public void testSmallEntries() throws IOException, URISyntaxException {
+    void testSmallEntries() throws IOException, URISyntaxException {
 
         try (ChronicleMap<String, String> actual = ChronicleMapBuilder.of(String.class, String.class)
                 .averageKey("D-6.0149935894066442E18").averageValue("226|16533|4|1|1|testHarness").entries(150 << 10)

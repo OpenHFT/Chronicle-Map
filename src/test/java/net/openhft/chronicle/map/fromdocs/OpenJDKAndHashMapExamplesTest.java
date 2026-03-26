@@ -37,7 +37,7 @@ public class OpenJDKAndHashMapExamplesTest {
     }
 
     @Test
-    public void bondExample() throws IOException, InterruptedException {
+    void bondExample() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chm-myBondPortfolioCHM-" + Time.uniqueId());
         file.deleteOnExit();

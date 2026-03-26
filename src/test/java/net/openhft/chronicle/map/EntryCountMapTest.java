@@ -21,7 +21,7 @@ import static java.lang.Math.round;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class EntryCountMapTest {
+class EntryCountMapTest {
     static final int ecmTests = Integer.getInteger("ecm.tests", 5);
     double score = 0;
     int scoreCount = 0;
@@ -49,7 +49,7 @@ public class EntryCountMapTest {
 
     @Disabled("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
     @Test
-    public void testVerySmall() throws IOException {
+    void testVerySmall() throws IOException {
         System.out.print("testVerySmall seeds");
         for (int t = 0; t < ecmTests; t++) {
             System.out.print(".");
@@ -99,7 +99,7 @@ public class EntryCountMapTest {
     }
 
     @Test
-    public void testSmall() throws IOException, ExecutionException, InterruptedException {
+    void testSmall() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testSmall seeds");
         int procs = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
@@ -143,7 +143,7 @@ public class EntryCountMapTest {
 
     @Disabled("Long running, large tests test")
     @Test
-    public void testMedium() throws IOException, ExecutionException, InterruptedException {
+    void testMedium() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testMedium seeds");
         int procs = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));

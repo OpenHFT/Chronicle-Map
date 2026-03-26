@@ -14,9 +14,9 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ExternalizableTest {
+class ExternalizableTest {
     @Test
-    public void externalizable() throws IOException {
+    void externalizable() throws IOException {
         String path = OS.getTarget() + "/test-" + Time.uniqueId() + ".map";
         new File(path).deleteOnExit();
         try (ChronicleMap<Long, SomeClass> storage = ChronicleMapBuilder

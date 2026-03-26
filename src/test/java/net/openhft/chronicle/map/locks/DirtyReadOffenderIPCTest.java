@@ -15,9 +15,9 @@ import java.util.concurrent.locks.StampedLock;
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.jupiter.api.Assumptions.*;
 
-public class DirtyReadOffenderIPCTest implements Runnable {
+class DirtyReadOffenderIPCTest implements Runnable {
     @BeforeEach
-    public void longRunningStableOnLinux() {
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
@@ -66,7 +66,7 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = offHeapLock.writeLock()) == 0) {
-    ; // none
+                ; // none
             }
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +

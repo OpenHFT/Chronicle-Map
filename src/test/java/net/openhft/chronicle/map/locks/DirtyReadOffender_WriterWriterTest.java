@@ -12,15 +12,15 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
-public class DirtyReadOffender_WriterWriterTest {
+class DirtyReadOffender_WriterWriterTest {
 
     @BeforeEach
-    public void longRunningStableOnLinux() {
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
     @Test
-    public void main() {
+    void main() {
         try {
             long sleepT = Long.parseLong("8");
             long holdTime = Long.parseLong("20");

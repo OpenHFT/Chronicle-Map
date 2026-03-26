@@ -13,22 +13,22 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
-public class Issue229Test {
+class Issue229Test {
 
     private File mapFile;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         mapFile = new File("test_map");
     }
 
     @AfterEach
-    public void cleanup() {
+    void cleanup() {
         mapFile.delete();
     }
 
     @Test
-    public void assureExclusiveAccess() throws IOException {
+    void assureExclusiveAccess() throws IOException {
         assertThrows(ChronicleHashRecoveryFailedException.class, () -> {
             assumeFalse(OS.isWindows());
 
@@ -38,7 +38,7 @@ public class Issue229Test {
                     .createPersistedTo(mapFile)) {
                 assertNotNull(readMap);
 
-    // It shall not be possible to recover since the
+                // It shall not be possible to recover since the
                 // file is open by the readMap
                 try (ChronicleMap<Long, Long> recoverMap = ChronicleMap
                         .of(Long.class, Long.class)

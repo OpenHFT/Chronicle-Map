@@ -7,12 +7,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class NegativeIntegerKeyTest {
+class NegativeIntegerKeyTest {
 
     @Test
-    public void testNegativeIntegerKey() throws IOException {
+    void testNegativeIntegerKey() throws IOException {
         File file = ChronicleMapTest.getPersistenceFile();
         try (ChronicleMap<Integer, Integer> map = ChronicleMap
                 .of(Integer.class, Integer.class)

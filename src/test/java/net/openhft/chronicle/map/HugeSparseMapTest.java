@@ -13,7 +13,7 @@ import java.io.IOException;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
-public class HugeSparseMapTest {
+class HugeSparseMapTest {
 
     private static ChronicleMap<CharSequence, CharSequence> createMap(boolean sparseFile) throws IOException {
         File file = IOTools.createTempFile("huge-map");
@@ -37,7 +37,7 @@ public class HugeSparseMapTest {
     }
 
     @Test
-    public void hugeSparseMap() throws IOException {
+    void hugeSparseMap() throws IOException {
         assumeTrue(OS.isLinux() && isTeamCityAgent());
         try (ChronicleMap<CharSequence, CharSequence> map = createMap(true)) {
             map.put("hi", "there");
@@ -46,7 +46,7 @@ public class HugeSparseMapTest {
     }
 
     @Test
-    public void hugeAllocatedMap() throws IOException {
+    void hugeAllocatedMap() throws IOException {
         assumeTrue(OS.isLinux() && isTeamCityAgent());
         assertThrows(IOException.class, () -> {
             try (ChronicleMap<CharSequence, CharSequence> map = createMap(false)) {

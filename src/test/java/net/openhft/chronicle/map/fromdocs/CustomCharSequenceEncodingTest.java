@@ -8,12 +8,13 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CustomCharSequenceEncodingTest {
+class CustomCharSequenceEncodingTest {
 
     @Test
-    public void customCharSequenceEncodingTest() {
+    void customCharSequenceEncodingTest() {
         Charset charset = StandardCharsets.UTF_8;
         int charBufferSize = 4;
         int bytesBufferSize = 8;
@@ -34,7 +35,7 @@ public class CustomCharSequenceEncodingTest {
     }
 
     @Test
-    public void gbkCharSequenceEncodingTest() {
+    void gbkCharSequenceEncodingTest() {
         Charset charset = Charset.forName("GBK");
         int charBufferSize = 100;
         int bytesBufferSize = 200;

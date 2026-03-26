@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Test;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public final class AbstractMarshallableKeyValueTest {
+final class AbstractMarshallableKeyValueTest {
 
     @Test
-    public void shouldAcceptAbstractMarshallableComponents() throws Exception {
+    void shouldAcceptAbstractMarshallableComponents() throws Exception {
         final ChronicleMap<Key, Value> map = ChronicleMapBuilder.of(Key.class, Value.class).entries(10).
                 averageKey(new Key()).averageValue(new Value()).create();
 
@@ -24,7 +24,7 @@ public final class AbstractMarshallableKeyValueTest {
     }
 
     @Test
-    public void shouldAcceptAbstractMarshallableComponents2() throws Exception {
+    void shouldAcceptAbstractMarshallableComponents2() throws Exception {
         final ChronicleMap<Key, Marshallable> map = ChronicleMapBuilder.of(Key.class, Marshallable.class).entries(10)
                 .averageKey(new Key()).averageValue(new Value())
                 .valueMarshaller(new TypedMarshallableReaderWriter<>(Marshallable.class))

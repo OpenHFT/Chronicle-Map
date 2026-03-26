@@ -14,10 +14,10 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
-public class DirtyReadVictimIPCTest {
+class DirtyReadVictimIPCTest {
 
     @BeforeEach
-    public void longRunningStableOnLinux() {
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
@@ -34,7 +34,7 @@ public class DirtyReadVictimIPCTest {
      */
 
     @Test
-    public void mainOptimisticNegative() throws IOException {
+    void mainOptimisticNegative() throws IOException {
         try {
             System.out.println("\n*****   Optimistic (-) Test\n");
 //            ProcessBuilder pb = new ProcessBuilder(
@@ -85,7 +85,7 @@ public class DirtyReadVictimIPCTest {
                             "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-    ; // none
+                ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -152,7 +152,7 @@ public class DirtyReadVictimIPCTest {
     }
 
     @Test
-    public void mainOptimisticPositive() {
+    void mainOptimisticPositive() {
         System.out.println("\n*****   Optimistic (+) Test\n");
         try {
             /*
@@ -174,7 +174,7 @@ public class DirtyReadVictimIPCTest {
                             + "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-    ; // none
+                ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

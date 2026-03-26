@@ -14,10 +14,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ParallelStartupTest {
+class ParallelStartupTest {
 
     @RepeatedTest(5)
-    public void test() throws InterruptedException {
+    void test() throws InterruptedException {
         final File file = assertDoesNotThrow(() -> IOTools.createTempFile("issue342"));
         Thread[] thread = new Thread[16];
         AtomicInteger succ = new AtomicInteger();

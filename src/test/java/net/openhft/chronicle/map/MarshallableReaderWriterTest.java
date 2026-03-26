@@ -13,11 +13,12 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Objects;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class MarshallableReaderWriterTest {
+class MarshallableReaderWriterTest {
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyOrder.class);
 
         try (ChronicleMap<CharSequence, MyOrder> map = ChronicleMap
@@ -43,7 +44,7 @@ public class MarshallableReaderWriterTest {
         }
     }
 
-    public static class MyOrder extends SelfDescribingMarshallable {
+    static class MyOrder extends SelfDescribingMarshallable {
         private String instrument;
         private String orderId;
 

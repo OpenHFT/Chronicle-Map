@@ -19,7 +19,7 @@ import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.FAIL;
 import static net.openhft.chronicle.map.BiMapTest.DualLockSuccess.SUCCESS;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class BiMapTest {
+class BiMapTest {
 
     private static <K, V> void verifyBiMapConsistent(Map<K, V> m1, Map<V, K> m2) {
         assertEquals(m1.size(), m2.size());
@@ -29,7 +29,7 @@ public class BiMapTest {
     }
 
     @Test
-    public void biMapTest() throws InterruptedException, ExecutionException {
+    void biMapTest() throws InterruptedException, ExecutionException {
         BiMapEntryOperations<Integer, CharSequence> biMapOps1 = new BiMapEntryOperations<>();
         ChronicleMap<Integer, CharSequence> map1 = ChronicleMapBuilder
                 .of(Integer.class, CharSequence.class)

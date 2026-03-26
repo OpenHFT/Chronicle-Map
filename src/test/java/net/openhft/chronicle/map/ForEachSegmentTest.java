@@ -13,13 +13,13 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class ForEachSegmentTest {
+class ForEachSegmentTest {
     static {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyDto.class);
     }
 
     @Test
-    public void forEachSegmentEntryWhileReleasesLock() throws IOException {
+    void forEachSegmentEntryWhileReleasesLock() throws IOException {
         ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.simpleMapOf(Integer.class, MyDto.class)
                 .entries(256)
                 .actualSegments(1);
@@ -38,7 +38,7 @@ public class ForEachSegmentTest {
     }
 
     @Test
-    public void stressTest() throws IOException, InterruptedException {
+    void stressTest() throws IOException, InterruptedException {
         ChronicleMapBuilder<Integer, MyDto> builder = ChronicleMapBuilder.simpleMapOf(Integer.class, MyDto.class)
                 .entries(256)
                 .actualSegments(1);

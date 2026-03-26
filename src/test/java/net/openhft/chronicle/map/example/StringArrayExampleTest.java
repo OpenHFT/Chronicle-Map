@@ -18,7 +18,7 @@ public class StringArrayExampleTest {
     private final CharSequenceArray charSequenceArray = Values.newHeapInstance(CharSequenceArray.class);
 
     @Test
-    public void examplePutAndGet() {
+    void examplePutAndGet() {
         ChronicleMap<Integer, CharSequenceArray> map = ChronicleMapBuilder
                 .of(Integer.class, CharSequenceArray.class)
                 .entries(100)

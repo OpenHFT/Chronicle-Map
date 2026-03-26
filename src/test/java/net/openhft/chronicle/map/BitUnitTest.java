@@ -5,17 +5,17 @@ package net.openhft.chronicle.map;
 
 import org.junit.jupiter.api.Test;
 
-public class BitUnitTest {
+class BitUnitTest {
 
     @Test
-    public void testToBits() {
+    void testToBits() {
     }
 
     @Test
-    public void testToMegaBits() {
+    void testToMegaBits() {
     }
 
     @Test
-    public void testToGigaBits() {
+    void testToGigaBits() {
     }
 }

@@ -9,9 +9,10 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class BloatFactorTest {
+class BloatFactorTest {
 
     private static final int EXPECTED_MAX_BLOAT_FACTOR = 100;
 
@@ -21,7 +22,7 @@ public class BloatFactorTest {
      * @throws IOException IOException
      */
     @Test
-    public void bloatFactorTest() throws IOException {
+    void bloatFactorTest() throws IOException {
 
         File cmap = File.createTempFile("chron", "cmap");
 

@@ -11,10 +11,10 @@ import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SerializableDataAccessTest {
+class SerializableDataAccessTest {
 
     @Test
-    public void testSerializableDataAccess() {
+    void testSerializableDataAccess() {
         SerializableDataAccess<SerializableTest.Foo> sda = new SerializableDataAccess<>();
         sda.initTransients(8192);
 

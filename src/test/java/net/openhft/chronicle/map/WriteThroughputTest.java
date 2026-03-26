@@ -14,10 +14,10 @@ import java.util.stream.IntStream;
 /**
  * Created by Peter Lawrey on 12/05/15.
  */
-public class WriteThroughputTest {
+class WriteThroughputTest {
     @Disabled("Long running")
     @Test
-    public void bandwidthTest() throws IOException {
+    void bandwidthTest() throws IOException {
         int count = 2000;
         int size = 50 << 10;
 
@@ -62,7 +62,7 @@ public class WriteThroughputTest {
 
     @Disabled("TODO")
     @Test
-    public void bandwidthTestZ() throws IOException {
+    void bandwidthTestZ() throws IOException {
         int count = 2 << 10;
         int size = 50 << 10;
 

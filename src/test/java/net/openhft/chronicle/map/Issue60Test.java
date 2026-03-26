@@ -4,12 +4,13 @@
 package net.openhft.chronicle.map;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class Issue60Test {
+class Issue60Test {
 
     @Test
-    public void issue60Test() {
+    void issue60Test() {
         int entries = 200;
         int maxBloatFactor = 10;
         int loop = 1000;
@@ -42,12 +43,12 @@ public class Issue60Test {
     }
 
     @Test
-    public void maxBloatFactorShouldBeLessThan1000() {
+    void maxBloatFactorShouldBeLessThan1000() {
         assertThrows(IllegalArgumentException.class, () -> ChronicleMapBuilder.of(String.class, String.class).maxBloatFactor(1000.01));
     }
 
     @Test
-    public void testIllegalMaxBloatFactor() {
+    void testIllegalMaxBloatFactor() {
         assertThrows(IllegalArgumentException.class, () -> ChronicleMapBuilder.of(Object.class, Object.class).maxBloatFactor(0.0));
     }
 }

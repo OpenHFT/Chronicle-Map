@@ -12,15 +12,16 @@ import net.openhft.chronicle.values.Values;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class OffHeapByteArrayExampleTest {
+class OffHeapByteArrayExampleTest {
 
     public static final char EXPECTED = 'b';
     private static ChronicleMap<LongValue, ByteArray> chm;
 
     @BeforeAll
-    public static void beforeClass() {
+    static void beforeClass() {
         chm = ChronicleMapBuilder
                 .of(LongValue.class, ByteArray.class)
                 .entries(1000)
@@ -28,13 +29,13 @@ public class OffHeapByteArrayExampleTest {
     }
 
     @AfterAll
-    public static void afterClass() {
+    static void afterClass() {
         if (chm != null)
             chm.close();
     }
 
     @Test
-    public void test() {
+    void test() {
 
         // this objects will be reused
         ByteValue byteValue = Values.newHeapInstance(ByteValue.class);

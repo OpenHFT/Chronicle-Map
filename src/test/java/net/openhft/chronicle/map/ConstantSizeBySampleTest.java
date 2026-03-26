@@ -15,10 +15,10 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
-public class ConstantSizeBySampleTest {
+class ConstantSizeBySampleTest {
 
     @Test
-    public void testConstantKeys() {
+    void testConstantKeys() {
         try (ChronicleMap<byte[], Long> map = ChronicleMapBuilder.of(byte[].class, Long.class)
                 .constantKeySizeBySample(new byte[8])
                 .entries(100)
@@ -38,7 +38,7 @@ public class ConstantSizeBySampleTest {
     }
 
     @Test
-    public void testUnexpectedlyLongConstantByteArrayValues() throws IOException {
+    void testUnexpectedlyLongConstantByteArrayValues() throws IOException {
         try (ChronicleMap<Long, byte[]> map = ChronicleMapBuilder.of(Long.class, byte[].class)
                 .constantValueSizeBySample(new byte[512 * 1024])
                 .entries(100)
@@ -53,7 +53,7 @@ public class ConstantSizeBySampleTest {
     }
 
     @Test
-    public void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
+    void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
         try (ChronicleMap<Long, ExternalizableData> map =
                      ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
                              .valueReaderAndDataAccess(new ExternalizableDataReader(),
@@ -70,7 +70,7 @@ public class ConstantSizeBySampleTest {
     }
 
     @Test
-    public void testUnexpectedlyLongConstantSerializableValues() throws IOException {
+    void testUnexpectedlyLongConstantSerializableValues() throws IOException {
         try (ChronicleMap<Long, SerializableData> map =
                      ChronicleMapBuilder.of(Long.class, SerializableData.class)
                              .constantValueSizeBySample(new SerializableData())

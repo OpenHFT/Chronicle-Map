@@ -14,9 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by peter.lawrey on 28/02/14.
  */
-public class KeySizesTest {
+class KeySizesTest {
     @Test
-    public void testDifferentKeySizes() throws IOException {
+    void testDifferentKeySizes() throws IOException {
 
         Map<String, String> map = ChronicleMap.of(String.class, String.class)
                 .entries(100).averageKeySize(100).averageValueSize(100).create();

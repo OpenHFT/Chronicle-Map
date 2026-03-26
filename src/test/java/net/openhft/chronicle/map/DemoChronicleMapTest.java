@@ -29,10 +29,10 @@ interface DemoOrderVOInterface {
 
 }
 
-public class DemoChronicleMapTest {
+class DemoChronicleMapTest {
 
     @Test
-    public void testMap() throws IOException {
+    void testMap() throws IOException {
         File file = File.createTempFile("DummyOrders" + System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
@@ -75,7 +75,7 @@ public class DemoChronicleMapTest {
     }
 
     @Test
-    public void testMapLocked() throws IOException {
+    void testMapLocked() throws IOException {
         File file = File.createTempFile("DummyOrders-" + System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
@@ -122,12 +122,12 @@ public class DemoChronicleMapTest {
     }
 
     @Test
-    public void testNegativeIllegalAlignment() {
-	assertThrows(IllegalArgumentException.class, () -> ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(-1));
+    void testNegativeIllegalAlignment() {
+        assertThrows(IllegalArgumentException.class, () -> ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(-1));
     }
 
     @Test
-    public void testNotPowerOfTwoIllegalAlignment() {
-	assertThrows(IllegalArgumentException.class, () -> ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13));
+    void testNotPowerOfTwoIllegalAlignment() {
+        assertThrows(IllegalArgumentException.class, () -> ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13));
     }
 }

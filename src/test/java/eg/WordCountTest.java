@@ -23,7 +23,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.reducing;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class WordCountTest {
+class WordCountTest {
 
     static String[] words;
     static Map<CharSequence, Integer> expectedMap;
@@ -48,7 +48,7 @@ public class WordCountTest {
     }
 
     @Test
-    public void wordCountTest() {
+    void wordCountTest() {
         try (ChronicleMap<CharSequence, IntValue> map = ChronicleMap
                 .of(CharSequence.class, IntValue.class)
                 .averageKeySize(7) // average word is 7 ascii bytes long (text in english)

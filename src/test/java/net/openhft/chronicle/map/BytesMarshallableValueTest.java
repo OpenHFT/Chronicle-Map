@@ -5,12 +5,13 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class BytesMarshallableValueTest {
+class BytesMarshallableValueTest {
 
     @Test
-    public void bytesMarshallableValueTest() {
+    void bytesMarshallableValueTest() {
         try (ChronicleMap<Integer, Value> map = ChronicleMap
                 .of(Integer.class, Value.class)
                 .averageValue(new Value(1, "foo"))
@@ -22,7 +23,7 @@ public class BytesMarshallableValueTest {
         }
     }
 
-    public static class Value implements BytesMarshallable {
+    static class Value implements BytesMarshallable {
         int x;
         String foo;
 

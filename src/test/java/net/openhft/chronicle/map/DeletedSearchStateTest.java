@@ -4,12 +4,13 @@
 package net.openhft.chronicle.map;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DeletedSearchStateTest {
+class DeletedSearchStateTest {
 
     @Test
-    public void deletedSearchStateTest() {
+    void deletedSearchStateTest() {
         ChronicleMap<Integer, Integer> map =
                 ChronicleMapBuilder.of(Integer.class, Integer.class).entries(100).create();
 

@@ -7,12 +7,13 @@ import net.openhft.chronicle.core.OS;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class Issue42Test {
+class Issue42Test {
 
     @Test
-    public void crashJVMWindowsTest() throws IOException {
+    void crashJVMWindowsTest() throws IOException {
 
         if (!OS.isWindows())
             return;

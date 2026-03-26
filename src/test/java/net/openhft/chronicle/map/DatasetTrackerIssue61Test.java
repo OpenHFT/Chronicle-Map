@@ -7,13 +7,14 @@ import net.openhft.chronicle.set.Builder;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
-public class DatasetTrackerIssue61Test {
+class DatasetTrackerIssue61Test {
 
     @Test
-    public void issue61Test() throws IOException {
+    void issue61Test() throws IOException {
 
         // replace Externalizable with DatasetTrackerIssue61Test to make this work
         ChronicleMapBuilder<String, Externalizable> builder = ChronicleMapBuilder

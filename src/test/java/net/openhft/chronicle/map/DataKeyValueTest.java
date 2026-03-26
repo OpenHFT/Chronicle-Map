@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class DataKeyValueTest {
+class DataKeyValueTest {
 
     @Test
-    public void dataKeyValueTest() {
+    void dataKeyValueTest() {
         ChronicleMap<IntValue, LongValue> map =
                 ChronicleMapBuilder.of(IntValue.class, LongValue.class)
                         .entries(1000).create();

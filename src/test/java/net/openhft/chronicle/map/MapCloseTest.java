@@ -15,10 +15,10 @@ import static net.openhft.chronicle.map.ChronicleMap.of;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class MapCloseTest {
+class MapCloseTest {
 
     @Test
-    public void closeInContextTest() {
+    void closeInContextTest() {
         ChronicleMap<Integer, Integer> map =
                 of(Integer.class, Integer.class).entries(1).create();
         ExternalMapQueryContext<Integer, Integer, ?> cxt = map.queryContext(1);
@@ -26,7 +26,7 @@ public class MapCloseTest {
     }
 
     @Test
-    public void testGetAfterCloseThrowsChronicleHashClosedException() throws InterruptedException {
+    void testGetAfterCloseThrowsChronicleHashClosedException() throws InterruptedException {
         assertThrows(ChronicleHashClosedException.class, () -> {
             ChronicleMap<Integer, Integer> map =
                     of(Integer.class, Integer.class).entries(1).create();
@@ -38,9 +38,9 @@ public class MapCloseTest {
     }
 
     @Test
-    public void testIterationAfterCloseThrowsChronicleHashClosedException()
+    void testIterationAfterCloseThrowsChronicleHashClosedException()
             throws InterruptedException {
-                assertThrows(ChronicleHashClosedException.class, () -> {
+        assertThrows(ChronicleHashClosedException.class, () -> {
             ChronicleMap<Integer, Integer> map =
                     of(Integer.class, Integer.class).entries(1).create();
             Thread t = new Thread(map::close);
@@ -48,24 +48,24 @@ public class MapCloseTest {
             t.join();
             map.forEach((k, v) -> {
             });
-                });
-            }
+        });
+    }
 
     @Test
-    public void testSizeAfterCloseThrowsChronicleHashClosedException()
+    void testSizeAfterCloseThrowsChronicleHashClosedException()
             throws InterruptedException {
-                assertThrows(ChronicleHashClosedException.class, () -> {
+        assertThrows(ChronicleHashClosedException.class, () -> {
             ChronicleMap<Integer, Integer> map =
                     of(Integer.class, Integer.class).entries(1).create();
             Thread t = new Thread(map::close);
             t.start();
             t.join();
             map.size();
-                });
-            }
+        });
+    }
 
     @Test
-    public void closeWithContextInAnotherThreadTest() throws InterruptedException {
+    void closeWithContextInAnotherThreadTest() throws InterruptedException {
         LOCK_TIMEOUT_SECONDS = 2;
         ChronicleMap<Integer, Integer> map =
                 of(Integer.class, Integer.class).entries(1).create();
@@ -93,7 +93,7 @@ public class MapCloseTest {
     }
 
     @Test
-    public void testRemainingAutoResizesAfterClose() {
+    void testRemainingAutoResizesAfterClose() {
         assertThrows(ChronicleHashClosedException.class, () -> {
             ChronicleMap<Integer, Integer> map = of(Integer.class, Integer.class).entries(1).create();
             map.close();
@@ -102,7 +102,7 @@ public class MapCloseTest {
     }
 
     @Test
-    public void vanillaChronicleHashAllContextsExpungeTest() throws InterruptedException {
+    void vanillaChronicleHashAllContextsExpungeTest() throws InterruptedException {
         VanillaChronicleMap<Integer, Integer, Void> map =
                 (VanillaChronicleMap<Integer, Integer, Void>)
                         of(Integer.class, Integer.class).entries(1).create();

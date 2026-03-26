@@ -7,9 +7,9 @@ import net.openhft.chronicle.values.Array;
 import net.openhft.chronicle.values.Values;
 import org.junit.jupiter.api.Test;
 
-public class Issue110Test {
+class Issue110Test {
     @Test
-    public void testChronicleDoubleArray() {
+    void testChronicleDoubleArray() {
         ChronicleMap<String, IContainer> map =
                 ChronicleMapBuilder.of(String.class, IContainer.class)
                         .entries(1024)

@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.util.Random;
 
-public class Issue3Test {
+class Issue3Test {
 
     @Disabled("https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
     @Test
-    public void test() throws IOException {
+    void test() throws IOException {
         try (ChronicleSet<Long> set = ChronicleSetBuilder.of(Long.class)
                 .actualSegments(1)
                 .entriesPerSegment(1000)

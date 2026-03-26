@@ -9,18 +9,18 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-public class GlobalMutableStateTest {
+class GlobalMutableStateTest {
 
     private String dumpCode;
 
     @BeforeEach
-    public void setDumpCode() {
+    void setDumpCode() {
         dumpCode = System.getProperty("dvg.dumpCode");
         System.setProperty("dvg.dumpCode", "true");
     }
 
     @AfterEach
-    public void unsetDumpCode() {
+    void unsetDumpCode() {
         if (dumpCode != null)
             System.setProperty("dvg.dumpCode", dumpCode);
         else
@@ -28,7 +28,7 @@ public class GlobalMutableStateTest {
     }
 
     @Test
-    public void globalMutableStateTest() {
+    void globalMutableStateTest() {
         Values.newNativeReference(ReplicatedGlobalMutableStateV2.class);
         Values.newNativeReference(VanillaGlobalMutableState.class);
     }

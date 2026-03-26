@@ -5,12 +5,13 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.set.ChronicleSet;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ChronicleMapNameTest {
+class ChronicleMapNameTest {
 
     @Test
-    public void testChronicleMapName() {
+    void testChronicleMapName() {
         ChronicleMap<Integer, Integer> map = ChronicleMap
                 .of(Integer.class, Integer.class)
                 .entries(1)
@@ -20,7 +21,7 @@ public class ChronicleMapNameTest {
     }
 
     @Test
-    public void testChronicleSetName() {
+    void testChronicleSetName() {
         ChronicleSet<Integer> set = ChronicleSet
                 .of(Integer.class)
                 .entries(1)

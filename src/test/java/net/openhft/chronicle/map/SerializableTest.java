@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class SerializableTest {
     @Test
-    public void test1() {
+    void test1() {
         for (int i = 512; i < 514; i++) {
             System.out.println(i);
             try (ChronicleMap<Integer, Foo> map = ChronicleMapBuilder.of(Integer.class, Foo.class)
@@ -39,7 +39,7 @@ public class SerializableTest {
     }
 
     @Test
-    public void test2() {
+    void test2() {
         ChronicleMap<Integer, Foo> map = ChronicleMapBuilder.of(Integer.class, Foo.class)
                 .name("bar")
                 .averageValueSize(4096)
@@ -56,7 +56,7 @@ public class SerializableTest {
     }
 
     @Test
-    public void test2b() {
+    void test2b() {
         ChronicleMap<Integer, Bar> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar.class)
                 .name("bar")
                 .averageValueSize(4096)
@@ -75,7 +75,7 @@ public class SerializableTest {
     }
 
     @Test
-    public void test2c() {
+    void test2c() {
         ChronicleMap<Integer, Bar2> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar2.class)
                 .name("bar")
                 .averageValueSize(1024)
@@ -94,7 +94,7 @@ public class SerializableTest {
     }
 
     @Test
-    public void test2d() {
+    void test2d() {
         // if you create the Map of value type == Marshallable then it will use a TypedMarshallableReaderWriter
         ChronicleMap<Integer, Marshallable> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Marshallable.class)
                 .name("bar")
@@ -115,7 +115,7 @@ public class SerializableTest {
     }
 
     @Test
-    public void test2e() {
+    void test2e() {
         ChronicleMap<Integer, Bar> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar.class)
                 .name("bar")
                 .averageValueSize(4096)
@@ -133,8 +133,9 @@ public class SerializableTest {
 
         assertEquals(expected, actual);
     }
+
     @Test
-    public void test2f() {
+    void test2f() {
         ChronicleMap<Integer, Bar2> map = ChronicleMapBuilder.simpleMapOf(Integer.class, Bar2.class)
                 .name("bar")
                 .averageValueSize(1024)

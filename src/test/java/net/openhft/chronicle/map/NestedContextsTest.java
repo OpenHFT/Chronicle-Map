@@ -16,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class NestedContextsTest {
+class NestedContextsTest {
 
     private static void verifyGraphConsistent(ChronicleMap<Integer, Set<Integer>> graph) {
         graph.forEach((node, neighbours) ->
@@ -150,7 +150,7 @@ public class NestedContextsTest {
     }
 
     @Test
-    public void nestedContextsTest() throws ExecutionException, InterruptedException {
+    void nestedContextsTest() throws ExecutionException, InterruptedException {
         HashSet<Integer> averageValue = new HashSet<>();
         for (int i = 0; i < 5; i++) {
             averageValue.add(i);
@@ -195,7 +195,7 @@ public class NestedContextsTest {
     }
 
     @Test
-    public void negativeEntriesTest() {
-	assertThrows(IllegalArgumentException.class, () -> ChronicleMap.of(Integer.class, Set.class).entries(-1L).create());
+    void negativeEntriesTest() {
+        assertThrows(IllegalArgumentException.class, () -> ChronicleMap.of(Integer.class, Set.class).entries(-1L).create());
     }
 }

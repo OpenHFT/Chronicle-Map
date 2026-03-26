@@ -21,10 +21,10 @@ import java.util.concurrent.locks.LockSupport;
 /**
  * Created by Borislav Ivanov on 5/29/15.
  */
-public class ChronicleMapSanityCheckTest {
+class ChronicleMapSanityCheckTest {
 
     @Test
-    public void testSanity1() throws IOException, InterruptedException {
+    void testSanity1() throws IOException, InterruptedException {
 
         String tmp = OS.getTarget();
 

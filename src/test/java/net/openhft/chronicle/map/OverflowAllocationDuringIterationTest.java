@@ -6,11 +6,11 @@ package net.openhft.chronicle.map;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class OverflowAllocationDuringIterationTest {
+class OverflowAllocationDuringIterationTest {
 
     @Disabled("https://teamcity.chronicle.software/viewLog.html?buildId=639359&buildTypeId=Chronicle_ChronicleMap_SnapshotARM")
     @Test
-    public void testOverflowAllocationDuringIteration() {
+    void testOverflowAllocationDuringIteration() {
         int entries = 10000;
         String x = "x";
         try (ChronicleMap<Integer, CharSequence> map = ChronicleMapBuilder

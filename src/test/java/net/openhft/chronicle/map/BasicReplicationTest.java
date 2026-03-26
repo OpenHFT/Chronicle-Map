@@ -23,14 +23,14 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class BasicReplicationTest {
+class BasicReplicationTest {
 
     private static byte asByte(final int i) {
         return (byte) i;
     }
 
     @Test
-    public void shouldReplicate() {
+    void shouldReplicate() {
         final ChronicleMapBuilder<String, String> builder = ChronicleMap.of(String.class, String.class)
                 .entries(1000).averageKeySize(7).averageValueSize(7);
         try (

@@ -14,18 +14,18 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class DirtyReadVictimTest {
+class DirtyReadVictimTest {
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
     }
 
     @Test
-    public void main() {
+    void main() {
         try {
             /*
              *  ben.cotton@rutgers.edu   START
@@ -33,7 +33,7 @@ public class DirtyReadVictimTest {
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/OPERAND_CHRONICLE_MAP"
-/*                            "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"*/
+                            /*                            "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"*/
                     );
             Double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
@@ -47,7 +47,7 @@ public class DirtyReadVictimTest {
                     /*"C:\\Users\\buddy\\dev\\shm\\OPERAND_ChronicleStampedLock"*/
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-    ; // none
+                ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

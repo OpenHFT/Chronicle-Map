@@ -17,15 +17,15 @@ import static org.junit.jupiter.api.Assumptions.*;
  * is always granted (i.e. csl.tryReadLock()  ALWAYS returns true)
  */
 
-public class DirtyReadIntolerant_ReaderReader_Test {
+class DirtyReadIntolerant_ReaderReader_Test {
 
     @BeforeEach
-    public void longRunningStableOnLinux() {
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
     @Test
-    public void main() {
+    void main() {
         try {
             long sleepMock = Long.parseLong("5");
             long holdTime = Long.parseLong("25");

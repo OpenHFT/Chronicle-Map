@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class NestedContextsInIterationContextTest {
+class NestedContextsInIterationContextTest {
 
     @Test
-    public void testNestedGetsInIterationContextAllowed() {
+    void testNestedGetsInIterationContextAllowed() {
         try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .entries(100)
@@ -21,7 +21,7 @@ public class NestedContextsInIterationContextTest {
     }
 
     @Test
-    public void testNestedPutsInIterationContextForbidden() {
+    void testNestedPutsInIterationContextForbidden() {
         assertThrows(IllegalStateException.class, () -> {
             try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                     .of(Integer.class, Integer.class)
@@ -34,7 +34,7 @@ public class NestedContextsInIterationContextTest {
     }
 
     @Test
-    public void testNestedUpdatesDifferentSegmentInIterationContextForbidden() {
+    void testNestedUpdatesDifferentSegmentInIterationContextForbidden() {
         try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .entries(100)
@@ -77,7 +77,7 @@ public class NestedContextsInIterationContextTest {
     }
 
     @Test
-    public void testNestedWritesDifferentSegmentInIterationContextForbidden() {
+    void testNestedWritesDifferentSegmentInIterationContextForbidden() {
         try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .entries(100)
@@ -120,7 +120,7 @@ public class NestedContextsInIterationContextTest {
     }
 
     @Test
-    public void testNestedReadDifferentSegmentInIterationContextAllowed() {
+    void testNestedReadDifferentSegmentInIterationContextAllowed() {
         try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                 .of(Integer.class, Integer.class)
                 .entries(100)
@@ -157,7 +157,7 @@ public class NestedContextsInIterationContextTest {
     }
 
     @Test
-    public void testNestedIterationInIterationContextForbidden() {
+    void testNestedIterationInIterationContextForbidden() {
         assertThrows(IllegalStateException.class, () -> {
             try (ChronicleMap<Integer, Integer> map = ChronicleMapBuilder
                     .of(Integer.class, Integer.class)

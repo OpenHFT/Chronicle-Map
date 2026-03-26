@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class MemoryLeaksTest {
+class MemoryLeaksTest {
 
     /**
      * Accounting {@link CountedStringReader} creation and finalization. All serializers,
@@ -64,7 +64,7 @@ public class MemoryLeaksTest {
     }
 
     @BeforeEach
-    public void resetSerializerCount() {
+    void resetSerializerCount() {
         System.err.println("This test is expect to print 'ChronicleMap ... is not closed manually, cleaned up from Cleaner'");
         serializerCount.set(0);
     }
@@ -72,7 +72,7 @@ public class MemoryLeaksTest {
     @Timeout(value = 10, unit = TimeUnit.SECONDS)
     @ParameterizedTest
     @MethodSource("data")
-    public void testChronicleMapCollectedAndDirectMemoryReleased(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) throws IOException {
+    void testChronicleMapCollectedAndDirectMemoryReleased(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) throws IOException {
         assumeFalse(OS.isMacOSX());
         ChronicleMapBuilder<IntValue, String> builder = createBuilder(replicated);
         // This test is flaky in Linux and Mac OS apparently because some native memory from
@@ -136,7 +136,7 @@ public class MemoryLeaksTest {
     @Timeout(value = 60, unit = TimeUnit.SECONDS)
     @ParameterizedTest
     @MethodSource("data")
-    public void testExplicitChronicleMapCloseReleasesMemory(String testType, boolean replicated, boolean persisted, boolean closeWithinContext)
+    void testExplicitChronicleMapCloseReleasesMemory(String testType, boolean replicated, boolean persisted, boolean closeWithinContext)
             throws IOException, InterruptedException {
         ChronicleMapBuilder<IntValue, String> builder = createBuilder(replicated);
         long nativeMemoryUsedBeforeMap = nativeMemoryUsed(persisted);

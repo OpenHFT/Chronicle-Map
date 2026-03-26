@@ -18,10 +18,10 @@ import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static net.openhft.chronicle.algo.hashing.LongHashFunction.xx_r39;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class TrickyContextCasesTest {
+class TrickyContextCasesTest {
 
     @Test
-    public void nestedContextsSameKeyTest() {
+    void nestedContextsSameKeyTest() {
         assertThrows(IllegalStateException.class, () -> {
             ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
                     .of(Integer.class, IntValue.class)
@@ -45,7 +45,7 @@ public class TrickyContextCasesTest {
     }
 
     @Test
-    public void testPutShouldBeWriteLocked() {
+    void testPutShouldBeWriteLocked() {
         assertThrows(Exception.class, () -> {
             ChronicleMap<Integer, byte[]> map = ChronicleMapBuilder
                     .of(Integer.class, byte[].class)
@@ -57,7 +57,7 @@ public class TrickyContextCasesTest {
                 MapEntry<Integer, byte[]> entry = q.entry(); // acquires read lock implicitly
                 assertNotNull(entry);
                 Executors.newFixedThreadPool(1,
-                        new NamedThreadFactory("test"))
+                                new NamedThreadFactory("test"))
                         .submit(() -> {
                             // this call should try to acquire write lock, that should lead to dead lock
                             // but if not...
@@ -73,7 +73,7 @@ public class TrickyContextCasesTest {
     }
 
     @Test
-    public void testHashCollision() {
+    void testHashCollision() {
         try (ChronicleMap<ByteBuffer, Integer> map = ChronicleMap
                 .of(ByteBuffer.class, Integer.class)
                 .constantKeySizeBySample(ByteBuffer.allocate(128))

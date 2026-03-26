@@ -10,10 +10,10 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 
-public class ArrayTest {
+class ArrayTest {
     // don't use Double[] as it uses ~3.5x the memory of a double[]
     @Test
-    public void testDoubleArray() throws IOException {
+    void testDoubleArray() throws IOException {
         File file = new File(OS.getTarget() + "/testDoubleArray-" + Time.uniqueId());
         ChronicleMap<Long, double[]> writeMap = ChronicleMapBuilder
                 .of(Long.class, double[].class)
@@ -33,7 +33,7 @@ public class ArrayTest {
 
     // don't use Long[] as it uses ~3.5x the memory of a long[]
     @Test
-    public void testLongArray() throws IOException {
+    void testLongArray() throws IOException {
         File file = new File(OS.getTarget() + "/testLongArray-" + Time.uniqueId());
         ChronicleMap<Long, long[]> writeMap = ChronicleMapBuilder
                 .of(Long.class, long[].class)

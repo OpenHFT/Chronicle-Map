@@ -13,11 +13,11 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class RecursiveRefereneChMapTest {
+class RecursiveRefereneChMapTest {
     public static final String TMP = OS.getTarget();
 
     @Test
-    public void testRecursive() throws IOException {
+    void testRecursive() throws IOException {
         File file = new File(TMP + "/test." + Time.uniqueId() + ".tmp");
         file.deleteOnExit();
         Map<String, StupidCycle> map = ChronicleMapBuilder.of(String.class, StupidCycle.class)
@@ -33,13 +33,13 @@ public class RecursiveRefereneChMapTest {
     }
 
     @SuppressWarnings("serial")
-    public static class StupidCycle implements Serializable {
+    static class StupidCycle implements Serializable {
         int dummy;
         Object[] cycle = {this};
     }
 
     @SuppressWarnings("serial")
-    public static class StupidCycle2 extends StupidCycle implements Externalizable {
+    static class StupidCycle2 extends StupidCycle implements Externalizable {
         public void writeExternal(ObjectOutput out) throws IOException {
             out.writeInt(dummy);
             out.writeObject(cycle);

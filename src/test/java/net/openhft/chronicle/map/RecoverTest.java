@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static net.openhft.chronicle.map.ChronicleMapTest.getPersistenceFile;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class RecoverTest {
+class RecoverTest {
 
     Logger LOG = LoggerFactory.getLogger(RecoverTest.class);
 
@@ -36,7 +36,7 @@ public class RecoverTest {
 
     @Disabled("HCOLL-422")
     @Test
-    public void recoverTest() throws IOException, ExecutionException, InterruptedException {
+    void recoverTest() throws IOException, ExecutionException, InterruptedException {
         File mapFile = File.createTempFile("recoverTestFile", ".map");
         mapFile.deleteOnExit();
 
@@ -112,7 +112,7 @@ public class RecoverTest {
     }
 
     @Test
-    public void testCorruptedEntryRecovery() throws IOException {
+    void testCorruptedEntryRecovery() throws IOException {
         File file = getPersistenceFile();
         try (ChronicleMap<Integer, LongValue> map = ChronicleMap
                 .of(Integer.class, LongValue.class)

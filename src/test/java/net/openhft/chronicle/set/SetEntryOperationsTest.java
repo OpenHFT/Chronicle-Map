@@ -7,12 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class SetEntryOperationsTest {
+class SetEntryOperationsTest {
 
     @Test
-    public void setEntryOperationsTest() {
+    void setEntryOperationsTest() {
         AtomicInteger insertCounter = new AtomicInteger();
         AtomicInteger remoteCounter = new AtomicInteger();
         try (ChronicleSet<String> fruits = ChronicleSet

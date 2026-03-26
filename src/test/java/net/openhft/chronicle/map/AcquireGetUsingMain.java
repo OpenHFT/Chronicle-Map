@@ -13,7 +13,7 @@ import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AcquireGetUsingMain {
+class AcquireGetUsingMain {
     public static void main(String[] args) throws IOException {
         File file = new File(OS.getTarget() + "/test1");
         ChronicleMap<String, Data> theSharedMap =

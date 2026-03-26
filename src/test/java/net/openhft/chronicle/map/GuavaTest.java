@@ -20,8 +20,9 @@ import java.util.Map;
 import static com.google.common.collect.testing.MapTestSuiteBuilder.using;
 import static com.google.common.collect.testing.features.MapFeature.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
-public class GuavaTest {
+class GuavaTest {
 
     public static Test suite() {
         MapTestSuiteBuilder<String, String> chmSuite = using(new CHMTestGenerator());

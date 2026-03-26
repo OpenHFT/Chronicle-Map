@@ -15,15 +15,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class DirtyReadVictimTest {
+class DirtyReadVictimTest {
 
     @BeforeEach
-    public void longRunningStableOnLinux() {
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
     @Test
-    public void mainOptimisticNegative() throws IOException {
+    void mainOptimisticNegative() throws IOException {
         try {
             System.out.println("\n*****   Optimistic (-) Test\n");
 
@@ -115,7 +115,7 @@ public class DirtyReadVictimTest {
     }
 
     @Test
-    public void mainOptimisticPositive() {
+    void mainOptimisticPositive() {
         System.out.println("\n*****   Optimistic (+) Test\n");
         try {
             /*

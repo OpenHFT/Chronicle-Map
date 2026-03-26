@@ -4,12 +4,13 @@
 package net.openhft.chronicle.map;
 
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class NoUpperBoundChunksPerEntryTest {
+class NoUpperBoundChunksPerEntryTest {
 
     @Test
-    public void noUpperBoundChunksPerEntryTest() {
+    void noUpperBoundChunksPerEntryTest() {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                         .averageValueSize(2).entries(10000L).actualSegments(1).create();

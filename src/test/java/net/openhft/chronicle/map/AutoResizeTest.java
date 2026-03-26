@@ -10,17 +10,18 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class AutoResizeTest {
+class AutoResizeTest {
 
     @BeforeAll
-    public static void setup() {
+    static void setup() {
         Jvm.setExceptionHandlers(null, null, null);
     }
 
     @AfterAll
-    public static void reset() {
+    static void reset() {
         Jvm.resetExceptionHandlers();
     }
 
@@ -30,7 +31,7 @@ public class AutoResizeTest {
      * @throws IOException IOException
      */
     @Test
-    public void testAutoResizeNotZeroUponRestart() throws IOException {
+    void testAutoResizeNotZeroUponRestart() throws IOException {
 
         File cmap = File.createTempFile("chron", "cmap");
 
@@ -55,7 +56,7 @@ public class AutoResizeTest {
     }
 
     @Test
-    public void testAutoResizeNotZeroUponRestart2() {
+    void testAutoResizeNotZeroUponRestart2() {
 
         try (ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
@@ -69,9 +70,9 @@ public class AutoResizeTest {
     }
 
     @Test
-    public void testNegativeReplication() {
+    void testNegativeReplication() {
         assertThrows(IllegalArgumentException.class, () -> {
-    	ChronicleMapBuilder.of(String.class, String.class).replication((byte) -1);
+            ChronicleMapBuilder.of(String.class, String.class).replication((byte) -1);
         });
     }
 }

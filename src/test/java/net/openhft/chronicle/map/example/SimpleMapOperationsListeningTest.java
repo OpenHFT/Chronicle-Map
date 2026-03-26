@@ -14,10 +14,10 @@ import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingMapEntryOperations.simpleLoggingMapEntryOperations;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class SimpleMapOperationsListeningTest {
+class SimpleMapOperationsListeningTest {
 
     @Test
-    public void simpleLoggingTest() {
+    void simpleLoggingTest() {
         ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
                 .of(Integer.class, IntValue.class)
                 .entries(100)

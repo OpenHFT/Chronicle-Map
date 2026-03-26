@@ -14,12 +14,13 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ChecksumEntryTest {
+class ChecksumEntryTest {
 
     @Test
-    public void testChecksumEntriesWithValueInterface() throws IOException {
+    void testChecksumEntriesWithValueInterface() throws IOException {
         File file = Builder.getPersistenceFile();
 
         try (ChronicleMap<Integer, LongValue> map = ChronicleMap

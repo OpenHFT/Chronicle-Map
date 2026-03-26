@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class PortfolioValueTest {
+class PortfolioValueTest {
     private static final boolean useIterator = true;
     private static final long nAssets = 10_000_000;
     private static final int nThreads = Runtime.getRuntime().availableProcessors();
@@ -92,7 +92,7 @@ public class PortfolioValueTest {
     }
 
     @Test
-    public void test() throws ExecutionException, InterruptedException {
+    void test() throws ExecutionException, InterruptedException {
         ChronicleMapBuilder<LongValue, PortfolioAssetInterface> mapBuilder = ChronicleMapBuilder.of(LongValue.class, PortfolioAssetInterface.class).entries(nAssets);
 
         try (ChronicleMap<LongValue, PortfolioAssetInterface> cache = mapBuilder.create()) {

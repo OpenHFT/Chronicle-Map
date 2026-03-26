@@ -25,12 +25,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Rob Austin.
  */
 @SuppressWarnings({"rawtypes", "unchecked", "try"})
-public class ChronicleMapImportExportTest {
+class ChronicleMapImportExportTest {
 
     public static final String TMP = OS.getTarget();
 
     @Test
-    public void test() throws IOException, InterruptedException {
+    void test() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -55,7 +55,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithMapValue() throws IOException, InterruptedException {
+    void testWithMapValue() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -84,7 +84,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithMapOfMapValue() throws IOException, InterruptedException {
+    void testWithMapOfMapValue() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -114,7 +114,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithIntegerAndDouble() throws IOException, InterruptedException {
+    void testWithIntegerAndDouble() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -137,7 +137,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithCharSeq() throws IOException, InterruptedException {
+    void testWithCharSeq() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -165,7 +165,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testFromHashMap() throws IOException, InterruptedException {
+    void testFromHashMap() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         System.out.println(file.getCanonicalFile());
@@ -203,7 +203,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithLongValue() throws IOException, InterruptedException {
+    void testWithLongValue() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         //file.deleteOnExit();
@@ -237,7 +237,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testBondVOInterface() throws IOException, InterruptedException {
+    void testBondVOInterface() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();

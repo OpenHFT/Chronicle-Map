@@ -9,10 +9,10 @@ import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ChronicleMapEqualsTest {
+class ChronicleMapEqualsTest {
 
     @Test
-    public void test() {
+    void test() {
         ChronicleMap<String, String> map = ChronicleMap
                 .of(String.class, String.class)
                 .averageKey("a").averageValue("b")

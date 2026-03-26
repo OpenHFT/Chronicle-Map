@@ -14,10 +14,10 @@ import java.net.URL;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Disabled("As per https://github.com/OpenHFT/Chronicle-Map/issues/324, there is no compatibility anymore")
-public class ChronicleMap3_12IntegerKeyCompatibilityTest {
+class ChronicleMap3_12IntegerKeyCompatibilityTest {
 
     @Test
-    public void testWithChecksums() throws Exception {
+    void testWithChecksums() throws Exception {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         URL fileUrl = cl.getResource("chronicle-map-3-12-with-checksums.dat");
         File file = new File(fileUrl.toURI());
@@ -34,7 +34,7 @@ public class ChronicleMap3_12IntegerKeyCompatibilityTest {
     }
 
     @Test
-    public void testNoChecksums() throws Exception {
+    void testNoChecksums() throws Exception {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         URL fileUrl = cl.getResource("chronicle-map-3-12-no-checksums.dat");
         File file = new File(fileUrl.toURI());

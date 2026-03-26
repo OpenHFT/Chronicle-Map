@@ -24,7 +24,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
 
-public class ExitHookTest {
+class ExitHookTest {
 
     private static final int KEY = 1;
     private static final int JVM_STARTUP_WAIT_TIME_MS = 10_000;
@@ -112,7 +112,7 @@ public class ExitHookTest {
     }
 
     @Test
-    public void testExitHook() throws IOException, InterruptedException {
+    void testExitHook() throws IOException, InterruptedException {
         if (!OS.isLinux() && !OS.isMacOSX())
             return; // This test runs only in Unix-like OSes
         File mapFile = newTempFile();
@@ -140,7 +140,7 @@ public class ExitHookTest {
     }
 
     @Test
-    public void testSkipExitHook() throws IOException, InterruptedException {
+    void testSkipExitHook() throws IOException, InterruptedException {
         assumeTrue(OS.isLinux() || OS.isMacOSX(), "This test runs only in Unix-like OSes");
         File mapFile = newTempFile();
         File lockingConfirmationFile = newTempFile();
@@ -167,7 +167,7 @@ public class ExitHookTest {
     }
 
     @Test
-    public void testSerialization1() throws Exception {
+    void testSerialization1() throws Exception {
         File mapFile = newTempFile();
         ChronicleMap<Integer, Integer> expected = createMapBuilder()
                 .skipCloseOnExitHook(true)
@@ -179,7 +179,7 @@ public class ExitHookTest {
     }
 
     @Test
-    public void testSerialization2() throws Exception {
+    void testSerialization2() throws Exception {
         File mapFile = newTempFile();
         ChronicleMap<Integer, Integer> expected = createMapBuilder()
                 .createPersistedTo(mapFile);
@@ -240,8 +240,8 @@ public class ExitHookTest {
         return JavaProcessBuilder.create(ExitHookTest.class)
                 //.inheritingIO()
                 .withProgramArguments(mapFile.getAbsolutePath(),
-                    lockingFile.getAbsolutePath(),
-                    outputFile.getAbsolutePath(),
-                    String.valueOf(skipCloseOnExitHook)).start();
+                        lockingFile.getAbsolutePath(),
+                        outputFile.getAbsolutePath(),
+                        String.valueOf(skipCloseOnExitHook)).start();
     }
 }
