@@ -11,8 +11,8 @@ import java.util.Random;
 
 class Issue3Test {
 
-    @Disabled("https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
     @Test
+    @Disabled("https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
     void test() throws IOException {
         try (ChronicleSet<Long> set = ChronicleSetBuilder.of(Long.class)
                 .actualSegments(1)

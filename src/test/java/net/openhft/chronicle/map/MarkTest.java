@@ -17,7 +17,6 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Timeout;
-import java.util.concurrent.TimeUnit;
 
 class MarkTest {
 
@@ -43,16 +42,16 @@ class MarkTest {
         System.out.println(System.currentTimeMillis() - ms);
     }
 
-    @Disabled("often out of time, that is a parf issue, not a bug")
     @Test
-    @Timeout(value = 25000, unit = TimeUnit.MILLISECONDS)
+    @Disabled("often out of time, that is a parf issue, not a bug")
+    @Timeout(25)
     void inMemoryTest() {
         test(ChronicleMapBuilder::create);
     }
 
-    @Disabled("ignored because it take too long and times out")
     @Test
-    @Timeout(value = 25000, unit = TimeUnit.MILLISECONDS)
+    @Disabled("ignored because it take too long and times out")
+    @Timeout(25)
     void persistedTest() {
         int rnd = new Random().nextInt();
         final File db = Paths.get(OS.getTarget(), "mark" + rnd).toFile();

@@ -29,24 +29,26 @@ class Issue229Test {
 
     @Test
     void assureExclusiveAccess() throws IOException {
-        assertThrows(ChronicleHashRecoveryFailedException.class, () -> {
-            assumeFalse(OS.isWindows());
+        assumeFalse(OS.isWindows());
 
-            try (ChronicleMap<Long, Long> readMap = ChronicleMap
-                    .of(Long.class, Long.class)
-                    .entries(10)
-                    .createPersistedTo(mapFile)) {
-                assertNotNull(readMap);
+        try (ChronicleMap<Long, Long> readMap = ChronicleMap
+                .of(Long.class, Long.class)
+                .entries(10)
+                .createPersistedTo(mapFile)) {
+            assertNotNull(readMap);
 
-                // It shall not be possible to recover since the
-                // file is open by the readMap
-                try (ChronicleMap<Long, Long> recoverMap = ChronicleMap
-                        .of(Long.class, Long.class)
-                        .entries(10)
-                        .recoverPersistedTo(mapFile, true)) {
-                    assertNotNull(recoverMap);
-                }
-            }
-        });
+            // It shall not be possible to recover since the
+            // file is open by the readMap
+            assertThrows(ChronicleHashRecoveryFailedException.class, () -> recoverPersistedMap(mapFile));
+        }
+    }
+
+    private static void recoverPersistedMap(File mapFile) throws IOException {
+        try (ChronicleMap<Long, Long> recoverMap = ChronicleMap
+                .of(Long.class, Long.class)
+                .entries(10)
+                .recoverPersistedTo(mapFile, true)) {
+            assertNotNull(recoverMap);
+        }
     }
 }

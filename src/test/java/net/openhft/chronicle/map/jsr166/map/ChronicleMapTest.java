@@ -14,7 +14,6 @@ import java.util.Map.Entry;
 
 import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Timeout;
-import java.util.concurrent.TimeUnit;
 
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
@@ -59,7 +58,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * clear removes all pairs
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testClear() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.clear();
@@ -71,7 +70,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * contains returns {@code true} for contained value
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testContains() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(map.containsValue("A"));
@@ -83,7 +82,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * containsKey returns {@code true} for contained key
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testContainsKey() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(map.containsKey(one));
@@ -95,7 +94,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * containsValue returns {@code true} for held values
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testContainsValue() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(map.containsValue("A"));
@@ -107,7 +106,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * get returns the correct element at the given key, or null if not present
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testGet() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.get(one).toString());
@@ -121,7 +120,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * isEmpty is {@code true} of empty map and {@code false} for non-empty
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testIsEmpty() throws IOException {
         try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8078)) {
             try (ChronicleMap<Integer, CharSequence> map = map5()) {
@@ -138,7 +137,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * keySet returns a Set containing all the keys
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testKeySet() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.keySet();
@@ -155,7 +154,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * keySet.toArray returns contains all keys
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testKeySetToArray() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.keySet();
@@ -171,7 +170,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * Values.toArray contains all values
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testValuesToArray() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Collection<CharSequence> vs = map.values();
@@ -189,7 +188,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * entrySet.toArray contains all entries
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testEntrySetToArray() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.entrySet();
@@ -206,7 +205,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * values collection contains all values
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testValues() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Collection s = map.values();
@@ -223,7 +222,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * entrySet contains all pairs
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testEntrySet() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set<Entry<Integer, CharSequence>> s = map.entrySet();
@@ -244,7 +243,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * putAll adds all key-value pairs from the given map
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testPutAll() throws IOException {
 
         try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8076)) {
@@ -264,7 +263,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * putIfAbsent works when the given key is not present
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testPutIfAbsent() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.putIfAbsent(six, "Z");
@@ -276,7 +275,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * putIfAbsent does not add the pair if the key is already present
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testPutIfAbsent2() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.putIfAbsent(one, "Z").toString());
@@ -287,7 +286,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace fails when the given key is not present
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testReplace() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertNull(map.replace(six, "Z"));
@@ -299,7 +298,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace succeeds if the key is already present
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testReplace2() throws
             IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
@@ -312,7 +311,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace value fails when the given key not mapped to expected value
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testReplaceValue() throws
             IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
@@ -326,7 +325,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace value succeeds when the given key mapped to expected value
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     public void testReplaceValue2
     () throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
@@ -340,7 +339,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * remove removes the correct key-value pair from the map
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testRemove() throws
             IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
@@ -354,7 +353,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * remove(key,value) removes only if pair present
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     public void testRemove2
     () throws IOException {
    /*     try(   ChronicleMap map = map5(8076)) {
@@ -371,7 +370,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * size returns the correct values
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testSize() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8078)) {
@@ -385,7 +384,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * size returns the correct values
      */
     @Test
-    @Timeout(value = 10000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(10)
     void testSize2() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8078)) {
@@ -399,7 +398,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * size returns the correct values
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testSize3() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8078)) {
@@ -413,7 +412,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * toString contains toString of elements
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testToString() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             String s = map.toString();
@@ -427,7 +426,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * get(null) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testGet_NullPointerException() throws IOException {
 
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
@@ -441,7 +440,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * containsKey(null) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.containsKey(null);
@@ -454,7 +453,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * put(null,x) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testPut1_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.put(null, "whatever");
@@ -467,7 +466,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * put(x, null) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     public void testPut2_NullPointerException
     () throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
@@ -481,7 +480,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * putIfAbsent(null, x) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     public void testPutIfAbsent1_NullPointerException
     () throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
@@ -495,7 +494,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace(null, x) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     public void testReplace_NullPointerException
     () throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
@@ -509,7 +508,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace(null, x, y) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     public void testReplaceValue_NullPointerException
     () throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
@@ -523,7 +522,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * putIfAbsent(x, null) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testPutIfAbsent2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.putIfAbsent(notPresent, null);
@@ -536,7 +535,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace(x, null) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testReplace2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, null);
@@ -549,7 +548,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace(x, null, y) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testReplaceValue2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, null, "A");
@@ -562,7 +561,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * replace(x, y, null) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testReplaceValue3_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, "A", null);
@@ -575,7 +574,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * remove(null) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testRemove1_NullPointerException() throws IOException {
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8076)) {
             c.put("sadsdf", "asdads");
@@ -589,7 +588,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * remove(null, x) throws NPE
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     public void testRemove2_NullPointerException
     () throws IOException {
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8086)) {
@@ -604,7 +603,7 @@ class ChronicleMapTest extends JSR166TestCase {
      * remove(x, null) returns false
      */
     @Test
-    @Timeout(value = 5000, unit = TimeUnit.MILLISECONDS)
+    @Timeout(5)
     void testRemove3() throws IOException {
 
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8076)) {

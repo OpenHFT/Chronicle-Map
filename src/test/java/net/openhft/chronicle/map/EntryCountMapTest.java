@@ -47,8 +47,8 @@ class EntryCountMapTest {
         return maxSize * 14 / 10 + 300;
     }
 
-    @Disabled("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
     @Test
+    @Disabled("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
     void testVerySmall() throws IOException {
         System.out.print("testVerySmall seeds");
         for (int t = 0; t < ecmTests; t++) {
@@ -141,8 +141,8 @@ class EntryCountMapTest {
         System.out.printf(" Score: %.2f%n", scoreCount / score);
     }
 
-    @Disabled("Long running, large tests test")
     @Test
+    @Disabled("Long running, large tests test")
     void testMedium() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testMedium seeds");
         int procs = Runtime.getRuntime().availableProcessors();

@@ -8,8 +8,6 @@ import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;

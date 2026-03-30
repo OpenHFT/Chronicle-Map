@@ -10,8 +10,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ChronicleSetBuilderTest {
 
-    @Disabled("see https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
     @Test
+    @Disabled("see https://teamcity.chronicle.software/viewLog.html?buildId=639348&tab=buildResultsDiv&buildTypeId=OpenHFT_BuildAll_BuildJava8compileJava8")
     void test() {
 
         try (ChronicleSet<Integer> integers = ChronicleSet.of(Integer.class).entries(10).create()) {

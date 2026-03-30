@@ -15,8 +15,8 @@ import java.util.stream.IntStream;
  * Created by Peter Lawrey on 12/05/15.
  */
 class WriteThroughputTest {
-    @Disabled("Long running")
     @Test
+    @Disabled("Long running")
     void bandwidthTest() throws IOException {
         int count = 2000;
         int size = 50 << 10;
@@ -60,8 +60,8 @@ class WriteThroughputTest {
         }
     }
 
-    @Disabled("TODO")
     @Test
+    @Disabled("TODO")
     void bandwidthTestZ() throws IOException {
         int count = 2 << 10;
         int size = 50 << 10;

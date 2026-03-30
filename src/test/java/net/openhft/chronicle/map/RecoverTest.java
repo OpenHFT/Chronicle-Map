@@ -34,8 +34,8 @@ class RecoverTest {
 
     ReplicatedChronicleMap<Integer, Integer, ?> map;
 
-    @Disabled("HCOLL-422")
     @Test
+    @Disabled("HCOLL-422")
     void recoverTest() throws IOException, ExecutionException, InterruptedException {
         File mapFile = File.createTempFile("recoverTestFile", ".map");
         mapFile.deleteOnExit();

@@ -28,7 +28,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -71,7 +70,7 @@ class MemoryLeaksTest {
         serializerCount.set(0);
     }
 
-    @Timeout(value = 10, unit = TimeUnit.SECONDS)
+    @Timeout(10)
     @ParameterizedTest
     @MethodSource("data")
     void testChronicleMapCollectedAndDirectMemoryReleased(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) throws IOException {
@@ -146,7 +145,7 @@ class MemoryLeaksTest {
         return actual;
     }
 
-    @Timeout(value = 60, unit = TimeUnit.SECONDS)
+    @Timeout(60)
     @ParameterizedTest
     @MethodSource("data")
     void testExplicitChronicleMapCloseReleasesMemory(String testType, boolean replicated, boolean persisted, boolean closeWithinContext)

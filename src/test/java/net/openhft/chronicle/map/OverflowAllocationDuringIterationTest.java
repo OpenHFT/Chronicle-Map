@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 
 class OverflowAllocationDuringIterationTest {
 
-    @Disabled("https://teamcity.chronicle.software/viewLog.html?buildId=639359&buildTypeId=Chronicle_ChronicleMap_SnapshotARM")
     @Test
+    @Disabled("https://teamcity.chronicle.software/viewLog.html?buildId=639359&buildTypeId=Chronicle_ChronicleMap_SnapshotARM")
     void testOverflowAllocationDuringIteration() {
         int entries = 10000;
         String x = "x";
