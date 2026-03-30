@@ -50,5 +50,4 @@ class ParallelStartupTest {
 
         assertEquals(thread.length, succ.get());
     }
-
 }
