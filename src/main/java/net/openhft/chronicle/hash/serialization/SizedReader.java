@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Deserializer of objects from bytes, pairing {@link SizedWriter}, i. e. assuming the length
+ * Deserializer of objects from bytes, pairing {@link SizedWriter}, i.e. assuming the length
  * of the serialized form isn't written in the beginning of the serialized form itself, but managed
  * by {@link ChronicleHash} implementation and passed to the reading methods.
  * <p>
@@ -34,9 +34,9 @@ import org.jetbrains.annotations.Nullable;
 public interface SizedReader<T> extends Marshallable {
 
     /**
-     * Reads and returns the object from {@link Bytes#readPosition()} (i. e. the current position)
+     * Reads and returns the object from {@link Bytes#readPosition()} (i.e. the current position)
      * to {@code Bytes.readPosition() + size} in the given {@code in}. Should attempt to reuse the
-     * given {@code using} object, i. e. to read the deserialized data into the given object. If it
+     * given {@code using} object, i.e. to read the deserialized data into the given object. If it
      * is possible, this objects then returned from this method. If it is impossible for any reason,
      * a new object should be created and returned. The given {@code using} object could be {@code
      * null}, in this case read() should always create a new object.

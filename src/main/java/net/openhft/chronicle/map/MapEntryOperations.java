@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * By default {@link #remove}, {@link #insert} and {@link #replaceValue} return {@code null},
  * but subclasses could return something more sensible, to be used in higher-level SPI interfaces,
  * namely {@link MapMethods} and {@link MapRemoteOperations}. For example, in bidirectional map
- * implementation (i. e. a map that preserves the uniqueness of its values as well as that of
+ * implementation (i.e. a map that preserves the uniqueness of its values as well as that of
  * its keys), that includes two {@code ChronicleMaps}, the {@code MapEntryOperations}' methods return
  * type could be used to indicate if we were successful to lock both maps before performing
  * the update: <pre>
@@ -95,7 +95,7 @@ public interface MapEntryOperations<K, V, R> {
      * and returns {@code null}.
      *
      * @param entry the entry to remove
-     * @return result of operation, understandable by higher-level SPIs, e. g. custom
+     * @return result of operation, understandable by higher-level SPIs, e.g. custom
      * {@link MapMethods} implementation
      * @throws IllegalStateException if some locking/state conditions required to perform remove
      *                               operation are not met
@@ -112,7 +112,7 @@ public interface MapEntryOperations<K, V, R> {
      * entry.doReplaceValue(newValue)} and returns {@code null}.
      *
      * @param entry the entry to replace the value in
-     * @return result of operation, understandable by higher-level SPIs, e. g. custom
+     * @return result of operation, understandable by higher-level SPIs, e.g. custom
      * {@link MapMethods} implementation
      * @throws IllegalStateException if some locking/state conditions required to perform replace
      *                               operation are not met
@@ -130,7 +130,7 @@ public interface MapEntryOperations<K, V, R> {
      * Note: default implementation calls {@link MapAbsentEntry#doInsert(Data)
      * absentEntry.doInsert(value)} and returns {@code null}.
      *
-     * @return result of operation, understandable by higher-level SPIs, e. g. custom
+     * @return result of operation, understandable by higher-level SPIs, e.g. custom
      * {@link MapMethods} implementation
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      *                               operation are not met

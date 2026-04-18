@@ -42,7 +42,7 @@ public abstract class ThreadLocalState {
     public boolean lockContextLocally(ChronicleHash<?, ?, ?, ?> hash) {
         // hash().isOpen() check guarantees no starvation of a thread calling chMap.close() and
         // trying to close this context by closeContext() method below, while the thread owning this
-        // context frequently locks and unlocks it (e. g. in a loop). This is also the only check
+        // context frequently locks and unlocks it (e.g. in a loop). This is also the only check
         // for chMap openness during the whole context usage lifecycle.
         if (hash.isOpen() && MEMORY.compareAndSwapInt(this, CONTEXT_LOCK_OFFSET,
                 CONTEXT_UNLOCKED, CONTEXT_LOCKED_LOCALLY)) {
@@ -78,7 +78,7 @@ public abstract class ThreadLocalState {
         // a good idea to make this check rather than not to make.
         if (contextLock == CONTEXT_CLOSED)
             return;
-        // If first attempt of closing a context (i. e. moving from unused to closed state) failed,
+        // If first attempt of closing a context (i.e. moving from unused to closed state) failed,
         // it means that the context is still in use. If this context belongs to the current thread,
         // this is a bug, because we cannot "wait" until context is unused in the same thread:
         if (owner() == Thread.currentThread()) {
@@ -114,7 +114,7 @@ public abstract class ThreadLocalState {
                 "- The context owner thread exited before closing this context. Ensure that you\n" +
                 "always close opened Chronicle Map's contexts, the best way to do this is to use\n" +
                 "try-with-resources blocks." +
-                "- The context owner thread runs some context operation (e. g. a query) for\n" +
+                "- The context owner thread runs some context operation (e.g. a query) for\n" +
                 "unexpectedly long time (at least " + LOCK_TIMEOUT_SECONDS + " seconds).\n" +
                 "You should either redesign your logic to spend less time in Chronicle Map\n" +
                 "contexts (recommended) or synchronize map.close() with queries externally,\n" +

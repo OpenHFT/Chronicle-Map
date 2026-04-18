@@ -60,10 +60,10 @@ public interface Data<T> {
      * method.
      * <p>
      * For safety, this interface returns read-only object, because it could expose bytes source
-     * that must be immutable, e. g. a `char[]` array behind a {@code String}. But in cases when the
-     * {@code Data} instance wraps off-heap bytes, e. g. {@link MapEntry#value()}, it is allowed to
+     * that must be immutable, e.g. a `char[]` array behind a {@code String}. But in cases when the
+     * {@code Data} instance wraps off-heap bytes, e.g. {@link MapEntry#value()}, it is allowed to
      * cast the object, returned from this method, to {@link BytesStore}, and write into the
-     * off-heap memory. You should only ensure that current context (e. g. {@link MapQueryContext})
+     * off-heap memory. You should only ensure that current context (e.g. {@link MapQueryContext})
      * is locked exclusively, in order to avoid data races.
      */
     RandomDataInput bytes();
@@ -172,7 +172,7 @@ public interface Data<T> {
 
     /**
      * {@code Data} implementations should override {@link Object#toString()} with delegation to
-     * this method. Delegates to {@code Data}'s <i>object</i> {@code toString()}, i. e. equivalent
+     * this method. Delegates to {@code Data}'s <i>object</i> {@code toString()}, i.e. equivalent
      * to calling {@code get().toString()} on this {@code Data} instance with some fallback, if
      * {@code get()} method throws an exception.
      */
