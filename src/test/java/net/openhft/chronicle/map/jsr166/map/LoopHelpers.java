@@ -6,7 +6,7 @@ package net.openhft.chronicle.map.jsr166.map;
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
  * Expert Group and released to the public domain, as explained at
- * http://creativecommons.org/publicdomain/zero/1.0/
+ * https://creativecommons.org/publicdomain/zero/1.0/
  */
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +23,7 @@ class LoopHelpers {
 
     /**
      * generates 32 bit pseudo-random numbers.
-     * Adapted from <a href="http://www.snippets.org">...</a>
+     * Adapted from <a href="https://www.snippets.org">...</a>
      */
     public static int compute1(int x) {
         int lo = 16807 * (x & 0xFFFF);

@@ -10,7 +10,7 @@ package net.openhft.chronicle.hash.impl.util.math;
  *
  * References:
  * <ul>
- * <li><a href="http://mathworld.wolfram.com/ContinuedFraction.html">
+ * <li><a href="https://mathworld.wolfram.com/ContinuedFraction.html">
  * Continued Fraction</a></li>
  * </ul>
  */
@@ -44,12 +44,12 @@ abstract class ContinuedFraction {
      * <ul>
      * <li>
      * I. J. Thompson,  A. R. Barnett. "Coulomb and Bessel Functions of Complex Arguments and Order."
-     * <a target="_blank" href="http://www.fresco.org.uk/papers/Thompson-JCP64p490.pdf">
-     * http://www.fresco.org.uk/papers/Thompson-JCP64p490.pdf</a>
+     * <a target="_blank" href="https://www.fresco.org.uk/papers/Thompson-JCP64p490.pdf">
+     * https://www.fresco.org.uk/papers/Thompson-JCP64p490.pdf</a>
      * </li>
      * </ul>
      * <b>Note:</b> the implementation uses the terms a<sub>i</sub> and b<sub>i</sub> as defined in
-     * <a href="http://mathworld.wolfram.com/ContinuedFraction.html">Continued Fraction @ MathWorld</a>.
+     * <a href="https://mathworld.wolfram.com/ContinuedFraction.html">Continued Fraction @ MathWorld</a>.
      *
      * @param x             the evaluation point.
      * @param epsilon       maximum error allowed.

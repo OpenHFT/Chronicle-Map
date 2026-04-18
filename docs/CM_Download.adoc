@@ -44,7 +44,7 @@ for versioning e.g.
 </dependencyManagement>
 ```
 
-Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-bom%22[Latest Version Number].
+Click here to get the https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-bom%22[Latest Version Number].
 
 Alternatively, Chronicle Map can be included directly:
 
@@ -56,7 +56,7 @@ Alternatively, Chronicle Map can be included directly:
 </dependency>
 ```
 
-Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22[Latest Version Number].
+Click here to get the https://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22[Latest Version Number].
 
 == Maven Snapshot Download
 
