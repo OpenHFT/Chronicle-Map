@@ -115,7 +115,7 @@ public class VanillaChronicleMap<K, V, R>
         }
         Announcer.announce("net.openhft", "chronicle-map",
                 AnalyticsFacade.isEnabled()
-                        ? singletonMap("Analytics", "Chronicle Map reports usage statistics. Learn more or turn off: https://github.com/OpenHFT/Chronicle-Map/blob/master/DISCLAIMER.adoc")
+                        ? singletonMap("Analytics", "Chronicle Map reports usage statistics. Learn more or turn off: https://github.com/OpenHFT/Chronicle-Map/blob/develop/DISCLAIMER.adoc")
                         : emptyMap());
         AnalyticsHolder.instance().sendEvent("started", additionalEventParameters);
     }
