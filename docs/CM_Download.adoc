@@ -23,8 +23,8 @@ If you want to obtain this software under a more permissive license, please cont
 == Maven Artifact Download
 
 [#image-maven]
-[caption="",link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
-image::https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[]
+[caption="",link=https://central.sonatype.com/artifact/net.openhft/chronicle-map]
+image::https://img.shields.io/maven-central/v/net.openhft/chronicle-map.svg[]
 
 Chronicle Map depends on other Chronicle libraries and it is Chronicle's recommendation to use the
 https://chronicle.software/monorepo-versus-bill-of-materials-shaping-your-project/[chronicle-bom]
@@ -44,7 +44,7 @@ for versioning e.g.
 </dependencyManagement>
 ```
 
-Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-bom%22[Latest Version Number].
+Click here to get the https://central.sonatype.com/artifact/net.openhft/chronicle-bom[Latest Version Number].
 
 Alternatively, Chronicle Map can be included directly:
 
@@ -56,7 +56,7 @@ Alternatively, Chronicle Map can be included directly:
 </dependency>
 ```
 
-Click here to get the http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22net.openhft%22%20AND%20a%3A%22chronicle-map%22[Latest Version Number].
+Click here to get the https://central.sonatype.com/artifact/net.openhft/chronicle-map[Latest Version Number].
 
 == Maven Snapshot Download
 
