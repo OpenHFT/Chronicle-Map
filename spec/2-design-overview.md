@@ -121,7 +121,7 @@ A segment tier basically consists of two parts:
 
 The hash lookup slots' size is either 4 or 8 bytes. Allocation identifiers use the minimum required
 bits to identify themselves within the entry space, the rest bits of hash lookup slots are used to
-store bits of the Chronicle Map's key hash codes, to minimize full collisions on the hash lookup
+store bits of the Chronicle Map's key hash codes, to minimise full collisions on the hash lookup
 level.
 
 > Hash lookup slots are disallowed to be of any integral byte size from 3 to 8 bytes, despite it

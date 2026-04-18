@@ -625,9 +625,9 @@ So, although it is recommended that you `close()` when you have finished with th
 WARNING: If you call `close()` too early before you have finished working with the map, this can cause your JVM to crash.
 Close **MUST** be the last thing that you do with the map.
 
-== Behaviour Customization
+== Behaviour Customisation
 
-You can customize the behaviour of Chronicle Map.
+You can customise the behaviour of Chronicle Map.
 
 See <<CM_Tutorial_Behaviour.adoc#,CM_Tutorial_Behaviour>> for more details.
 

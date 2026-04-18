@@ -71,7 +71,7 @@ public class VanillaChronicleMap<K, V, R>
     // Value Data model
     Type valueClass;
     /////////////////////////////////////////////////
-    // Behavior
+    // Behaviour
     transient boolean putReturnsNull;
     transient boolean putIfAbsentUsingValue;
     transient boolean removeReturnsNull;
@@ -341,7 +341,7 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     public final MapClosable acquireContext(@NotNull final K key, @NotNull final V usingValue) {
         final QueryContextInterface<K, V, R> q = queryContext(key);
-        // TODO optimize to update lock in certain cases
+        // TODO optimise to update lock in certain cases
         try {
             q.writeLock().lock();
             checkAcquiredUsing(acquireUsingBody(q, usingValue), usingValue);

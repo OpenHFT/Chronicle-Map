@@ -37,7 +37,7 @@ public abstract class VanillaChronicleMapHolderImpl<K, V, R>
         // alternative to this "unsafe" casting approach is proper generalization
         // of Chaining/ChainingInterface, but this causes issues with current version
         // of stage-compiler.
-        // TODO generalize Chaining with <M extends VanillaCM> when stage-compiler is improved.
+        // TODO generalise Chaining with <M extends VanillaCM> when stage-compiler is improved.
         //noinspection unchecked
         m = map;
     }

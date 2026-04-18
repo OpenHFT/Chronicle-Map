@@ -45,8 +45,8 @@ public final class InternalMapFileAnalyzer {
 
         final Path path = Paths.get(args[0]);
 
-        System.out.println("Analyzing " + path.toAbsolutePath());
-        System.out.println("Warning, this program is not capable of analyzing all map file types.");
+        System.out.println("Analysing " + path.toAbsolutePath());
+        System.out.println("Warning, this program is not capable of analysing all map file types.");
 
         if (path.toFile().length() > 1L << 31) {
             System.out.println("This program can only handle files that are smaller than 2^31 bytes)");

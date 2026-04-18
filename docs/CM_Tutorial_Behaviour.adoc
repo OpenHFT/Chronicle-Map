@@ -1,4 +1,4 @@
-= Behaviour Customization
+= Behaviour Customisation
 Neil Clifford
 :toc: macro
 :toclevels: 2
@@ -8,9 +8,9 @@ Neil Clifford
 
 toc::[]
 
-== Customization
+== Customisation
 
-You could customize `ChronicleMap` behaviour on several levels:
+You could customise `ChronicleMap` behaviour on several levels:
 
 - `ChronicleMapBuilder.entryOperations()` define the "inner" listening level.
 All operations with entries, either during ordinary map method calls, remote calls, replication or modifications during iteration over the map, operate using this configured SPI.

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * As a writer for top-level Chronicle Map's key or value type (Long), {@code DoubleMarshaller} is
- * deprecated in favor of {@link DoubleDataAccess}. As reader and element writer for {@link
+ * deprecated in favour of {@link DoubleDataAccess}. As reader and element writer for {@link
  * ListMarshaller} and similar composite marshallers, {@code DoubleMarshaller} is not deprecated.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})

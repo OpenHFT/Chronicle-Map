@@ -1079,7 +1079,7 @@ public final class ChronicleMapBuilder<K, V> implements
     //TODO review because this heuristic doesn't seem to perform well
     private int estimateSegmentsBasedOnSize() {
         // the idea is that if values are huge, operations on them (and simply ser/deser)
-        // could take long time, so we want more segment to minimize probablity that
+        // could take long time, so we want more segment to minimise probablity that
         // two or more concurrent write ops will go to the same segment, and then all but one of
         // these threads will wait for long time.
         int segmentsForEntries = estimateSegmentsForEntries(entries());

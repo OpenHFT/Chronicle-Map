@@ -83,7 +83,7 @@ public interface HashSplitting extends Marshallable {
         }
     }
 
-    //TODO optimize?
+    //TODO optimise?
     class ForNonPowerOf2Segments implements HashSplitting {
 
         private static final int MASK = Integer.MAX_VALUE;
