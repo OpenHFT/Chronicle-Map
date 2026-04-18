@@ -45,7 +45,7 @@ Millions of operations per second, with low and stable microsecond latencies for
 Write queries scale well up to the number of hardware execution threads in the server.
 Read queries never block each other.
 • **reliable**.
-Chronicle Software have a “chaos monkey” test which verifies Chronicle Map multi-master replication in the face of node and network failures.
+Chronicle Software have a "chaos monkey" test which verifies Chronicle Map multi-master replication in the face of node and network failures.
 The map can optionally be persisted to disk.
 • **in production** at banks and hedge funds, globally.
 • **built using lessons learnt** from real-world experience solving real-world problems.

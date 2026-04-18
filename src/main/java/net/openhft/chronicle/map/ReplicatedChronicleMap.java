@@ -51,7 +51,7 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
  * number of nodes will be fixed. The data that is stored locally in each node will become
  * eventually consistent. So changes made to one node, for example by calling put() will be
  * replicated over to the other node. To achieve a high level of performance and throughput, the
- * call to put() won’t block, with concurrentHashMap, It is typical to check the return code of some
+ * call to put() won't block, with concurrentHashMap, It is typical to check the return code of some
  * methods to obtain the old value for example remove(). Due to the loose coupling and lock free
  * nature of this multi master implementation,  this return value will only be the old value on the
  * nodes local data store. In other words the nodes are only concurrent locally. Its worth realising
