@@ -27,14 +27,14 @@ final class JsonSerializer {
                     "we don't include these artifacts by default as some users don't require this functionality. " +
                     "Please add the following artifacts to your project\n" +
                     "<dependency>\n" +
-                    " <groupId>xstream</groupId>\n" +
+                    " <groupId>com.thoughtworks.xstream</groupId>\n" +
                     " <artifactId>xstream</artifactId>\n" +
-                    " <version>1.2.2</version>\n" +
+                    " <version>1.4.21</version>\n" +
                     "</dependency>\n" +
                     "<dependency>\n" +
                     " <groupId>org.codehaus.jettison</groupId>\n" +
                     " <artifactId>jettison</artifactId>\n" +
-                    " <version>1.3.6</version>\n" +
+                    " <version>1.5.4</version>\n" +
                     "</dependency>\n";
 
     static synchronized <K, V> void getAll(final File toFile,
