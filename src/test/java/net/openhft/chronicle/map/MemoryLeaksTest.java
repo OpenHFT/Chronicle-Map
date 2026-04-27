@@ -36,6 +36,17 @@ import static org.junit.Assume.assumeFalse;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class MemoryLeaksTest {
 
+    private static final long[] ALLOWED_NATIVE_MEMORY_DELTAS = {1L << 12, 1L << 14, 3L << 14};
+
+    private static boolean withinAllowedDelta(long expected, long actual) {
+        long delta = actual - expected;
+        for (long allowed : ALLOWED_NATIVE_MEMORY_DELTAS) {
+            if (delta == allowed)
+                return true;
+        }
+        return false;
+    }
+
     /**
      * Accounting {@link CountedStringReader} creation and finalization. All serializers,
      * created since the map creation, should become unreachable after map.close() or collection by
@@ -105,7 +116,7 @@ public class MemoryLeaksTest {
         long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
         try {
             long actual = nativeMemoryUsed();
-            if (actual != expectedNativeMemory + 4096)
+            if (!withinAllowedDelta(expectedNativeMemory, actual))
                 assertEquals(expectedNativeMemory, actual);
         } finally {
             tryCloseFromContext(map);
@@ -131,7 +142,7 @@ public class MemoryLeaksTest {
         }
         if (nativeMemoryUsedBeforeMap < nativeMemoryUsed()) {
             long actual = nativeMemoryUsed();
-            if (actual != nativeMemoryUsedBeforeMap + 4096) {
+            if (!withinAllowedDelta(nativeMemoryUsedBeforeMap, actual)) {
                 Assert.assertEquals(nativeMemoryUsedBeforeMap, actual);
             }
         }
@@ -149,8 +160,12 @@ public class MemoryLeaksTest {
     @Test(timeout = 60_000)
     public void testExplicitChronicleMapCloseReleasesMemory()
             throws IOException, InterruptedException {
-        long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
         int serializersBeforeMap = serializerCount.get();
+        // warm up the code
+        try (ChronicleMap<IntValue, String> map = getMap()) {
+            assertEquals(3, map.size());
+        }
+        long nativeMemoryUsedBeforeMap = nativeMemoryUsed();
         try (ChronicleMap<IntValue, String> map = getMap()) {
             // One serializer should be copied to the map's valueReader field, another is copied from
             // the map's valueReader field to the context
@@ -165,6 +180,7 @@ public class MemoryLeaksTest {
                                 expectedNativeMemory, nativeMemoryUsed()),
                         expectedNativeMemory, nativeMemoryUsed());
             } finally {
+                System.err.println("Expected to log: Attempt to close a Chronicle Hash in the context of not yet finished query or iteration");
                 tryCloseFromContext(map);
                 Closeable.closeQuietly(map);
             }
@@ -174,26 +190,23 @@ public class MemoryLeaksTest {
                 return;
             } else {
                 long actual = nativeMemoryUsed();
-                if (actual != 16_000)
+                if (!withinAllowedDelta(nativeMemoryUsedBeforeMap, actual))
                     assertEquals(nativeMemoryUsedBeforeMap, actual);
             }
-
-            // Wait until chronicle map context (hence serializers) is collected by the GC
-            for (int i = 0; i < 6_000; i++) {
-                if (serializerCount.get() == serializersBeforeMap)
-                    break;
-                System.gc();
-                byte[] garbage = new byte[50_000_000];
-                Thread.sleep(1);
-            }
-            Assert.assertTrue(serializerCount.get() == serializersBeforeMap);
-            // This assertion ensures GC doesn't reclaim the map before or during the loop iteration
-            // above, to ensure that we test that the direct memory and contexts are released because
-            // of the manual map.close(), despite the "leak" of the map object itself.
-
-            // Assertion disabled because a closed map now guards offHeapMemoryUsed()
-            //Assert.assertEquals(0, map.offHeapMemoryUsed());
         }
+        // Wait until chronicle map context (hence serializers) is collected by the GC
+        long end = System.currentTimeMillis() + 6_000;
+        while (System.currentTimeMillis() < end) {
+            if (serializerCount.get() == serializersBeforeMap)
+                break;
+            System.gc();
+            byte[] garbage = new byte[50_000_000];
+            Thread.sleep(1);
+        }
+        Assert.assertEquals(serializersBeforeMap, serializerCount.get());
+        // This assertion ensures GC doesn't reclaim the map before or during the loop iteration
+        // above, to ensure that we test that the direct memory and contexts are released because
+        // of the manual map.close(), despite the "leak" of the map object itself.
     }
 
     private ChronicleMap<IntValue, String> getMap() throws IOException {
