@@ -113,7 +113,6 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             return null;
         if (!"cmap".equals(reader.getNodeName()))
             throw new ConversionException("should be under 'cmap' node");
-        reader.moveDown();
         while (reader.hasMoreChildren()) {
             reader.moveDown();
 
@@ -138,7 +137,6 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
 
             reader.moveUp();
         }
-        reader.moveUp();
         return null;
     }
 }
