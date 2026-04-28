@@ -106,20 +106,17 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
     }
 
     private void readEntry(HierarchicalStreamReader reader, UnmarshallingContext context) {
-        final String nodeName0 = reader.getNodeName();
+        final String nodeName = reader.getNodeName();
 
-        if (!nodeName0.equals("entry"))
-            throw new ConversionException("unable to convert node named=" + nodeName0);
-
-        final K k;
-        final V v;
+        if (!nodeName.equals("entry"))
+            throw new ConversionException("unable to convert node named=" + nodeName);
 
         reader.moveDown();
-        k = deserialize(context, reader);
+        final K k = deserialize(context, reader);
         reader.moveUp();
 
         reader.moveDown();
-        v = deserialize(context, reader);
+        final V v = deserialize(context, reader);
         reader.moveUp();
 
         if (k != null)
