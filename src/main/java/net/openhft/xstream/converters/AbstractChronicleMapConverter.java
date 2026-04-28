@@ -105,6 +105,35 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         }
     }
 
+    private void readEntry(HierarchicalStreamReader reader, UnmarshallingContext context) {
+        final String nodeName0 = reader.getNodeName();
+
+        if (!nodeName0.equals("entry"))
+            throw new ConversionException("unable to convert node named=" + nodeName0);
+
+        final K k;
+        final V v;
+
+        reader.moveDown();
+        k = deserialize(context, reader);
+        reader.moveUp();
+
+        reader.moveDown();
+        v = deserialize(context, reader);
+        reader.moveUp();
+
+        if (k != null)
+            map.put(k, v);
+    }
+
+    private void readEntries(HierarchicalStreamReader reader, UnmarshallingContext context) {
+        while (reader.hasMoreChildren()) {
+            reader.moveDown();
+            readEntry(reader, context);
+            reader.moveUp();
+        }
+    }
+
     @Override
     public Object unmarshal(HierarchicalStreamReader reader,
                             UnmarshallingContext context) {
@@ -113,34 +142,16 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             return null;
         if (!"cmap".equals(reader.getNodeName()))
             throw new ConversionException("should be under 'cmap' node");
-        // Jettison exposes the aliased map as an extra nested "cmap" wrapper.
+        // XStream/Jettison versions differ: 1.4.20 exposes an extra nested "cmap" wrapper.
         reader.moveDown();
-        while (reader.hasMoreChildren()) {
-            reader.moveDown();
-
-            final String nodeName0 = reader.getNodeName();
-
-            if (!nodeName0.equals("entry"))
-                throw new ConversionException("unable to convert node named=" + nodeName0);
-
-            final K k;
-            final V v;
-
-            reader.moveDown();
-            k = deserialize(context, reader);
+        if ("cmap".equals(reader.getNodeName())) {
+            readEntries(reader, context);
             reader.moveUp();
-
-            reader.moveDown();
-            v = deserialize(context, reader);
+        } else {
+            readEntry(reader, context);
             reader.moveUp();
-
-            if (k != null)
-                map.put(k, v);
-
-            reader.moveUp();
+            readEntries(reader, context);
         }
-        // Balance the wrapper moveDown above; entry/key/value moves are balanced in the loop.
-        reader.moveUp();
         return null;
     }
 }
