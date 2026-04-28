@@ -45,14 +45,12 @@ final class JsonSerializer {
         try (OutputStream outputStream = createOutputStream(toFile)) {
             xstream.toXML(map, outputStream);
         }
-        debugFile("getAll output", toFile); // TODO remove temporary CI diagnostics
     }
 
     static synchronized <K, V> void putAll(final File fromFile,
                                            final Map<K, V> map,
                                            final List<?> jsonConverters) throws IOException {
         final XStream xstream = xStream(map, jsonConverters);
-        debugFile("putAll input", fromFile); // TODO remove temporary CI diagnostics
 
         try (InputStream inputStream = createInputStream(fromFile)) {
             xstream.fromXML(inputStream);
@@ -78,14 +76,6 @@ final class JsonSerializer {
             final XStream xstream = new XStream(new JettisonMappedXmlDriver());
             xstream.setMode(XStream.NO_REFERENCES);
             xstream.alias("cmap", map.getClass());
-            System.err.println("[CM-XSTREAM] mapClass=" + map.getClass().getName()); // TODO remove temporary CI diagnostics
-            System.err.println("[CM-XSTREAM] XStream version=" + // TODO remove temporary CI diagnostics
-                    XStream.class.getPackage().getImplementationVersion()); // TODO remove temporary CI diagnostics
-            System.err.println("[CM-XSTREAM] XStream jar=" + // TODO remove temporary CI diagnostics
-                    XStream.class.getProtectionDomain().getCodeSource().getLocation()); // TODO remove temporary CI diagnostics
-            System.err.println("[CM-XSTREAM] Jettison driver jar=" + // TODO remove temporary CI diagnostics
-                    JettisonMappedXmlDriver.class.getProtectionDomain().getCodeSource().getLocation()); // TODO remove temporary CI diagnostics
-            System.err.println("[CM-XSTREAM] java.version=" + System.getProperty("java.version")); // TODO remove temporary CI diagnostics
 
             registerChronicleMapConverter(map, xstream);
             xstream.registerConverter(new ByteBufferConverter());
@@ -113,19 +103,4 @@ final class JsonSerializer {
     private static <K, V> void registerChronicleMapConverter(final Map<K, V> map, final XStream xstream) {
         xstream.registerConverter(new VanillaChronicleMapConverter<>(map));
     }
-    private static void debugFile(String label, File file) throws IOException { // TODO remove temporary CI diagnostics
-        final int maxPreview = 4000; // TODO remove temporary CI diagnostics
-        ByteArrayOutputStream out = new ByteArrayOutputStream(); // TODO remove temporary CI diagnostics
-        try (InputStream inputStream = createInputStream(file)) { // TODO remove temporary CI diagnostics
-            byte[] bytes = new byte[1024]; // TODO remove temporary CI diagnostics
-            int read; // TODO remove temporary CI diagnostics
-            while (out.size() < maxPreview && // TODO remove temporary CI diagnostics
-                    (read = inputStream.read(bytes, 0, Math.min(bytes.length, maxPreview - out.size()))) != -1) { // TODO remove temporary CI diagnostics
-                out.write(bytes, 0, read); // TODO remove temporary CI diagnostics
-            } // TODO remove temporary CI diagnostics
-        } // TODO remove temporary CI diagnostics
-        String content = out.toString("UTF-8"); // TODO remove temporary CI diagnostics
-        System.err.println("[CM-XSTREAM] " + label + " file=" + file // TODO remove temporary CI diagnostics
-                + " length=" + file.length() + " preview=" + content); // TODO remove temporary CI diagnostics
-    } // TODO remove temporary CI diagnostics
 }

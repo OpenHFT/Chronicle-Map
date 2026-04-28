@@ -31,17 +31,6 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         this.map = map;
         this.mapClazz = map.getClass();
     }
-    private static void debugReader(String label, HierarchicalStreamReader reader) { // TODO remove temporary CI diagnostics
-        try { // TODO remove temporary CI diagnostics
-            System.err.println("[CM-XSTREAM] " + label // TODO remove temporary CI diagnostics
-                    + " readerClass=" + reader.getClass().getName() // TODO remove temporary CI diagnostics
-                    + " node=" + reader.getNodeName() // TODO remove temporary CI diagnostics
-                    + " hasMoreChildren=" + reader.hasMoreChildren() // TODO remove temporary CI diagnostics
-                    + " value='" + reader.getValue() + "'"); // TODO remove temporary CI diagnostics
-        } catch (Throwable t) { // TODO remove temporary CI diagnostics
-            System.err.println("[CM-XSTREAM] " + label + " debug failed: " + t); // TODO remove temporary CI diagnostics
-        } // TODO remove temporary CI diagnostics
-    } // TODO remove temporary CI diagnostics
 
     private static <E> E deserialize(@NotNull UnmarshallingContext unmarshallingContext,
                                      @NotNull HierarchicalStreamReader reader) {
@@ -119,16 +108,15 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
     @Override
     public Object unmarshal(HierarchicalStreamReader reader,
                             UnmarshallingContext context) {
-        debugReader("unmarshal entry", reader); // TODO remove temporary CI diagnostics
         // empty map
         if ("[\"\"]".equals(reader.getValue()))
             return null;
         if (!"cmap".equals(reader.getNodeName()))
             throw new ConversionException("should be under 'cmap' node");
+        // Jettison exposes the aliased map as an extra nested "cmap" wrapper.
+        reader.moveDown();
         while (reader.hasMoreChildren()) {
-            debugReader("loop before entry moveDown", reader); // TODO remove temporary CI diagnostics
             reader.moveDown();
-            debugReader("loop after entry moveDown", reader); // TODO remove temporary CI diagnostics
 
             final String nodeName0 = reader.getNodeName();
 
@@ -139,24 +127,20 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             final V v;
 
             reader.moveDown();
-            debugReader("key node", reader); // TODO remove temporary CI diagnostics
             k = deserialize(context, reader);
             reader.moveUp();
-            debugReader("after key moveUp", reader); // TODO remove temporary CI diagnostics
 
             reader.moveDown();
-            debugReader("value node", reader); // TODO remove temporary CI diagnostics
             v = deserialize(context, reader);
             reader.moveUp();
-            debugReader("after value moveUp", reader); // TODO remove temporary CI diagnostics
 
             if (k != null)
                 map.put(k, v);
 
             reader.moveUp();
-            debugReader("after entry moveUp", reader); // TODO remove temporary CI diagnostics
         }
-        debugReader("unmarshal exit", reader); // TODO remove temporary CI diagnostics
+        // Balance the wrapper moveDown above; entry/key/value moves are balanced in the loop.
+        reader.moveUp();
         return null;
     }
 }
