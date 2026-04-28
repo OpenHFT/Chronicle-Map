@@ -29,7 +29,7 @@ final class JsonSerializer {
                     "<dependency>\n" +
                     " <groupId>com.thoughtworks.xstream</groupId>\n" +
                     " <artifactId>xstream</artifactId>\n" +
-                    " <version>1.4.21</version>\n" +
+                    " <version>1.4.20</version>\n" +
                     "</dependency>\n" +
                     "<dependency>\n" +
                     " <groupId>org.codehaus.jettison</groupId>\n" +
