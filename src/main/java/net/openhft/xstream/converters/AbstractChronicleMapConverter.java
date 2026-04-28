@@ -113,6 +113,7 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             return null;
         if (!"cmap".equals(reader.getNodeName()))
             throw new ConversionException("should be under 'cmap' node");
+        // Jettison exposes the aliased map as an extra nested "cmap" wrapper.
         reader.moveDown();
         while (reader.hasMoreChildren()) {
             reader.moveDown();
@@ -138,6 +139,7 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
 
             reader.moveUp();
         }
+        // Balance the wrapper moveDown above; entry/key/value moves are balanced in the loop.
         reader.moveUp();
         return null;
     }
