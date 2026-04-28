@@ -105,32 +105,6 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
         }
     }
 
-    private void readEntry(HierarchicalStreamReader reader, UnmarshallingContext context) {
-        final String nodeName = reader.getNodeName();
-
-        if (!nodeName.equals("entry"))
-            throw new ConversionException("unable to convert node named=" + nodeName);
-
-        reader.moveDown();
-        final K k = deserialize(context, reader);
-        reader.moveUp();
-
-        reader.moveDown();
-        final V v = deserialize(context, reader);
-        reader.moveUp();
-
-        if (k != null)
-            map.put(k, v);
-    }
-
-    private void readEntries(HierarchicalStreamReader reader, UnmarshallingContext context) {
-        while (reader.hasMoreChildren()) {
-            reader.moveDown();
-            readEntry(reader, context);
-            reader.moveUp();
-        }
-    }
-
     @Override
     public Object unmarshal(HierarchicalStreamReader reader,
                             UnmarshallingContext context) {
@@ -150,5 +124,31 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             readEntries(reader, context);
         }
         return null;
+    }
+
+    private void readEntries(HierarchicalStreamReader reader, UnmarshallingContext context) {
+        while (reader.hasMoreChildren()) {
+            reader.moveDown();
+            readEntry(reader, context);
+            reader.moveUp();
+        }
+    }
+
+    private void readEntry(HierarchicalStreamReader reader, UnmarshallingContext context) {
+        final String nodeName = reader.getNodeName();
+
+        if (!nodeName.equals("entry"))
+            throw new ConversionException("unable to convert node named=" + nodeName);
+
+        reader.moveDown();
+        final K k = deserialize(context, reader);
+        reader.moveUp();
+
+        reader.moveDown();
+        final V v = deserialize(context, reader);
+        reader.moveUp();
+
+        if (k != null)
+            map.put(k, v);
     }
 }
