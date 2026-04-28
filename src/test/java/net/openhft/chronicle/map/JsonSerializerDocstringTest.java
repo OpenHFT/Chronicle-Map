@@ -23,7 +23,7 @@ import static org.junit.Assert.assertTrue;
  * Pins the dependency versions advertised in
  * {@link JsonSerializer#LOG_ERROR_SUGGEST_X_STREAM} to the actual versions
  * resolved on the test classpath.
- *
+ * <p>
  * The error message is a documented contract: anyone hitting it copies the
  * snippet straight into their {@code pom.xml}. If the BOM bumps xstream or
  * jettison and this docstring is not kept in sync, users would be advised to
