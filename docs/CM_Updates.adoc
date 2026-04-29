@@ -45,6 +45,18 @@ For more information, see <<CM_Tutorial.adoc#configure-entries,Configure entries
 
 - Chronicle Map 3 has <<CM_Compatibility_and_Versioning.adoc#,versioning and compatibility policies>>.
 
+- Generic type parameters on public interfaces were renamed to follow Java conventions (single-letter names).
+This is a source-compatible change but is visible in Javadoc and IDE inlay hints:
++
+[cols="1,1,1"]
+|===
+|Type |Before |After
+
+|`ChronicleHash`              |`<K, E, SC, EQC>` |`<K, E, S, Q>`
+|`VanillaChronicleHash`       |`<K, C, SC, ECQ>` |`<K, C, S, Q>`
+|`ChronicleHashBuilderPrivateAPI` |`<K, RO>` |`<K, R>`
+|===
+
 '''
 
 <<../ReadMe.adoc#,Back to ReadMe>>
