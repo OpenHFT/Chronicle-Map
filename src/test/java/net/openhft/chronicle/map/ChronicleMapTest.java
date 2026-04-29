@@ -23,6 +23,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.stream.Collectors.toSet;
@@ -246,6 +247,44 @@ public class ChronicleMapTest {
             }
         }
     }
+
+    @Test
+    public void testPutWithLargeValues() {
+        ChronicleMapBuilder<CharSequence, char[]> builder = ChronicleMapBuilder
+                .of(CharSequence.class, char[].class)
+                .entries(10)
+                .actualChunkSize(4)
+                .maxChunksPerEntry(20)
+                .averageKeySize(5)
+                .averageValueSize(5);
+
+        try (final ChronicleMap<CharSequence, char[]> map = builder.create()) {
+            // small entry sizes should fit
+            testSafePutEntry(map, "hello", "hello".toCharArray(), true);
+            // just fits 19 chunks
+            testSafePutEntry(map, "hello", new char[20], true);
+            // at 20 chunks it should be ok (maxChunksPerEntry is inclusive)
+            testSafePutEntry(map, "Oh hello", new char[20], true);
+            // exceeds maxChunksPerEntry (21 chunks needed)
+            testSafePutEntry(map, "hello world!", new char[20], false);
+            // easily too big
+            testSafePutEntry(map, "A very big hello to all entries in this map", new char[1000], false);
+        }
+    }
+
+    private <K, V> void testSafePutEntry(ChronicleMap<K, V> map, K key, V value, boolean expectFit) {
+        final AtomicBoolean putSucceeded = new AtomicBoolean(true);
+        map.safePut(key, value, (k, v) -> putSucceeded.set(false));
+        assertEquals(expectFit, putSucceeded.get());
+
+       // assert that if it wasn't expected to fit, put() throws an exception
+        if (!expectFit) {
+            assertThrows(IllegalArgumentException.class, () -> map.put(key, value));
+        } else {
+            map.put(key, value); // should succeed
+        }
+    }
+
 
     @Test
     public void testEqualsByteArray() {

@@ -2738,6 +2738,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
         return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize, alignment));
     }
 
+    @Override
     public final long entrySize(long keySize, long valueSize) {
         long sizeOfEverythingBeforeValue = sizeOfEverythingBeforeValue(keySize, valueSize);
         return innerEntrySize(sizeOfEverythingBeforeValue, valueSize);

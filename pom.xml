@@ -11,13 +11,13 @@
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
-        <version>1.27ea1</version>
+        <version>2026.0</version>
         <relativePath />
     </parent>
 
     <artifactId>chronicle-map</artifactId>
 
-    <version>3.27ea2-SNAPSHOT</version>
+    <version>2026.2-SNAPSHOT</version>
     <name>OpenHFT/Chronicle-Map</name>
     <description>Chronicle-Map</description>
     <packaging>bundle</packaging>
@@ -25,6 +25,9 @@
         <zero.cost.assertions>disabled</zero.cost.assertions>
         <sonar.organization>openhft</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <!-- Coverage thresholds aligned to observed ratios (rounded down) -->
+        <jacoco.line.coverage>0.50</jacoco.line.coverage>
+        <jacoco.branch.coverage>0.30</jacoco.branch.coverage>
     </properties>
 
     <dependencyManagement>
@@ -33,7 +36,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>third-party-bom</artifactId>
-                <version>3.27ea7</version>
+                <version>2026.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -41,7 +44,7 @@
             <dependency>
                 <groupId>net.openhft</groupId>
                 <artifactId>chronicle-bom</artifactId>
-                <version>2.27ea-SNAPSHOT</version>
+                <version>2026.0-SNAPSHOT</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -126,10 +129,10 @@
         </dependency>
 
         <!-- optional dependencies -->
-
         <dependency>
             <groupId>com.thoughtworks.xstream</groupId>
             <artifactId>xstream</artifactId>
+            <version>1.4.20</version>
             <optional>true</optional>
         </dependency>
 
@@ -260,7 +263,7 @@
                             <goal>enforcer</goal>
                         </goals>
                         <configuration>
-                            <referenceVersion>3.27ea0</referenceVersion>
+                            <referenceVersion>2026.0</referenceVersion>
                             <artifactsURI>https://teamcity.chronicle.software/repository/download</artifactsURI>
                             <binaryCompatibilityPercentageRequired>100.0</binaryCompatibilityPercentageRequired>
                         </configuration>
