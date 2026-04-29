@@ -144,21 +144,22 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
             // 2. this thread updates the size and the value
             // 3. concurrent reader reads the value
             // We MUST upgrade to exclusive lock
+        } else {
+            // TODO to turn the following block on, JLANG-46 is required. Also unclear what happens
+            // if the value is DataValue generated with 2, 4 or 8 distinct bytes, putting on-heap
+            // implementation of such value is also not atomic currently, however there is a way
+            // to make it atomic, we should identify such cases and make a single write:
+            // state = UNSAFE.getLong(onHeapValueObject, offsetToTheFirstField);
+            // bytes.writeLong(state);
+            //            boolean newValueSizeIsPowerOf2 = ((newValueSize - 1L) & newValueSize) != 0;
+            //            if (!newValueSizeIsPowerOf2 || newValueSize > 8L) {
+            //                 if the new value size is 1, 2, 4, or 8, it is written not atomically only if
+            //                 the user provided own marshaller and writes value byte-by-byte, that is very
+            //                 unlikely. in this case the user should update acquire write lock before write
+            //                 updates himself
+            //                upgradeToWriteLock();
+            //            }
         }
-        // TODO to turn the following block on, JLANG-46 is required. Also unclear what happens
-        // if the value is DataValue generated with 2, 4 or 8 distinct bytes, putting on-heap
-        // implementation of such value is also not atomic currently, however there is a way
-        // to make it atomic, we should identify such cases and make a single write:
-        // state = UNSAFE.getLong(onHeapValueObject, offsetToTheFirstField);
-        // bytes.writeLong(state);
-        //            boolean newValueSizeIsPowerOf2 = ((newValueSize - 1L) & newValueSize) != 0;
-        //            if (!newValueSizeIsPowerOf2 || newValueSize > 8L) {
-        //                 if the new value size is 1, 2, 4, or 8, it is written not atomically only if
-        //                 the user provided own marshaller and writes value byte-by-byte, that is very
-        //                 unlikely. in this case the user should update acquire write lock before write
-        //                 updates himself
-        //                upgradeToWriteLock();
-        //            }
         s.innerWriteLock.lock();
 
         if (newValueSizeIsDifferent) {
