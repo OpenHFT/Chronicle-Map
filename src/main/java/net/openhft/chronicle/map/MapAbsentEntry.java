@@ -39,7 +39,7 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
     /**
      * Returns the <i>default</i> (or <i>nil</i>) value, that should be inserted into the map in
      * this context. This is primarily used in {@link ChronicleMap#acquireUsing} operation
-     * implementation, i. e. {@link MapMethods#acquireUsing}.
+     * implementation, i.e. {@link MapMethods#acquireUsing}.
      * <p>
      * This method if the default implementation for {@link
      * DefaultValueProvider#defaultValue(MapAbsentEntry)},

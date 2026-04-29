@@ -21,12 +21,12 @@ The primary checksum is a 64-bit value.
 
 If the 2nd field of the [stored entry structure
 ](3-memory-layout.md#stored-entry-structure) ends at the same address, as the 6th field of the same
-structure starts, i. e. the value size is 0, and the size itself is stored using 0 bytes, and there
+structure starts, i.e. the value size is 0, and the size itself is stored using 0 bytes, and there
 is no value alignment, the key hash code *is* the primary checksum.
 
 Otherwise, the [xxHash](https://github.com/Cyan4973/xxHash/) algorithm (XXH64 version) is applied to
 the memory range between the end of the 2nd field of the stored entry structure and the end of the
-5th field, i. e. between the end of the stored key and the end of the stored value. The resulting
+5th field, i.e. between the end of the stored key and the end of the stored value. The resulting
 hash value is called *payload checksum*.
 
 > xxHash is used to compute the payload checksum instead of CRC32, because the Java implementation

@@ -297,7 +297,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                     "replicated Chronicle Map. This should only be possible if persisted\n" +
                     "replicated Chronicle Map access from another process/JVM run/after\n" +
                     "a transfer from another machine, and replication identifier is not\n" +
-                    "specified when access is configured, e. g. ChronicleMap.of(...)" +
+                    "specified when access is configured, e.g. ChronicleMap.of(...)" +
                     ".createPersistedTo(existingFile).\n" +
                     "In this case, replicated Chronicle Map \"doesn't know\" it's identifier,\n" +
                     "and is able to perform simple _read_ operations like map.get(), which\n" +

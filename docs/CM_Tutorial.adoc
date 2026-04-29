@@ -641,7 +641,7 @@ Theoretically, there is still about a one-in-a-billion chance that after entry c
 
 By default, entry checksums are:
 
-- **`ON`** if the Chronicle Map is persisted to disk (i. e. created via
+- **`ON`** if the Chronicle Map is persisted to disk (i.e. created via
 `createPersistedTo()` method)
 - **`OFF`** if the Chronicle Map is purely in-memory.
 

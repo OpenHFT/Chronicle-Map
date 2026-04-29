@@ -28,7 +28,7 @@ public interface ChecksumEntry {
      *
      * @throws UnsupportedOperationException if checksums are not stored in the containing Chronicle
      *                                       Hash
-     * @throws RuntimeException              if the context of this entry is locked improperly, e. g. on the
+     * @throws RuntimeException              if the context of this entry is locked improperly, e.g. on the
      *                                       {@linkplain HashQueryContext#readLock() read} level, that is not upgradable to the
      *                                       {@linkplain HashQueryContext#updateLock() update} level. Calling {@code updateChecksum()}
      *                                       method is enabled when at least update lock is held.
@@ -41,7 +41,7 @@ public interface ChecksumEntry {
      * @return {@code true} if stored checksum equals to checksum computed from the entry bytes
      * @throws UnsupportedOperationException if checksums are not stored in the containing Chronicle
      *                                       Hash
-     * @throws RuntimeException              if the context of this entry is locked improperly, e. g. on the
+     * @throws RuntimeException              if the context of this entry is locked improperly, e.g. on the
      *                                       {@linkplain HashQueryContext#readLock() read} level, that is not upgradable to the
      *                                       {@linkplain HashQueryContext#updateLock() update} level. Calling {@code checkSum()} method is
      *                                       enabled when at least update lock is held.

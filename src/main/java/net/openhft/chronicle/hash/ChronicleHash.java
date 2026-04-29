@@ -24,8 +24,8 @@ import java.util.function.Predicate;
 public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
         EQC extends ExternalHashQueryContext<K>> extends MapClosable {
     /**
-     * Returns the file this hash container mapped to, i. e. when it is created by {@link ChronicleHashBuilder#create()} call, or {@code null} if it
-     * is purely in-memory, i. e. if it is created by {@link ChronicleHashBuilder#create()} call.
+     * Returns the file this hash container mapped to, i.e. when it is created by {@link ChronicleHashBuilder#create()} call, or {@code null} if it
+     * is purely in-memory, i.e. if it is created by {@link ChronicleHashBuilder#create()} call.
      *
      * @return the file this {@link ChronicleMap} or {@link ChronicleSet} is mapped to, or {@code null} if it is not mapped to any file
      * @see ChronicleHashBuilder#createPersistedTo(File)
@@ -185,7 +185,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * <p>
      * After this method call, all methods, querying the {@code ChronicleHash}'s entries, {@link
      * #longSize()} and {@code size()}), throw {@link ChronicleHashClosedException}. {@link #isOpen()} returns {@code false}, {@code close()} itself
-     * returns immediately without effects (i. e. repetitive {@code close()}, even from concurrent threads, are safe).
+     * returns immediately without effects (i.e. repetitive {@code close()}, even from concurrent threads, are safe).
      */
     @Override
     void close();

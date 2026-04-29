@@ -131,7 +131,7 @@ public class ExitHookTest {
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
         ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
-            // Test that we are able to lock the segment, i. e. the lock was released in other
+            // Test that we are able to lock the segment, i.e. the lock was released in other
             // process, thanks to default shutdown hook.
             c.writeLock().lock();
         }
@@ -158,7 +158,7 @@ public class ExitHookTest {
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
         ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
-            // Test that we are able to lock the segment, i. e. the lock was released in other
+            // Test that we are able to lock the segment, i.e. the lock was released in other
             // process, thanks to user shutdown hook.
             c.writeLock().lock();
         }
