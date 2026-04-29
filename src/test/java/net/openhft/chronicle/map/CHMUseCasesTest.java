@@ -918,13 +918,8 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try {
-                map.computeIfPresent(1, (k, s) -> s + 1);
-            } catch (Exception todoMoreSpecificException) {
-                assertNotNull(todoMoreSpecificException);
-            }
+            map.computeIfPresent(1, (k, s) -> s + 1);
             mapChecks();
-
         }
     }
 
@@ -959,12 +954,7 @@ public class CHMUseCasesTest {
 
             mapChecks();
 
-            try {
-                map.computeIfPresent(1L, (k, s) -> s + 1);
-            } catch (Exception todoMoreSpecificException) {
-                assertNotNull(todoMoreSpecificException);
-            }
-
+            map.computeIfPresent(1L, (k, s) -> s + 1);
             mapChecks();
         }
     }
@@ -996,12 +986,7 @@ public class CHMUseCasesTest {
             }));
             assertNull(map.getMapped(-1.0, (SerializableFunction<Double, Double>) s -> 10 * s));
 
-            try {
-                map.computeIfPresent(1.0, (k, s) -> s + 1);
-
-            } catch (Exception todoMoreSpecificException) {
-                assertNotNull(todoMoreSpecificException);
-            }
+            map.computeIfPresent(1.0, (k, s) -> s + 1);
         }
     }
 
@@ -1204,9 +1189,9 @@ public class CHMUseCasesTest {
                     ? ByteBuffer.wrap(new byte[]{1, 1, 1, 1})
 
                     : ((ByteBuffer) (ByteBuffer.allocateDirect(4)
-                    .put(new byte[]{1, 1, 1, 1})
-                    .flip()))
-                    .asReadOnlyBuffer();
+                                     .put(new byte[]{1, 1, 1, 1})
+                                     .flip()))
+                      .asReadOnlyBuffer();
 
             final ByteBuffer key2 = ByteBuffer.wrap(new byte[]{2, 2, 2, 2});
             // Apparently, asReadOnlyBuffer cannot be used as keys because the backing array cannot be exposed;
