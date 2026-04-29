@@ -222,8 +222,8 @@ The size of segment tiers in this Chronicle Map, in bytes. A positive 64-bit val
 > ](#tierfreelistoutersize) + [`tierEntrySpaceOuterSize`](#tierentryspaceoutersize) + (optionally)
 > 64. The `tierSize` is a multiple of 64 (i.e. it spans integral number of cache lines). The
 > optional extra cache line is added, when the `tierSize` is too round, and there are too many
-> segments, in order to break collisions of tiers' start addresses by L1 cache banks. See e.g.
-> [this post](http://danluu.com/3c-conflict/) for more information on this effect.
+> segments, in order to break collisions of tiers' start addresses by L1 cache banks. See e. g.
+> [this post](https://danluu.com/3c-conflict/) for more information on this effect.
 
 ##### `maxExtraTiers`
 

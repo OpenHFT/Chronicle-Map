@@ -85,7 +85,7 @@ When no processes access the file, it could be moved to another location in the 
 It could even run on different operating systems.
 When opened from another location you will observe the same data.
 
-If you don't need the Chronicle Map instance to survive a server restart (that is, you don't need persistence to disk; only multi-process access), mount the file on http://en.wikipedia.org/wiki/Tmpfs[tmpfs].
+If you don't need the Chronicle Map instance to survive a server restart (that is, you don't need persistence to disk; only multi-process access), mount the file on https://en.wikipedia.org/wiki/Tmpfs[tmpfs].
 For example, on `Linux` it is as easy as placing your file in `/dev/shm` directory.
 
 == Configure entries
@@ -96,7 +96,7 @@ Try to configure the entries so that the created Chronicle Map is going to serve
 You should not put additional margin over the actual target number of entries.
 This bad practice was popularized by `new HashMap(capacity)` and `new HashSet(capacity)` constructors, which accept capacity, that should be multiplied by load factor to obtain the actual maximum expected number of entries in the container. `ChronicleMap` and `ChronicleSet` do not have a notion of a load factor.
 
-See `ChronicleMapBuilder#entries()` in http://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs] for more information.
+See `ChronicleMapBuilder#entries()` in https://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs] for more information.
 
 Once a `ChronicleMap` instance is created, its configurations are sealed and cannot be changed using the `ChronicleMapBuilder` instance.
 
@@ -173,8 +173,8 @@ The key, or value type, of `ChronicleMap<K, V>` could be:
 
 - Types with best possible out-of-the-box support:
 ** Any https://github.com/OpenHFT/Chronicle-Values[value interface]
-** Any class implementing http://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/Byteable.html[`Byteable`] interface from https://github.com/OpenHFT/Chronicle-Bytes[Chronicle Bytes].
-** Any class implementing http://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/BytesMarshallable.html[`BytesMarshallable`].
+** Any class implementing https://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/Byteable.html[`Byteable`] interface from https://github.com/OpenHFT/Chronicle-Bytes[Chronicle Bytes].
+** Any class implementing https://openhft.github.io/Chronicle-Bytes/apidocs/net/openhft/chronicle/bytes/BytesMarshallable.html[`BytesMarshallable`].
 interface from Chronicle Bytes.
 The implementation class should have a public no-arg constructor.
 ** `byte[]` and `ByteBuffer`
@@ -652,7 +652,7 @@ Entry checksums are computed automatically when an entry is inserted into a Chro
 For example, `map.put()`,
 `map.replace()`, `map.compute()`, `mapEntry.doReplaceValue()`.
 See the `MapEntry` interface in
-http://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs].
+https://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs].
 If you update values directly, bypassing Chronicle Map logic, keeping the entry checksum up-to-date is also your responsibility.
 
 It is strongly recommended to update off-heap memory of values directly only within a context, and update or write lock held.

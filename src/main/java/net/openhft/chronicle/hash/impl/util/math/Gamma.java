@@ -11,19 +11,19 @@ package net.openhft.chronicle.hash.impl.util.math;
  * Implementation of {@link #invGamma1pm1(double)} and
  * {@link #logGamma1p(double)} is based on the algorithms described in
  * <ul>
- * <li><a href="http://dx.doi.org/10.1145/22721.23109">Didonato and Morris
+ * <li><a href="https://dx.doi.org/10.1145/22721.23109">Didonato and Morris
  * (1986)</a>, <em>Computation of the Incomplete Gamma Function Ratios and
  * their Inverse</em>, TOMS 12(4), 377-393,</li>
- * <li><a href="http://dx.doi.org/10.1145/131766.131776">Didonato and Morris
+ * <li><a href="https://dx.doi.org/10.1145/131766.131776">Didonato and Morris
  * (1992)</a>, <em>Algorithm 708: Significant Digit Computation of the
  * Incomplete Beta Function Ratios</em>, TOMS 18(3), 360-373,</li>
  * </ul>
  * and implemented in the
- * <a href="http://www.dtic.mil/docs/citations/ADA476840">NSWC Library of Mathematical Functions</a>,
+ * <a href="https://www.dtic.mil/docs/citations/ADA476840">NSWC Library of Mathematical Functions</a>,
  * available
- * <a href="http://www.ualberta.ca/CNS/RESEARCH/Software/NumericalNSWC/site.html">here</a>.
+ * <a href="https://www.ualberta.ca/CNS/RESEARCH/Software/NumericalNSWC/site.html">here</a>.
  * This library is "approved for public release", and the
- * <a href="http://www.dtic.mil/dtic/pdf/announcements/CopyrightGuidance.pdf">Copyright guidance</a>
+ * <a href="https://www.dtic.mil/dtic/pdf/announcements/CopyrightGuidance.pdf">Copyright guidance</a>
  * indicates that unless otherwise stated in the code, all FORTRAN functions in
  * this library are license free. Since no such notice appears in the code these
  * functions can safely be ported to Commons-Math.
@@ -263,11 +263,11 @@ class Gamma {
      * implementation in the <em>NSWC Library of Mathematics Subroutines</em>,
      * {@code DGAMLN}. For x &gt; 8, the implementation is based on
      * <ul>
-     * <li><a href="http://mathworld.wolfram.com/GammaFunction.html">Gamma
+     * <li><a href="https://mathworld.wolfram.com/GammaFunction.html">Gamma
      * Function</a>, equation (28).</li>
-     * <li><a href="http://mathworld.wolfram.com/LanczosApproximation.html">
+     * <li><a href="https://mathworld.wolfram.com/LanczosApproximation.html">
      * Lanczos Approximation</a>, equations (1) through (5).</li>
-     * <li><a href="http://my.fit.edu/~gabdo/gamma.txt">Paul Godfrey, A note on
+     * <li><a href="https://my.fit.edu/~gabdo/gamma.txt">Paul Godfrey, A note on
      * the computation of the convergent Lanczos complex Gamma
      * approximation</a></li>
      * </ul>
@@ -308,15 +308,15 @@ class Gamma {
      * The implementation of this method is based on:
      * <ul>
      * <li>
-     * <a href="http://mathworld.wolfram.com/RegularizedGammaFunction.html">
+     * <a href="https://mathworld.wolfram.com/RegularizedGammaFunction.html">
      * Regularized Gamma Function</a>, equation (1)
      * </li>
      * <li>
-     * <a href="http://mathworld.wolfram.com/IncompleteGammaFunction.html">
+     * <a href="https://mathworld.wolfram.com/IncompleteGammaFunction.html">
      * Incomplete Gamma Function</a>, equation (4).
      * </li>
      * <li>
-     * <a href="http://mathworld.wolfram.com/ConfluentHypergeometricFunctionoftheFirstKind.html">
+     * <a href="https://mathworld.wolfram.com/ConfluentHypergeometricFunctionoftheFirstKind.html">
      * Confluent Hypergeometric Function of the First Kind</a>, equation (1).
      * </li>
      * </ul>
@@ -377,11 +377,11 @@ class Gamma {
      * The implementation of this method is based on:
      * <ul>
      * <li>
-     * <a href="http://mathworld.wolfram.com/RegularizedGammaFunction.html">
+     * <a href="https://mathworld.wolfram.com/RegularizedGammaFunction.html">
      * Regularized Gamma Function</a>, equation (1).
      * </li>
      * <li>
-     * <a href="http://functions.wolfram.com/GammaBetaErf/GammaRegularized/10/0003/">
+     * <a href="https://functions.wolfram.com/GammaBetaErf/GammaRegularized/10/0003/">
      * Regularized incomplete gamma function: Continued fraction representations
      * (formula 06.08.10.0003)</a>
      * </li>
@@ -443,9 +443,9 @@ class Gamma {
      *
      * @param x Argument.
      * @return The Lanczos approximation.
-     * @see <a href="http://mathworld.wolfram.com/LanczosApproximation.html">Lanczos Approximation</a>
+     * @see <a href="https://mathworld.wolfram.com/LanczosApproximation.html">Lanczos Approximation</a>
      * equations (1) through (5), and Paul Godfrey's
-     * <a href="http://my.fit.edu/~gabdo/gamma.txt">Note on the computation
+     * <a href="https://my.fit.edu/~gabdo/gamma.txt">Note on the computation
      * of the convergent Lanczos complex Gamma approximation</a>
      * @since 3.1
      */
