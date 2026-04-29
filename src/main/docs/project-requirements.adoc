@@ -1,0 +1,81 @@
+= Chronicle Map Project Requirements
+:toc:
+:sectnums:
+:lang: en-GB
+:source-highlighter: rouge
+
+== Scope
+
+Chronicle Map provides an off-heap, optionally persisted key–value store with support for inter-process sharing and replication.
+The requirements in this document summarise existing behaviour described in the `docs/CM_*.adoc` guides and will be refined in future ISO-alignment passes.
+
+== Functional Requirements (Initial Skeleton)
+
+[cols=\"1,5,4\",options=\"header\"]
+|===
+|ID |Requirement |Verification
+|MAP-FN-001 |Provide an off-heap key–value store addressable via `ChronicleMap` that supports put/get/remove operations with predictable latency. |Core map behaviour is exercised by tests such as `ChronicleMapImportExportTest`, `SerializableTest`, `EntryCountMapTest`, `KeySizesTest` and `HugeSparseMapTest`, together with tutorial code under `docs/CM_Tutorial_*.adoc`.
+|MAP-FN-002 |Support persisted maps backed by memory-mapped files so that data survives JVM restarts and can be shared between processes. |Persistence and restart scenarios are covered by tests such as `ChronicleMapImportExportTest`, `BasicReplicationTest`, `AutoResizeTest` and long-running examples such as `LargeMapMain`.
+|MAP-FN-003 |Expose a fluent `ChronicleMapBuilder` to configure key/value types, expected entry count and persistence settings. |Builder usage examples in `docs/CM_Tutorial_DataAccess.adoc` and tests such as `EntryCountMapTest`, `BytesMarshallableValueTest` and `ChronicleSetBuilderTest` (for the related Chronicle Set builder).
+|===
+
+== Non-Functional Requirements - Performance
+
+[cols=\"1,5,4\",options=\"header\"]
+|===
+|ID |Requirement |Verification
+|MAP-NF-P-001 |Put and get operations on typical maps (with configured average key and value sizes) should maintain predictable latency across supported entry-count ranges. |Micro-benchmarks and tests such as `CHMLatencyTestMain` and `PageLatencyMain` measure latency characteristics under different map sizes and access patterns; results are used to detect regressions.
+|MAP-NF-P-002 |Replicated Chronicle Maps should maintain acceptable end-to-end latency for update propagation across typical cluster topologies. |Replication-oriented tests such as `BasicReplicationTest` exercise update propagation between maps; additional benchmarks may be added to characterise latency across nodes.
+|===
+
+== Non-Functional Requirements - Operability
+
+[cols=\"1,5,4\",options=\"header\"]
+|===
+|ID |Requirement |Verification
+|MAP-NF-O-001 |Chronicle Map should provide configuration options and documented patterns for sizing (entry count and segment count) so operators can avoid unexpected resizing or capacity errors in production. |Examples and guidance in `docs/CM_Tutorial_DataAccess.adoc` and related guides, together with tests such as `EntryCountMapTest`, `AutoResizeTest` and `KeySegmentDistributionTest`, illustrate how sizing parameters affect behaviour.
+|===
+
+== Non-Functional Requirements - Security
+
+[cols=\"1,5,4\",options=\"header\"]
+|===
+|ID |Requirement |Verification
+|MAP-NF-S-001 |Chronicle Map must rely on Chronicle Bytes and related core libraries for bounds-checked off-heap access and avoid unchecked direct memory writes that could corrupt map metadata or entries; security-sensitive use (for example maps storing secrets) is expected to layer encryption and access control externally. |Code reviews and static analysis focus on memory-access paths in Chronicle Map, ensuring they pass through Chronicle Bytes safety checks; higher-level security guidance is provided by the Chronicle Bytes and Chronicle Queue security reviews and by deployment documentation in the wider stack.
+|===
+
+== Traceability and Future Work
+
+The tables above provide an initial mapping from `MAP-*` requirements to representative tests and examples.
+They focus on the most widely used Chronicle Map behaviours; additional requirements and associated tests can be added as further behaviours are formalised.
+
+[cols=\"1,5,4\",options=\"header\"]
+|===
+|Requirement ID |Representative tests |Notes
+
+|MAP-FN-001
+|`ChronicleMapImportExportTest`, `SerializableTest`, `EntryCountMapTest`, `KeySizesTest`, `HugeSparseMapTest`
+|Exercise basic off-heap key–value operations, serialisation, sizing and distribution across segments.
+
+|MAP-FN-002
+|`ChronicleMapImportExportTest`, `BasicReplicationTest`, `AutoResizeTest`, `LargeMapMain`
+|Cover persisted maps backed by memory-mapped files, restart scenarios, replication between processes and resizing behaviour.
+
+|MAP-FN-003
+|`EntryCountMapTest`, `BytesMarshallableValueTest`, `ChronicleSetBuilderTest`
+|Use `ChronicleMapBuilder` (and related builder patterns) to configure entry counts, key/value types and persistence, verifying that builder options are honoured.
+
+|MAP-NF-P-001, MAP-NF-P-002
+|`CHMLatencyTestMain`, `PageLatencyMain`, `BasicReplicationTest`
+|Provide latency measurements for local and replicated maps; used to monitor performance regressions.
+
+|MAP-NF-O-001
+|`EntryCountMapTest`, `AutoResizeTest`, `KeySegmentDistributionTest`
+|Demonstrate the impact of sizing and segment configuration on behaviour, helping operators tune maps for production.
+|===
+
+Future work should:
+
+* expand the requirements catalogue as additional behaviours are formalised;
+* align existing `CM_*` documentation with the `MAP-*` identifiers above and add further `MAP-NF-S-*` and `MAP-NF-O-*` entries for security and operability;
+* keep the mapping between `MAP-*` requirements and representative tests in sync with the evolving test suite.

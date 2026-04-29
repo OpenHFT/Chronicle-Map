@@ -5,7 +5,6 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -36,7 +35,7 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                     "..... @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender established chm "
             );
-            StampedLock offHeapLock = new ChronicleStampedLock(
+            final StampedLock offHeapLock = new ChronicleStampedLock(
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
@@ -65,7 +64,7 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = offHeapLock.writeLock()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +

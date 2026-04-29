@@ -63,9 +63,9 @@ import static net.openhft.chronicle.map.ChronicleHashCorruptionImpl.report;
 
 @SuppressWarnings({"rawtypes", "unchecked", "this-escape"})
 public abstract class VanillaChronicleHash<K,
-        C extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
-        ECQ extends ExternalHashQueryContext<K>> extends AbstractCloseable
-        implements ChronicleHash<K, C, SC, ECQ>, Marshallable {
+        C extends HashEntry<K>, S extends HashSegmentContext<K, ?>,
+        Q extends ExternalHashQueryContext<K>> extends AbstractCloseable
+        implements ChronicleHash<K, C, S, Q>, Marshallable {
 
     public static final long TIER_COUNTERS_AREA_SIZE = 64;
     public static final long RESERVED_GLOBAL_MUTABLE_STATE_BYTES = 1024;

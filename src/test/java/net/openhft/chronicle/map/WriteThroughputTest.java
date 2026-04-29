@@ -51,7 +51,7 @@ public class WriteThroughputTest {
                 .of(CharSequence.class, CharSequence.class)
                 .entries(count * 3 / 2)
                 .averageValueSize(size / 4)
-//                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
+                //                .valueReaderAndDataAccess(, SnappyStringMarshaller.INSTANCE, )
                 .putReturnsNull(true)
                 .createPersistedTo(file2)) {
 

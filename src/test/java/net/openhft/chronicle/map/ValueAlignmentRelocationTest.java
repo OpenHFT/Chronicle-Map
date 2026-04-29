@@ -92,9 +92,9 @@ public class ValueAlignmentRelocationTest {
                     map.put(new byte[]{(byte) i}, new byte[]{(byte) i});
                     map.put(("Hello" + i).getBytes(), "world".getBytes());
                 }
-//                System.out.println("firstKeySize=" + firstKeySize + ",second key=" + secondKeySize);
+                //                System.out.println("firstKeySize=" + firstKeySize + ",second key=" + secondKeySize);
                 Assert.assertEquals(Arrays.toString(map.get(firstKey)), Arrays.toString(thirdValue));
-                Assert.assertTrue(Arrays.equals(map.get(firstKey), thirdValue));
+                Assert.assertArrayEquals(map.get(firstKey), thirdValue);
             }
         }
     }
@@ -121,24 +121,24 @@ public class ValueAlignmentRelocationTest {
                 for (int j = i + 1; j <= i + 10; j++) {
                     map.clear();
 
-                    byte[] _austi = "abcdefghijklmnopqrstuvwxyz".substring(0, k).getBytes(ISO_8859_1);
-                    byte[] _shorter = "1234567890".substring(0, i).getBytes(ISO_8859_1);
-                    byte[] _h = "h".getBytes(ISO_8859_1);
-                    byte[] _a = "a".getBytes(ISO_8859_1);
+                    byte[] prefix = "abcdefghijklmnopqrstuvwxyz".substring(0, k).getBytes(ISO_8859_1);
+                    byte[] shorter = "1234567890".substring(0, i).getBytes(ISO_8859_1);
+                    byte[] letterH = "h".getBytes(ISO_8859_1);
+                    byte[] letterA = "a".getBytes(ISO_8859_1);
                     String expected = "abcdefghijklmnopqrstuvwxyz".substring(0, j);
-                    byte[] _longer = expected.getBytes(ISO_8859_1);
-                    byte[] _Hello = "Hello".getBytes(ISO_8859_1);
-                    byte[] _world = "world".getBytes(ISO_8859_1);
+                    byte[] longer = expected.getBytes(ISO_8859_1);
+                    final byte[] hello = "Hello".getBytes(ISO_8859_1);
+                    final byte[] world = "world".getBytes(ISO_8859_1);
 
-                    map.put(_austi, _shorter);
-                    map.put(_h, _a);
+                    map.put(prefix, shorter);
+                    map.put(letterH, letterA);
 
-                    map.put(_austi, _longer);
-                    String actual0 = toString(map.get(_austi));
+                    map.put(prefix, longer);
+                    String actual0 = toString(map.get(prefix));
                     Assert.assertEquals(expected, actual0);
 
-                    map.put(_Hello, _world);
-                    String actual = toString(map.get(_austi));
+                    map.put(hello, world);
+                    String actual = toString(map.get(prefix));
 
                     if (expected.equals(actual))
                         Assert.assertEquals(expected, actual);

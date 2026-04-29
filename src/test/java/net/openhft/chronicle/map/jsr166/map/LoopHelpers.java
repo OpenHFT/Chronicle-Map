@@ -157,7 +157,7 @@ class LoopHelpers {
         }
 
         public int next() {
-            int t = x ^ (x << 11);
+            final int t = x ^ (x << 11);
             x = y;
             y = z;
             z = w;
@@ -204,8 +204,9 @@ class LoopHelpers {
             if (!started) {
                 started = true;
                 startTime = t;
-            } else
+            } else {
                 endTime = t;
+            }
         }
 
         public void clear() {

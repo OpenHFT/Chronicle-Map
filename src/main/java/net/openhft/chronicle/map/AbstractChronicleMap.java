@@ -82,7 +82,7 @@ interface AbstractChronicleMap<K, V> extends ChronicleMap<K, V> {
             @Override
             public Iterator<V> iterator() {
                 return new Iterator<V>() {
-                    private Iterator<Entry<K, V>> i = entrySet().iterator();
+                    private final Iterator<Entry<K, V>> i = entrySet().iterator();
 
                     @Override
                     public boolean hasNext() {

@@ -17,7 +17,7 @@ public class RecursiveRefereneChMapTest {
     public static final String TMP = OS.getTarget();
 
     @Test
-    public void testRecursive() throws IOException {
+    public void testRecursive() {
         File file = new File(TMP + "/test." + Time.uniqueId() + ".tmp");
         file.deleteOnExit();
         Map<String, StupidCycle> map = ChronicleMapBuilder.of(String.class, StupidCycle.class)

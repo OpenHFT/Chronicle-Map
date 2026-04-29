@@ -7,15 +7,13 @@ import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-
 /**
  * @author Rob Austin.
  */
 public class BuildVersionTest {
 
     @Test
-    public void test() throws IOException, InterruptedException {
+    public void test() {
         // checks that we always get a version
         Assert.assertNotNull(BuildVersion.version());
     }
@@ -25,7 +23,7 @@ public class BuildVersionTest {
      *
      */
     @Test
-    public void testVersion() throws IOException, InterruptedException {
+    public void testVersion() {
 
         try (ChronicleMap<Integer, Double> expected = ChronicleMap.of(Integer.class, Double.class)
                 .entries(1).create()) {

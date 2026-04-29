@@ -1,0 +1,48 @@
+= Chronicle Map Testing Strategy
+:toc:
+:sectnums:
+:lang: en-GB
+:source-highlighter: rouge
+
+This document outlines how Chronicle Map is tested.
+It complements the `MAP-*` requirements in `project-requirements.adoc` and helps reviewers understand how key behaviours are validated.
+
+== Objectives
+
+Testing for Chronicle Map aims to:
+
+* verify the functional requirements (`MAP-FN-*`) for core map operations, persistence and builder configuration;
+* exercise non-functional requirements (`MAP-NF-P-*`, `MAP-NF-O-*`) around latency, sizing and operability;
+* ensure that off-heap and persisted maps behave correctly across JVM restarts and, where applicable, in replicated deployments.
+
+== Unit and Integration Tests
+
+Representative tests include:
+
+* core operations and serialisation: `ChronicleMapImportExportTest`, `SerializableTest`, `BytesMarshallableValueTest`;
+* sizing and distribution: `EntryCountMapTest`, `KeySizesTest`, `HugeSparseMapTest`, `KeySegmentDistributionTest`;
+* persistence and restart: `ChronicleMapImportExportTest`, `AutoResizeTest`, examples such as `LargeMapMain`;
+* replication: `BasicReplicationTest` and related classes under `net.openhft.chronicle.map`.
+
+These tests are organised under `src/test/java` and are run via the standard Maven test lifecycle.
+
+== Performance and Latency Tests
+
+Latency characteristics for Chronicle Map are explored using tests and harnesses such as:
+
+* `CHMLatencyTestMain` – exercises map operations under load and reports latency metrics;
+* `PageLatencyMain` – explores page and memory-mapped access patterns.
+
+These programmes are typically run manually or in dedicated performance environments rather than on every CI build, but they inform the performance expectations captured in `MAP-NF-P-*` requirements.
+
+== Traceability
+
+`project-requirements.adoc` documents the `MAP-*` requirements and includes a traceability table mapping each requirement to representative tests.
+When new behaviours are added or existing ones change, keep the following aligned:
+
+* add or update `MAP-*` entries in `project-requirements.adoc`;
+* extend the traceability table with the relevant test classes;
+* add or update unit, integration or performance tests under `src/test/java`.
+
+All tests should pass under the shared quality profiles on supported JDKs before releasing new versions of Chronicle Map.
+

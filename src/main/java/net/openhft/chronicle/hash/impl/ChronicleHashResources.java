@@ -131,14 +131,16 @@ public abstract class ChronicleHashResources implements Runnable {
             if (state == COMPLETELY_CLOSED)
                 return;
             try {
-                Jvm.error().on(getClass(), chronicleHashIdentityString+" is not closed manually, cleaned up from Cleaner"                        );
+                Jvm.error().on(getClass(),
+                        chronicleHashIdentityString + " is not closed manually, cleaned up from Cleaner");
             } catch (Throwable t) {
                 thrown = t;
             } finally {
                 synchronized (this) {
                     if (state == COMPLETELY_CLOSED) {
-                        Jvm.error().on(getClass(), "Somebody closed "+chronicleHashIdentityString+" while it is processed by Cleaner, " +
-                                "this should be impossible");
+                        Jvm.error().on(getClass(),
+                                "Somebody closed " + chronicleHashIdentityString
+                                        + " while it is processed by Cleaner, this should be impossible");
                     } else {
                         thrown = Throwables.returnOrSuppress(thrown, releaseEverything(true));
                     }

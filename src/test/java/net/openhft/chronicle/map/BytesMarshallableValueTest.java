@@ -23,8 +23,8 @@ public class BytesMarshallableValueTest {
     }
 
     public static class Value implements BytesMarshallable {
-        int x;
-        String foo;
+        final int x;
+        final String foo;
 
         public Value(int x, String foo) {
             this.x = x;

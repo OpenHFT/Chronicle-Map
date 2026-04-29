@@ -12,18 +12,17 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Objects;
 
 public class MarshallableReaderWriterTest {
     @Test
-    public void test() throws IOException {
+    public void test() {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyOrder.class);
 
         try (ChronicleMap<CharSequence, MyOrder> map = ChronicleMap
                 .of(CharSequence.class, MyOrder.class)
                 .entries(10)
-//                .valueMarshaller(new MarshallableReaderWriter<>(MyOrder.class))
+                //                .valueMarshaller(new MarshallableReaderWriter<>(MyOrder.class))
                 .averageKeySize(32)
                 .averageValueSize(64)
                 .create()) {

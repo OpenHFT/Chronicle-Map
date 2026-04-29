@@ -5,12 +5,9 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.io.IOException;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.Assume.assumeFalse;
@@ -35,36 +32,36 @@ public class DirtyReadVictimIPCTest {
      */
 
     @Test
-    public void mainOptimisticNegative() throws IOException {
+    public void mainOptimisticNegative() {
         try {
             System.out.println("\n*****   Optimistic (-) Test\n");
-//            ProcessBuilder pb = new ProcessBuilder(
-//                    "/usr/bin/mkdir -p "+
-//                    " C:\\Users\\buddy\\dev\\shm\\ "
-//            );
-
-//            Process p = pb.start();
-//            Scanner scan = new Scanner(p.getInputStream());
-//            while (scan.hasNext()) {
-//                System.out.println(
-//                        " ,,@t=" +
-//                                System.currentTimeMillis() +
-//                                " DirtyReadVictimTest CALLING [" +
-//                                scan.next() +
-//                                "]"
-//                );
-//            }
-//            Thread.sleep(1_000);
-//            p.destroyForcibly();
-//            System.out.println(
-//                    " ,,@t=" +
-//                            System.currentTimeMillis() +
-//                            " DirtyReadVictimTest called [\n" +
-//                            "mkdir -p " +
-//                            " C:\\Users\\buddy\\dev\\shm\\ " +
-//                            "\n" +
-//                            "]"
-//            );
+            //            ProcessBuilder pb = new ProcessBuilder(
+            //                    "/usr/bin/mkdir -p "+
+            //                    " C:\\Users\\buddy\\dev\\shm\\ "
+            //            );
+            //
+            //            Process p = pb.start();
+            //            Scanner scan = new Scanner(p.getInputStream());
+            //            while (scan.hasNext()) {
+            //                System.out.println(
+            //                        " ,,@t=" +
+            //                                System.currentTimeMillis() +
+            //                                " DirtyReadVictimTest CALLING [" +
+            //                                scan.next() +
+            //                                "]"
+            //                );
+            //            }
+            //            Thread.sleep(1_000);
+            //            p.destroyForcibly();
+            //            System.out.println(
+            //                    " ,,@t=" +
+            //                            System.currentTimeMillis() +
+            //                            " DirtyReadVictimTest called [\n" +
+            //                            "mkdir -p " +
+            //                            " C:\\Users\\buddy\\dev\\shm\\ " +
+            //                            "\n" +
+            //                            "]"
+            //            );
 
             /*
                ben.cotton@rutgers.edu   START
@@ -74,7 +71,7 @@ public class DirtyReadVictimIPCTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp;
             System.out.println(
@@ -86,7 +83,7 @@ public class DirtyReadVictimIPCTest {
                             "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -115,8 +112,8 @@ public class DirtyReadVictimIPCTest {
                 Thread.sleep(20_000);
 
             } finally {
-                boolean r;
-                if ((r = offHeapLock.validate(stamp))) {
+                boolean r = offHeapLock.validate(stamp);
+                if (r) {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
                                     " DirtyReadVictim OPTIMISTICALLY_READ coupon=" +
@@ -169,7 +166,7 @@ public class DirtyReadVictimIPCTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;
             System.out.println(
@@ -181,7 +178,7 @@ public class DirtyReadVictimIPCTest {
                             + "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

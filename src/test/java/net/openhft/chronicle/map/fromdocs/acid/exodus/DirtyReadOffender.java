@@ -47,7 +47,7 @@ public class DirtyReadOffender implements Runnable {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = this.offHeapLock.writeLock()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     " @t=" + System.currentTimeMillis() +
@@ -102,7 +102,7 @@ public class DirtyReadOffender implements Runnable {
         this.isoLevel = isoLevel;
     }
 
-    public void setStampedLock(StampedLock _sLock) {
-        this.offHeapLock = _sLock;
+    public void setStampedLock(StampedLock stampedLock) {
+        this.offHeapLock = stampedLock;
     }
 }

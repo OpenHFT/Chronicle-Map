@@ -106,10 +106,6 @@ procedure and call one depending on the context.
 > The reference Java implementation uses only the version of this procedure without the first two
 > steps.
 
-<a name="release-write-lock" />
-<a name="write-to-update-lock-downgrade" />
-<a name="write-to-read-lock-downgrade" />
-
 ## Release write lock, or write to update lock downgrade, or write to read lock downgrade
 
 Perform a CAS operation on the count word of the lock state, comparing 0x80000000 (i.e. a count
@@ -140,9 +136,6 @@ procedure.
  3. Perform a CAS operation on the wait word of the lock structure, comparing the wait word that was
  read with a wait word with the wait count decremented. If the CAS operation fails, begin the
  deregister wait procedure from the start. If the CAS operation succeeds, the procedure succeeds.
-
-<a name="time-limited-write-lock-acquisition" />
-<a name="time-limited-update-to-write-lock-upgrade" />
 
 ## Time-limited write lock acquisition or update to write upgrade
 

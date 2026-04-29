@@ -15,4 +15,57 @@
     <suppress files="CompiledReplicatedMapQueryContext.java" checks=".*"/>
     <suppress files="CompiledMapIterationContext.java" checks=".*"/>
     <suppress files="CompiledMapQueryContext.java" checks=".*"/>
+
+    <!-- Test-only suppressions for legacy/examples -->
+    <suppress files="DirtyReadVictimTest.java"
+              checks="(CommentsIndentation|VariableDeclarationUsageDistance)"/>
+    <suppress files="ChronicleStampedLock.java"
+              checks="(CommentsIndentation|VariableDeclarationUsageDistance)"/>
+    <suppress files="DirtyReadVictim.java"
+              checks="(CommentsIndentation|VariableDeclarationUsageDistance)"/>
+    <suppress files="CHMTestIterator1.java"
+              checks="CommentsIndentation"/>
+    <suppress files="Issue229Test.java"
+              checks="CommentsIndentation"/>
+    <suppress files="ValueAlignmentRelocationTest.java"
+              checks="(CommentsIndentation|VariableDeclarationUsageDistance)"/>
+    <suppress files="MarshallableReaderWriterTest.java"
+              checks="CommentsIndentation"/>
+    <suppress files="LargeEntriesTest.java"
+              checks="CommentsIndentation"/>
+    <suppress files="DemoChronicleMapTest.java"
+              checks="CommentsIndentation"/>
+    <suppress files="Issue63Test.java"
+              checks="CommentsIndentation"/>
+    <suppress files="MapCheck.java"
+              checks="CommentsIndentation"/>
+    <suppress files="CHMUseCasesTest.java"
+              checks="(CommentsIndentation|VariableDeclarationUsageDistance)"/>
+    <suppress files="ChronicleMapTest.java"
+              checks="(CommentsIndentation|VariableDeclarationUsageDistance)"/>
+
+    <suppress files="DirtyReadOffender_WriterWriterTest.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="DirtyReadOffender.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="DirtyReadIntolerant.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="DirtyReadOffenderIPCTest.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="DirtyReadOffender_ReaderWriterTest.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="DirtyReadOffenderTest.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="DirtyReadOffender_WriterReaderTest.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="DirtyReadIntolerant_ReaderReader_Test.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="DirtyReadVictimIPCTest.java"
+              checks="CommentsIndentation"/>
+    <suppress files="DirtyReadVictim.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="ReaderToo.java"
+              checks="VariableDeclarationUsageDistance"/>
+    <suppress files="WriterToo.java"
+              checks="VariableDeclarationUsageDistance"/>
 </suppressions>

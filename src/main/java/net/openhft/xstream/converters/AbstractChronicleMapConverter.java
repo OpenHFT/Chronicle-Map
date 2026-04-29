@@ -46,7 +46,8 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             case "java.util.Collections$EmptyMap":
             case "java.util.Collections.EmptyMap":
                 return (E) Collections.emptyMap();
-
+            default:
+                break;
         }
 
         return (E) unmarshallingContext.convertAnother(null, forName(reader.getNodeName()));

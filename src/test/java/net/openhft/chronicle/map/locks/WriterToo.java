@@ -14,7 +14,7 @@ class WriterToo implements Runnable {
     @Override
     public void run() {
         try {
-            long sleepT = 0;
+            final long sleepT = 0;
             long holdTime = 20;
 
             ChronicleMap<String, BondVOInterface> chm =
@@ -31,7 +31,7 @@ class WriterToo implements Runnable {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            Assert.assertNotEquals(offHeapLock, null);
+            Assert.assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
@@ -61,6 +61,7 @@ class WriterToo implements Runnable {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = offHeapLock.writeLock()) == 0) {
+                Thread.yield();
             }
             System.out.println(
                     "WRITER TOO" +

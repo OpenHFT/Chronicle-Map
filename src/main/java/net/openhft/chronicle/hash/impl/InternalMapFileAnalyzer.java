@@ -89,7 +89,8 @@ public final class InternalMapFileAnalyzer {
             output24u(buffer, "allocatedExtraTierBulks");
             output40u(buffer, "firstFreeTierIndex");
             output40u(buffer, "extraTiersInUse");
-            int segmentHeadersOffset = Math.toIntExact(output32u(buffer, "segmentHeadersOffset"));
+            final int segmentHeadersOffsetFromHeader =
+                    Math.toIntExact(output32u(buffer, "segmentHeadersOffset"));
             output64(buffer, "dataStoreSize");
             output64(buffer, "currentCleanupSegmentIndex(r)");
             output8(buffer, "modificationIteratorsCount(r)");
@@ -98,7 +99,12 @@ public final class InternalMapFileAnalyzer {
             output64(buffer, "modificationIteratorInitAt(r)1");
 
             header("Segment Headers Area");
-            segmentHeadersOffset = 0x005c1000; // Why is this not picked up properly?
+            int segmentHeadersOffset = segmentHeadersOffsetFromHeader;
+            if (segmentHeadersOffset <= 0) {
+                System.out.println(
+                        "invalid segmentHeadersOffset (" + segmentHeadersOffsetFromHeader + "), using fallback 0x005c1000");
+                segmentHeadersOffset = 0x005c1000; // Fallback until layout bug is fixed.
+            }
             buffer.position(segmentHeadersOffset);
             final int actualSegments = (int) props.get("actualSegments");
             System.out.println("actualSegments = " + actualSegments);

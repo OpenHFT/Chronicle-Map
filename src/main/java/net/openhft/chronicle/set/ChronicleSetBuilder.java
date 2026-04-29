@@ -35,6 +35,8 @@ public final class ChronicleSetBuilder<K>
             corruption -> Jvm.error().on(ChronicleSetBuilder.class, corruption.message(), corruption.exception());
 
     private ChronicleMapBuilder<K, DummyValue> chronicleMapBuilder;
+    // retained for reflective access via Jvm.getValue(builder, "privateAPI")
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final ChronicleSetBuilderPrivateAPI<K> privateAPI;
 
     ChronicleSetBuilder(Class<K> keyClass) {

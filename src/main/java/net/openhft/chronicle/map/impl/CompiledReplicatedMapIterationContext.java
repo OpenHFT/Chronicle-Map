@@ -344,7 +344,8 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
     }
 
     enum EntriesToTest {
-PRESENT, ALL;    }
+        PRESENT, ALL;
+    }
 
     private long _MapEntryStages_countValueSizeOffset() {
         return keyEnd();
@@ -1671,7 +1672,8 @@ PRESENT, ALL;    }
     }
 
     public enum SearchState {
-PRESENT, ABSENT;    }
+        PRESENT, ABSENT;
+    }
 
     private long _HashEntryStages_entryEnd() {
         return keyEnd();
@@ -2592,7 +2594,7 @@ PRESENT, ABSENT;    }
 
     }
 
-    public void initSegmentTier_WithBaseAddr(int tier, long tierBaseAddr, long tierIndex) {
+    public void initSegmentTierWithBaseAddr(int tier, long tierBaseAddr, long tierIndex) {
         boolean wasSegmentTierInit = this.segmentTierInit();
         this.tier = tier;
         this.tierIndex = tierIndex;
@@ -4424,7 +4426,7 @@ PRESENT, ABSENT;    }
                     } finally {
                         hookAfterEachIteration();
                         if ((this.tier()) != currentTier) {
-                            this.initSegmentTier_WithBaseAddr(currentTier, currentTierBaseAddr, tierIndex);
+                            this.initSegmentTierWithBaseAddr(currentTier, currentTierBaseAddr, tierIndex);
                             currentHashLookupPos = hashLookup.stepBack(currentHashLookupPos);
                             steps--;
                             this.initHashLookupPos(currentHashLookupPos);

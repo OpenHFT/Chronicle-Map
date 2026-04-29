@@ -30,7 +30,7 @@ public class DirtyReadOffender {
                     " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender established chm "
             );
-            StampedLock offHeapLock = new ChronicleStampedLock(
+            final StampedLock offHeapLock = new ChronicleStampedLock(
                     args[3]
                             + "OPERAND_ChronicleStampedLock"
             );
@@ -60,7 +60,7 @@ public class DirtyReadOffender {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = offHeapLock.writeLock()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     " @t=" + System.currentTimeMillis() +

@@ -1,0 +1,49 @@
+= Chronicle Map Architecture Overview
+:toc:
+:sectnums:
+:lang: en-GB
+:source-highlighter: rouge
+
+This document provides a high-level overview of Chronicle Map, its role in the Chronicle stack, and the main design choices that underpin its behaviour.
+It complements the existing user guides in `docs/CM_*.adoc` and will be extended as further ISO 9001 and 27001 work is performed.
+
+== Context and Role
+
+Chronicle Map is an off-heap, persisted key–value store designed for low-latency access and inter-process data sharing.
+It sits in Layer 1 of the Chronicle stack alongside Chronicle Queue and Chronicle Wire and is typically used by higher-level services to cache, share and replicate state.
+
+Chronicle Map depends on:
+
+* Chronicle Bytes for off-heap and memory-mapped storage primitives.
+* Chronicle Core for utilities, lifecycle handling and configuration helpers.
+* Chronicle Threads for optional background maintenance and monitoring tasks.
+* Chronicle Wire for serialising complex keys and values when needed.
+
+== Core Abstractions
+
+The primary runtime abstractions are:
+
+* `ChronicleMap` – the main key–value container interface, usually created via `ChronicleMapBuilder`.
+* `ChronicleMapBuilder` – a fluent builder that configures key and value types, expected entry count, persistence location and replication parameters.
+* Query contexts – `ExternalMapQueryContext` and related types that provide scoped, allocation-aware access to entries.
+* Event listeners – hooks such as `MapEventListener` used to observe updates and replication events.
+
+Maps may be in-heap or persisted; persisted instances back their entries with memory-mapped files so that multiple JVMs or processes can observe the same data structures.
+
+== Storage and Persistence Model
+
+Chronicle Map uses fixed-size segments and off-heap memory to store entries.
+When persistence is enabled, segments are backed by memory-mapped files so that data survives process restarts and can be shared between JVMs.
+
+Key aspects include:
+
+* off-heap storage avoids GC pauses on large maps;
+* segments can be accessed concurrently by multiple threads, subject to the configured locking strategy;
+* file-backed maps require careful coordination around file-system permissions and lifecycle, as described in the existing `CM_*.adoc` guides.
+
+Further details on wire formats, replication and compatibility are available in:
+
+* `docs/CM_Compatibility_and_Versioning.adoc`
+* `docs/CM_Replication.adoc`
+* `docs/CM_Tutorial_*.adoc`
+

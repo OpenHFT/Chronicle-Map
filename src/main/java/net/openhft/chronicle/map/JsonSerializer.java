@@ -10,6 +10,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.xstream.converters.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -59,16 +60,16 @@ final class JsonSerializer {
 
     private static InputStream createInputStream(final File toFile) throws IOException {
         if (toFile.getName().toLowerCase().endsWith(".gz"))
-            return new GZIPInputStream(new FileInputStream(toFile));
+            return new GZIPInputStream(Files.newInputStream(toFile.toPath()));
         else
-            return new FileInputStream(toFile);
+            return Files.newInputStream(toFile.toPath());
     }
 
     private static OutputStream createOutputStream(final File toFile) throws IOException {
         if (toFile.getName().toLowerCase().endsWith(".gz"))
-            return new GZIPOutputStream(new FileOutputStream(toFile));
+            return new GZIPOutputStream(Files.newOutputStream(toFile.toPath()));
         else
-            return new FileOutputStream(toFile);
+            return Files.newOutputStream(toFile.toPath());
     }
 
     private static <K, V> XStream xStream(final Map<K, V> map, final List<?> jsonConverters) {

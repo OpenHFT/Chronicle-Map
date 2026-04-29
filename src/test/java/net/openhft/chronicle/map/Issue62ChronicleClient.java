@@ -5,7 +5,7 @@ package net.openhft.chronicle.map;
 
 public class Issue62ChronicleClient {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         /*prepare(MAP_FILE_B);
 
         ChronicleMapBuilder<String, Long> cityPostalCodesMapBuilder =

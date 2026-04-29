@@ -155,14 +155,13 @@ public class SerializableTest {
 
     @NotNull
     private static String expected() {
-        String expected = IntStream.range(0, 4096)
+        return IntStream.range(0, 4096)
                 .mapToObj(i -> i % 50 == 0 ? String.format("\n%04d", i) : "" + i % 10)
                 .collect(Collectors.joining(""));
-        return expected;
     }
 
     public static class Foo implements Serializable {
-        public String x;
+        public final String x;
 
         Foo(int length) {
             this.x = "x" + IntStream.range(0, length)

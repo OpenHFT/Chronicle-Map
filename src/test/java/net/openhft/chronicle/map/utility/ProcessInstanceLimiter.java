@@ -20,6 +20,7 @@ import net.openhft.chronicle.values.Values;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -116,7 +117,7 @@ public class ProcessInstanceLimiter implements Runnable {
      * @throws IOException - if the default shared file cannot be created
      */
     public ProcessInstanceLimiter(Callback callback) throws IOException {
-        this(DEFAULT_SHARED_MAP_DIRECTORY + System.getProperty("file.separator") + DEFAULT_SHARED_MAP_NAME, callback);
+        this(DEFAULT_SHARED_MAP_DIRECTORY + FileSystems.getDefault().getSeparator() + DEFAULT_SHARED_MAP_NAME, callback);
     }
 
     /**
@@ -142,7 +143,7 @@ public class ProcessInstanceLimiter implements Runnable {
         t.start();
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         ProcessInstanceLimiter.limitTo(2);
         Jvm.pause(60L * 1000L);
     }
@@ -280,7 +281,7 @@ public class ProcessInstanceLimiter implements Runnable {
                 Set<Entry<String, Integer>> entrySet = this.localUpdates.entrySet();
                 for (Entry<String, Integer> entry : entrySet) {
                     processType = entry.getKey();
-                    int index = entry.getValue().intValue();
+                    int index = entry.getValue();
                     Data data = this.timedata.get(processType);
                     if (data == null) {
                         entrySet.remove(entry);
@@ -387,13 +388,9 @@ public class ProcessInstanceLimiter implements Runnable {
         if (data.getMaxNumberOfProcessesAllowed() != maxNumberOfProcessesAllowed) {
             //it's either a new object, set to 0, or
             //another process set it to an invalid value
-            if (data.compareAndSwapMaxNumberOfProcessesAllowed(0, maxNumberOfProcessesAllowed)) {
-                //What we expected, everything's good
-            } else {
-                //something else set a value, if it's not 2 we've got a conflict
-                if (data.getMaxNumberOfProcessesAllowed() != maxNumberOfProcessesAllowed) {
-                    throw new IllegalArgumentException("The existing shared map already specifies that the maximum number of processes allowed is " + data.getMaxNumberOfProcessesAllowed() + " and changing that to " + maxNumberOfProcessesAllowed + " is not supported");
-                }
+            if (!data.compareAndSwapMaxNumberOfProcessesAllowed(0, maxNumberOfProcessesAllowed)
+                    && data.getMaxNumberOfProcessesAllowed() != maxNumberOfProcessesAllowed) {
+                throw new IllegalArgumentException("The existing shared map already specifies that the maximum number of processes allowed is " + data.getMaxNumberOfProcessesAllowed() + " and changing that to " + maxNumberOfProcessesAllowed + " is not supported");
             }
         }
         String name = processType + '#';

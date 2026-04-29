@@ -14,13 +14,15 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.*;
 
+import static java.nio.charset.StandardCharsets.*;
+
 /**
  * Created by Rob Austin
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class ByteBufferConverter implements Converter {
 
-    private final Charset charset = Charset.forName("ISO-8859-1");
+    private final Charset charset = ISO_8859_1;
     private final CharsetDecoder decoder = charset.newDecoder();
 
     @Override
@@ -47,7 +49,7 @@ public class ByteBufferConverter implements Converter {
         buffer.capacity();
 
         int position = buffer.position();
-        int limit = buffer.limit();
+        final int limit = buffer.limit();
 
         buffer.clear();
 
@@ -78,7 +80,7 @@ public class ByteBufferConverter implements Converter {
         reader.moveUp();
 
         reader.moveDown();
-        int limit = (Integer) unmarshallingContext.convertAnother(null, int.class);
+        final int limit = (Integer) unmarshallingContext.convertAnother(null, int.class);
         reader.moveUp();
 
         reader.moveDown();

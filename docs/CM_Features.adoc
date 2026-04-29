@@ -5,6 +5,8 @@ Neil Clifford
 :css-signature: demo
 :toc-placement: macro
 :icons: font
+:lang: en-GB
+:source-highlighter: rouge
 
 toc::[]
 
@@ -12,7 +14,7 @@ Chronicle Map is an in-memory, key-value store, designed for low-latency, and/or
 
 == Features
 
-- **Ultra low latency**: Chronicle Map targets median latency of both read and write queries of less than 1 microsecond in https://github.com/OpenHFT/Chronicle-Map/search?l=java&q=perf&type=Code[certain tests].
+- **Ultra low latency**: Chronicle Map targets median latency of both read and write queries of less than 1 µs in https://github.com/OpenHFT/Chronicle-Map/search?l=java&q=perf&type=Code[certain tests].
 
 - **High concurrency**: Write queries scale well up to the number of hardware execution threads in the server.
 Read queries never block each other.
@@ -23,7 +25,7 @@ Read queries never block each other.
 
 - Multiple processes can access a Chronicle Map concurrently.
 At the same time, the data store is *in-process* for each of the accessing processes.
-Out-of-process approach to IPC is simply incompatible with Chronicle Map's median latency target of < 1 μs.
+Out-of-process approach to IPC is simply incompatible with Chronicle Map's median latency target of < 1 µs.
 
 - Replication
 

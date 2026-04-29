@@ -1763,7 +1763,7 @@ public final class ChronicleMapBuilder<K, V> implements
         }
     }
 
-    private void prepareMapPublication(@NotNull final VanillaChronicleMap<K, V, ?> map) throws IOException {
+    private void prepareMapPublication(@NotNull final VanillaChronicleMap<K, V, ?> map) {
         establishReplication(map);
         map.setResourcesName();
         map.registerCleaner();
@@ -1969,7 +1969,7 @@ public final class ChronicleMapBuilder<K, V> implements
     }
 
     @SuppressWarnings("unchecked")
-    private VanillaChronicleMap<K, V, ?> newMap() throws IOException {
+    private VanillaChronicleMap<K, V, ?> newMap() {
         preMapConstruction();
         if (replicated) {
             try {

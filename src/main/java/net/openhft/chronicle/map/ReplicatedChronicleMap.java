@@ -26,7 +26,6 @@ import net.openhft.chronicle.wire.WireIn;
 import net.openhft.chronicle.wire.WireOut;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -121,7 +120,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     private transient long startOfModificationIterators;
     private transient long[] remoteNodeCouldBootstrapFrom;
 
-    public ReplicatedChronicleMap(@NotNull final ChronicleMapBuilder<K, V> builder) throws IOException {
+    public ReplicatedChronicleMap(@NotNull final ChronicleMapBuilder<K, V> builder) {
         super(builder);
         tierModIterBitSetSizeInBits = computeTierModIterBitSetSizeInBits();
         tierModIterBitSetOuterSize = computeTierModIterBitSetOuterSize();
