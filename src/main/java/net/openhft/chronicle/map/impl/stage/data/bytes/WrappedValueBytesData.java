@@ -48,6 +48,8 @@ public class WrappedValueBytesData<V> extends AbstractData<V> {
     private boolean wrappedValueBytesUsed = false;
     @Stage("CachedWrappedValue")
     private V cachedWrappedValue;
+    @Stage("CachedWrappedValue")
+    private boolean cachedWrappedValueRead = false;
 
     boolean nextInit() {
         return true;
@@ -100,6 +102,7 @@ public class WrappedValueBytesData<V> extends AbstractData<V> {
 
     private void initCachedWrappedValue() {
         cachedWrappedValue = innerGetUsing(cachedWrappedValue);
+        cachedWrappedValueRead = true;
     }
 
     @Override
