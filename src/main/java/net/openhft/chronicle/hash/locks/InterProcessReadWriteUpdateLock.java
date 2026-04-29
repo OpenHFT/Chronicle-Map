@@ -44,7 +44,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  * This is so to prevent dead locks: for example, imagine, that two threads came and acquired read
  * locks, and then both try to upgrade to write lock, blocking each other indefinitely.
  * <p>
- * This interface is based on <a href="https://code.google.com/p/concurrent-locks/">this
+ * This interface is based on <a href="https://code.google.com/archive/p/concurrent-locks/">this
  * work</a>, might be useful to read to understand read-write-update lock idea, and how to use
  * this concept.
  * <p>
