@@ -65,7 +65,7 @@ However, we encourage all our clients to use Linux, as it has improved handling 
 
 === Question
 
-Will Chronicle Map work in *Docker* environments “out-of-the-box”.
+Will Chronicle Map work in *Docker* environments "out-of-the-box".
 For example, two java programs running on dockers?
 
 === Answer

@@ -77,7 +77,7 @@ class OldDeletedEntriesCleanupThread extends Thread
         return a;
     }
 
-    // Implementing Fisher–Yates shuffle
+    // Implementing Fisher-Yates shuffle
     private static void shuffle(int[] a) {
         SecureRandom rnd = new SecureRandom();
         for (int i = a.length - 1; i > 0; i--) {

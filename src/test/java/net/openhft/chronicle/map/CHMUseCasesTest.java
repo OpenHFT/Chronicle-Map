@@ -126,7 +126,7 @@ interface IBean {
 
     Inner getInnerAt(int index);
 
-    /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”
+    /* nested interface - empowering an Off-Heap hierarchical "TIER of prices"
     as array[ ] value */
     interface Inner {
 
