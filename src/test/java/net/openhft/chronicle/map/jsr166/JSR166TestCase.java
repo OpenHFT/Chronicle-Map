@@ -474,7 +474,7 @@ public class JSR166TestCase {
         long startTime = System.nanoTime();
         try {
             future.get(timeoutMillis, MILLISECONDS);
-            assertThrows();
+            failExpectedException();
         } catch (TimeoutException success) {
             Assert.assertNotNull(success);
         } catch (Exception e) {
@@ -488,7 +488,7 @@ public class JSR166TestCase {
     /**
      * Fails with message "should throw exception".
      */
-    public void assertThrows() {
+    public void failExpectedException() {
         Assert.fail("Should throw exception");
     }
     /**

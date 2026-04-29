@@ -388,7 +388,7 @@ public class ChronicleMapTest extends JSR166TestCase {
 
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.get(null);
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -401,7 +401,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.containsKey(null);
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -414,7 +414,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testPut1_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.put(null, "whatever");
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -427,7 +427,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testPut2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.put(notPresent, null);
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -440,7 +440,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testPutIfAbsent1_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.putIfAbsent(null, "whatever");
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -453,7 +453,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplace_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(null, "whatever");
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -466,7 +466,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplaceValue_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(null, "A", "whatever");
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -479,7 +479,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testPutIfAbsent2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.putIfAbsent(notPresent, null);
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -492,7 +492,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplace2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, null);
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -505,7 +505,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplaceValue2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, null, "A");
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -518,7 +518,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplaceValue3_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, "A", null);
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -532,7 +532,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8076)) {
             c.put("sadsdf", "asdads");
             c.remove(null);
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
@@ -546,7 +546,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8086)) {
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
-            assertThrows();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
             Assert.assertNotNull(success);
         }
