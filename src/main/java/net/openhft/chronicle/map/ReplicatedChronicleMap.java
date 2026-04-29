@@ -51,7 +51,7 @@ import static net.openhft.chronicle.hash.replication.TimeProvider.currentTime;
  * number of nodes will be fixed. The data that is stored locally in each node will become
  * eventually consistent. So changes made to one node, for example by calling put() will be
  * replicated over to the other node. To achieve a high level of performance and throughput, the
- * call to put() won’t block, with concurrentHashMap, It is typical to check the return code of some
+ * call to put() won't block, with concurrentHashMap, It is typical to check the return code of some
  * methods to obtain the old value for example remove(). Due to the loose coupling and lock free
  * nature of this multi master implementation,  this return value will only be the old value on the
  * nodes local data store. In other words the nodes are only concurrent locally. Its worth realising
@@ -297,7 +297,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                     "replicated Chronicle Map. This should only be possible if persisted\n" +
                     "replicated Chronicle Map access from another process/JVM run/after\n" +
                     "a transfer from another machine, and replication identifier is not\n" +
-                    "specified when access is configured, e. g. ChronicleMap.of(...)" +
+                    "specified when access is configured, e.g. ChronicleMap.of(...)" +
                     ".createPersistedTo(existingFile).\n" +
                     "In this case, replicated Chronicle Map \"doesn't know\" it's identifier,\n" +
                     "and is able to perform simple _read_ operations like map.get(), which\n" +
@@ -1014,7 +1014,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                                     "local id: " + localIdentifier);
                         }
                         // TODO currently, all entries, originating not from the current node,
-                        // are bootstrapped. This could be optimized, but requires to generate
+                        // are bootstrapped. This could be optimised, but requires to generate
                         // unique connection id, it identify two ChronicleMap instances
                         // reconnecting vs. different Map start-up
                         if (e.originIdentifier() != localIdentifier ||

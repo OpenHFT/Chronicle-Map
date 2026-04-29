@@ -126,7 +126,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * Where {@code defaultValue(key)} returns {@link
      * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) defaultValueProvider}.
      * <p>
-     * If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
+     * If the {@code ChronicleMap} is off-heap updatable, i.e. created via {@link
      * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of what
      * to do if the key is absent in the map. By default, value bytes are just zeroed out, no
      * default value, either provided for key or constant, is put for the absent key.
@@ -178,7 +178,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * when accessing {@code ChronicleMap} implementation which delegates it's requests to some
      * remote node (server) and pulls the result through serialization/deserialization path, and
      * probably network. In this case, when you actually need only a part of the map value's state
-     * (e. g. a single field) it's cheaper to extract it on the server side and transmit lesser
+     * (e.g. a single field) it's cheaper to extract it on the server side and transmit lesser
      * bytes.
      *
      * @param key      the key whose associated value is to be queried
@@ -287,7 +287,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * The maximum number of times, the chronicle map is allowed to grow in size beyond
      * the configured number of entries.
      * <p>
-     * The default maximum bloat factor is {@code 1.0} - i. e. "no bloat is expected".
+     * The default maximum bloat factor is {@code 1.0} - i.e. "no bloat is expected".
      * <p>
      * It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
      * almost certainly, you either should configure {@code ChronicleHash}es completely differently,

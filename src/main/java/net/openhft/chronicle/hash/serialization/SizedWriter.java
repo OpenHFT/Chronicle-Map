@@ -31,7 +31,7 @@ public interface SizedWriter<T> extends Marshallable {
 
     /**
      * Returns the length (in bytes) of the serialized form of the given object. Serialization form
-     * in terms of this interface, i. e. how much bytes are written to {@code out} on
+     * in terms of this interface, i.e. how much bytes are written to {@code out} on
      * {@link #write(Bytes, long, Object) write(out, size, toWrite)} call.
      *
      * @param toWrite the object which serialized form length should be returned
@@ -52,7 +52,7 @@ public interface SizedWriter<T> extends Marshallable {
      * @param out     the {@code Bytes} to write the given object to
      * @param size    the size, returned by {@link #size(Object)} for the given {@code toWrite} object.
      *                it is given, because size might be needed during serialization, and it's computation has
-     *                non-constant complexity, i. e. if serializing a {@code CharSequence} using variable-length
+     *                non-constant complexity, i.e. if serializing a {@code CharSequence} using variable-length
      *                encoding like UTF-8.
      * @param toWrite the object to serialize
      * @see SizedReader#read(Bytes, long, Object)

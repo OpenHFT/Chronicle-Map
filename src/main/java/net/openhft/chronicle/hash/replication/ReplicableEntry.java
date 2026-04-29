@@ -94,7 +94,7 @@ public interface ReplicableEntry {
      * Check is the entry is scheduled to be replicated to the remote Chronicle nodes, to which
      * the connection is currently established.
      *
-     * @return {@code true} is the entry is "dirty" locally, i. e. should be replicated to any of
+     * @return {@code true} is the entry is "dirty" locally, i.e. should be replicated to any of
      * remote Chronicle nodes, {@code false} otherwise
      */
     boolean isChanged();

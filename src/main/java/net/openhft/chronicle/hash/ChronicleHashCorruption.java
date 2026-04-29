@@ -52,7 +52,7 @@ public interface ChronicleHashCorruption {
      * applicable. E. g. if this is a segment lock word corruption, returns the index of the
      * segment, guarded by the corrupted lock. If this is an entry data corruption, returns the
      * index of the segment, in which the corrupted entry is stored. If the corruption is not
-     * associated with a particular segment, returns -1, e. g. if this is a ChronicleHash
+     * associated with a particular segment, returns -1, e.g. if this is a ChronicleHash
      * header corruption.
      */
     int segmentIndex();

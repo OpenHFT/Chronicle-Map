@@ -82,9 +82,9 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
         // 3) update entry checksum
         // but the actual entry replacement is not needed, if the value object is a flyweight over
         // the off-heap bytes. This condition avoids in-place data copy.
-        // TODO would be nice to reduce scope of this check, i. e. check only when it could be
+        // TODO would be nice to reduce scope of this check, i.e. check only when it could be
         // true, and avoid when it surely false (fresh value put, relocating put etc.)
-        // TODO this optimization is now disabled, because it calls value.bytes() that forces double
+        // TODO this optimisation is now disabled, because it calls value.bytes() that forces double
         // data copy, if sizedReader/Writer configured for the value.
 //        RandomDataInput valueBytes = value.bytes();
 //        if (valueBytes instanceof NativeBytesStore &&

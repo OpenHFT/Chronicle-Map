@@ -86,8 +86,8 @@ procedure starts, the procedure must fail.
 
  1. (Optional step) Read the count word of the lock state.
  2. (Optional step) If the count word is non-zero, the procedure fails.
- 3. Perform a CAS operation on the count word of the lock state, comparing 0 (i. e. the operation
- fails, if any bit of the count word is non-zero) and swapping with 0x80000000, i. e. a count word
+ 3. Perform a CAS operation on the count word of the lock state, comparing 0 (i.e. the operation
+ fails, if any bit of the count word is non-zero) and swapping with 0x80000000, i.e. a count word
  with the write lock flag set, the update lock flag not set, and the read lock count of zero. The
  result of the CAS operation is the result of the procedure.
 
@@ -112,16 +112,16 @@ procedure and call one depending on the context.
 
 ## Release write lock, or write to update lock downgrade, or write to read lock downgrade
 
-Perform a CAS operation on the count word of the lock state, comparing 0x80000000 (i. e. a count
+Perform a CAS operation on the count word of the lock state, comparing 0x80000000 (i.e. a count
 word with the write lock flag set) and swapping with 0 (in case of releasing write lock), or
 0x40000000 (in case of write to update lock downgrade), or 1 (in case of write to read lock
 downgrade). The result of the CAS operation is the result of the procedure.
 
 ## Try upgrade to write lock
 
-Perform a CAS operation on the count word of the lock state, comparing 0x40000000 (i. e. a count
+Perform a CAS operation on the count word of the lock state, comparing 0x40000000 (i.e. a count
 word with the update lock flag set, the write lock flag not set, the read lock count of zero) and
-swapping with 0x80000000, i. e. a count word with the write lock flag set, the update lock flag not
+swapping with 0x80000000, i.e. a count word with the write lock flag set, the update lock flag not
 set, and the read lock count of zero. The result of the CAS operation is the result of the
 procedure.
 
@@ -177,7 +177,7 @@ acquiring read and update lock](#time-limited-read-or-update-lock-acquisition).
 > ## The reference Java implementation
 >
 > Attempt, release and downgrade operations: [`VanillaReadWriteUpdateWithWaitsLockingStrategy`](
-> https://github.com/OpenHFT/Chronicle-Algorithms/blob/master/src/main/java/net/openhft/chronicle/algo/locks/VanillaReadWriteUpdateWithWaitsLockingStrategy.java)
+> https://github.com/OpenHFT/Chronicle-Algorithms/blob/develop/src/main/java/net/openhft/chronicle/algo/locks/VanillaReadWriteUpdateWithWaitsLockingStrategy.java)
 >
 > Time-limited operations: [`BigSegmentHeader`](
 > ../src/main/java/net/openhft/chronicle/hash/impl/BigSegmentHeader.java)

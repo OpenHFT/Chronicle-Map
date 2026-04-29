@@ -30,7 +30,7 @@ public interface MapEntry<K, V> extends SetEntry<K> {
      * Replaces the entry's value with the given {@code newValue}.
      * <p>
      * This method is the default implementation for {@link MapEntryOperations#replaceValue(
-     *MapEntry, Data)}, which might be customized over the default.
+     *MapEntry, Data)}, which might be customised over the default.
      *
      * @param newValue the value to be put into the map instead of the {@linkplain #value() current
      *                 value}
@@ -43,7 +43,7 @@ public interface MapEntry<K, V> extends SetEntry<K> {
      * Removes the entry from the map.
      * <p>
      * This method is the default implementation for {@link MapEntryOperations#remove(MapEntry)},
-     * which might be customized over the default.
+     * which might be customised over the default.
      */
     @Override
     void doRemove();

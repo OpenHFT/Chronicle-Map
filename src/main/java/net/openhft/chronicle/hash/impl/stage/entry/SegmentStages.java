@@ -428,7 +428,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
                 break;
             prevContext = nextNode;
         }
-        // i. e. structured unlocking
+        // i.e. structured unlocking
         verifyInnermostContext();
         prevContext.setNextNode(null);
     }

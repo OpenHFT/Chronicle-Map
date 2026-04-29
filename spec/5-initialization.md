@@ -11,7 +11,7 @@ This section describes the process of creation of a new Chronicle Map data store
 existing Map, persisted to some file).
 
  1. If the Chronicle Map should be persisted to some file, and this file does not exist, this file
- is created as empty, i. e. with size of 0 bytes.
+ is created as empty, i.e. with size of 0 bytes.
 
  2. If the Chronicle Map should be persisted to some file, and the size of the file is non-zero,
  [wait until the Chronicle Map is ready](#wait-until-chronicle-map-is-ready). Otherwise, acquire
@@ -40,14 +40,14 @@ existing Map, persisted to some file).
 
  If on this step we were waiting until Chronicle Map is ready, then start using Chronicle Map
  normally. If on this step we wrote self-bootstrapping header or the Chronicle Map is not persisted
- to any file (i. e. purely in-memory), continue initialization with following steps:
+ to any file (i.e. purely in-memory), continue initialization with following steps:
 
  3. Zero out the [global mutable state](3-memory-layout.md#global-mutable-state)'s space in the
  file.
  4. Zero out the [segment headers area](3-memory-layout.md#segment-headers-area) in the file.
  5. For each segment tier in the [main segments area](3-memory-layout.md#main-segments-area), zero
  out memory from the beginning of the tier to the start of the [entry space](
- 3-memory-layout.md#entry-space), i. e. zero out this tier's hash lookup, segment tier counters area
+ 3-memory-layout.md#entry-space), i.e. zero out this tier's hash lookup, segment tier counters area
  and free list.
  6. Write the segment headers offset into the 5th field of the global mutable state.
  7. Write the offset to the end of the main segments area into the 6th field of the global mutable
@@ -55,7 +55,7 @@ existing Map, persisted to some file).
  8. If the Chronicle Map is persisted, ensure all data written to the file is flushed to the disk.
  For example on Linux, this could be done with `msync` and `fdatasync` calls, on Windows - with
  `FlushFileBuffers` system call.
- 9. If the Chronicle Map is persisted, write the readiness bit into the header, i. e. the highest
+ 9. If the Chronicle Map is persisted, write the readiness bit into the header, i.e. the highest
  bit of the 32-bit word by offset 8 from the beginning of the file, read and written in the
  little-endian order. Read the [Size Prefix Blob](
  https://github.com/OpenHFT/RFC/blob/master/Size-Prefixed-Blob/Size-Prefixed-Blob-0.1.md)
@@ -67,7 +67,7 @@ existing Map, persisted to some file).
 Check until the readiness bit is set to 0. The readiness bit it the highest bit of 32-bit word by
 offset 8 from the beginning of the Chronicle Map persistence file, read in the little-endian order.
 
-Optionally yield processor resources after failed checks, e. g. make the waiting thread sleep for
+Optionally yield processor resources after failed checks, e.g. make the waiting thread sleep for
 some time. The exact yielding operation (or if it is making the current thread sleeping, the exact
 sleep interval) is unspecified.
 
@@ -105,14 +105,14 @@ by [global mutable state](3-memory-layout.md#global-mutable-state) lock.
  Chronicle Map data store (either the end of the [main segments area](
  3-memory-layout.md#main-segments-area) or the end of the previous extra tier bulk) by the minimum
  memory amount allowed for mapping (a multiple of the native page size), that covers space required
- for the next extra tier bulk, i. e. [`tierBulkSizeInBytes`](
+ for the next extra tier bulk, i.e. [`tierBulkSizeInBytes`](
  3_1-header-fields.md#tierbulksizeinbytes) bytes from the previous end of the Chronicle Map data
  store.
  2. Prepare the extra tier bulk's metadata space, that starts at the beginning of the extra tier
  bulk and spans [`tierBulkInnerOffsetToTiers`](3_1-header-fields.md#tierbulkinneroffsettotiers),
  according to the way how metadata space is actually used. This is unspecified.
  3. For each tier in the extra tier bulk, zero out memory from the beginning of the tier to the
- start of the [entry space](3-memory-layout.md#entry-space), i. e. zero out this tier's hash lookup,
+ start of the [entry space](3-memory-layout.md#entry-space), i.e. zero out this tier's hash lookup,
  segment tier counters area and free list. This step is equivalent to the 5th step of the [Chronicle
  Map creation](#chronicle-map-creation) procedure.
  4. For each (but the last one) tier in the extra tier bulk, write [index of the next tier](

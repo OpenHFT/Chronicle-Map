@@ -20,7 +20,7 @@ public interface SetEntry<K> extends HashEntry<K> {
      * Removes the entry from the {@code ChronicleSet}.
      * <p>
      * This method is the default implementation for {@link SetEntryOperations#remove(SetEntry)},
-     * which might be customized over the default.
+     * which might be customised over the default.
      */
     @Override
     void doRemove();

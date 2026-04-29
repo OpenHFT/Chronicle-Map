@@ -83,7 +83,7 @@ import static net.openhft.chronicle.map.VanillaChronicleMap.alignAddr;
  * <p>
  * ChronicleMap<Key, Value> map1 = builder.create();
  * ChronicleMap<Key, Value> map2 = builder.create();}</pre>
- * i. e. created {@code ChronicleMap} instances don't depend on the builder.
+ * i.e. created {@code ChronicleMap} instances don't depend on the builder.
  * <p>
  * {@code ChronicleMapBuilder} is mutable, see a note in {@link ChronicleHashBuilder} interface
  * documentation.
@@ -595,12 +595,12 @@ public final class ChronicleMapBuilder<K, V> implements
      * <p>
      * {@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
      * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
-     * that, however, might result to quite high internal fragmentation, i. e. losses because only
+     * that, however, might result to quite high internal fragmentation, i.e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average value size
      * configuration, which is anyway needed.
      * <p>
-     * If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * If values are of boxed primitive type or {@link Byteable} subclass, i.e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
      * <p>
      * Calling this method clears any previous {@link #constantValueSizeBySample(Object)} and
@@ -635,12 +635,12 @@ public final class ChronicleMapBuilder<K, V> implements
      * <p>
      * {@code ChronicleHashBuilder} implementation heuristically chooses {@linkplain
      * #actualChunkSize(int) the actual chunk size} based on this configuration and the key size,
-     * that, however, might result to quite high internal fragmentation, i. e. losses because only
+     * that, however, might result to quite high internal fragmentation, i.e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average value size
      * configuration, which is anyway needed.
      * <p>
-     * If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * If values are of boxed primitive type or {@link Byteable} subclass, i.e. if value size is
      * known statically, it is automatically accounted and shouldn't be specified by user.
      * <p>
      * Calling this method clears any previous {@link #constantValueSizeBySample(Object)}
@@ -676,7 +676,7 @@ public final class ChronicleMapBuilder<K, V> implements
      * created by this builder. This is done by providing the {@code sampleValue}, all values should
      * take the same number of bytes in serialized form, as this sample object.
      * <p>
-     * If values are of boxed primitive type or {@link Byteable} subclass, i. e. if value size is
+     * If values are of boxed primitive type or {@link Byteable} subclass, i.e. if value size is
      * known statically, it is automatically accounted and this method shouldn't be called.
      * <p>
      * If value size varies, method {@link #averageValue(Object)} or {@link
@@ -903,14 +903,14 @@ public final class ChronicleMapBuilder<K, V> implements
 
     /**
      * Configures alignment of address in memory of entries and independently of address in memory
-     * of values within entries ((i. e. final addresses in native memory are multiples of the given
+     * of values within entries ((i.e. final addresses in native memory are multiples of the given
      * alignment) for ChronicleMaps, created by this builder.
      * <p>
      * Useful when values of the map are updated intensively, particularly fields with volatile
      * access, because it doesn't work well if the value crosses cache lines. Also, on some
      * (nowadays rare) architectures any misaligned memory access is more expensive than aligned.
      * <p>
-     * If values couldn't reference off-heap memory (i. e. it is not {@link Byteable} or a value
+     * If values couldn't reference off-heap memory (i.e. it is not {@link Byteable} or a value
      * interface), alignment configuration makes no sense.
      * <p>
      * Default is {@link ValueModel#recommendedOffsetAlignment()} if the value type is a value
@@ -971,7 +971,7 @@ public final class ChronicleMapBuilder<K, V> implements
     long entries() {
         if (entries < 0) {
             throw new IllegalStateException("If in-memory Chronicle Map is created or persisted\n" +
-                    "to a file for the first time (i. e. not accessing an existing file),\n" +
+                    "to a file for the first time (i.e. not accessing an existing file),\n" +
                     "ChronicleMapBuilder.entries() must be configured.\n" +
                     "See Chronicle Map 3 tutorial and javadocs for more information");
         }
@@ -1079,7 +1079,7 @@ public final class ChronicleMapBuilder<K, V> implements
     //TODO review because this heuristic doesn't seem to perform well
     private int estimateSegmentsBasedOnSize() {
         // the idea is that if values are huge, operations on them (and simply ser/deser)
-        // could take long time, so we want more segment to minimize probablity that
+        // could take long time, so we want more segment to minimise probablity that
         // two or more concurrent write ops will go to the same segment, and then all but one of
         // these threads will wait for long time.
         int segmentsForEntries = estimateSegmentsForEntries(entries());
@@ -1208,10 +1208,10 @@ public final class ChronicleMapBuilder<K, V> implements
         final int segments = actualSegments();
 
         final long pageSize = OS.pageSize();
-        if (segments * (64 * 3) < (2 * pageSize)) // i. e. <= 42 segments, if page size is 4K
+        if (segments * (64 * 3) < (2 * pageSize)) // i.e. <= 42 segments, if page size is 4K
             return 64 * 3; // cache line per header, plus one CL to the left, plus one to the right
 
-        if (segments * (64 * 2) < (3 * pageSize)) // i. e. <= 96 segments, if page size is 4K
+        if (segments * (64 * 2) < (3 * pageSize)) // i.e. <= 96 segments, if page size is 4K
             return 64 * 2;
 
         // reduce false sharing unless we have a lot of segments.

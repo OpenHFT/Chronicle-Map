@@ -22,7 +22,7 @@ belongs to).
 The *next tier field* of some tier is the 4th field of the [segment header structure](
 3-memory-layout.md#segment-header-structure) (if the tier is the first in the segment it belongs
 to), or the 1st field of the [counters area](3-memory-layout.md#segment-tier-counters-area) (if the
-tier belongs to one of [extra tier bulks](3-memory-layout.md#extra-tier-bulks), i. e. not the first
+tier belongs to one of [extra tier bulks](3-memory-layout.md#extra-tier-bulks), i.e. not the first
 in the segment it belongs to).
 
 ## Key lookup
@@ -75,10 +75,10 @@ in the segment it belongs to).
  If any of two checks is failed during this step, continue with the next step.
 
  6. Compute the next hash lookup slot, by incrementing the current slot index and wrapping around
- [`tierHashLookupCapacity`](3_1-header-fields.md#tierhashlookupcapacity) (i. e. instead of
+ [`tierHashLookupCapacity`](3_1-header-fields.md#tierhashlookupcapacity) (i.e. instead of
  `tierHashLookupCapacity` the slot index becomes 0). Then continue with the 4th step.
 
- 7. If the current tier is the last tier in the chain for the current segment, i. e. the value of
+ 7. If the current tier is the last tier in the chain for the current segment, i.e. the value of
  the [next tier field](#next-tier-field) of the current tier is 0, the lookup operation is failed.
  Otherwise, continue with the next linked tier (as the new current tier) and go to the 3rd step.
 
@@ -168,7 +168,7 @@ in the segment it belongs to).
  this could be deferred in the case of multi-key query, or the lock could be downgraded to the read
  level.
 
- 14. If the current tier is the last tier in the chain for the segment, i. e. the value of the [next
+ 14. If the current tier is the last tier in the chain for the segment, i.e. the value of the [next
  tier field](#next-tier-field) of the current tier is 0, go to the 15th step. Otherwise, continue
  with the next linked tier (as the new current tier) and go to the 5th step.
 
@@ -197,7 +197,7 @@ Steps 4-5 are *in-place* value update. Steps from 6 to the end of the operation 
  > on the write level right away allows not to perform a lock upgrade operation later. On the other
  > hand, if there are frequent concurrent readers, reducing the time when the lock is held on an
  > exclusive level improves concurrency. This is an implementation choice. The reference Java
- > implementation takes the second way, i. e. acquires lock on the update level first, and upgrades
+ > implementation takes the second way, i.e. acquires lock on the update level first, and upgrades
  > to the write level for the least possible time.
 
  Value update is possible only if the lookup operation is *successful*.
@@ -221,7 +221,7 @@ Steps 4-5 are *in-place* value update. Steps from 6 to the end of the operation 
 
  > In-place value update (the following step) is performed on fully exclusive locking level, because
  > concurrent readers could see inconsistent value state, while the update is in progress. If the
- > value could be updated atomically on machine level: e. g. the value is just 4 or 8 bytes long
+ > value could be updated atomically on machine level: e.g. the value is just 4 or 8 bytes long
  > and could be updated by a single ordinary (atomic on x86) memory transfer, implementations
  > may omit acquiring the segment lock on the write level on this step.
 
@@ -281,7 +281,7 @@ Steps 4-5 are *in-place* value update. Steps from 6 to the end of the operation 
  > to work correctly for overlapping memory regions.
 
  14. Copy the part of the already existing entry (located on the first step of this operation)
- before the 3rd field, i. e. stored key size and the key itself, to the entry space of the current
+ before the 3rd field, i.e. stored key size and the key itself, to the entry space of the current
  tier, starting from the chunk at index equal to the index of the first bit in the block, that was
  found and set to 1 on the previous steps. Write the rest of the entry (the new value size, the
  new value and optionally checksum) after the copied part. The procedure of writing an entry is
@@ -336,7 +336,7 @@ Steps 4-5 are *in-place* value update. Steps from 6 to the end of the operation 
  > Example: [`TrickyContextCasesTest.testPutShouldBeWriteLocked()`](
  > ../src/test/java/net/openhft/chronicle/map/TrickyContextCasesTest.java) method.
  >
- > Possibility to optimize this is explored in [HCOLL-425](
+ > Possibility to optimise this is explored in [HCOLL-425](
  > https://higherfrequencytrading.atlassian.net/browse/HCOLL-425).
  >
  > If a block of free chunks for the updated entry is found in a different tier from the one where
@@ -353,7 +353,7 @@ Steps 4-5 are *in-place* value update. Steps from 6 to the end of the operation 
  20. If this step is performed for the first time, set the current tier to the first tier of this
  segment.
 
- 21. If the current tier is the last tier in the chain for the segment, i. e. the value of the [next
+ 21. If the current tier is the last tier in the chain for the segment, i.e. the value of the [next
  tier field](#next-tier-field) of the current tier is 0, go to the 22th step. Otherwise, set the
  current tier to the next linked tier. If the current tier equals to the then-current tier on the
  3rd step of this operation, repeat this step. Otherwise, go to the 8th step.
@@ -397,7 +397,7 @@ querying for some key:
  2. Read the value in the current slot.
  3. If the slot is empty this sub-operation is finished. Otherwise, continue with the next step.
  4. Compute the next hash lookup slot, by incrementing the current slot index and wrapping around
- [`tierHashLookupCapacity`](3_1-header-fields.md#tierhashlookupcapacity) (i. e. instead of
+ [`tierHashLookupCapacity`](3_1-header-fields.md#tierhashlookupcapacity) (i.e. instead of
  `tierHashLookupCapacity` the slot index becomes 0). Then continue with the 2nd step.
 
 > In the reference Java implementation, this sub-operation and the steps 3-6 of [key
@@ -423,10 +423,10 @@ probing).
 
  1. Set the *remove slot* and the *shift slot* to the slot that is going to be removed.
  2. Compute the next shift slot, by incrementing the current shift slot index and wrapping around
- [`tierHashLookupCapacity`](3_1-header-fields.md#tierhashlookupcapacity) (i. e. instead of
+ [`tierHashLookupCapacity`](3_1-header-fields.md#tierhashlookupcapacity) (i.e. instead of
  `tierHashLookupCapacity` the slot index becomes 0).
  3. Read the value in the shift slot.
- 4. If the shift slot value is 0 (i. e. the slot is empty), go to the 6th step. Otherwise, extract
+ 4. If the shift slot value is 0 (i.e. the slot is empty), go to the 6th step. Otherwise, extract
  the hash lookup key of the shift slot (at the lowest [`tierHashLookupKeyBits`](
  3_1-header-fields.md#tierhashlookupkeybits) bits of the slot value), and determine, if the remove
  slot is on the shortest slot chain between the starting search slot for the extracted hash lookup
@@ -434,7 +434,7 @@ probing).
  the remove slot (and the hash table is still correct), given that the hash table is not full. If
  so, write the shift slot value to the remove slot, set the remove slot to the current shift slot.
  5. Go to the 2nd step.
- 6. Write 0 to the remove slot, i. e. clear the slot.
+ 6. Write 0 to the remove slot, i.e. clear the slot.
 
 > The reference Java implementation: [`CompactOffHeapLinearHashTable.remove()`](
 > ../src/main/java/net/openhft/chronicle/hash/impl/CompactOffHeapLinearHashTable.java)

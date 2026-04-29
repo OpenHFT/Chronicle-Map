@@ -58,7 +58,7 @@ import static net.openhft.chronicle.hash.replication.DefaultEventualConsistencyS
 public interface MapRemoteOperations<K, V, R> {
 
     /**
-     * Handle remote {@code remove} call and {@code remove} replication event, i. e. when the entry
+     * Handle remote {@code remove} call and {@code remove} replication event, i.e. when the entry
      * with the query key ({@code q.queriedKey()}) was removed on some {@code ChronicleMap} node.
      *
      * @param q the remote operation context
@@ -117,7 +117,7 @@ public interface MapRemoteOperations<K, V, R> {
     }
 
     /**
-     * Handle remote {@code put} call or replication event, i. e. when the entry with the queried
+     * Handle remote {@code put} call or replication event, i.e. when the entry with the queried
      * key ({@code q.queriedKey()}) was changed on some remote {@code ChronicleMap} node, with the
      * given {@code newValue}.
      *

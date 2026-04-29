@@ -28,7 +28,7 @@ class OldDeletedEntriesCleanupThread extends Thread
     private final WeakReference<ReplicatedChronicleMap<?, ?, ?>> mapRef;
     /**
      * {@code cleanupTimeout}, {@link #cleanupTimeoutUnit} and {@link #segments} are parts of the
-     * cleaned Map's state, extracted in order to minimize accesses to the map.
+     * cleaned Map's state, extracted in order to minimise accesses to the map.
      *
      * @see ChronicleHashBuilderPrivateAPI#removedEntryCleanupTimeout(long, TimeUnit)
      */
@@ -77,7 +77,7 @@ class OldDeletedEntriesCleanupThread extends Thread
         return a;
     }
 
-    // Implementing Fisher–Yates shuffle
+    // Implementing Fisher-Yates shuffle
     private static void shuffle(int[] a) {
         SecureRandom rnd = new SecureRandom();
         for (int i = a.length - 1; i > 0; i--) {

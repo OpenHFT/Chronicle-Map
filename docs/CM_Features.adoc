@@ -31,9 +31,9 @@ NOTE: See <<CM_Replication.adoc#,Chronicle Map Replication>> for more informatio
 
 **Chronicle Map** has two meanings:
 
-- https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[language-agnostic data store (specification)].
+- https://github.com/OpenHFT/Chronicle-Map/blob/develop/spec[language-agnostic data store (specification)].
 
-- https://github.com/OpenHFT/Chronicle-Map/blob/master/src[implementation of this data store for the JVM (source)].
+- https://github.com/OpenHFT/Chronicle-Map/blob/develop/src[implementation of this data store for the JVM (source)].
 Currently, this is the only implementation.
 
 === From the Java perspective
@@ -80,7 +80,7 @@ It is split into independent segments; each segment has:
 
 - a lock in shared memory (implemented via CAS loops) for managing concurrent access.
 
-See https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[Chronicle Map data store design overview] for more information.
+See https://github.com/OpenHFT/Chronicle-Map/blob/develop/spec[Chronicle Map data store design overview] for more information.
 
 == Chronicle Map is not
 

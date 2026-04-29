@@ -16,7 +16,7 @@ Changes between Chronicle Map 3 and the previous Chronicle Map version are detai
 
 - Added support for multi-key queries.
 
-- "Listeners" mechanism fully reworked; see <<CM_Tutorial_Behaviour.adoc#,Behaviour Customization>>.
+- "Listeners" mechanism fully reworked; see <<CM_Tutorial_Behaviour.adoc#,Behaviour Customisation>>.
 This has a number of important consequences, most notable is that it is now possible to define "eventual-consistency" replication strategy, different from "last write wins"; any state-based CRDT.
 
 - "Stateless clients" functionality (remote calls) has been removed.

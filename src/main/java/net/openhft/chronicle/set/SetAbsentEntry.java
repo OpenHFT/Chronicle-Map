@@ -23,7 +23,7 @@ public interface SetAbsentEntry<K> extends HashAbsentEntry<K> {
      * Inserts {@link #absentKey() the new key} into the set.
      * <p>
      * This method is the default implementation for {@link SetEntryOperations#insert(
-     *SetAbsentEntry)}, which might be customized over the default.
+     *SetAbsentEntry)}, which might be customised over the default.
      *
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
      *                               operation are not met

@@ -28,14 +28,14 @@ import org.jetbrains.annotations.Nullable;
 public interface BytesReader<T> extends Marshallable {
 
     /**
-     * Reads and returns the object from {@link Bytes#readPosition()} (i. e. the current position)
-     * in the given {@code in}. Should attempt to reuse the given {@code using} object, i. e. to
+     * Reads and returns the object from {@link Bytes#readPosition()} (i.e. the current position)
+     * in the given {@code in}. Should attempt to reuse the given {@code using} object, i.e. to
      * read the deserialized data into the given object. If it is possible, this object then
      * returned from this method back. If it is impossible for any reason, a new object should be
      * created and returned. The given {@code using} object could be {@code null}, in this case this
      * method, of cause, should create a new object.
      * <p>
-     * This method should increment the position in the given {@code Bytes}, i. e. consume the
+     * This method should increment the position in the given {@code Bytes}, i.e. consume the
      * read bytes. {@code in} bytes shouldn't be written.
      *
      * @param in    the {@code Bytes} to read the object from

@@ -38,7 +38,7 @@ public interface MapContext<K, V, R>
     /**
      * Wraps the given value as a {@code Data}. Useful when you need to pass a value
      * to some method accepting {@code Data}, for example, {@link MapEntryOperations#replaceValue(
-     *MapEntry, Data)}, without allocating new objects (i. e. garbage) and {@code ThreadLocals}.
+     *MapEntry, Data)}, without allocating new objects (i.e. garbage) and {@code ThreadLocals}.
      * <p>
      * The returned {@code Data} object shouldn't outlive this {@code MapContext}.
      *
