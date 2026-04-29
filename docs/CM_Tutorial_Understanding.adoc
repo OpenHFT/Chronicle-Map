@@ -67,7 +67,7 @@ See examples of implementing this interface in <<CM_Tutorial_Bytes.adoc#custom-c
 It is permissable to return `this` from the `copy()` method, if the serializer implementation doesn't have a state.
 
 Typically this is the case when the serializer is configured with sub-serializers, which might be `StatefulCopyable`, or not.
-For example, the  https://github.com/OpenHFT/Chronicle-Map/blob/master/src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java[`ListMarshaller`]
+For example, the  https://github.com/OpenHFT/Chronicle-Map/blob/develop/src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java[`ListMarshaller`]
 class.
 
 '''
