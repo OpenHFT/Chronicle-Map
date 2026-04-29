@@ -180,7 +180,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * required by the entry, 200 bytes will be allocated, 150 used and 50 wasted. This is called
      * internal fragmentation.
      * <p>
-     * To minimize memory overuse and improve speed, you should pay decent attention to this
+     * To minimise memory overuse and improve speed, you should pay decent attention to this
      * configuration. Alternatively, you can just trust the heuristics and doesn't configure
      * the chunk size.
      * <p>
@@ -567,7 +567,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * <em>WARNING:</em> Make sure this instance is the only one that accesses the
      * provided {@code file} during recovery across all JVMs/threads/processes or else
-     * the behavior is unspecified including the possibility that the Map file gets
+     * the behaviour is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
      * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
@@ -626,7 +626,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * <em>WARNING:</em> Make sure this instance is the only one that accesses the
      * provided {@code file} during recovery across all JVMs/threads/processes or else
-     * the behavior is unspecified including the possibility that the Map file gets
+     * the behaviour is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
      * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.

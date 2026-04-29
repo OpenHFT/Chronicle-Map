@@ -1014,7 +1014,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
                                     "local id: " + localIdentifier);
                         }
                         // TODO currently, all entries, originating not from the current node,
-                        // are bootstrapped. This could be optimized, but requires to generate
+                        // are bootstrapped. This could be optimised, but requires to generate
                         // unique connection id, it identify two ChronicleMap instances
                         // reconnecting vs. different Map start-up
                         if (e.originIdentifier() != localIdentifier ||

@@ -336,7 +336,7 @@ Steps 4-5 are *in-place* value update. Steps from 6 to the end of the operation 
  > Example: [`TrickyContextCasesTest.testPutShouldBeWriteLocked()`](
  > ../src/test/java/net/openhft/chronicle/map/TrickyContextCasesTest.java) method.
  >
- > Possibility to optimize this is explored in [HCOLL-425](
+ > Possibility to optimise this is explored in [HCOLL-425](
  > https://higherfrequencytrading.atlassian.net/browse/HCOLL-425).
  >
  > If a block of free chunks for the updated entry is found in a different tier from the one where

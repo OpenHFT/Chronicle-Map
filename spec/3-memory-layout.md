@@ -19,7 +19,7 @@ one big continuous block of memory. Its structure, from lower addresses to highe
  is read from the global mutable state (specifically this field of the global mutable state is
  actually immutable, once written).
 
- > The purpose of this alignment is to minimize the number of pages spanned by the following
+ > The purpose of this alignment is to minimise the number of pages spanned by the following
  > *segment headers area*. The segment headers area is frequently accessed and updated, so the pages
  > it spans almost always reside in the TLB cache and always need to be flushed to the disk.
 
@@ -117,7 +117,7 @@ multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segment
  *unsigned* value, stored in the little-endian order.
  3. Bytes 12..15 - the smallest index of a chunk in the entry space of the first tier of the
  segment, that could possibly be free. A 32-bit *unsigned* value, stored in the little-endian order.
- This field is used to optimize allocation of space for new entries, the search for a sufficient
+ This field is used to optimise allocation of space for new entries, the search for a sufficient
  range of continuous free chunks in the [free list](#free-list) is started from this index, rather
  than 0. This field is updated on each entry allocation and deletion in the first tier of the
  segment, if the smallest index of a free chunk is changed. When all chunks in the entry space are

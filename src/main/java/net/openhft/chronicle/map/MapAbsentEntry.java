@@ -27,7 +27,7 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * value}.
      * <p>
      * This method is the default implementation for {@link MapEntryOperations#insert(
-     *MapAbsentEntry, Data)}, which might be customized over the default.
+     *MapAbsentEntry, Data)}, which might be customised over the default.
      *
      * @param value the value to insert into the map along with {@link #absentKey() the key}
      * @throws IllegalStateException if some locking/state conditions required to perform insertion
@@ -43,7 +43,7 @@ public interface MapAbsentEntry<K, V> extends HashAbsentEntry<K> {
      * <p>
      * This method if the default implementation for {@link
      * DefaultValueProvider#defaultValue(MapAbsentEntry)},
-     * which might be customized over the default.
+     * which might be customised over the default.
      *
      * @see DefaultValueProvider#defaultValue(MapAbsentEntry)
      */

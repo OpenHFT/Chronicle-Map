@@ -60,7 +60,7 @@ A call to the `copy()` method, at any point of a serializer instance lifetime, s
 
 As a consequence, the `copy()` method is transitive. `serializer.copy().copy().copy()` should return an object in exactly the same state as after a single `copy()` call.
 
-Chronicle Map implementation recognizes that configured `BytesWriter`, `BytesReader`, `SizedWriter`, `SizedReader`, or `DataAccess` instances implement `StatefulCopyable`, and populates it internally using `copy()` for each thread, Chronicle Map instances and serialized object domain (keys or values).
+Chronicle Map implementation recognises that configured `BytesWriter`, `BytesReader`, `SizedWriter`, `SizedReader`, or `DataAccess` instances implement `StatefulCopyable`, and populates it internally using `copy()` for each thread, Chronicle Map instances and serialized object domain (keys or values).
 
 See examples of implementing this interface in <<CM_Tutorial_Bytes.adoc#custom-charsequence-encoding,custom `CharSequence` encoding>>.
 

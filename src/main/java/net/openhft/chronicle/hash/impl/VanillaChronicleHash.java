@@ -643,7 +643,7 @@ public abstract class VanillaChronicleHash<K,
 
     private long computeSegmentHeadersOffset() {
         long reserved = RESERVED_GLOBAL_MUTABLE_STATE_BYTES - globalMutableStateTotalUsedSize();
-        // Align segment headers on page boundary to minimize number of pages that
+        // Align segment headers on page boundary to minimise number of pages that
         // segment headers span
         return pageAlign(mapHeaderInnerSize() + reserved);
     }
@@ -771,7 +771,7 @@ public abstract class VanillaChronicleHash<K,
     }
 
     public final int inChunks(final long sizeInBytes) {
-        // TODO optimize for the case when chunkSize is power of 2, that is default (and often) now
+        // TODO optimise for the case when chunkSize is power of 2, that is default (and often) now
         if (sizeInBytes <= chunkSize)
             return 1;
 

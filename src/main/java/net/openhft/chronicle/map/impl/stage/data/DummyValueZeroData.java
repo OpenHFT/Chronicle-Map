@@ -59,7 +59,7 @@ public class DummyValueZeroData<V> extends AbstractData<V> {
     @Override
     public V get() {
         checkOnEachPublicOperation.checkOnEachPublicOperation();
-        // Not optimized and creates garbage, because this isn't the primary
+        // Not optimised and creates garbage, because this isn't the primary
         // use case. Zero data should only be used in bytes form
         return getUsing(null);
     }

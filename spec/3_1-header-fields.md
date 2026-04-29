@@ -88,7 +88,7 @@ e. g.
 >  `actualSegments` value is a power of 2 (except 1). Lowest bits of keys' hash codes (specified by
 >  the `bits` field) are used to choose the segment, highest 64 &minus; `bits` are used as keys in
 >  segment tier's hash lookups.
->  - `net.openhft.chronicle.hash.impl.HashSplitting$ForSingleSegment` is an optimized version of
+>  - `net.openhft.chronicle.hash.impl.HashSplitting$ForSingleSegment` is an optimised version of
 >  `HashSplitting$ForPowerOf2Segments`, for the case of the single segment in the Chronicle Map
 >  (`actualSegments` equals to 1). The "chosen" segment index is 0, and entire key's hash codes are
 >  used as key in segment tier's hash lookups.
