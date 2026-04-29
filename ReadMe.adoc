@@ -6,7 +6,7 @@ Chronicle Software
 :lang: en-GB
 :source-highlighter: rouge
 
-image:https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[caption="",link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
+image:https://img.shields.io/maven-central/v/net.openhft/chronicle-map.svg[caption="",link=https://central.sonatype.com/artifact/net.openhft/chronicle-map]
 image:https://javadoc.io/badge2/net.openhft/chronicle-map/javadoc.svg[link="https://www.javadoc.io/doc/net.openhft/chronicle-map/latest/index.html"]
 //image:https://javadoc-badge.appspot.com/net.openhft/chronicle-map.svg?label=javadoc[JavaDoc, link=https://www.javadoc.io/doc/net.openhft/chronicle-map]
 image:https://img.shields.io/github/license/OpenHFT/Chronicle-Map[GitHub]
