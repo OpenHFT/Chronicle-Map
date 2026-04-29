@@ -111,7 +111,7 @@ public final class DeflatorStringMarshaller implements BytesReader<CharSequence>
         return INSTANCE;
     }
 
-    private static abstract class StringFactory {
+    private abstract static class StringFactory {
         abstract String fromChars(char[] chars) throws Exception;
     }
 

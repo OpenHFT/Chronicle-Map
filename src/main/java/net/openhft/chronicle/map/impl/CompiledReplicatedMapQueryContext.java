@@ -1848,10 +1848,12 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     }
 
     public enum EntryPresence {
-PRESENT, ABSENT;    }
+        PRESENT, ABSENT;
+    }
 
     public enum SearchState {
-PRESENT, ABSENT;    }
+        PRESENT, ABSENT;
+    }
 
     private long _HashEntryStages_entryEnd() {
         return keyEnd();

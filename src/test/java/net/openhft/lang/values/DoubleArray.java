@@ -8,13 +8,12 @@ import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.bytes.DynamicallySized;
 import net.openhft.chronicle.values.Copyable;
 
-import java.io.IOException;
 import java.nio.channels.FileLock;
 
 /**
  * Created by peter.lawrey on 23/04/2015.
  */
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"rawtypes", "unchecked", "deprecation", "removal"})
 public class DoubleArray implements Byteable, Copyable<DoubleArray>, DynamicallySized {
     static boolean HACK = true;
     private static final int CAPACITY = 0; // assume a 32-bit size.
@@ -54,12 +53,12 @@ public class DoubleArray implements Byteable, Copyable<DoubleArray>, Dynamically
     }
 
     @Override
-    public FileLock lock(boolean shared) throws IOException {
+    public FileLock lock(boolean shared) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public FileLock tryLock(boolean shared) throws IOException {
+    public FileLock tryLock(boolean shared) {
         throw new UnsupportedOperationException();
     }
 

@@ -2,7 +2,7 @@
  * Copyright 2013-2025 chronicle.software; SPDX-License-Identifier: Apache-2.0
  */
 /**
- * This package and any and all sub-packages contains strictly internal classes for this Chronicle library.
+ * This package and any and all sub-packages contain strictly internal classes for this Chronicle library.
  * Internal classes shall <em>never</em> be used directly.
  * <p>
  *  Specifically, the following actions (including, but not limited to) are not allowed

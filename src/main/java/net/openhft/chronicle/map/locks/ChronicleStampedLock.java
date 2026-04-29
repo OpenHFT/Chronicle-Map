@@ -173,15 +173,13 @@ public class ChronicleStampedLock extends StampedLock {
 
     @Override
     public long tryWriteLock() {
-        long l = 0L;
-
         offHeapLock = chm.get("Stamp ");
         lastWriterT = chm.get("LastWriterTime ");
         writeLockHolderCount = chmW.get("WriterCount ");
 
-        l = offHeapLock.getEntryLockState();
+        long lockState = offHeapLock.getEntryLockState();
 
-        if (l != 0L)
+        if (lockState != 0L)
             return 0L;
 
         do {
@@ -202,7 +200,7 @@ public class ChronicleStampedLock extends StampedLock {
                             ","
             );
             offHeapLock = chm.get("Stamp ");
-            l = offHeapLock.getEntryLockState();
+            lockState = offHeapLock.getEntryLockState();
             try {
                 Thread.sleep((long) (1000 * Math.random()));
             } catch (InterruptedException e) {
@@ -211,10 +209,8 @@ public class ChronicleStampedLock extends StampedLock {
             }
         } while (
                 readLockHolderCount.getVolatileValue() > 0 ||
-                        (writeLockHolderCount =
-                                chmW.get("WriterCount "))
-                                .getVolatileValue() > 0
-        );
+                        (writeLockHolderCount = chmW.get("WriterCount "))
+                                .getVolatileValue() > 0);
 
         writeLockHolderCount.addAtomicValue(+1);
         chmW.put("WriterCount ", writeLockHolderCount);
@@ -306,12 +302,11 @@ public class ChronicleStampedLock extends StampedLock {
 
     @Override
     public long writeLock() {
-        long l = 0L;
-
         offHeapLock = chm.get("Stamp ");
         lastWriterT = chm.get("LastWriterTime ");
         writeLockHolderCount = chmW.get("WriterCount ");
 
+        long lockState;
         do {
             Jvm.debug().on(getClass(), 
                     " ,@t=" + System.currentTimeMillis() +
@@ -330,7 +325,7 @@ public class ChronicleStampedLock extends StampedLock {
                             ","
             );
             offHeapLock = chm.get("Stamp ");
-            l = offHeapLock.getEntryLockState();
+            lockState = offHeapLock.getEntryLockState();
             try {
                 Thread.sleep((long) (1000 * Math.random()));
             } catch (InterruptedException e) {
@@ -338,7 +333,7 @@ public class ChronicleStampedLock extends StampedLock {
                 Thread.currentThread().interrupt();
             }
         } while (
-                l != 0L ||
+                lockState != 0L ||
                         readLockHolderCount.getVolatileValue() > 0 ||
                         (writeLockHolderCount = chmW.get("WriterCount ")).getVolatileValue() > 0
         );
@@ -373,11 +368,10 @@ public class ChronicleStampedLock extends StampedLock {
 
     @Override
     public long readLock() {
-        long l = 0L;
-
         offHeapLock = chm.get("Stamp ");
         readLockHolderCount = chmR.get("ReaderCount ");
 
+        long lockState;
         do {
             Jvm.debug().on(getClass(), 
                     " ,@t=" + System.currentTimeMillis() +
@@ -391,14 +385,14 @@ public class ChronicleStampedLock extends StampedLock {
                             "] " +
                             ","
             );
-            l = (offHeapLock = chm.get("Stamp ")).getEntryLockState();
+            lockState = (offHeapLock = chm.get("Stamp ")).getEntryLockState();
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
             }
-        } while (l < 0L);
+        } while (lockState < 0L);
 
         Jvm.debug().on(getClass(), 
                 " ,@t=" + System.currentTimeMillis() +
@@ -437,7 +431,7 @@ public class ChronicleStampedLock extends StampedLock {
         } else if (stamp > 0L) {
             unlockRead(stamp);
         } else {
-            // lock available
+            return;
         }
     }
 

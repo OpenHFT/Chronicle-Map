@@ -20,12 +20,12 @@ public class CHMTestIterator1 {
                 .entries(runs);
 
         try (ChronicleMap<String, Long> chm = builder.create()) {
-        /*chm.put("k1", alValue.incrementAndGet());
-        chm.put("k2", alValue.incrementAndGet());
-        chm.put("k3", alValue.incrementAndGet());
-        chm.put("k4", alValue.incrementAndGet());
-        chm.put("k5", alValue.incrementAndGet());*/
-            //chm.keySet();
+            // chm.put("k1", alValue.incrementAndGet());
+            // chm.put("k2", alValue.incrementAndGet());
+            // chm.put("k3", alValue.incrementAndGet());
+            // chm.put("k4", alValue.incrementAndGet());
+            // chm.put("k5", alValue.incrementAndGet());
+            // chm.keySet();
 
             for (int i = 0; i < runs; i++) {
                 chm.put("k" + alKey.incrementAndGet(), alValue.incrementAndGet());

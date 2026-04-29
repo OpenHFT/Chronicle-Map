@@ -9,8 +9,6 @@ import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.Values;
 import org.junit.Test;
 
-import java.io.IOException;
-
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -19,7 +17,7 @@ import static org.junit.Assert.assertEquals;
 public class IntValueMapTest {
 
     @Test
-    public void test() throws IOException {
+    public void test() {
 
         try (final ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)

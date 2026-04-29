@@ -55,7 +55,7 @@ public final class TimeProvider {
     }
 
     /**
-     * Returns system time interval (i. e. wall time interval) between two time values, taken using
+     * Returns system time interval (i.e. wall time interval) between two time values, taken using
      * {@link #currentTime()} method, with the highest possible precision, in the given time units.
      *
      * @param earlierTime            {@link #currentTime()} result, taken at some moment in the past (earlier)

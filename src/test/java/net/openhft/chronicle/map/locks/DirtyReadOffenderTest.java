@@ -34,7 +34,7 @@ class DirtyReadOffenderTest implements Runnable {
                     "..... @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender established chm "
             );
-            StampedLock offHeapLock = new ChronicleStampedLock(
+            final StampedLock offHeapLock = new ChronicleStampedLock(
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
@@ -63,7 +63,7 @@ class DirtyReadOffenderTest implements Runnable {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = offHeapLock.writeLock()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +

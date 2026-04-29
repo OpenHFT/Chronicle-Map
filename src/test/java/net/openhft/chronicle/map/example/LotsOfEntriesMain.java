@@ -22,9 +22,9 @@ import java.util.concurrent.Future;
 
 interface MyFloats {
     @Array(length = 6)
-    public void setValueAt(int index, float f);
+    void setValueAt(int index, float f);
 
-    public float getValueAt(int index);
+    float getValueAt(int index);
 }
 /**
  * Created by peter.lawrey on 19/12/14.

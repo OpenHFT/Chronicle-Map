@@ -71,7 +71,7 @@ public class VanillaChronicleMap<K, V, R>
     // Value Data model
     Type valueClass;
     /////////////////////////////////////////////////
-    // Behavior
+    // Behaviour
     transient boolean putReturnsNull;
     transient boolean putIfAbsentUsingValue;
     transient boolean removeReturnsNull;
@@ -81,7 +81,7 @@ public class VanillaChronicleMap<K, V, R>
     /////////////////////////////////////////////////
     private transient String name;
     /**
-     * identityString is initialized lazily in {@link #toIdentityString()} rather than in {@link #initOwnTransients()} because it depends on {@link
+     * identityString is initialized lazily in {@link #toIdentityString()} rather than in  because it depends on {@link
      * #file()} which is set after initOwnTransients().
      */
     private transient String identityString;
@@ -115,7 +115,7 @@ public class VanillaChronicleMap<K, V, R>
         }
         Announcer.announce("net.openhft", "chronicle-map",
                 AnalyticsFacade.isEnabled()
-                        ? singletonMap("Analytics", "Chronicle Map reports usage statistics. Learn more or turn off: https://github.com/OpenHFT/Chronicle-Map/blob/master/DISCLAIMER.adoc")
+                        ? singletonMap("Analytics", "Chronicle Map reports usage statistics. Learn more or turn off: https://github.com/OpenHFT/Chronicle-Map/blob/develop/DISCLAIMER.adoc")
                         : emptyMap());
         AnalyticsHolder.instance().sendEvent("started", additionalEventParameters);
     }
@@ -341,7 +341,7 @@ public class VanillaChronicleMap<K, V, R>
     @Override
     public final MapClosable acquireContext(@NotNull final K key, @NotNull final V usingValue) {
         final QueryContextInterface<K, V, R> q = queryContext(key);
-        // TODO optimize to update lock in certain cases
+        // TODO optimise to update lock in certain cases
         try {
             q.writeLock().lock();
             checkAcquiredUsing(acquireUsingBody(q, usingValue), usingValue);

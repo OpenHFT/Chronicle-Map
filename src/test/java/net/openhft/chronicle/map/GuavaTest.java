@@ -50,7 +50,7 @@ public class GuavaTest extends TestCase {
                 .withFeatures(RESTRICTS_KEYS, RESTRICTS_VALUES);
     }
 
-    static abstract class TestGenerator
+    abstract static class TestGenerator
             implements TestMapGenerator<String, String> {
 
         abstract Map<String, String> newMap();
@@ -97,7 +97,7 @@ public class GuavaTest extends TestCase {
     }
 
     static class CHMTestGenerator extends TestGenerator {
-        ChronicleMapBuilder<String, String> builder =
+        final ChronicleMapBuilder<String, String> builder =
                 ChronicleMapBuilder.of(String.class, String.class)
                         .entries(100)
                         .averageKeySize(10).averageValueSize(10)

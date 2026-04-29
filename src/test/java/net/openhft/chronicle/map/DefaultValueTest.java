@@ -46,10 +46,7 @@ public class DefaultValueTest {
 
     private static class SimpleDefaultValueProvider<K, V> extends SelfDescribingMarshallable implements DefaultValueProvider<K, V> {
 
-        private final V defaultValue;
-
         public SimpleDefaultValueProvider(V defaultValue) {
-            this.defaultValue = defaultValue;
         }
 
         @Override
@@ -81,7 +78,7 @@ public class DefaultValueTest {
     }
 
     @Test
-    public void test() throws IllegalAccessException, InstantiationException, IOException {
+    public void test() throws IOException {
         File file = Builder.getPersistenceFile();
         try {
 

@@ -22,7 +22,7 @@ import java.util.concurrent.locks.Lock;
  * threads</i>, instead of that, lock objects should be obtained in each thread separately, using
  * the same call chain. This is because since the lock is inter-process, it anyway keeps it's
  * synchronization state in shared off-heap memory, but restricting on-heap "view" of shared lock
- * to a single thread is beneficial form performance point-of-view, e. g. fields of the on-heap
+ * to a single thread is beneficial form performance point-of-view, e.g. fields of the on-heap
  * {@code InterProcessLock} object shouldn't be {@code volatile}.
  * <p>
  * Lock is inter-process, hence it cannot afford to wait for acquisition infinitely, because
@@ -61,7 +61,7 @@ public interface InterProcessLock extends Lock {
      * {@link InterProcessDeadLockException} is thrown.
      *
      * @throws IllegalMonitorStateException  if this method call observes illegal lock state, or some
-     *                                       lock limitations reached (e. g. maximum read lock holders)
+     *                                       lock limitations reached (e.g. maximum read lock holders)
      * @throws InterProcessDeadLockException if fails to acquire a lock for some finite time
      */
     @Override
@@ -88,7 +88,7 @@ public interface InterProcessLock extends Lock {
      *
      * @throws InterruptedException          if the current thread is interrupted while acquiring the lock
      * @throws IllegalMonitorStateException  if this method call observes illegal lock state, or some
-     *                                       lock limitations reached (e. g. maximum read lock holders)
+     *                                       lock limitations reached (e.g. maximum read lock holders)
      * @throws InterProcessDeadLockException if fails to acquire a lock for some finite time
      */
     @Override
@@ -129,7 +129,7 @@ public interface InterProcessLock extends Lock {
      *
      * @return {@code true} if the lock was acquired and {@code false} otherwise
      * @throws IllegalMonitorStateException if this method call observes illegal lock state, or some
-     *                                      lock limitations reached (e. g. maximum read lock holders)
+     *                                      lock limitations reached (e.g. maximum read lock holders)
      */
     @Override
     boolean tryLock();

@@ -164,18 +164,18 @@ public class ListenersTest {
 
     @Test(expected = IllegalStateException.class)
     public void testRemoveTwice() {
-	ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class).entries(100).create();
-	map.put(1, 1);
-	Iterator<Map.Entry<Integer, Integer>> it = map.entrySet().iterator();
-	it.next();
-	it.remove();
-	it.remove();
+        ChronicleMap<Integer, Integer> map = ChronicleMapBuilder.of(Integer.class, Integer.class).entries(100).create();
+        map.put(1, 1);
+        Iterator<Map.Entry<Integer, Integer>> it = map.entrySet().iterator();
+        it.next();
+        it.remove();
+        it.remove();
     }
 
     static class CountingEntryOperations<K, V> implements MapEntryOperations<K, V, Void> {
-        AtomicInteger removeCount = new AtomicInteger();
-        AtomicInteger insertCount = new AtomicInteger();
-        AtomicInteger replaceValueCount = new AtomicInteger();
+        final AtomicInteger removeCount = new AtomicInteger();
+        final AtomicInteger insertCount = new AtomicInteger();
+        final AtomicInteger replaceValueCount = new AtomicInteger();
 
         @Override
         public Void remove(@NotNull MapEntry<K, V> entry) {

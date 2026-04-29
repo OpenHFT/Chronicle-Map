@@ -6,9 +6,9 @@ the primary key hash code. Then the [`hashSplitting`](3_1-header-fields.md#hashs
 is applied, to determine the segment in which the key should be stored, and the part of the key hash
 code to be stored in a segment tier's hash lookup.
 
-> The reference Java implementation: [`XxHash_r39`](
-> https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/hashing/XxHash_r39.java).
-> Although the Java implementation class has `_r39` suffix, the xxHash algorithm is stable since r3
+> The reference Java implementation: [`XxHashR39`](
+> https://github.com/OpenHFT/Chronicle-Algorithms/blob/chronicle-algorithms-1.1.6/src/main/java/net/openhft/chronicle/algo/hashing/XxHashR39.java).
+> Although the algorithm originated from the r39 release, the xxHash algorithm is stable since r3
 > and [won't change in the future](
 > https://github.com/Cyan4973/xxHash/issues/34#issuecomment-169176338). A different version of
 > the algorithm could have a different name.
@@ -21,12 +21,12 @@ The primary checksum is a 64-bit value.
 
 If the 2nd field of the [stored entry structure
 ](3-memory-layout.md#stored-entry-structure) ends at the same address, as the 6th field of the same
-structure starts, i. e. the value size is 0, and the size itself is stored using 0 bytes, and there
+structure starts, i.e. the value size is 0, and the size itself is stored using 0 bytes, and there
 is no value alignment, the key hash code *is* the primary checksum.
 
 Otherwise, the [xxHash](https://github.com/Cyan4973/xxHash/) algorithm (XXH64 version) is applied to
 the memory range between the end of the 2nd field of the stored entry structure and the end of the
-5th field, i. e. between the end of the stored key and the end of the stored value. The resulting
+5th field, i.e. between the end of the stored key and the end of the stored value. The resulting
 hash value is called *payload checksum*.
 
 > xxHash is used to compute the payload checksum instead of CRC32, because the Java implementation

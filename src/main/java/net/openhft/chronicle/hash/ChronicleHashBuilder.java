@@ -21,7 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 
 /**
- * Base interface for {@link ChronicleMapBuilder} and {@link ChronicleSetBuilder}, i. e. defines
+ * Base interface for {@link ChronicleMapBuilder} and {@link ChronicleSetBuilder}, i.e. defines
  * <i>Chronicle hash container</i> configurations.
  * <p>
  * {@code ChronicleHashBuilder} is mutable. Configuration methods mutate the builder and return
@@ -38,9 +38,9 @@ import java.util.concurrent.CountDownLatch;
  * etc.
  *
  * @param <K> the type of keys in hash containers, created by this builder
- * @param <H> the container type, created by this builder, i. e. {@link ChronicleMap} or {@link
+ * @param <H> the container type, created by this builder, i.e. {@link ChronicleMap} or {@link
  *            ChronicleSet}
- * @param <B> the concrete builder type, i. e. {@link ChronicleMapBuilder}
+ * @param <B> the concrete builder type, i.e. {@link ChronicleMapBuilder}
  *            or {@link ChronicleSetBuilder}
  */
 public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
@@ -92,12 +92,12 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * {@code ChronicleHashBuilder} implementation heuristically chooses
      * {@linkplain #actualChunkSize(int) the actual chunk size} based on this configuration, that,
-     * however, might result to quite high internal fragmentation, i. e. losses because only
+     * however, might result to quite high internal fragmentation, i.e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average key size
      * configuration, which is anyway needed.
      * <p>
-     * If key is a boxed primitive type, a value interface or {@link Byteable} subclass, i. e. if
+     * If key is a boxed primitive type, a value interface or {@link Byteable} subclass, i.e. if
      * key size is known statically, it is automatically accounted and shouldn't be specified by
      * user.
      * <p>
@@ -125,12 +125,12 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * {@code ChronicleHashBuilder} implementation heuristically chooses
      * {@linkplain #actualChunkSize(int) the actual chunk size} based on this configuration, that,
-     * however, might result to quite high internal fragmentation, i. e. losses because only
+     * however, might result to quite high internal fragmentation, i.e. losses because only
      * integral number of chunks could be allocated for the entry. If you want to avoid this, you
      * should manually configure the actual chunk size in addition to this average key size
      * configuration, which is anyway needed.
      * <p>
-     * If key is a boxed primitive type or {@link Byteable} subclass, i. e. if key size is known
+     * If key is a boxed primitive type or {@link Byteable} subclass, i.e. if key size is known
      * statically, it is automatically accounted and shouldn't be specified by user.
      * <p>
      * Calling this method clears any previous {@link #constantKeySizeBySample(Object)} and
@@ -151,7 +151,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * containers, created by this builder. This is done by providing the {@code sampleKey}, all
      * keys should take the same number of bytes in serialized form, as this sample object.
      * <p>
-     * If keys are of boxed primitive type or {@link Byteable} subclass, i. e. if key size is
+     * If keys are of boxed primitive type or {@link Byteable} subclass, i.e. if key size is
      * known statically, it is automatically accounted and this method shouldn't be called.
      * <p>
      * If key size varies, method {@link #averageKeySize(double)} should be called instead of
@@ -180,7 +180,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * required by the entry, 200 bytes will be allocated, 150 used and 50 wasted. This is called
      * internal fragmentation.
      * <p>
-     * To minimize memory overuse and improve speed, you should pay decent attention to this
+     * To minimise memory overuse and improve speed, you should pay decent attention to this
      * configuration. Alternatively, you can just trust the heuristics and doesn't configure
      * the chunk size.
      * <p>
@@ -279,7 +279,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * {@code IllegalStateException}, which will quickly show you, that there is a bug in you
      * application.
      * <p>
-     * The default maximum bloat factor factor is {@code 1.0} - i. e. "no bloat is expected".
+     * The default maximum bloat factor factor is {@code 1.0} - i.e. "no bloat is expected".
      * <p>
      * It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
      * almost certainly, you either should configure {@code ChronicleHash}es completely differently,
@@ -320,7 +320,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * The last caveat means that the configured percentile and affects segment size relying on
      * Poisson distribution law, if inserted entries (keys) fall into all segments randomly. If
-     * e. g. the keys, inserted into the Chronicle Hash, are purposely selected to collide by
+     * e.g. the keys, inserted into the Chronicle Hash, are purposely selected to collide by
      * a certain range of hash code bits, so that they all fall into the same segment (a DOS
      * attacker might do this), this segment is obviously going to be tiered.
      * <p>
@@ -331,10 +331,10 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * mentioned in this paragraph, are specified, {@code nonTieredSegmentsPercentile} doesn't make
      * any effect.
      * <p>
-     * Default value is 0.99999, i. e. if hash code distribution of the keys is good, only one
+     * Default value is 0.99999, i.e. if hash code distribution of the keys is good, only one
      * segment of 100K is tiered on average. If your segment size is small and you want to improve
      * memory footprint of Chronicle Hash (probably compromising latency percentiles), you might
-     * want to configure more "relaxed" value, e. g. 0.99.
+     * want to configure more "relaxed" value, e.g. 0.99.
      *
      * @param nonTieredSegmentsPercentile Fraction of segments which shouldn't be tiered
      * @return this builder back
@@ -501,7 +501,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * process lifecycle.
      * <p>
      * Multiple containers could give access to the same data simultaneously, either inside a
-     * single JVM or across processes. Access is synchronized correctly across all instances, i. e.
+     * single JVM or across processes. Access is synchronized correctly across all instances, i.e.
      * hash container mapping the data from the first JVM isn't able to modify the data,
      * concurrently accessed from the second JVM by another hash container instance, mapping the
      * same data.
@@ -531,7 +531,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * leave some locks "acquired" therefore some segments inaccessible), or an accessor process
      * external termination (that, in addition to inaccessible segments, might lead to leaks in the
      * Chronicle Hash memory), or a sudden power loss, or a file corruption (that, in addition to
-     * the already mentioned consequences, might lead to data corruption, i. e. presence of entries
+     * the already mentioned consequences, might lead to data corruption, i.e. presence of entries
      * which were never put into the Chronicle Hash).
      * <p>
      * This method, unlike {@link #createPersistedTo(File)} method, expects that the given file already
@@ -567,7 +567,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * <em>WARNING:</em> Make sure this instance is the only one that accesses the
      * provided {@code file} during recovery across all JVMs/threads/processes or else
-     * the behavior is unspecified including the possibility that the Map file gets
+     * the behaviour is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
      * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.
@@ -599,7 +599,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * leave some locks "acquired" therefore some segments inaccessible), or an accessor process
      * external termination (that, in addition to inaccessible segments, might lead to leaks in the
      * Chronicle Hash memory), or a sudden power loss, or a file corruption (that, in addition to
-     * the already mentioned consequences, might lead to data corruption, i. e. presence of entries
+     * the already mentioned consequences, might lead to data corruption, i.e. presence of entries
      * which were never put into the Chronicle Hash).
      * <p>
      * This method, unlike {@link #createPersistedTo(File)} method,
@@ -626,7 +626,7 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * <em>WARNING:</em> Make sure this instance is the only one that accesses the
      * provided {@code file} during recovery across all JVMs/threads/processes or else
-     * the behavior is unspecified including the possibility that the Map file gets
+     * the behaviour is unspecified including the possibility that the Map file gets
      * <em>completely corrupted and/or is silently returning stale or otherwise erroneous data.</em>
      * <p>
      * Chronicle Map employs a best-effort to ensure file exclusivity during recovery operations.

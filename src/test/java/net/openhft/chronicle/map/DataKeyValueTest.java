@@ -19,7 +19,7 @@ public class DataKeyValueTest {
                         .entries(1000).create();
         IntValue heapKey = Values.newHeapInstance(IntValue.class);
         LongValue heapValue = Values.newHeapInstance(LongValue.class);
-        LongValue directValue = Values.newNativeReference(LongValue.class);
+        final LongValue directValue = Values.newNativeReference(LongValue.class);
 
         heapKey.setValue(1);
         heapValue.setValue(1);

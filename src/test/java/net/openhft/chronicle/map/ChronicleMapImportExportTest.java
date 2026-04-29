@@ -15,8 +15,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public class ChronicleMapImportExportTest {
     public static final String TMP = OS.getTarget();
 
     @Test
-    public void test() throws IOException, InterruptedException {
+    public void test() throws IOException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -56,7 +56,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithMapValue() throws IOException, InterruptedException {
+    public void testWithMapValue() throws IOException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -85,7 +85,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithMapOfMapValue() throws IOException, InterruptedException {
+    public void testWithMapOfMapValue() throws IOException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -115,7 +115,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithIntegerAndDouble() throws IOException, InterruptedException {
+    public void testWithIntegerAndDouble() throws IOException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -138,7 +138,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithCharSeq() throws IOException, InterruptedException {
+    public void testWithCharSeq() throws IOException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -166,7 +166,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testFromHashMap() throws IOException, InterruptedException {
+    public void testFromHashMap() throws IOException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         System.out.println(file.getCanonicalFile());
@@ -181,7 +181,7 @@ public class ChronicleMapImportExportTest {
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
 
-        xstream.toXML(map, new FileOutputStream(file));
+        xstream.toXML(map, Files.newOutputStream(file.toPath()));
 
         try (ChronicleMap<Integer, String> expected = ChronicleMapBuilder
                 .of(Integer.class, String.class)
@@ -204,7 +204,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithLongValue() throws IOException, InterruptedException {
+    public void testWithLongValue() throws IOException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         //file.deleteOnExit();
@@ -233,12 +233,12 @@ public class ChronicleMapImportExportTest {
                 Assert.assertEquals(expected, actual);
             }
         } finally {
-            // file.delete();
+            file.delete();
         }
     }
 
     @Test
-    public void testBondVOInterface() throws IOException, InterruptedException {
+    public void testBondVOInterface() throws IOException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();

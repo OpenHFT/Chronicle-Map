@@ -11,7 +11,7 @@ performing a query to a Chronicle Map:
  2. Identify the segment that should hold the key, based on the hash code.
  3. Acquire the segment lock on the needed level.
  4. Search for the entry with the queried key in the segment.
- 5. Perform the actual query operation on the entry, if the entry is found (e. g. read the value,
+ 5. Perform the actual query operation on the entry, if the entry is found (e.g. read the value,
  update the value, etc.), or insert the entry, if the queried key was absent in the segment, and
  insertion of a previously absent entry is implied by the logic of the query being performed.
  6. Release the segment lock.
@@ -22,7 +22,7 @@ For multi-key queries,
  2. Acquire the locks of all the involved segments. Within each involved Chronicle Map store,
  acquire the segment locks in the order of their segments.
 
- > Acquiring segment locks always in the same order is needed to avoid dead-locks, e. g. when the
+ > Acquiring segment locks always in the same order is needed to avoid dead-locks, e.g. when the
  > first thread acquires the lock of the segment #1 and then tries to acquire the lock of the
  > segment #2, and the second thread does the opposite: locks the segment #2, then tries to lock the
  > segment #1.
@@ -121,7 +121,7 @@ A segment tier basically consists of two parts:
 
 The hash lookup slots' size is either 4 or 8 bytes. Allocation identifiers use the minimum required
 bits to identify themselves within the entry space, the rest bits of hash lookup slots are used to
-store bits of the Chronicle Map's key hash codes, to minimize full collisions on the hash lookup
+store bits of the Chronicle Map's key hash codes, to minimise full collisions on the hash lookup
 level.
 
 > Hash lookup slots are disallowed to be of any integral byte size from 3 to 8 bytes, despite it
@@ -132,7 +132,7 @@ level.
 
 ### Tier chaining
 
-If a segment tier is filled up, i. e. on some entry insertion request entry space fails to allocate
+If a segment tier is filled up, i.e. on some entry insertion request entry space fails to allocate
 a memory block sufficient to place the new entry, *a whole new segment tier is allocated and chained
 after the previous tier.* All tiers, either first in their segments or chained, are identical.
 

@@ -39,7 +39,7 @@ public class ConstantSizeBySampleTest {
     }
 
     @Test
-    public void testUnexpectedlyLongConstantByteArrayValues() throws IOException {
+    public void testUnexpectedlyLongConstantByteArrayValues() {
         try (ChronicleMap<Long, byte[]> map = ChronicleMapBuilder.of(Long.class, byte[].class)
                 .constantValueSizeBySample(new byte[512 * 1024])
                 .entries(100)
@@ -49,12 +49,12 @@ public class ConstantSizeBySampleTest {
 
             value[42] = 1;
             map.put(1L, value);
-            Assert.assertTrue(Arrays.equals(map.get(1L), value));
+            Assert.assertArrayEquals(map.get(1L), value);
         }
     }
 
     @Test
-    public void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
+    public void testUnexpectedlyLongConstantExternalizableValues() {
         try (ChronicleMap<Long, ExternalizableData> map =
                      ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
                              .valueReaderAndDataAccess(new ExternalizableDataReader(),
@@ -71,7 +71,7 @@ public class ConstantSizeBySampleTest {
     }
 
     @Test
-    public void testUnexpectedlyLongConstantSerializableValues() throws IOException {
+    public void testUnexpectedlyLongConstantSerializableValues() {
         try (ChronicleMap<Long, SerializableData> map =
                      ChronicleMapBuilder.of(Long.class, SerializableData.class)
                              .constantValueSizeBySample(new SerializableData())
@@ -109,13 +109,13 @@ public class ConstantSizeBySampleTest {
         }
 
         @Override
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        public void readExternal(ObjectInput in) throws IOException {
             in.read(data = new byte[512 * 1024]);
         }
     }
 
     static final class SerializableData implements Serializable {
-        byte[] data = new byte[512 * 1024];
+        final byte[] data = new byte[512 * 1024];
 
         @Override
         public boolean equals(Object obj) {

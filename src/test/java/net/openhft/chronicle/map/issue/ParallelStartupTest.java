@@ -6,19 +6,17 @@ package net.openhft.chronicle.map.issue;
 import net.openhft.chronicle.core.io.IOTools;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 public class ParallelStartupTest {
 
     @RepeatedTest(5)
-    public void test() throws InterruptedException {
+    public void test() {
         try {
             final File file = IOTools.createTempFile("issue342");
             Thread[] thread = new Thread[16];
@@ -44,16 +42,14 @@ public class ParallelStartupTest {
                 });
             }
 
-            for (int i = 0; i < thread.length; i++)
-                thread[i].start();
+            for (Thread item : thread) item.start();
 
-            for (int i = 0; i < thread.length; i++)
-                thread[i].join();
+            for (Thread value : thread) value.join();
 
-            assertEquals(thread.length, succ.get());
+            Assertions.assertEquals(thread.length, succ.get());
         } catch (Exception ex) {
             ex.printStackTrace();
-            fail();
+            Assertions.fail();
         }
     }
 

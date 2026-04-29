@@ -5,6 +5,8 @@ Neil Clifford
 :css-signature: demo
 :toc-placement: macro
 :icons: font
+:lang: en-GB
+:source-highlighter: rouge
 
 toc::[]
 
@@ -12,7 +14,7 @@ toc::[]
 
 === Public API
 
-The *public API* comprises public classes that are included in http://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadoc].
+The *public API* comprises public classes that are included in https://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadoc].
 
 NOTE: Other public classes are not subject to the following rules; they may be changed in any way, or even removed.
 
@@ -85,14 +87,14 @@ For example, `chronicle-bytes` dependency is updated from `1.1.1` to `1.1.2`. +
 This rule does not apply to dependencies to the umbrella POMs which merely determine versions of other dependencies (namely, `chronicle-bom` and `third-party-bom`), if the versions of actual dependencies do not change between those versions of umbrella POMs. +
 Also, this rule does not apply to dependencies with Maven scopes of `test` or `provided`.
 
-- **bug fixes, performance optimization, or feature additions** that requires changes to:
+- **bug fixes, performance optimisation, or feature additions** that requires changes to:
 ** the binary, or serialized, form of Chronicle Map data store; therefore revising the Chronicle Map data store specification.
 ** the binary replication protocol, or the serialized form of some marshaller classes, that require creation of new versions of classes.
 
 === The <minor> number should not be updated when:
 
 - **a bug is fixed**, in a way that does not make any working code to change its behaviour semantically.
-- **performance is optimized**, changing its performance characteristics, but not semantics.
+- **performance is optimised**, changing its performance characteristics, but not semantics.
 
 During development, and after the release of the version `3.y.z`, the library should be versioned `3.y.<x+1>-SNAPSHOT`. +
 + As soon as changes are made that are substantial enough for the next released version to update the `<minor>` number, then the version should be changed to `3.<y+1>.0-SNAPSHOT`, *in the same commit operation* that these changes are made.

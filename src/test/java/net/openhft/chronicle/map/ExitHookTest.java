@@ -36,7 +36,7 @@ public class ExitHookTest {
     private static AtomicReference<ChronicleMap<Integer, Integer>> mapReference;
 
     @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
+    public final TemporaryFolder folder = new TemporaryFolder();
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -105,7 +105,7 @@ public class ExitHookTest {
                 .entries(1);
     }
 
-    // http://stackoverflow.com/a/33171840/648955
+    // https://stackoverflow.com/a/33171840/648955
     public static long getPidOfProcess(Process p) {
         Number pid = Jvm.getValue(p, "pid");
         return pid.longValue();
@@ -131,7 +131,7 @@ public class ExitHookTest {
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
         ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
-            // Test that we are able to lock the segment, i. e. the lock was released in other
+            // Test that we are able to lock the segment, i.e. the lock was released in other
             // process, thanks to default shutdown hook.
             c.writeLock().lock();
         }
@@ -158,7 +158,7 @@ public class ExitHookTest {
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
         ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
         try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
-            // Test that we are able to lock the segment, i. e. the lock was released in other
+            // Test that we are able to lock the segment, i.e. the lock was released in other
             // process, thanks to user shutdown hook.
             c.writeLock().lock();
         }
@@ -226,13 +226,13 @@ public class ExitHookTest {
         }
     }
 
-    // http://stackoverflow.com/a/7835467/648955
+    // https://stackoverflow.com/a/7835467/648955
     @SuppressWarnings("deprecation")
     private void interruptProcess(long pidOfProcess) throws IOException {
         Runtime.getRuntime().exec("kill -SIGINT " + pidOfProcess);
     }
 
-    private Process startOtherProcess(File mapFile, File lockingFile, File outputFile, boolean skipCloseOnExitHook) throws IOException {
+    private Process startOtherProcess(File mapFile, File lockingFile, File outputFile, boolean skipCloseOnExitHook) {
         return JavaProcessBuilder.create(ExitHookTest.class)
                 //.inheritingIO()
                 .withProgramArguments(mapFile.getAbsolutePath(),

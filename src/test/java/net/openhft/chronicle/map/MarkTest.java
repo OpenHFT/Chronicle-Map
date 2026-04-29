@@ -19,7 +19,7 @@ import static org.junit.Assert.assertTrue;
 
 public class MarkTest {
 
-    static int ENTRIES = 25_000_000;
+    static final int ENTRIES = 25_000_000;
 
     private static void test(
             Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>
@@ -72,6 +72,6 @@ public class MarkTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeEntriesPerSegment() {
-	ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
+        ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
     }
 }

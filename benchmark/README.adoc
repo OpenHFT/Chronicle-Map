@@ -1,7 +1,9 @@
 = Benchmark results
 Peter Lawrey
+:lang: en-GB
+:source-highlighter: rouge
 
-Summary of results on a Ryzen 9 5950X with a Corsair MP600 driver
+Summary of results on a Ryzen 9 5950X with a Corsair MP600 drive
 
 == 1 million reads and 1 million writes each second of 500 byte messages
 

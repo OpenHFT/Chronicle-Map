@@ -131,14 +131,16 @@ public abstract class ChronicleHashResources implements Runnable {
             if (state == COMPLETELY_CLOSED)
                 return;
             try {
-                Jvm.error().on(getClass(), chronicleHashIdentityString+" is not closed manually, cleaned up from Cleaner"                        );
+                Jvm.error().on(getClass(),
+                        chronicleHashIdentityString + " is not closed manually, cleaned up from Cleaner");
             } catch (Throwable t) {
                 thrown = t;
             } finally {
                 synchronized (this) {
                     if (state == COMPLETELY_CLOSED) {
-                        Jvm.error().on(getClass(), "Somebody closed "+chronicleHashIdentityString+" while it is processed by Cleaner, " +
-                                "this should be impossible");
+                        Jvm.error().on(getClass(),
+                                "Somebody closed " + chronicleHashIdentityString
+                                        + " while it is processed by Cleaner, this should be impossible");
                     } else {
                         thrown = Throwables.returnOrSuppress(thrown, releaseEverything(true));
                     }
@@ -288,7 +290,7 @@ public abstract class ChronicleHashResources implements Runnable {
                 }
             }
         }
-        // Forget about contexts only if all of them are successfully closed, i. e. no throwables
+        // Forget about contexts only if all of them are successfully closed, i.e. no throwables
         // were thrown in the above loop.
         if (thrown == null) {
             // Make GC life easier
@@ -300,7 +302,7 @@ public abstract class ChronicleHashResources implements Runnable {
     private void closeContext(ContextHolder contextHolder) {
         ChainingInterface context = contextHolder.get();
         // The context could have already been cleared, if this is the second attempt to close
-        // contexts, the first one failed e. g. with IllegalStateException on one of the contexts
+        // contexts, the first one failed e.g. with IllegalStateException on one of the contexts
         // (see comment (*) below in this method), it could have succeed for some contexts and
         // contextHolder.clear() is performed.
         if (context != null) {
@@ -314,7 +316,7 @@ public abstract class ChronicleHashResources implements Runnable {
             }
 
             // (*) Don't execute contextHolder.clear() from a finally section of a try block
-            // wrapping context.closeContext(), because if context.closeContext() fails e. g. with
+            // wrapping context.closeContext(), because if context.closeContext() fails e.g. with
             // IllegalStateException because the context is currently used (this happens if
             // ChronicleMap.close() is called within try-with-resources block of it's own operation,
             // see MapCloseTest.closeInContextTest()), we may want to try to close this context
@@ -346,7 +348,7 @@ public abstract class ChronicleHashResources implements Runnable {
                 }
             }
         }
-        // Forget about closeables only if all of them are successfully closed, i. e. no throwables
+        // Forget about closeables only if all of them are successfully closed, i.e. no throwables
         // were thrown in the above loop.
         if (thrown == null) {
             // Make GC life easier
@@ -375,7 +377,7 @@ public abstract class ChronicleHashResources implements Runnable {
                 }
             }
         }
-        // Forget about memory resources only if all of them are successfully released, i. e. no
+        // Forget about memory resources only if all of them are successfully released, i.e. no
         // throwables were thrown in the above loop.
         if (thrown == null) {
             this.memoryResources = null;

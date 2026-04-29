@@ -40,7 +40,7 @@ public interface BondVOInterface {
 
     void setSymbol(@MaxUtf8Length(20) String symbol);
 
-    // OpenHFT Off-Heap array[ ] processing notice ‘At’ suffix
+    // OpenHFT Off-Heap array[ ] processing notice 'At' suffix
     @Group(1)
     @Array(length = 7)
     void setMarketPxIntraDayHistoryAt(int tradingDayHour, MarketPx mPx);
@@ -48,13 +48,13 @@ public interface BondVOInterface {
     /* 7 Hours in the Trading Day:
      * index_0 = 9.30am,
      * index_1 = 10.30am,
-     …,
+     ...,
      * index_6 = 4.30pm
      */
 
     MarketPx getMarketPxIntraDayHistoryAt(int tradingDayHour);
 
-    /* nested interface - empowering an Off-Heap hierarchical “TIER of prices”
+    /* nested interface - empowering an Off-Heap hierarchical "TIER of prices"
     as array[ ] value */
     interface MarketPx {
         double getCallPx();

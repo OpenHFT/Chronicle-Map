@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public final class AbstractMarshallableKeyValueTest {
 
     @Test
-    public void shouldAcceptAbstractMarshallableComponents() throws Exception {
+    public void shouldAcceptAbstractMarshallableComponents() {
         final ChronicleMap<Key, Value> map = ChronicleMapBuilder.of(Key.class, Value.class).entries(10).
                 averageKey(new Key()).averageValue(new Value()).create();
 
@@ -24,7 +24,7 @@ public final class AbstractMarshallableKeyValueTest {
     }
 
     @Test
-    public void shouldAcceptAbstractMarshallableComponents2() throws Exception {
+    public void shouldAcceptAbstractMarshallableComponents2() {
         final ChronicleMap<Key, Marshallable> map = ChronicleMapBuilder.of(Key.class, Marshallable.class).entries(10)
                 .averageKey(new Key()).averageValue(new Value())
                 .valueMarshaller(new TypedMarshallableReaderWriter<>(Marshallable.class))
@@ -37,10 +37,10 @@ public final class AbstractMarshallableKeyValueTest {
     }
 
     private static final class Key extends SelfDescribingMarshallable {
-        private String k = "key";
+        private final String k = "key";
     }
 
     private static final class Value extends SelfDescribingMarshallable {
-        private Integer number = 17;
+        private final Integer number = 17;
     }
 }

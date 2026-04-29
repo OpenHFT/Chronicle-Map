@@ -84,7 +84,7 @@ public class ValueConverter implements Converter {
     }
 
     private void fillInObject(HierarchicalStreamReader reader, UnmarshallingContext context,
-                              ValueModel valueModel, Object using) throws ClassNotFoundException {
+                              ValueModel valueModel, Object using) {
 
         while (reader.hasMoreChildren()) {
             reader.moveDown();

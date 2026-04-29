@@ -71,7 +71,7 @@ public class AcquireGetUsingMain {
         System.out.println("2 " + data.getTimeAt(1));
     }
 
-    public static interface Data {
+    public interface Data {
         @Array(length = 8)
         void setTimeAt(int index, long time);
 

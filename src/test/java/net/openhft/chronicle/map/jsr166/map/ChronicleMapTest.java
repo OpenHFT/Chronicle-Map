@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
  * Expert Group and released to the public domain, as explained at
- * http://creativecommons.org/publicdomain/zero/1.0/
+ * https://creativecommons.org/publicdomain/zero/1.0/
  * Other contributors include Andrew Wright, Jeffrey Hayes,
  * Pat Fisher, Mike Judd.
  */
@@ -26,13 +26,13 @@ import static org.junit.Assert.*;
 @SuppressWarnings({"rawtypes", "unchecked", "try"})
 public class ChronicleMapTest extends JSR166TestCase {
 
-    static ChronicleMap<Integer, CharSequence> newShmIntString(int size) throws IOException {
+    static ChronicleMap<Integer, CharSequence> newShmIntString(int size) {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                 .averageValueSize(1)
                 .entries(size).create();
     }
 
-    static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) throws IOException {
+    static ChronicleMap<CharSequence, CharSequence> newStrStrMap(int size) {
         return ChronicleMapBuilder.of(CharSequence.class, CharSequence.class)
                 .averageKeySize(20).averageValueSize(20)
                 .entries(size).create();
@@ -215,9 +215,7 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set<Entry<Integer, CharSequence>> s = map.entrySet();
             assertEquals(5, s.size());
-            Iterator<Entry<Integer, CharSequence>> it = s.iterator();
-            while (it.hasNext()) {
-                Entry<Integer, CharSequence> e = it.next();
+            for (Entry<Integer, CharSequence> e : s) {
                 assertTrue(
                         (e.getKey().equals(one) && "A".contentEquals(e.getValue())) ||
                                 (e.getKey().equals(two) && "B".contentEquals(e.getValue())) ||
@@ -309,8 +307,7 @@ public class ChronicleMapTest extends JSR166TestCase {
      * replace value succeeds when the given key mapped to expected value
      */
     @Test(timeout = 5000)
-    public void testReplaceValue2
-    () throws IOException {
+    public void testReplaceValue2() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.get(one).toString());
             assertTrue(map.replace(one, "A", "Z"));
@@ -329,22 +326,6 @@ public class ChronicleMapTest extends JSR166TestCase {
             assertEquals(4, map.size());
             assertFalse(map.containsKey(five));
         }
-    }
-
-    /**
-     * remove(key,value) removes only if pair present
-     */
-    @Test(timeout = 5000)
-    public void testRemove2
-    () throws IOException {
-   /*     try(   ChronicleMap map = map5(8076)) {
-        map.remove(five, "E");
-    assertEquals(4, map.size());
-        assertFalse(map.containsKey(five));
-        map.remove(four, "A");
-        assertEquals(4, map.size());
-        assertTrue(map.containsKey(four));
-   */
     }
 
     /**
@@ -407,8 +388,9 @@ public class ChronicleMapTest extends JSR166TestCase {
 
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.get(null);
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -419,8 +401,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.containsKey(null);
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -431,8 +414,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testPut1_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.put(null, "whatever");
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -440,12 +424,12 @@ public class ChronicleMapTest extends JSR166TestCase {
      * put(x, null) throws NPE
      */
     @Test(timeout = 5000)
-    public void testPut2_NullPointerException
-    () throws IOException {
+    public void testPut2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.put(notPresent, null);
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -453,12 +437,12 @@ public class ChronicleMapTest extends JSR166TestCase {
      * putIfAbsent(null, x) throws NPE
      */
     @Test(timeout = 5000)
-    public void testPutIfAbsent1_NullPointerException
-    () throws IOException {
+    public void testPutIfAbsent1_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.putIfAbsent(null, "whatever");
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -466,12 +450,12 @@ public class ChronicleMapTest extends JSR166TestCase {
      * replace(null, x) throws NPE
      */
     @Test(timeout = 5000)
-    public void testReplace_NullPointerException
-    () throws IOException {
+    public void testReplace_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(null, "whatever");
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -479,12 +463,12 @@ public class ChronicleMapTest extends JSR166TestCase {
      * replace(null, x, y) throws NPE
      */
     @Test(timeout = 5000)
-    public void testReplaceValue_NullPointerException
-    () throws IOException {
+    public void testReplaceValue_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(null, "A", "whatever");
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -495,8 +479,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testPutIfAbsent2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.putIfAbsent(notPresent, null);
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -507,8 +492,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplace2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, null);
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -519,8 +505,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplaceValue2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, null, "A");
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -531,8 +518,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     public void testReplaceValue3_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, "A", null);
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -544,8 +532,9 @@ public class ChronicleMapTest extends JSR166TestCase {
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8076)) {
             c.put("sadsdf", "asdads");
             c.remove(null);
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -553,13 +542,13 @@ public class ChronicleMapTest extends JSR166TestCase {
      * remove(null, x) throws NPE
      */
     @Test(timeout = 5000)
-    public void testRemove2_NullPointerException
-    () throws IOException {
+    public void testRemove2_NullPointerException() throws IOException {
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8086)) {
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
-            shouldThrow();
+            failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
+            Assert.assertNotNull(success);
         }
     }
 
@@ -603,89 +592,6 @@ public class ChronicleMapTest extends JSR166TestCase {
                 assertEquals(52224, ss.sizeInBytes());
                 assertEquals(3, ss.tiers());
             }
-        }
-    }
-
-    // classes for testing Comparable fallbacks
-    static class BI implements Comparable<BI> {
-        private final int value;
-
-        BI(int value) {
-            this.value = value;
-        }
-
-        public int compareTo(BI other) {
-            return Integer.compare(value, other.value);
-        }
-
-        public boolean equals(Object x) {
-            return (x instanceof BI) && ((BI) x).value == value;
-        }
-
-        public int hashCode() {
-            return 42;
-        }
-    }
-
-    static class CI extends BI {
-        CI(int value) {
-            super(value);
-        }
-    }
-
-    static class DI extends BI {
-        DI(int value) {
-            super(value);
-        }
-    }
-
-    static class BS implements Comparable<BS> {
-        private final String value;
-
-        BS(String value) {
-            this.value = value;
-        }
-
-        public int compareTo(BS other) {
-            return value.compareTo(other.value);
-        }
-
-        public boolean equals(Object x) {
-            return (x instanceof BS) && value.equals(((BS) x).value);
-        }
-
-        public int hashCode() {
-            return 42;
-        }
-    }
-
-    static class LexicographicList<E extends Comparable<E>> extends ArrayList<E>
-            implements Comparable<LexicographicList<E>> {
-        private static final long serialVersionUID = 0;
-        static long total;
-        static long n;
-
-        LexicographicList(Collection<E> c) {
-            super(c);
-        }
-
-        LexicographicList(E e) {
-            super(Collections.singleton(e));
-        }
-
-        public int compareTo(LexicographicList<E> other) {
-            long start = System.currentTimeMillis();
-            int common = Math.min(size(), other.size());
-            int r = 0;
-            for (int i = 0; i < common; i++) {
-                if ((r = get(i).compareTo(other.get(i))) != 0)
-                    break;
-            }
-            if (r == 0)
-                r = Integer.compare(size(), other.size());
-            total += System.currentTimeMillis() - start;
-            n++;
-            return r;
         }
     }
 }
