@@ -26,11 +26,11 @@ import static org.junit.Assert.*;
 
 /**
  * Mutation-tested coverage for AbstractChronicleMapConverter.unmarshal.
- *
+ * <p>
  * Each test in this file was retained because it kills at least one mutation
  * (real bug or contrived) that no other kept test catches. Tests that did not
  * earn their keep against the catalogued mutations were dropped.
- *
+ * <p>
  * Mutations covered:
  * - drop spurious moveDown()/moveUp() (the original 1.4.20→1.4.21 regression)
  * - drop "entry" node-name validation
@@ -99,7 +99,7 @@ public class AbstractChronicleMapConverterFuzzTest {
                 assertEquals(m.size(), dst.size());
             }
         } finally {
-            f.delete();
+            Files.delete(f.toPath());
         }
     }
 
@@ -177,7 +177,7 @@ public class AbstractChronicleMapConverterFuzzTest {
                     assertEquals("entry " + e.getKey(), e.getValue(), dst.get(e.getKey()));
             }
         } finally {
-            f.delete();
+            Files.delete(f.toPath());
         }
     }
 
