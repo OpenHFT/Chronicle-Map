@@ -42,8 +42,6 @@ import static org.junit.Assert.*;
  */
 public class AbstractChronicleMapConverterFuzzTest {
 
-    private static final String TMP = OS.getTarget();
-
     /** Empty-map early-return path. Only test that exercises the leading
      *  {@code reader.getValue()} probe. */
     @Test
@@ -210,8 +208,8 @@ public class AbstractChronicleMapConverterFuzzTest {
         }
     }
 
-    private static File newJsonFile() throws IOException {
-        File f = new File(TMP + "/converter-fuzz-" + Time.uniqueId() + ".json");
+    private static File newJsonFile() {
+        File f = new File(OS.getTarget() + "/converter-fuzz-" + Time.uniqueId() + ".json");
         f.deleteOnExit();
         return f;
     }
