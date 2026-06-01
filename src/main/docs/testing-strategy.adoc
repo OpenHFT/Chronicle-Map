@@ -45,3 +45,4 @@ When new behaviours are added or existing ones change, keep the following aligne
 * add or update unit, integration or performance tests under `src/test/java`.
 
 All tests should pass under the shared quality profiles on supported JDKs before releasing new versions of Chronicle Map.
+

@@ -44,3 +44,4 @@ They are treated as enabled if the key is present with no value, `true` or `yes`
 | Overrides the global timeout, in seconds, used when waiting for segment level locks in multi-process use. If this timeout is exceeded an `InterProcessDeadLockException` is thrown with guidance on possible causes.
 | `LOCK_TIMEOUT_SECONDS` (`int`)
 |===
+
