@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PutIfAbsentNoGarbageTest {
 
-    static ChronicleMap<Long, LongValue> newShmLongLongValueUsing(int size, boolean putIfAbsentUsingValue) throws IOException {
+    static ChronicleMap<Long, LongValue> newShmLongLongValueUsing(int size, boolean putIfAbsentUsingValue) {
         return ChronicleMapBuilder.simpleMapOf(Long.class, LongValue.class)
                 .entries(size).putIfAbsentUsingValue(putIfAbsentUsingValue).create();
     }

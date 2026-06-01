@@ -26,15 +26,14 @@ class Issue24ChronicleSetTest {
         File file = File.createTempFile("stringSet", ".dat");
         file.deleteOnExit();
         try {
-            H result = builder.entries(entrySize)
+            return builder.entries(entrySize)
                     .averageKeySize(averageKeySize).createPersistedTo(file);
-            return result;
         } catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
     }
 
-    public synchronized static <A> ChronicleSet<A> initSet(
+    public static synchronized <A> ChronicleSet<A> initSet(
             Class<A> entryClass, int entrySize, int averageKeySize)
             throws IOException {
         return init(ChronicleSetBuilder.of(entryClass), entrySize, averageKeySize);
@@ -51,7 +50,7 @@ class Issue24ChronicleSetTest {
         }
         executor.shutdown();
         while (!executor.isTerminated()) {
-
+            Thread.yield();
         }
         System.out.println("Finished all threads");
 

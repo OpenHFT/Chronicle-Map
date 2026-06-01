@@ -25,14 +25,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class WordCountTest {
 
-    static String[] words;
-    static Map<CharSequence, Integer> expectedMap;
+    static final String[] words;
+    static final Map<CharSequence, Integer> expectedMap;
 
     static {
         // english version of war and peace ->  ascii
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         try (InputStream zippedIS = Objects.requireNonNull(cl.getResourceAsStream("war_and_peace.txt.gz"));
-             GZIPInputStream binaryIS = new GZIPInputStream(zippedIS);) {
+             GZIPInputStream binaryIS = new GZIPInputStream(zippedIS)) {
             String fullText =
                     new String(ByteStreams.toByteArray(binaryIS), UTF_8);
             words = fullText.split("\\s+");

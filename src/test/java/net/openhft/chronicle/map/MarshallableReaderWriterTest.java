@@ -24,7 +24,7 @@ class MarshallableReaderWriterTest {
         try (ChronicleMap<CharSequence, MyOrder> map = ChronicleMap
                 .of(CharSequence.class, MyOrder.class)
                 .entries(10)
-//                .valueMarshaller(new MarshallableReaderWriter<>(MyOrder.class))
+                //                .valueMarshaller(new MarshallableReaderWriter<>(MyOrder.class))
                 .averageKeySize(32)
                 .averageValueSize(64)
                 .create()) {

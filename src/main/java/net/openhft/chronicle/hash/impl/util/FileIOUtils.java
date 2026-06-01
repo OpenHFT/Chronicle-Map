@@ -3,6 +3,8 @@
  */
 package net.openhft.chronicle.hash.impl.util;
 
+import net.openhft.chronicle.core.Jvm;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -17,10 +19,21 @@ public final class FileIOUtils {
         int startBufferPosition = buffer.position();
         while (buffer.remaining() > 0 &&
                 buffer.position() < fileChannel.size()) {
-            int bytesRead = fileChannel.read(buffer,
-                    filePosition + buffer.position() - startBufferPosition);
-            if (bytesRead == -1)
-                break;
+            long position = filePosition + buffer.position() - startBufferPosition;
+            try {
+                int bytesRead = fileChannel.read(buffer, position);
+                if (bytesRead == -1)
+                    break;
+            } catch (IOException e) {
+                Jvm.warn().on(FileIOUtils.class, "IOException in readFully: " +
+                        "fileChannel: " + fileChannel +
+                        ", position= " + position +
+                        ", filePosition=" + filePosition +
+                        ", buffer.position()=" + buffer.position() +
+                        ", buffer.remaining()=" + buffer.remaining() +
+                        ", startBufferPosition=" + startBufferPosition, e);
+                throw e;
+            }
         }
     }
 
@@ -28,7 +41,19 @@ public final class FileIOUtils {
             throws IOException {
         int startBufferPosition = buffer.position();
         while (buffer.remaining() > 0) {
-            fileChannel.write(buffer, filePosition + buffer.position() - startBufferPosition);
+            long position = filePosition + buffer.position() - startBufferPosition;
+            try {
+                fileChannel.write(buffer, position);
+            } catch (IOException ioe) {
+                Jvm.warn().on(FileIOUtils.class, "IOException in writeFully: " +
+                        "fileChannel: " + fileChannel +
+                        ", position= " + position +
+                        ", filePosition=" + filePosition +
+                        ", buffer.position()=" + buffer.position() +
+                        ", buffer.remaining()=" + buffer.remaining() +
+                        ", startBufferPosition=" + startBufferPosition, ioe);
+                throw ioe;
+            }
         }
     }
 }

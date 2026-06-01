@@ -10,6 +10,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.xstream.converters.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -27,14 +28,14 @@ final class JsonSerializer {
                     "we don't include these artifacts by default as some users don't require this functionality. " +
                     "Please add the following artifacts to your project\n" +
                     "<dependency>\n" +
-                    " <groupId>xstream</groupId>\n" +
+                    " <groupId>com.thoughtworks.xstream</groupId>\n" +
                     " <artifactId>xstream</artifactId>\n" +
-                    " <version>1.2.2</version>\n" +
+                    " <version>1.4.20</version>\n" +
                     "</dependency>\n" +
                     "<dependency>\n" +
                     " <groupId>org.codehaus.jettison</groupId>\n" +
                     " <artifactId>jettison</artifactId>\n" +
-                    " <version>1.3.6</version>\n" +
+                    " <version>1.5.4</version>\n" +
                     "</dependency>\n";
 
     static synchronized <K, V> void getAll(final File toFile,
@@ -59,16 +60,16 @@ final class JsonSerializer {
 
     private static InputStream createInputStream(final File toFile) throws IOException {
         if (toFile.getName().toLowerCase().endsWith(".gz"))
-            return new GZIPInputStream(new FileInputStream(toFile));
+            return new GZIPInputStream(Files.newInputStream(toFile.toPath()));
         else
-            return new FileInputStream(toFile);
+            return Files.newInputStream(toFile.toPath());
     }
 
     private static OutputStream createOutputStream(final File toFile) throws IOException {
         if (toFile.getName().toLowerCase().endsWith(".gz"))
-            return new GZIPOutputStream(new FileOutputStream(toFile));
+            return new GZIPOutputStream(Files.newOutputStream(toFile.toPath()));
         else
-            return new FileOutputStream(toFile);
+            return Files.newOutputStream(toFile.toPath());
     }
 
     private static <K, V> XStream xStream(final Map<K, V> map, final List<?> jsonConverters) {

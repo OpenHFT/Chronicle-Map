@@ -15,11 +15,11 @@ one big continuous block of memory. Its structure, from lower addresses to highe
  3. [The global mutable state](#global-mutable-state).
  4. [Segment header alignment](#segment-headers-alignment")
  The alignment to the next page boundary by addresses (page size of the current memory mapping),
- if a new Chronicle Map is created, if an existing one (i. e. persisted) is loaded, the alignment
+ if a new Chronicle Map is created, if an existing one (i.e. persisted) is loaded, the alignment
  is read from the global mutable state (specifically this field of the global mutable state is
  actually immutable, once written).
 
- > The purpose of this alignment is to minimize the number of pages spanned by the following
+ > The purpose of this alignment is to minimise the number of pages spanned by the following
  > *segment headers area*. The segment headers area is frequently accessed and updated, so the pages
  > it spans almost always reside in the TLB cache and always need to be flushed to the disk.
 
@@ -45,9 +45,9 @@ The structure of this area is described in the [Size Prefixed Blob](
 https://github.com/OpenHFT/RFC/blob/master/Size-Prefixed-Blob/Size-Prefixed-Blob-0.1.md)
 specification. The first 8 bytes contains the hash value of bytes sequence from 9th byte to the end
 of this size-prefixed blob, computed by [xxHash](https://github.com/Cyan4973/xxHash/) algorithm
-(XXH64 version). The "message" is marked as user data (i. e. the user/meta data bit is set to 0).
+(XXH64 version). The "message" is marked as user data (i.e. the user/meta data bit is set to 0).
 
-The self-bootstrapping header itself (i. e. the "message" of the size-prefixed blob) is encoded in
+The self-bootstrapping header itself (i.e. the "message" of the size-prefixed blob) is encoded in
 Text Wire format. Once created, this header is never changed. It contains all configurations,
 immutable for Chronicle Map during the data store lifetime: number of segments, various sizes,
 offsets, etc. See the specification of the fields on [Map Header Fields](3_1-header-fields.md) page.
@@ -75,7 +75,7 @@ The global mutable state is 33 bytes long.
 
  ##### Tier index
  *Tier index* is *1-counted* from the beginning of the main segments area, and counting continues in
- the extra tier bulks, i. e. the first tier of the segment #0 has *tier index* 1, the first tier of
+ the extra tier bulks, i.e. the first tier of the segment #0 has *tier index* 1, the first tier of
  the segment #1 has tier index 2, ... the first tier of the last segment (it's index is
  [`actualSegments`](3_1-header-fields.md#actualsegments) &minus; 1) has tier index `actualSegments`,
  the first tier of the first extra tier bulk has tier index `actualSegments` + 1, etc. Tier indexes
@@ -117,11 +117,11 @@ multiples of `segmentHeaderSize`. Each segment header is 32 bytes long. `segment
  *unsigned* value, stored in the little-endian order.
  3. Bytes 12..15 - the smallest index of a chunk in the entry space of the first tier of the
  segment, that could possibly be free. A 32-bit *unsigned* value, stored in the little-endian order.
- This field is used to optimize allocation of space for new entries, the search for a sufficient
+ This field is used to optimise allocation of space for new entries, the search for a sufficient
  range of continuous free chunks in the [free list](#free-list) is started from this index, rather
  than 0. This field is updated on each entry allocation and deletion in the first tier of the
  segment, if the smallest index of a free chunk is changed. When all chunks in the entry space are
- allocated (i. e. the current tier becomes *full*), the value of this field is changed to
+ allocated (i.e. the current tier becomes *full*), the value of this field is changed to
  [`actualChunksPerSegmentTier`](3_1-header-fields.md#actualchunkspersegmenttier) (an impossible
  chunk index, which varies from 0 to `actualChunksPerSegmentTier` &minus; 1).
  4. Bytes 16..23 - the [index](#tier-index) of the next segment tier, chained after the first tier
@@ -176,11 +176,11 @@ In [`tierHashLookupKeyBits`](3_1-header-fields.md#tierhashlookupkeybits) lower b
 a *hash lookup key* is stored. It is a part of a Chronicle Map's key hash code, extracted by the
 [`hashSplitting`](3_1-header-fields.md#hashsplitting) algorithm. In addition, if the `hashSplitting`
 extracts the part of the hash code of 0, a hash lookup key of all set `tierHashLookupKeyBits` bits
-(i. e. `(1 << tierHashLookupKeyBits) - 1`) is used instead, to avoid the full hash lookup slot to
+(i.e. `(1 << tierHashLookupKeyBits) - 1`) is used instead, to avoid the full hash lookup slot to
 look like an empty slot, if the *hash lookup value* is also 0.
 
 In [`tierHashLookupValueBits`](3_1-header-fields.md#tierhashlookupvaluebits) bits, following after
-the lower key bits (i. e. bits from `tierHashLookupKeyBits`-th to `tierHashLookupKeyBits +
+the lower key bits (i.e. bits from `tierHashLookupKeyBits`-th to `tierHashLookupKeyBits +
 tierHashLookupValueBits - 1`-th, inclusive) of a slot value a *hash lookup value* is stored. It is
 an index of the first chunk of the range of chunks (possibly only a single chunk) in the entry space
 of this segment tier, in which a Chronicle Map's entry is stored.
@@ -201,10 +201,10 @@ tier.
 
 The segment tier counters structure is 64 bytes long:
 
- 1. Bytes 0..7 - for tiers from extra tier bulks (i. e. tiers that are not first in chains of
+ 1. Bytes 0..7 - for tiers from extra tier bulks (i.e. tiers that are not first in chains of
  their segments), this field is the [index](#tier-index) of the next segment tier, chained after
  this segment tier. I. e. this field value in the second tier in the chain - to the third tier in
- the chain, and so on. For tiers from the main segment area (i. e. first in chains of their
+ the chain, and so on. For tiers from the main segment area (i.e. first in chains of their
  segments), this field is unused, the 4th field of the [segment header
  structure](#segment-header-structure) is used instead. This field and the 4th field in the segment
  header structure have the same semantics, with the only difference that this field serves chained
@@ -215,7 +215,7 @@ The segment tier counters structure is 64 bytes long:
  means there is no chained segment tier in this segment yet after the current tier, in other words,
  the current tier is the last in the chain for the current segment.
 
- When the tier is in the *free* state, i. e. allocated in the extra tier bulk, but not yet assigned
+ When the tier is in the *free* state, i.e. allocated in the extra tier bulk, but not yet assigned
  to some segment, the value of this field is the index of the next *free* tier. The index of the
  first free tier is pointed by the 3rd field of the [global mutable state](#global-mutable-state).
 
@@ -226,15 +226,15 @@ The segment tier counters structure is 64 bytes long:
 
  2. Bytes 8..15 - the [index](#tier-index) of the previous segment tier, chained before this segment
  tier. It is a 64-bit value, stored in the little-endian order. In tiers in the main segments area,
- i. e. first tiers in segments' chains, this field has value 0, this means there is no previous
+ i.e. first tiers in segments' chains, this field has value 0, this means there is no previous
  tiers in chains.
 
  This field together with the previous field form a doubly-linked list of chained tiers within each
  segment.
 
- 3. Bytes 16..23 - for tiers from extra tier bulks (i. e. tiers that are not first in chains of
+ 3. Bytes 16..23 - for tiers from extra tier bulks (i.e. tiers that are not first in chains of
  their segments), this field is the smallest index of a chunk in the entry space of this tier,
- that could possibly be free. For tiers from the main segment area (i. e. first in chains of their
+ that could possibly be free. For tiers from the main segment area (i.e. first in chains of their
  segments), this field is unused, the 3rd field of the [segment header structure
  ](#segment-header-structure) is used instead. This field and the 3rd field in the segment header
  structure have the same semantics, with the only difference that this field serves chained tiers
@@ -254,7 +254,7 @@ The segment tier counters structure is 64 bytes long:
  value of this field is 0 (because they are first in chains of their segments), in the tiers which
  are second in chains of their segments the value of this field is 1, in third tiers - 2, and so on.
 
- 6. Bytes 32..35 - for tiers that from extra tier bulks (i. e. not first in chains of their segments
+ 6. Bytes 32..35 - for tiers that from extra tier bulks (i.e. not first in chains of their segments
  ), this field is the number of entries, stored in the tier. In tiers from the main segments area
  this field is unused, the 2nd field of the [segment header structure](#segment-header-structure) is
  used instead. Like the 3rd field of the tier counters structure, this field and the 2nd field in
@@ -299,7 +299,7 @@ The entry space starts with an internal offset of [`tierEntrySpaceInnerOffset`
 each chunk of [`chunkSize`](3_1-header-fields.md#chunksize) bytes.
 
 A chunk is the minimum allocation unit. A single or several continuous chunks are used to store the
-Chronicle Map's entries. These ranges doesn't intersect, i. e. each chunk is used to store at most
+Chronicle Map's entries. These ranges doesn't intersect, i.e. each chunk is used to store at most
 one entry.
 
 ##### Stored entry structure

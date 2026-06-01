@@ -36,10 +36,10 @@ final class AbstractMarshallableKeyValueTest {
     }
 
     private static final class Key extends SelfDescribingMarshallable {
-        private String k = "key";
+        private final String k = "key";
     }
 
     private static final class Value extends SelfDescribingMarshallable {
-        private Integer number = 17;
+        private final Integer number = 17;
     }
 }

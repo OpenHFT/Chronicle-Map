@@ -6,6 +6,9 @@ Neil Clifford
 :toc-placement: macro
 :icons: font
 
+:lang: en-GB
+:source-highlighter: rouge
+
 toc::[]
 
 Changes between Chronicle Map 3 and the previous Chronicle Map version are detailed below:
@@ -16,7 +19,7 @@ Changes between Chronicle Map 3 and the previous Chronicle Map version are detai
 
 - Added support for multi-key queries.
 
-- "Listeners" mechanism fully reworked; see <<CM_Tutorial_Behaviour.adoc#,Behaviour Customization>>.
+- "Listeners" mechanism fully reworked; see <<CM_Tutorial_Behaviour.adoc#,Behaviour Customisation>>.
 This has a number of important consequences, most notable is that it is now possible to define "eventual-consistency" replication strategy, different from "last write wins"; any state-based CRDT.
 
 - "Stateless clients" functionality (remote calls) has been removed.
@@ -41,6 +44,18 @@ For more information, see <<CM_Tutorial.adoc#configure-entries,Configure entries
 - Chronicle Map 3 requires Java version 8, or later.
 
 - Chronicle Map 3 has <<CM_Compatibility_and_Versioning.adoc#,versioning and compatibility policies>>.
+
+- Generic type parameters on public interfaces were renamed to follow Java conventions (single-letter names).
+This is a source-compatible change but is visible in Javadoc and IDE inlay hints:
++
+[cols="1,1,1"]
+|===
+|Type |Before |After
+
+|`ChronicleHash`              |`<K, E, SC, EQC>` |`<K, E, S, Q>`
+|`VanillaChronicleHash`       |`<K, C, SC, ECQ>` |`<K, C, S, Q>`
+|`ChronicleHashBuilderPrivateAPI` |`<K, RO>` |`<K, R>`
+|===
 
 '''
 

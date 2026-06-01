@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class FileLockUtilTest {
 
     private File canonicalFile;
-    private RandomAccessFile raf;
     private FileChannel fileChannel;
 
     @BeforeEach
@@ -29,7 +28,7 @@ class FileLockUtilTest {
         canonicalFile = new File("file.lock").getCanonicalFile();
         canonicalFile.delete();
         canonicalFile.createNewFile();
-        raf = CanonicalRandomAccessFiles.acquire(canonicalFile);
+        RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(canonicalFile);
         fileChannel = raf.getChannel();
     }
 
@@ -64,7 +63,8 @@ class FileLockUtilTest {
             try {
                 CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
                 fail();
-            } catch (ChronicleFileLockException ignore) {
+            } catch (ChronicleFileLockException e) {
+                assertNotNull(e);
             }
             CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
         }
@@ -77,7 +77,8 @@ class FileLockUtilTest {
             try {
                 CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
                 fail();
-            } catch (ChronicleFileLockException ignore) {
+            } catch (ChronicleFileLockException e) {
+                assertNotNull(e);
             }
             CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
         }
@@ -114,6 +115,7 @@ class FileLockUtilTest {
                 fail();
             } catch (ChronicleFileLockException e) {
                 CanonicalRandomAccessFiles.releaseSharedFileLock(canonicalFile);
+                assertNotNull(e);
             }
         }
     }

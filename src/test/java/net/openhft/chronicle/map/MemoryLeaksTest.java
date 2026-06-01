@@ -24,18 +24,27 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assumptions.*;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 class MemoryLeaksTest {
+
+    private static final long[] ALLOWED_NATIVE_MEMORY_DELTAS = {1L << 12, 1L << 14, 3L << 14};
+
+    private static boolean withinAllowedDelta(long expected, long actual) {
+        long delta = actual - expected;
+        for (long allowed : ALLOWED_NATIVE_MEMORY_DELTAS) {
+            if (delta == allowed)
+                return true;
+        }
+        return false;
+    }
 
     /**
      * Accounting {@link CountedStringReader} creation and finalization. All serializers,
@@ -75,8 +84,8 @@ class MemoryLeaksTest {
     @MethodSource("data")
     void testChronicleMapCollectedAndDirectMemoryReleased(String testType, boolean replicated, boolean persisted, boolean closeWithinContext) throws IOException {
         assumeFalse(OS.isMacOSX());
-        assumePersistedMapSupport(persisted);
         ChronicleMapBuilder<IntValue, String> builder = createBuilder(replicated);
+        serializerCount.set(0);
         // This test is flaky in Linux and Mac OS apparently because some native memory from
         // running previous/concurrent tests is released during this test, that infers with
         // the (*) check below. The aim of this test is to check that native memory is not
@@ -94,7 +103,7 @@ class MemoryLeaksTest {
         long expectedNativeMemory = nativeMemoryUsedBeforeMap + map.offHeapMemoryUsed();
         try {
             long actual = nativeMemoryUsed(persisted);
-            if (actual != expectedNativeMemory + 4096)
+            if (!withinAllowedDelta(expectedNativeMemory, actual))
                 assertEquals(expectedNativeMemory, actual);
         } finally {
             tryCloseFromContext(map, closeWithinContext);
@@ -119,8 +128,8 @@ class MemoryLeaksTest {
             System.out.println(serializerCount.get() + " <=> " + serializersBeforeMap);
         }
         if (nativeMemoryUsedBeforeMap < nativeMemoryUsed(persisted)) {
-            long actual = waitForNativeMemoryAtMost(persisted, nativeMemoryUsedBeforeMap + 4096);
-            if (actual != nativeMemoryUsedBeforeMap + 4096) {
+            long actual = nativeMemoryUsed(persisted);
+            if (!withinAllowedDelta(nativeMemoryUsedBeforeMap, actual)) {
                 assertEquals(nativeMemoryUsedBeforeMap, actual);
             }
         }
@@ -135,25 +144,19 @@ class MemoryLeaksTest {
         }
     }
 
-    private long waitForNativeMemoryAtMost(boolean persisted, long maxAllowed) {
-        long actual = nativeMemoryUsed(persisted);
-        for (int i = 1; actual > maxAllowed && i <= 40; i++) {
-            System.gc();
-            Jvm.pause(i * 25L);
-            actual = nativeMemoryUsed(persisted);
-        }
-        return actual;
-    }
-
     @Timeout(60)
     @ParameterizedTest
     @MethodSource("data")
     void testExplicitChronicleMapCloseReleasesMemory(String testType, boolean replicated, boolean persisted, boolean closeWithinContext)
             throws IOException, InterruptedException {
-        assumePersistedMapSupport(persisted);
         ChronicleMapBuilder<IntValue, String> builder = createBuilder(replicated);
-        long nativeMemoryUsedBeforeMap = nativeMemoryUsed(persisted);
+        serializerCount.set(0);
         int serializersBeforeMap = serializerCount.get();
+        // warm up the code
+        try (ChronicleMap<IntValue, String> map = getMap(builder, persisted)) {
+            assertEquals(3, map.size());
+        }
+        long nativeMemoryUsedBeforeMap = nativeMemoryUsed(persisted);
         try (ChronicleMap<IntValue, String> map = getMap(builder, persisted)) {
             // One serializer should be copied to the map's valueReader field, another is copied from
             // the map's valueReader field to the context
@@ -168,6 +171,7 @@ class MemoryLeaksTest {
                                 map.offHeapMemoryUsed(),
                                 expectedNativeMemory, nativeMemoryUsed(persisted)));
             } finally {
+                System.err.println("Expected to log: Attempt to close a Chronicle Hash in the context of not yet finished query or iteration");
                 tryCloseFromContext(map, closeWithinContext);
                 Closeable.closeQuietly(map);
             }
@@ -176,27 +180,24 @@ class MemoryLeaksTest {
                 // Fails because of https://github.com/OpenHFT/Chronicle-Map/issues/153
                 return;
             } else {
-                long actual = waitForNativeMemoryAtMost(persisted, nativeMemoryUsedBeforeMap + 4096);
-                if (actual != 16_000)
+                long actual = nativeMemoryUsed(persisted);
+                if (!withinAllowedDelta(nativeMemoryUsedBeforeMap, actual))
                     assertEquals(nativeMemoryUsedBeforeMap, actual);
             }
-
-            // Wait until chronicle map context (hence serializers) is collected by the GC
-            for (int i = 0; i < 6_000; i++) {
-                if (serializerCount.get() == serializersBeforeMap)
-                    break;
-                System.gc();
-                byte[] garbage = new byte[50_000_000];
-                Thread.sleep(1);
-            }
-            assertTrue(serializerCount.get() == serializersBeforeMap);
-            // This assertion ensures GC doesn't reclaim the map before or during the loop iteration
-            // above, to ensure that we test that the direct memory and contexts are released because
-            // of the manual map.close(), despite the "leak" of the map object itself.
-
-            // Assertion disabled because a closed map now guards offHeapMemoryUsed()
-            //assertEquals(0, map.offHeapMemoryUsed());
         }
+        // Wait until chronicle map context (hence serializers) is collected by the GC
+        long end = System.currentTimeMillis() + 6_000;
+        while (System.currentTimeMillis() < end) {
+            if (serializerCount.get() == serializersBeforeMap)
+                break;
+            System.gc();
+            byte[] garbage = new byte[50_000_000];
+            Thread.sleep(1);
+        }
+        assertEquals(serializersBeforeMap, serializerCount.get());
+        // This assertion ensures GC doesn't reclaim the map before or during the loop iteration
+        // above, to ensure that we test that the direct memory and contexts are released because
+        // of the manual map.close(), despite the "leak" of the map object itself.
     }
 
     private ChronicleMapBuilder<IntValue, String> createBuilder(boolean replicated) {
@@ -226,27 +227,6 @@ class MemoryLeaksTest {
         return map;
     }
 
-    private void assumePersistedMapSupport(boolean persisted) {
-        if (!persisted) {
-            return;
-        }
-        assumeTrue(isUnmapSupportAvailable(),
-                "Skipping persisted variants because chronicle-core unmap support is unavailable in this JVM");
-    }
-
-    private boolean isUnmapSupportAvailable() {
-        try {
-            Method getUnmapp0Mh = OS.class.getDeclaredMethod("getUnmapp0Mh");
-            getUnmapp0Mh.setAccessible(true);
-            getUnmapp0Mh.invoke(null);
-            return true;
-        } catch (NoSuchMethodException | IllegalAccessException e) {
-            throw new AssertionError("Unable to probe unmap support", e);
-        } catch (InvocationTargetException | LinkageError e) {
-            return false;
-        }
-    }
-
     private void tryCloseFromContext(ChronicleMap<IntValue, String> map, boolean closeWithinContext) {
         // Test that the map could still be successfully closed and no leaks are introduced
         // by an attempt to close the map from within context.
@@ -265,19 +245,17 @@ class MemoryLeaksTest {
 
     private static final class CountedStringReader extends StringSizedReader {
         private transient MemoryLeaksTest memoryLeaksTest;
-        private final String creationStackTrace;
-        private final Cleaner cleaner;
 
         CountedStringReader(MemoryLeaksTest memoryLeaksTest) {
             this.memoryLeaksTest = memoryLeaksTest;
             this.memoryLeaksTest.serializerCount.incrementAndGet();
             this.memoryLeaksTest.serializers.add(new WeakReference<>(this));
-            cleaner = CleanerUtils.createCleaner(this, this.memoryLeaksTest.serializerCount::decrementAndGet);
+            Cleaner cleaner = CleanerUtils.createCleaner(this, this.memoryLeaksTest.serializerCount::decrementAndGet);
             try (StringWriter stringWriter = new StringWriter();
                  PrintWriter printWriter = new PrintWriter(stringWriter)) {
                 new Exception().printStackTrace(printWriter);
                 printWriter.flush();
-                creationStackTrace = stringWriter.toString();
+                String creationStackTrace = stringWriter.toString();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

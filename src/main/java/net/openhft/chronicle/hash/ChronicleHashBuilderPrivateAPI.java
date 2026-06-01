@@ -8,7 +8,7 @@ import net.openhft.chronicle.hash.serialization.impl.SerializationBuilder;
 
 import java.util.concurrent.TimeUnit;
 
-public interface ChronicleHashBuilderPrivateAPI<K, RO> {
+public interface ChronicleHashBuilderPrivateAPI<K, R> {
 
     String name();
 
@@ -73,7 +73,7 @@ public interface ChronicleHashBuilderPrivateAPI<K, RO> {
      */
     void removedEntryCleanupTimeout(long removedEntryCleanupTimeout, TimeUnit unit);
 
-    void remoteOperations(RO remoteOperations);
+    void remoteOperations(R remoteOperations);
 
     /**
      * Provides registered action to be executed before closing a {@link ChronicleHash} in a JVM

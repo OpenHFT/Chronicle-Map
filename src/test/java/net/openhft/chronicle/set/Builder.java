@@ -19,7 +19,7 @@ public class Builder {
     public static final int SIZE = 10_000;
     // added to ensure uniqueness
     static int count;
-    static String WIN_OS = "WINDOWS";
+    static final String WIN_OS = "WINDOWS";
 
     public static File getPersistenceFile() throws IOException {
 
@@ -29,8 +29,7 @@ public class Builder {
         if (System.getProperty("os.name").indexOf(WIN_OS) > 0) {
             /*Windows will lock a file that are currently in use. You cannot delete it, however,
               using setwritable() and then releasing RandomRW lock adds the file to JVM exit cleanup.
-    		  This will only work if the user is an admin on windows.
-    		*/
+              This will only work if the user is an admin on windows. */
             file.setWritable(true);//just in case relative path was used.
             try (RandomAccessFile raf = new RandomAccessFile(file, "rw")) {
                 //allows closing the file access on windows. forcing to close access. Only works for admin-access.

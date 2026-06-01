@@ -126,7 +126,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * Where {@code defaultValue(key)} returns {@link
      * ChronicleMapBuilder#defaultValueProvider(DefaultValueProvider) defaultValueProvider}.
      * <p>
-     * If the {@code ChronicleMap} is off-heap updatable, i. e. created via {@link
+     * If the {@code ChronicleMap} is off-heap updatable, i.e. created via {@link
      * ChronicleMapBuilder} builder (values are {@link Byteable}), there is one more option of what
      * to do if the key is absent in the map. By default, value bytes are just zeroed out, no
      * default value, either provided for key or constant, is put for the absent key.
@@ -165,8 +165,8 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      *
      * @param key the key whose associated value is to be returned
      * @param usingValue the object to read value data in, if present. Can be null
-     * @see #acquireUsing(Object, Object)
      * @return Lock control object that releases the update lock on close.
+     * @see #acquireUsing(Object, Object)
      */
     @NotNull
     net.openhft.chronicle.core.io.Closeable acquireContext(@NotNull K key, @NotNull V usingValue);
@@ -178,7 +178,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * when accessing {@code ChronicleMap} implementation which delegates it's requests to some
      * remote node (server) and pulls the result through serialization/deserialization path, and
      * probably network. In this case, when you actually need only a part of the map value's state
-     * (e. g. a single field) it's cheaper to extract it on the server side and transmit lesser
+     * (e.g. a single field) it's cheaper to extract it on the server side and transmit lesser
      * bytes.
      *
      * @param key      the key whose associated value is to be queried
@@ -238,6 +238,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * @return the amount of free space in the map as a percentage. When the free space gets low ( around 5-25% ) the map will automatically expand. The
      * number of times it can automatically expand is based on the {@code net.openhft.chronicle.map.ChronicleMapBuilder#maxBloatFactor}. If the map
      * expands you will see an increase in the available free space. NOTE: It is not possible to expand the chronicle map manually.
+     *
      * @see net.openhft.chronicle.map.ChronicleMap#remainingAutoResizes as these operations are related.
      */
     default short percentageFreeSpace() {
@@ -246,6 +247,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
 
     /**
      * WARNING: This is a detailed however expensive operation which can take milliseconds
+     *
      * @return an array of how full each segment is
      */
     default SegmentStats[] segmentStats() {
@@ -287,7 +289,7 @@ public interface ChronicleMap<K, V> extends ConcurrentMap<K, V>,
      * The maximum number of times, the chronicle map is allowed to grow in size beyond
      * the configured number of entries.
      * <p>
-     * The default maximum bloat factor is {@code 1.0} - i. e. "no bloat is expected".
+     * The default maximum bloat factor is {@code 1.0} - i.e. "no bloat is expected".
      * <p>
      * It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
      * almost certainly, you either should configure {@code ChronicleHash}es completely differently,

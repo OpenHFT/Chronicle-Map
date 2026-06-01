@@ -22,7 +22,7 @@ class DirtyReadOffender_WriterReaderTest {
     @Test
     void main() {
         try {
-            long sleepT = Long.parseLong("8");
+            final long sleepT = Long.parseLong("8");
             long holdTime = Long.parseLong("20");
 
             Thread tooThread = new Thread(new WriterToo());
@@ -42,7 +42,7 @@ class DirtyReadOffender_WriterReaderTest {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            assertNotEquals(offHeapLock, null);
+            assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
@@ -82,7 +82,7 @@ class DirtyReadOffender_WriterReaderTest {
                 );
 
             }
-            assertNotEquals(blockedByHoldingWriterCount, 0);
+            assertNotEquals(0, blockedByHoldingWriterCount);
             System.out.println(
                     "                             " +
                             " @t=" + System.currentTimeMillis() +

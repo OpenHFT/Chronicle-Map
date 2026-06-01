@@ -33,9 +33,9 @@ class DirtyReadVictimTest {
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/OPERAND_CHRONICLE_MAP"
-                            /*                            "C:\\Users\\buddy\\dev\\shm\\OPERAND_CHRONICLE_MAP"*/
+
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;
             System.out.println(
@@ -44,10 +44,9 @@ class DirtyReadVictimTest {
             );
             ChronicleStampedLock offHeapLock = new ChronicleStampedLock(
                     OS.getTarget() + "/OPERAND_ChronicleStampedLock"
-                    /*"C:\\Users\\buddy\\dev\\shm\\OPERAND_ChronicleStampedLock"*/
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-                ; // none
+                // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -79,7 +78,10 @@ class DirtyReadVictimTest {
                                     coupon + " "
                     );
                     // THIS Test will pass when ChronicleStampedLock is GA
-                    assertEquals(offHeapLock.chmW.get("WriterCount ").getVolatileValue(), 0L);
+                    assertEquals(
+                            0L,
+                            offHeapLock.chmW.get("WriterCount ").getVolatileValue()
+                    );
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +

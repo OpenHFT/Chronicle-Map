@@ -17,37 +17,40 @@ import static org.junit.jupiter.api.Assertions.*;
 class ParallelStartupTest {
 
     @RepeatedTest(5)
-    void test() throws InterruptedException {
-        final File file = assertDoesNotThrow(() -> IOTools.createTempFile("issue342"));
-        Thread[] thread = new Thread[16];
-        AtomicInteger succ = new AtomicInteger();
-        for (int i = 0; i < thread.length; i++) {
-            final int ii = i;
-            thread[i] = new Thread(() -> {
-                ChronicleMap<Integer, CharSequence> map;
-                try {
-                    map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
-                            .entries(100)
-                            .averageValueSize(100)
-                            .createPersistedTo(file);
+    void test() {
+        try {
+            final File file = IOTools.createTempFile("issue342");
+            Thread[] thread = new Thread[16];
+            AtomicInteger succ = new AtomicInteger();
+            for (int i = 0; i < thread.length; i++) {
+                final int ii = i;
+                thread[i] = new Thread(() -> {
+                    ChronicleMap<Integer, CharSequence> map;
+                    try {
+                        map = ChronicleMapBuilder.of(Integer.class, CharSequence.class)
+                                .entries(100)
+                                .averageValueSize(100)
+                                .createPersistedTo(file);
 
-                    map.put(ii, Thread.currentThread().getName());
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                        map.put(ii, Thread.currentThread().getName());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
 
-                succ.incrementAndGet();
+                    succ.incrementAndGet();
 
-                map.close();
-            });
+                    map.close();
+                });
+            }
+
+            for (Thread item : thread) item.start();
+
+            for (Thread value : thread) value.join();
+
+            assertEquals(thread.length, succ.get());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            fail();
         }
-
-        for (int i = 0; i < thread.length; i++)
-            thread[i].start();
-
-        for (int i = 0; i < thread.length; i++)
-            thread[i].join();
-
-        assertEquals(thread.length, succ.get());
     }
 }

@@ -5,7 +5,7 @@
  - Chronicle Map optionally persists to a *single file* via the memory-mapping facility, present in
  Windows and POSIX-compatible operating systems (`mmap`). The file shouldn't necessarily materialize
  on disk. It's OK for Chronicle Map if the file resides on a memory-mounted file system. The whole
- Chronicle Map state is contained in the file contents i. e. it is possible to move, copy or send
+ Chronicle Map state is contained in the file contents i.e. it is possible to move, copy or send
  the file to another machine, access it and observe exactly the same Chronicle Map state. Chronicle
  Map doesn't use the metadata of the file.
  - Chronicle Map supports fully-featured concurrent access from multiple processes, mapping the same
@@ -35,7 +35,7 @@ Chronicle Map implementation. It might be an OS thread or a "greener" thread.
 
 #### CPU
 
- - The CPU supports atomic 64-bit compare-and-swap operations with aligned memory, i. e. if several
+ - The CPU supports atomic 64-bit compare-and-swap operations with aligned memory, i.e. if several
  threads, possibly belonging to different processes, try to perform compare-and-swap operation on
  the same 4-byte block, at most one thread will succeed and all the rest will fail.
  - Aligned 32-bit or 64-bit writes are atomic, that means either all 4(8) bytes are written to
@@ -61,10 +61,10 @@ The two above points are true for CPUs with x86 and x86_64 architectures.
 
  - The memory-mapping implementation doesn't corrupt mapped files, even if operating system
  execution was interrupted in any way (black out, virtual machine crash, etc.) It means Chronicle
- Map expects some memory might be "stale", i. e. the values written shortly before operating system
+ Map expects some memory might be "stale", i.e. the values written shortly before operating system
  failure might not be persisted, but it doesn't expect to read values that have never been written
  to the memory.
- - Writes to the disk are at least 4 or 8 bytes atomic, i. e. either aligned 4- or 8-byte blocks
+ - Writes to the disk are at least 4 or 8 bytes atomic, i.e. either aligned 4- or 8-byte blocks
  are fully written to the disk, or not written at all (in case of power loss, virtual machine crash,
  etc.).
 
@@ -74,9 +74,9 @@ The two above points are true for CPUs with x86 and x86_64 architectures.
 Chronicle Map *doesn't* assume anything specific about how memory if flushed to the disk:
 
  - The order in which memory is flushed (up or down by addresses, random, concurrent, etc.).
- - The maximum timeout dirty memory might not be flushed to the disk, i. e. Chronicle Map assumes
+ - The maximum timeout dirty memory might not be flushed to the disk, i.e. Chronicle Map assumes
  some memory might remain dirty forever.
- - The maximum fraction of dirty memory not written to the disk, i. e. Chronicle Map assumes that
+ - The maximum fraction of dirty memory not written to the disk, i.e. Chronicle Map assumes that
  *all* the mapped memory might be dirty.
 
 #### File locking
@@ -89,7 +89,7 @@ https://en.wikipedia.org/wiki/File_locking).
 If the above assumptions are met, Chronicle Map aims to satisfy the following guarantees:
 
  - Single-key and multi-key accesses and updates to the Chronicle Map (multi-key updates could span
- several Chronicle Map stores) are concurrently isolated, i. e. accesses involving a certain key
+ several Chronicle Map stores) are concurrently isolated, i.e. accesses involving a certain key
  are totally ordered across accessing threads and processes. All updates made to the entry during
  the previous update are visible during the subsequent accesses. After a multi-key update,
  a subsequent multi-key query involving a subset of the updated keys (and possibly some more keys)
@@ -114,7 +114,7 @@ Therefore, *some entries updated shortly before the failure could be lost.*
 The ultimate goal of Chronicle Map design is efficiency:
 
  - If the number of entries in Chronicle Map is much greater than the number of accessor CPUs, it
- scales (i. e. adding the last CPU still adds to the total throughput) up to the total number of
+ scales (i.e. adding the last CPU still adds to the total throughput) up to the total number of
  CPUs present in the system.
  - Chronicle Map is a low-latency key-value store, meaning that for any particular percentile (90%,
  99%, 99.9% etc.) the latency of Chronicle Map operations should be the best or among the best
@@ -139,7 +139,7 @@ guarantees, but it shouldn't be expected to be similarly efficient.
 ## Non-goals
 
  - Alphabetical ordering of the keys (sorted keys).
- - Durability. There are ways to make Chronicle Map look like a durable key-value store, e. g.
+ - Durability. There are ways to make Chronicle Map look like a durable key-value store, e.g.
  to call `msync` after each operation. However, if required, it would be better to use a data store
  designed for durability.
 

@@ -21,11 +21,11 @@ import java.util.function.Predicate;
  * Common base interface for {@link ChronicleMap} and {@link ChronicleSet}.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegmentContext<K, ?>,
-        EQC extends ExternalHashQueryContext<K>> extends MapClosable {
+public interface ChronicleHash<K, E extends HashEntry<K>, S extends HashSegmentContext<K, ?>,
+        Q extends ExternalHashQueryContext<K>> extends MapClosable {
     /**
-     * Returns the file this hash container mapped to, i. e. when it is created by {@link ChronicleHashBuilder#create()} call, or {@code null} if it
-     * is purely in-memory, i. e. if it is created by {@link ChronicleHashBuilder#create()} call.
+     * Returns the file this hash container mapped to, i.e. when it is created by {@link ChronicleHashBuilder#create()} call, or {@code null} if it
+     * is purely in-memory, i.e. if it is created by {@link ChronicleHashBuilder#create()} call.
      *
      * @return the file this {@link ChronicleMap} or {@link ChronicleSet} is mapped to, or {@code null} if it is not mapped to any file
      * @see ChronicleHashBuilder#createPersistedTo(File)
@@ -104,7 +104,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * @see MapMethods
      */
     @NotNull
-    EQC queryContext(K key);
+    Q queryContext(K key);
 
     /**
      * Returns a context to perform arbitrary operations with the given key, provided in {@link Data} form. Equivalent to {@link
@@ -119,7 +119,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * @return the context to perform operations with the key
      */
     @NotNull
-    EQC queryContext(Data<K> key);
+    Q queryContext(Data<K> key);
 
     /**
      * Returns a context to perform arbitrary operations with the given key, provided in the serialized form. See {@link #queryContext(Object)} and
@@ -131,14 +131,14 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * @return the context to perform operations with the key
      */
     @NotNull
-    EQC queryContext(BytesStore<?, ?> keyBytes, long offset, long size);
+    Q queryContext(BytesStore<?, ?> keyBytes, long offset, long size);
 
     /**
      * Returns a context of the segment with the given index. Segments are indexed from 0 to {@link #segments()}{@code - 1}.
      *
      * @see HashSegmentContext
      */
-    SC segmentContext(int segmentIndex);
+    S segmentContext(int segmentIndex);
 
     /**
      * Returns the number of segments in this {@code ChronicleHash}.
@@ -185,7 +185,7 @@ public interface ChronicleHash<K, E extends HashEntry<K>, SC extends HashSegment
      * <p>
      * After this method call, all methods, querying the {@code ChronicleHash}'s entries, {@link
      * #longSize()} and {@code size()}), throw {@link ChronicleHashClosedException}. {@link #isOpen()} returns {@code false}, {@code close()} itself
-     * returns immediately without effects (i. e. repetitive {@code close()}, even from concurrent threads, are safe).
+     * returns immediately without effects (i.e. repetitive {@code close()}, even from concurrent threads, are safe).
      */
     @Override
     void close();

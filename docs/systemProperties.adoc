@@ -1,0 +1,46 @@
+= Chronicle Map System Properties
+:toc:
+:lang: en-GB
+:source-highlighter: rouge
+
+== System Properties
+
+This document lists system properties that influence Chronicle Map behaviour in production and test runs.
+Set each property on the Java command line using `-Dkey=value`.
+
+NOTE: Unless otherwise stated, boolean properties are parsed via Chronicle Core's `Jvm.getBoolean` helper.
+They are treated as enabled if the key is present with no value, `true` or `yes`.
+
+.System properties
+[cols="2a,1,3a,2a",options="header"]
+|===
+| Property Key
+| Default Value
+| Description
+| Java Variable Name (Type)
+
+| `chronicle.map.creation.debug`
+| `false`
+| Enables verbose logging during Chronicle Map creation and recovery, including map name, file paths and configuration details. Useful when diagnosing startup issues and misconfigured builders.
+| `MAP_CREATION_DEBUG` (`boolean`)
+
+| `chronicle.map.file.lock.timeout.secs`
+| `10`
+| Number of seconds Chronicle Map waits when acquiring an internal file lock before giving up and throwing a lock related exception.
+| `FILE_LOCK_TIMEOUT` (`int`)
+
+| `chronicle.map.sparseFile`
+| `false`
+| When `true`, Chronicle Map uses sparse files for persisted data. This can reduce disk usage on some file systems at the cost of more fragmented allocation patterns.
+| `sparseFile` (`boolean`)
+
+| `chronicle.map.disable.locking`
+| `false`
+| Disables Chronicle Map file locking. When `true`, shared and exclusive locks are not acquired, which may be required on platforms without reliable file locking but removes protection against concurrent writers.
+| `USE_EXCLUSIVE_LOCKING`, `USE_SHARED_LOCKING` (derived `boolean` flags)
+
+| `net.openhft.chronicle.map.lockTimeoutSeconds`
+| `60`
+| Overrides the global timeout, in seconds, used when waiting for segment level locks in multi-process use. If this timeout is exceeded an `InterProcessDeadLockException` is thrown with guidance on possible causes.
+| `LOCK_TIMEOUT_SECONDS` (`int`)
+|===

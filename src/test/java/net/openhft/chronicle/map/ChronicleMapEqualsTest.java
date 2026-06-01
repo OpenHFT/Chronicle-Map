@@ -22,6 +22,6 @@ class ChronicleMapEqualsTest {
         HashMap<String, String> refMap = new HashMap<>();
         refMap.put("a", "b");
         map.putAll(refMap);
-        assertTrue(map.equals(refMap));
+        assertEquals(map, refMap);
     }
 }

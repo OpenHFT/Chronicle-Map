@@ -5,6 +5,8 @@ Neil Clifford
 :css-signature: demo
 :toc-placement: macro
 :icons: font
+:lang: en-GB
+:source-highlighter: rouge
 
 toc::[]
 
@@ -12,7 +14,7 @@ Chronicle Map is an in-memory, key-value store, designed for low-latency, and/or
 
 == Features
 
-- **Ultra low latency**: Chronicle Map targets median latency of both read and write queries of less than 1 microsecond in https://github.com/OpenHFT/Chronicle-Map/search?l=java&q=perf&type=Code[certain tests].
+- **Ultra low latency**: Chronicle Map targets median latency of both read and write queries of less than 1 µs in https://github.com/OpenHFT/Chronicle-Map/search?l=java&q=perf&type=Code[certain tests].
 
 - **High concurrency**: Write queries scale well up to the number of hardware execution threads in the server.
 Read queries never block each other.
@@ -23,7 +25,7 @@ Read queries never block each other.
 
 - Multiple processes can access a Chronicle Map concurrently.
 At the same time, the data store is *in-process* for each of the accessing processes.
-Out-of-process approach to IPC is simply incompatible with Chronicle Map's median latency target of < 1 μs.
+Out-of-process approach to IPC is simply incompatible with Chronicle Map's median latency target of < 1 µs.
 
 - Replication
 
@@ -31,9 +33,9 @@ NOTE: See <<CM_Replication.adoc#,Chronicle Map Replication>> for more informatio
 
 **Chronicle Map** has two meanings:
 
-- https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[language-agnostic data store (specification)].
+- https://github.com/OpenHFT/Chronicle-Map/blob/develop/spec[language-agnostic data store (specification)].
 
-- https://github.com/OpenHFT/Chronicle-Map/blob/master/src[implementation of this data store for the JVM (source)].
+- https://github.com/OpenHFT/Chronicle-Map/blob/develop/src[implementation of this data store for the JVM (source)].
 Currently, this is the only implementation.
 
 === From the Java perspective
@@ -80,7 +82,7 @@ It is split into independent segments; each segment has:
 
 - a lock in shared memory (implemented via CAS loops) for managing concurrent access.
 
-See https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[Chronicle Map data store design overview] for more information.
+See https://github.com/OpenHFT/Chronicle-Map/blob/develop/spec[Chronicle Map data store design overview] for more information.
 
 == Chronicle Map is not
 
@@ -88,7 +90,7 @@ See https://github.com/OpenHFT/Chronicle-Map/blob/master/spec[Chronicle Map data
 There are no secondary indexes.
 - A https://en.wikipedia.org/wiki/Multimap[multimap].
 Using a Chronicle Map collection as a multimap is technically possible, but often leads to problems.
-See http://stackoverflow.com/a/36486525/648955[StackOverflow answer] for details.
+See https://stackoverflow.com/a/36486525/648955[StackOverflow answer] for details.
 Developing a proper multimap, using Chronicle Map's design principles is possible.
 
 Please contact us at mailto:sales@chronicle.software[sales@chronicle.software] if you would consider sponsoring such development.
@@ -129,7 +131,7 @@ NOTE: For access to commercially available features please contact mailto:sales@
 
 - https://github.com/OpenHFT/Chronicle-Map/issues[Issues]
 - https://groups.google.com/forum/#!forum/chronicle-map[Chronicle Map mailing list]
-- http://stackoverflow.com/tags/chronicle-map[Stackoverflow]
+- https://stackoverflow.com/tags/chronicle-map[Stackoverflow]
 
 '''
 

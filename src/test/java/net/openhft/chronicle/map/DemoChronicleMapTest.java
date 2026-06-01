@@ -16,16 +16,16 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 interface DemoOrderVOInterface {
-    public CharSequence getSymbol();
-//    public StringBuilder getUsingSymbol(StringBuilder sb);
+    CharSequence getSymbol();
+    //    public StringBuilder getUsingSymbol(StringBuilder sb);
 
-    public void setSymbol(@MaxUtf8Length(20) CharSequence symbol);
+    void setSymbol(@MaxUtf8Length(20) CharSequence symbol);
 
-    public double addAtomicOrderQty(double toAdd);
+    double addAtomicOrderQty(double toAdd);
 
-    public double getOrderQty();
+    double getOrderQty();
 
-    public void setOrderQty(double orderQty);
+    void setOrderQty(double orderQty);
 
 }
 
@@ -66,7 +66,7 @@ class DemoChronicleMapTest {
                 IntValue k = entry.getKey();
                 DemoOrderVOInterface v = entry.getValue();
 
-//                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
+                //                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
                 assertNotNull(v);
             }
         }
@@ -103,18 +103,18 @@ class DemoChronicleMapTest {
                 }
 
                 // TODO suspicious -- getUsing `value2`, working with `value` then
-//                try (ReadContext rc = map.getUsingLocked(key, value2)) {
-//                    assertTrue(rc.present());
-//                    assertEquals("IBM-" + i, value.getSymbol());
-//                    assertEquals(1000, value.getOrderQty(), 0.0);
-//                }
+                //                try (ReadContext rc = map.getUsingLocked(key, value2)) {
+                //                    assertTrue(rc.present());
+                //                    assertEquals("IBM-" + i, value.getSymbol());
+                //                    assertEquals(1000, value.getOrderQty(), 0.0);
+                //                }
             }
 
             for (Map.Entry<IntValue, DemoOrderVOInterface> entry : map.entrySet()) {
                 IntValue k = entry.getKey();
                 DemoOrderVOInterface v = entry.getValue();
 
-//                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
+                //                System.out.println(String.format("Key %d %s", k.getValue(), v == null ? "<null>" : v.getSymbol()));
                 assertNotNull(v);
             }
         }

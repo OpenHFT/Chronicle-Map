@@ -6,6 +6,9 @@ Neil Clifford
 :toc-placement: macro
 :icons: font
 
+:lang: en-GB
+:source-highlighter: rouge
+
 toc::[]
 
 == Problems
@@ -60,14 +63,14 @@ A call to the `copy()` method, at any point of a serializer instance lifetime, s
 
 As a consequence, the `copy()` method is transitive. `serializer.copy().copy().copy()` should return an object in exactly the same state as after a single `copy()` call.
 
-Chronicle Map implementation recognizes that configured `BytesWriter`, `BytesReader`, `SizedWriter`, `SizedReader`, or `DataAccess` instances implement `StatefulCopyable`, and populates it internally using `copy()` for each thread, Chronicle Map instances and serialized object domain (keys or values).
+Chronicle Map implementation recognises that configured `BytesWriter`, `BytesReader`, `SizedWriter`, `SizedReader`, or `DataAccess` instances implement `StatefulCopyable`, and populates it internally using `copy()` for each thread, Chronicle Map instances and serialized object domain (keys or values).
 
 See examples of implementing this interface in <<CM_Tutorial_Bytes.adoc#custom-charsequence-encoding,custom `CharSequence` encoding>>.
 
 It is permissable to return `this` from the `copy()` method, if the serializer implementation doesn't have a state.
 
 Typically this is the case when the serializer is configured with sub-serializers, which might be `StatefulCopyable`, or not.
-For example, the  https://github.com/OpenHFT/Chronicle-Map/blob/master/src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java[`ListMarshaller`]
+For example, the  https://github.com/OpenHFT/Chronicle-Map/blob/develop/src/main/java/net/openhft/chronicle/hash/serialization/ListMarshaller.java[`ListMarshaller`]
 class.
 
 '''

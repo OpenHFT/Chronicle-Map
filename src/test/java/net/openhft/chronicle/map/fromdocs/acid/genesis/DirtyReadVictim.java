@@ -14,15 +14,15 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class DirtyReadVictim implements Runnable {
-    private int isoLevel = ChronicleAcidIsolation.LOWEST_LATENCY;
     private ChronicleMap chm;
     private StampedLock offHeapLock;
 
     DirtyReadVictim(String isoL) {
+        int isoLevel = ChronicleAcidIsolation.LOWEST_LATENCY;
         if (isoL.equals("DIRTY_READ_INTOLERANT"))
-            this.isoLevel = ChronicleAcidIsolation.DIRTY_READ_INTOLERANT;
+            isoLevel = ChronicleAcidIsolation.DIRTY_READ_INTOLERANT;
         else if (isoL.equals("DIRTY_READ_OPTIMISTIC"))
-            this.isoLevel = ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC;
+            isoLevel = ChronicleAcidIsolation.DIRTY_READ_OPTIMISTIC;
     }
 
     @Override
@@ -30,10 +30,10 @@ public class DirtyReadVictim implements Runnable {
         Scanner sc = new Scanner(System.in);
         try {
 
-/*
-   ben.cotton@rutgers.edu   START
- */
-            Double coupon = 0.00;
+            /*
+               ben.cotton@rutgers.edu   START
+             */
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;
             System.out.println(
@@ -41,7 +41,7 @@ public class DirtyReadVictim implements Runnable {
                             " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"
             );
             while ((stamp = this.offHeapLock.tryOptimisticRead()) == 0) {
-    ; // none
+                // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -109,7 +109,7 @@ public class DirtyReadVictim implements Runnable {
         this.chm = craig;
     }
 
-    public void setStampedLock(StampedLock _sLock) {
-        this.offHeapLock = _sLock;
+    public void setStampedLock(StampedLock stampedLock) {
+        this.offHeapLock = stampedLock;
     }
 }

@@ -30,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class RecoverTest {
 
-    Logger LOG = LoggerFactory.getLogger(RecoverTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RecoverTest.class);
 
     ReplicatedChronicleMap<Integer, Integer, ?> map;
 

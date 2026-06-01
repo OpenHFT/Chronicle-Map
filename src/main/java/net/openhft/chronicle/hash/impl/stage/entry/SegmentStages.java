@@ -389,6 +389,10 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
                         }
                     }
                 }
+                return;
+            default:
+                throw new IllegalStateException(
+                        hh.h().toIdentityString() + ": unexpected localLockState=" + localLockState);
         }
     }
 
@@ -428,7 +432,7 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
                 break;
             prevContext = nextNode;
         }
-        // i. e. structured unlocking
+        // i.e. structured unlocking
         verifyInnermostContext();
         prevContext.setNextNode(null);
     }
@@ -456,6 +460,10 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
                 return;
             case WRITE_LOCKED:
                 segmentHeader.writeUnlock(segmentHeaderAddress);
+                return;
+            default:
+                throw new IllegalStateException(
+                        hh.h().toIdentityString() + ": unexpected localLockState=" + localLockState);
         }
     }
 
@@ -594,17 +602,18 @@ public abstract class SegmentStages implements SegmentLock, LocksInterface {
         VanillaChronicleHash<?, ?, ?, ?> h = hh.h();
         long nextTierIndex = nextTierIndex();
         if (nextTierIndex == 0) {
-            Jvm.debug().on(getClass(), "Allocate tier for segment #  " + segmentIndex + " tier " +( tier + 1));
+            Jvm.debug().on(getClass(),
+                    "Allocate tier for segment #  " + segmentIndex + " tier " + (tier + 1));
             nextTierIndex = h.allocateTier();
             nextTierIndex(nextTierIndex);
-            long prevTierIndex = tierIndex;
+            final long previousTierIndex = tierIndex;
 
             initSegmentTier(tier + 1, nextTierIndex);
 
             TierCountersArea.segmentIndex(tierCountersAreaAddr(), segmentIndex);
             TierCountersArea.tier(tierCountersAreaAddr(), tier);
             nextTierIndex(0);
-            prevTierIndex(prevTierIndex);
+            prevTierIndex(previousTierIndex);
         } else {
             initSegmentTier(tier + 1, nextTierIndex);
         }

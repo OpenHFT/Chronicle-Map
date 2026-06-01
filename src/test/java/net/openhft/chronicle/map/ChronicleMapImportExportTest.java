@@ -14,8 +14,8 @@ import net.openhft.chronicle.values.Values;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -180,7 +180,7 @@ class ChronicleMapImportExportTest {
         final XStream xstream = new XStream(new JettisonMappedXmlDriver());
         xstream.setMode(XStream.NO_REFERENCES);
 
-        xstream.toXML(map, new FileOutputStream(file));
+        xstream.toXML(map, Files.newOutputStream(file.toPath()));
 
         try (ChronicleMap<Integer, String> expected = ChronicleMapBuilder
                 .of(Integer.class, String.class)
@@ -232,7 +232,7 @@ class ChronicleMapImportExportTest {
                 assertEquals(expected, actual);
             }
         } finally {
-            // file.delete();
+            file.delete();
         }
     }
 

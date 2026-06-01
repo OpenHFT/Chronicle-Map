@@ -1,0 +1,55 @@
+= Chronicle Map Decision Log
+:toc:
+:sectnums:
+:lang: en-GB
+:source-highlighter: rouge
+
+This file captures component-specific architectural and operational decisions for Chronicle Map.
+Identifiers follow the `<Scope>-<Tag>-NNN` pattern with scope `MAP` (Chronicle Map) and Nine-Box tags where practical.
+
+== Decision Index
+
+* link:#MAP-FN-101[MAP-FN-101 Off-heap Segmented Hash Map Design]
+* link:#MAP-NF-O-201[MAP-NF-O-201 Sizing and Capacity Configuration Via Builder]
+
+[[MAP-FN-101]]
+== MAP-FN-101 Off-heap Segmented Hash Map Design
+
+Date:: 2025-11-18
+Context::
+* Chronicle Map must support very large maps that may not fit in on-heap memory.
+* Many users require persistence and inter-process sharing via memory-mapped files.
+Decision Statement::
+* Chronicle Map uses an off-heap segmented hash map design backed by memory-mapped files, allowing entries to be stored outside the Java heap while remaining addressable via the `ChronicleMap` API.
+Alternatives Considered::
+* Pure on-heap `ConcurrentHashMap`-style implementation – simple but unable to scale to tens of gigabytes of data or share state between processes.
+* Flat file or database-backed key–value store – would introduce higher latency and require different APIs from existing Chronicle components.
+Rationale for Decision::
+* Off-heap segments and memory-mapped backing allow large maps with predictable latency while retaining a familiar Java API.
+* The design aligns with Chronicle's focus on low-latency, garbage-lean data structures.
+Impact & Consequences::
+* Users must size maps explicitly and consider off-heap memory and file-system limits.
+* Requirements such as `MAP-FN-001` and `MAP-FN-002` and the sizing guidance in `project-requirements.adoc` follow from this design.
+Notes/Links::
+* link:project-requirements.adoc[Project Requirements]
+
+[[MAP-NF-O-201]]
+== MAP-NF-O-201 Sizing and Capacity Configuration Via Builder
+
+Date:: 2025-11-18
+Context::
+* Incorrect sizing of Chronicle Map (for example too few entries or segments) can lead to performance degradation or capacity errors in production.
+* Operators need a clear and supported way to configure sizing without relying on defaults.
+Decision Statement::
+* Chronicle Map exposes sizing and capacity configuration via the fluent `ChronicleMapBuilder`, including expected entry count and average key/value sizes; operators are expected to use these builder settings rather than relying on implicit defaults.
+Alternatives Considered::
+* Hidden heuristics that infer sizing from early usage – convenient but unpredictable and difficult to document.
+* Hard-coded sizes – simple but unsuitable for the range of map sizes and workloads Chronicle Map targets.
+Rationale for Decision::
+* Builder-based sizing makes sizing decisions explicit in code and documentation.
+* It enables operational guidance and testing (for example `EntryCountMapTest`, `AutoResizeTest`, `KeySegmentDistributionTest`) to focus on a small set of well-defined parameters.
+Impact & Consequences::
+* Application code and tutorials must show correct builder usage.
+* Operational run-books and examples in `docs/CM_Tutorial_*.adoc` can give concrete sizing recipes.
+Notes/Links::
+* link:project-requirements.adoc[Project Requirements]

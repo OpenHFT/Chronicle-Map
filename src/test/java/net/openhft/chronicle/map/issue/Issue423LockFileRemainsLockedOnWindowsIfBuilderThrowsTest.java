@@ -33,7 +33,7 @@ class Issue423LockFileRemainsLockedOnWindowsIfBuilderThrowsTest {
         }
 
         try (RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file.getCanonicalFile());
-             FileChannel fileChannel = raf.getChannel();) {
+             FileChannel fileChannel = raf.getChannel()) {
 
             try (FileLock lock = fileChannel.tryLock()) {
                 // Make sure we can lock (hence the file was not previously locked)

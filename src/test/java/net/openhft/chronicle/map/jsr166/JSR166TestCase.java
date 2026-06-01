@@ -9,10 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.security.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -25,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Base class for JSR166 Junit TCK tests.  Defines some constants,
  * utility methods and classes, as well as a simple framework for
- * helping to make sure that assertions Assert.failing in generated threads
+ * helping to make sure that assertions failing in generated threads
  * cause the associated test that generated them to itself fail (which
  * JUnit does not otherwise arrange).  The rules for creating such
  * tests are:
@@ -40,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <li> If you override {@link #setUp} or {@link #tearDown}, make sure
  * to invoke {@code super.setUp} and {@code super.tearDown} within
  * them. These methods are used to clear and check for thread
- * assertion Assert.failures.</li>
+ * assertion failures.</li>
  * <li>All delays and timeouts must use one of the constants {@code
  * SHORT_DELAY_MS}, {@code SMALL_DELAY_MS}, {@code MEDIUM_DELAY_MS},
  * {@code LONG_DELAY_MS}. The idea here is that a SHORT is always
@@ -90,23 +86,23 @@ public class JSR166TestCase {
      * The number of elements to place in collections, arrays, etc.
      */
     public static final int SIZE = 20;
-    public static final Integer zero = new Integer(0);
-    public static final Integer one = new Integer(1);
-    public static final Integer two = new Integer(2);
-    public static final Integer three = new Integer(3);
-    public static final Integer four = new Integer(4);
-    public static final Integer five = new Integer(5);
-    public static final Integer six = new Integer(6);
-    public static final Integer seven = new Integer(7);
-    public static final Integer eight = new Integer(8);
-    public static final Integer nine = new Integer(9);
-    public static final Integer m1 = new Integer(-1);
-    public static final Integer m2 = new Integer(-2);
-    public static final Integer m3 = new Integer(-3);
-    public static final Integer m4 = new Integer(-4);
-    public static final Integer m5 = new Integer(-5);
-    public static final Integer m6 = new Integer(-6);
-    public static final Integer m10 = new Integer(-10);
+    public static final Integer zero = 0;
+    public static final Integer one = 1;
+    public static final Integer two = 2;
+    public static final Integer three = 3;
+    public static final Integer four = 4;
+    public static final Integer five = 5;
+    public static final Integer six = 6;
+    public static final Integer seven = 7;
+    public static final Integer eight = 8;
+    public static final Integer nine = 9;
+    public static final Integer m1 = -1;
+    public static final Integer m2 = -2;
+    public static final Integer m3 = -3;
+    public static final Integer m4 = -4;
+    public static final Integer m5 = -5;
+    public static final Integer m6 = -6;
+    public static final Integer m10 = -10;
     public static final Integer notPresent = 42;
     public static final String TEST_STRING = "a test string";
     protected static final boolean expensiveTests = false;
@@ -115,7 +111,7 @@ public class JSR166TestCase {
     public static long MEDIUM_DELAY_MS;
     public static long LONG_DELAY_MS;
     /**
-     * The first exception encountered if any threadAssertXXX method Assert.fails.
+     * The first exception encountered if any threadAssertXXX method fails.
      */
     private final AtomicReference<Throwable> threadFailure
             = new AtomicReference<Throwable>(null);
@@ -125,7 +121,7 @@ public class JSR166TestCase {
      * if the sleep is shorter than specified, may re-sleep or yield
      * until time elapses.
      */
-    static void delay(long millis) throws InterruptedException {
+    static void delay(long millis) {
         long startTime = System.nanoTime();
         long ns = millis * 1000 * 1000;
         for (; ; ) {
@@ -145,9 +141,9 @@ public class JSR166TestCase {
      * Returns a policy containing all the permissions we ever need.
      */
     public static Policy permissivePolicy() {
-        return new AdjustablePolicy
+        return new AdjustablePolicy(
                 // Permissions j.u.c. needs directly
-                (new RuntimePermission("modifyThread"),
+                new RuntimePermission("modifyThread"),
                         new RuntimePermission("getClassLoader"),
                         new RuntimePermission("setContextClassLoader"),
                         // Permissions needed to change permissions!
@@ -169,11 +165,8 @@ public class JSR166TestCase {
             }
 
             public void run() {
-                try {
-                    delay(timeoutMillis);
-                    done = true;
-                } catch (InterruptedException ok) {
-                }
+                delay(timeoutMillis);
+                done = true;
             }
         };
     }
@@ -214,8 +207,8 @@ public class JSR166TestCase {
 
     /**
      * Records an exception so that it can be rethrown later in the test
-     * harness thread, triggering a test case Assert.failure.  Only the first
-     * Assert.failure is recorded; subsequent calls to this method from within
+     * harness thread, triggering a test case failure.  Only the first
+     * failure is recorded; subsequent calls to this method from within
      * the same test have no effect.
      */
     public void threadRecordFailure(Throwable t) {
@@ -232,11 +225,11 @@ public class JSR166TestCase {
     /**
      * Extra checks that get done for all test cases.
      * <p>
-     * Triggers test case Assert.failure if any thread assertions have Assert.failed,
+     * Triggers test case failure if any thread assertions have failed,
      * by rethrowing, in the test harness thread, any exception recorded
      * earlier by threadRecordFailure.
      * <p>
-     * Triggers test case Assert.failure if interrupt status is set in the main thread.
+     * Triggers test case failure if interrupt status is set in the main thread.
      */
     @AfterEach
     void tearDown() throws InterruptedException {
@@ -278,9 +271,7 @@ public class JSR166TestCase {
                 thread.join(LONG_DELAY_MS);
                 if (!thread.isAlive()) continue;
                 thread.stop();
-                throw new AssertionFailedError
-                        (String.format("Found leaked ForkJoinPool thread test=%s thread=%s%n",
-                                toString(), name));
+                throw new AssertionFailedError(String.format("Found leaked ForkJoinPool thread test=%s thread=%s%n", this, name));
             }
         }
     }
@@ -420,7 +411,7 @@ public class JSR166TestCase {
     }
 
     /**
-     * Waits out termination of a thread pool or Assert.fails doing so.
+     * Waits out termination of a thread pool or fails doing so.
      */
     protected void joinPool(ExecutorService exec) {
         try {
@@ -445,13 +436,9 @@ public class JSR166TestCase {
      * Checks that thread does not terminate within the given millisecond delay.
      */
     void assertThreadStaysAlive(Thread thread, long millis) {
-        try {
-            // No need to optimize the Assert.failing case via Thread.join.
-            delay(millis);
-            assertTrue(thread.isAlive());
-        } catch (InterruptedException ie) {
-            fail("Unexpected InterruptedException");
-        }
+        // No need to optimize the failing case via Thread.join.
+        delay(millis);
+        assertTrue(thread.isAlive());
     }
 
     /**
@@ -466,14 +453,10 @@ public class JSR166TestCase {
      * Checks that the threads do not terminate within the given millisecond delay.
      */
     void assertThreadsStayAlive(long millis, Thread... threads) {
-        try {
-            // No need to optimize the Assert.failing case via Thread.join.
-            delay(millis);
-            for (Thread thread : threads)
-                assertTrue(thread.isAlive());
-        } catch (InterruptedException ie) {
-            fail("Unexpected InterruptedException");
-        }
+        // No need to optimize the failing case via Thread.join.
+        delay(millis);
+        for (Thread thread : threads)
+            assertTrue(thread.isAlive());
     }
 
     /**
@@ -491,8 +474,9 @@ public class JSR166TestCase {
         long startTime = System.nanoTime();
         try {
             future.get(timeoutMillis, MILLISECONDS);
-            shouldThrow();
+            failExpectedException();
         } catch (TimeoutException success) {
+            assertNotNull(success);
         } catch (Exception e) {
             threadUnexpectedException(e);
         } finally {
@@ -504,17 +488,9 @@ public class JSR166TestCase {
     /**
      * Fails with message "should throw exception".
      */
-    public void shouldThrow() {
+    public void failExpectedException() {
         fail("Should throw exception");
     }
-
-    /**
-     * Fails with message "should throw " + exceptionName.
-     */
-    public void shouldThrow(String exceptionName) {
-        fail("Should throw " + exceptionName);
-    }
-
     /**
      * android-changed
      * Android does not use a SecurityManager. This will simply execute
@@ -522,38 +498,6 @@ public class JSR166TestCase {
      */
     public void runWithPermissions(Runnable r, Permission... permissions) {
         r.run();
-    }
-
-    /**
-     * android-changed
-     * Android does not use a SecurityManager. This will simply execute
-     * the runnable ignoring permissions.
-     */
-    public void runWithSecurityManagerWithPermissions(Runnable r,
-                                                      Permission... permissions) {
-        r.run();
-    }
-
-    /**
-     * Runs a runnable without any permissions.
-     */
-    public void runWithoutPermissions(Runnable r) {
-        runWithPermissions(r);
-    }
-
-    /**
-     * Sleeps until the given time has elapsed.
-     * Throws AssertionFailedError if interrupted.
-     */
-    void sleep(long millis) {
-        try {
-            delay(millis);
-        } catch (InterruptedException ie) {
-            AssertionFailedError afe =
-                    new AssertionFailedError("Unexpected InterruptedException");
-            afe.initCause(ie);
-            throw afe;
-        }
     }
 
     /**
@@ -579,14 +523,6 @@ public class JSR166TestCase {
     }
 
     /**
-     * Waits up to LONG_DELAY_MS for the given thread to enter a wait
-     * state: BLOCKED, WAITING, or TIMED_WAITING.
-     */
-    void waitForThreadToEnterWaitState(Thread thread) {
-        waitForThreadToEnterWaitState(thread, LONG_DELAY_MS);
-    }
-
-    /**
      * Returns the number of milliseconds since time given by
      * startNanoTime, which must have been previously returned from a
      * call to.
@@ -595,180 +531,7 @@ public class JSR166TestCase {
         return NANOSECONDS.toMillis(System.nanoTime() - startNanoTime);
     }
 
-    /**
-     * Returns a new started daemon Thread running the given runnable.
-     */
-    protected Thread newStartedThread(Runnable runnable) {
-        Thread t = new Thread(runnable);
-        t.setDaemon(true);
-        t.start();
-        return t;
-    }
-
-    /**
-     * Waits for the specified time (in milliseconds) for the thread
-     * to terminate (using {@link Thread#join(long)}), else interrupts
-     * the thread (in the hope that it may terminate later) and Assert.fails.
-     */
-    protected void awaitTermination(Thread t, long timeoutMillis) {
-        try {
-            t.join(timeoutMillis);
-        } catch (InterruptedException ie) {
-            threadUnexpectedException(ie);
-        } finally {
-            if (t.getState() != Thread.State.TERMINATED) {
-                t.interrupt();
-                fail("Test timed out");
-            }
-        }
-    }
-
     // Some convenient Runnable classes
-
-    /**
-     * Waits for LONG_DELAY_MS milliseconds for the thread to
-     * terminate (using {@link Thread#join(long)}), else interrupts
-     * the thread (in the hope that it may terminate later) and Assert.fails.
-     */
-    protected void awaitTermination(Thread t) {
-        awaitTermination(t, LONG_DELAY_MS);
-    }
-
-    public Callable<String> latchAwaitingStringTask(final CountDownLatch latch) {
-        return new CheckedCallable<String>() {
-            protected String realCall() {
-                try {
-                    latch.await();
-                } catch (InterruptedException quittingTime) {
-                }
-                return TEST_STRING;
-            }
-        };
-    }
-
-    public Runnable awaiter(final CountDownLatch latch) {
-        return new CheckedRunnable() {
-            public void realRun() throws InterruptedException {
-                await(latch);
-            }
-        };
-    }
-
-    public void await(CountDownLatch latch) {
-        try {
-            assertTrue(latch.await(LONG_DELAY_MS, MILLISECONDS));
-        } catch (Throwable t) {
-            threadUnexpectedException(t);
-        }
-    }
-
-    public void await(Semaphore semaphore) {
-        try {
-            assertTrue(semaphore.tryAcquire(LONG_DELAY_MS, MILLISECONDS));
-        } catch (Throwable t) {
-            threadUnexpectedException(t);
-        }
-    }
-
-    public Runnable possiblyInterruptedRunnable(final long timeoutMillis) {
-        return new CheckedRunnable() {
-            protected void realRun() {
-                try {
-                    delay(timeoutMillis);
-                } catch (InterruptedException ok) {
-                }
-            }
-        };
-    }
-
-    protected void checkEmpty(BlockingQueue q) {
-        try {
-            assertTrue(q.isEmpty());
-            assertEquals(0, q.size());
-            assertNull(q.peek());
-            assertNull(q.poll());
-            assertNull(q.poll(0, MILLISECONDS));
-            assertEquals(q.toString(), "[]");
-            assertTrue(Arrays.equals(q.toArray(), new Object[0]));
-            assertFalse(q.iterator().hasNext());
-            try {
-                q.element();
-                shouldThrow();
-            } catch (NoSuchElementException success) {
-            }
-            try {
-                q.iterator().next();
-                shouldThrow();
-            } catch (NoSuchElementException success) {
-            }
-            try {
-                q.remove();
-                shouldThrow();
-            } catch (NoSuchElementException success) {
-            }
-        } catch (InterruptedException ie) {
-            threadUnexpectedException(ie);
-        }
-    }
-
-    void assertSerialEquals(Object x, Object y) {
-        assertTrue(Arrays.equals(serialBytes(x), serialBytes(y)));
-    }
-
-    void assertNotSerialEquals(Object x, Object y) {
-        assertFalse(Arrays.equals(serialBytes(x), serialBytes(y)));
-    }
-
-    byte[] serialBytes(Object o) {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(o);
-            oos.flush();
-            oos.close();
-            return bos.toByteArray();
-        } catch (Throwable t) {
-            threadUnexpectedException(t);
-            return new byte[0];
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected <T> T serialClone(T o) {
-        try {
-            ObjectInputStream ois = new ObjectInputStream
-                    (new ByteArrayInputStream(serialBytes(o)));
-            T clone = (T) ois.readObject();
-            assertSame(o.getClass(), clone.getClass());
-            return clone;
-        } catch (Throwable t) {
-            threadUnexpectedException(t);
-            return null;
-        }
-    }
-
-    public void assertThrows(Class<? extends Throwable> expectedExceptionClass,
-                             Runnable... throwingActions) {
-        for (Runnable throwingAction : throwingActions) {
-            boolean threw = false;
-            try {
-                throwingAction.run();
-            } catch (Throwable t) {
-                threw = true;
-                if (!expectedExceptionClass.isInstance(t)) {
-                    AssertionFailedError afe =
-                            new AssertionFailedError
-                                    ("Expected " + expectedExceptionClass.getName() +
-                                            ", got " + t.getClass().getName());
-                    afe.initCause(t);
-                    threadUnexpectedException(afe);
-                }
-            }
-            if (!threw)
-                shouldThrow(expectedExceptionClass.getName());
-        }
-    }
-
     public interface TrackedRunnable extends Runnable {
         boolean isDone();
     }
@@ -816,356 +579,4 @@ public class JSR166TestCase {
         }
     }
 
-//     /**
-//      * Spin-waits up to LONG_DELAY_MS until flag becomes true.
-//      */
-//     public void await(AtomicBoolean flag) {
-//         await(flag, LONG_DELAY_MS);
-//     }
-
-//     /**
-//      * Spin-waits up to the specified timeout until flag becomes true.
-//      */
-//     public void await(AtomicBoolean flag, long timeoutMillis) {
-//         long startTime = System.nanoTime();
-//         while (!flag.get()) {
-//             if (millisElapsedSince(startTime) > timeoutMillis)
-//                 throw new AssertionFailedError("timed out");
-//             Thread.yield();
-//         }
-//     }
-
-    static class NoOpRunnable implements Runnable {
-        public void run() {
-        }
-    }
-
-    static class NoOpCallable implements Callable {
-        public Object call() {
-            return Boolean.TRUE;
-        }
-    }
-
-    static class StringTask implements Callable<String> {
-        public String call() {
-            return TEST_STRING;
-        }
-    }
-
-    static class NPETask implements Callable<String> {
-        public String call() {
-            throw new NullPointerException();
-        }
-    }
-
-    static class CallableOne implements Callable<Integer> {
-        public Integer call() {
-            return one;
-        }
-    }
-
-    /**
-     * For use as ThreadFactory in constructors
-     */
-    static class SimpleThreadFactory implements ThreadFactory {
-        public Thread newThread(@NotNull Runnable r) {
-            return new Thread(r);
-        }
-    }
-
-    static class TrackedShortRunnable implements Runnable {
-        public volatile boolean done = false;
-
-        public void run() {
-            try {
-                delay(SHORT_DELAY_MS);
-                done = true;
-            } catch (InterruptedException ok) {
-            }
-        }
-    }
-
-    static class TrackedSmallRunnable implements Runnable {
-        public volatile boolean done = false;
-
-        public void run() {
-            try {
-                delay(SMALL_DELAY_MS);
-                done = true;
-            } catch (InterruptedException ok) {
-            }
-        }
-    }
-
-    static class TrackedMediumRunnable implements Runnable {
-        public volatile boolean done = false;
-
-        public void run() {
-            try {
-                delay(MEDIUM_DELAY_MS);
-                done = true;
-            } catch (InterruptedException ok) {
-            }
-        }
-    }
-
-    static class TrackedLongRunnable implements Runnable {
-        public volatile boolean done = false;
-
-        public void run() {
-            try {
-                delay(LONG_DELAY_MS);
-                done = true;
-            } catch (InterruptedException ok) {
-            }
-        }
-    }
-
-    static class TrackedNoOpRunnable implements Runnable {
-        public volatile boolean done = false;
-
-        public void run() {
-            done = true;
-        }
-    }
-
-    static class TrackedCallable implements Callable {
-        public volatile boolean done = false;
-
-        public Object call() {
-            try {
-                delay(SMALL_DELAY_MS);
-                done = true;
-            } catch (InterruptedException ok) {
-            }
-            return Boolean.TRUE;
-        }
-    }
-
-    /**
-     * For use as RejectedExecutionHandler in constructors
-     */
-    static class NoOpREHandler implements RejectedExecutionHandler {
-        public void rejectedExecution(Runnable r,
-                                      ThreadPoolExecutor executor) {
-        }
-    }
-
-    abstract class CheckedRunnable implements Runnable {
-        protected abstract void realRun() throws Throwable;
-
-        public final void run() {
-            try {
-                realRun();
-            } catch (Throwable t) {
-                threadUnexpectedException(t);
-            }
-        }
-    }
-
-    abstract class RunnableShouldThrow implements Runnable {
-        final Class<?> exceptionClass;
-
-        <T extends Throwable> RunnableShouldThrow(Class<T> exceptionClass) {
-            this.exceptionClass = exceptionClass;
-        }
-
-        protected abstract void realRun() throws Throwable;
-
-        public final void run() {
-            try {
-                realRun();
-                threadShouldThrow(exceptionClass.getSimpleName());
-            } catch (Throwable t) {
-                if (!exceptionClass.isInstance(t))
-                    threadUnexpectedException(t);
-            }
-        }
-    }
-
-    abstract class ThreadShouldThrow extends Thread {
-        final Class<?> exceptionClass;
-
-        <T extends Throwable> ThreadShouldThrow(Class<T> exceptionClass) {
-            this.exceptionClass = exceptionClass;
-        }
-
-        protected abstract void realRun() throws Throwable;
-
-        public final void run() {
-            try {
-                realRun();
-                threadShouldThrow(exceptionClass.getSimpleName());
-            } catch (Throwable t) {
-                if (!exceptionClass.isInstance(t))
-                    threadUnexpectedException(t);
-            }
-        }
-    }
-
-    abstract class CheckedInterruptedRunnable implements Runnable {
-        protected abstract void realRun() throws Throwable;
-
-        public final void run() {
-            try {
-                realRun();
-                threadShouldThrow("InterruptedException");
-            } catch (InterruptedException success) {
-                threadAssertFalse(Thread.interrupted());
-            } catch (Throwable t) {
-                threadUnexpectedException(t);
-            }
-        }
-    }
-
-    abstract class CheckedCallable<T> implements Callable<T> {
-        protected abstract T realCall() throws Throwable;
-
-        public final T call() {
-            try {
-                return realCall();
-            } catch (Throwable t) {
-                threadUnexpectedException(t);
-                return null;
-            }
-        }
-    }
-
-    abstract class CheckedInterruptedCallable<T>
-            implements Callable<T> {
-        protected abstract T realCall() throws Throwable;
-
-        public final T call() {
-            try {
-                T result = realCall();
-                threadShouldThrow("InterruptedException");
-                return result;
-            } catch (InterruptedException success) {
-                threadAssertFalse(Thread.interrupted());
-            } catch (Throwable t) {
-                threadUnexpectedException(t);
-            }
-            return null;
-        }
-    }
-
-    class ShortRunnable extends CheckedRunnable {
-        protected void realRun() throws Throwable {
-            delay(SHORT_DELAY_MS);
-        }
-    }
-
-    class ShortInterruptedRunnable extends CheckedInterruptedRunnable {
-        protected void realRun() throws InterruptedException {
-            delay(SHORT_DELAY_MS);
-        }
-    }
-
-    class SmallRunnable extends CheckedRunnable {
-        protected void realRun() throws Throwable {
-            delay(SMALL_DELAY_MS);
-        }
-    }
-
-    class SmallPossiblyInterruptedRunnable extends CheckedRunnable {
-        protected void realRun() {
-            try {
-                delay(SMALL_DELAY_MS);
-            } catch (InterruptedException ok) {
-            }
-        }
-    }
-
-    class SmallCallable extends CheckedCallable {
-        protected Object realCall() throws InterruptedException {
-            delay(SMALL_DELAY_MS);
-            return Boolean.TRUE;
-        }
-    }
-
-    class MediumRunnable extends CheckedRunnable {
-        protected void realRun() throws Throwable {
-            delay(MEDIUM_DELAY_MS);
-        }
-    }
-
-    class MediumInterruptedRunnable extends CheckedInterruptedRunnable {
-        protected void realRun() throws InterruptedException {
-            delay(MEDIUM_DELAY_MS);
-        }
-    }
-
-    class MediumPossiblyInterruptedRunnable extends CheckedRunnable {
-        protected void realRun() {
-            try {
-                delay(MEDIUM_DELAY_MS);
-            } catch (InterruptedException ok) {
-            }
-        }
-    }
-
-    class LongPossiblyInterruptedRunnable extends CheckedRunnable {
-        protected void realRun() {
-            try {
-                delay(LONG_DELAY_MS);
-            } catch (InterruptedException ok) {
-            }
-        }
-    }
-
-    /**
-     * Analog of CheckedRunnable for RecursiveAction
-     */
-    abstract class CheckedRecursiveAction extends RecursiveAction {
-        protected abstract void realCompute() throws Throwable;
-
-        @Override
-        protected final void compute() {
-            try {
-                realCompute();
-            } catch (Throwable t) {
-                threadUnexpectedException(t);
-            }
-        }
-    }
-
-    /**
-     * Analog of CheckedCallable for RecursiveTask
-     */
-    abstract class CheckedRecursiveTask<T> extends RecursiveTask<T> {
-        protected abstract T realCompute() throws Throwable;
-
-        @Override
-        protected final T compute() {
-            try {
-                return realCompute();
-            } catch (Throwable t) {
-                threadUnexpectedException(t);
-                return null;
-            }
-        }
-    }
-
-    /**
-     * A CyclicBarrier that uses timed await and Assert.fails with
-     * AssertionFailedErrors instead of throwing checked exceptions.
-     */
-    class CheckedBarrier extends CyclicBarrier {
-        public CheckedBarrier(int parties) {
-            super(parties);
-        }
-
-        public int await() {
-            try {
-                return super.await(2 * LONG_DELAY_MS, MILLISECONDS);
-            } catch (TimeoutException e) {
-                throw new AssertionFailedError("timed out");
-            } catch (Exception e) {
-                AssertionFailedError afe =
-                        new AssertionFailedError("Unexpected exception: " + e);
-                afe.initCause(e);
-                throw afe;
-            }
-        }
-    }
 }

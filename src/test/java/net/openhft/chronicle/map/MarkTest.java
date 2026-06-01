@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Timeout;
 
 class MarkTest {
 
-    static int ENTRIES = 25_000_000;
+    static final int ENTRIES = 25_000_000;
 
     private static void test(
             Function<ChronicleMapBuilder<Integer, Integer>, ChronicleMap<Integer, Integer>>

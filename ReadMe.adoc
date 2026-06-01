@@ -3,9 +3,10 @@ Chronicle Software
 :css-signature: demo
 :toc: macro
 :toclevels: 2
-:icons: font
+:lang: en-GB
+:source-highlighter: rouge
 
-image:https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map/badge.svg[caption="",link=https://maven-badges.herokuapp.com/maven-central/net.openhft/chronicle-map]
+image:https://img.shields.io/maven-central/v/net.openhft/chronicle-map.svg[caption="",link=https://central.sonatype.com/artifact/net.openhft/chronicle-map]
 image:https://javadoc.io/badge2/net.openhft/chronicle-map/javadoc.svg[link="https://www.javadoc.io/doc/net.openhft/chronicle-map/latest/index.html"]
 //image:https://javadoc-badge.appspot.com/net.openhft/chronicle-map.svg?label=javadoc[JavaDoc, link=https://www.javadoc.io/doc/net.openhft/chronicle-map]
 image:https://img.shields.io/github/license/OpenHFT/Chronicle-Map[GitHub]
@@ -30,26 +31,26 @@ image::docs/images/Image1_.png[750,650]
 
 Chronicle Map is used in production around the world for:
 
-• **real-time trading systems**.
+* **real-time trading systems**.
 Chronicle Map provides in-memory access speeds, and supports ultra-low garbage collection.
 Chronicle Map can support the most demanding of applications.
-• **highly concurrent systems**.
+* **highly concurrent systems**.
 Chronicle Map supports multiple readers and writers, distributed across multiple machines.
 
 === Why use Chronicle Map?
 
 Chronicle Map is:
 
-• **fast**.
+* **fast**.
 Millions of operations per second, with low and stable microsecond latencies for reads and writes.
 Write queries scale well up to the number of hardware execution threads in the server.
 Read queries never block each other.
-• **reliable**.
-Chronicle Software have a “chaos monkey” test which verifies Chronicle Map multi-master replication in the face of node and network failures.
+* **reliable**.
+Chronicle Software have a "chaos monkey" test which verifies Chronicle Map multi-master replication in the face of node and network failures.
 The map can optionally be persisted to disk.
-• **in production** at banks and hedge funds, globally.
-• **built using lessons learnt** from real-world experience solving real-world problems.
-• **open source** (standard version), and in use at hundreds of sites around the world.
+* **in production** at banks and hedge funds, globally.
+* **built using lessons learnt** from real-world experience solving real-world problems.
+* **open source** (standard version), and in use at hundreds of sites around the world.
 
 === Our offering
 

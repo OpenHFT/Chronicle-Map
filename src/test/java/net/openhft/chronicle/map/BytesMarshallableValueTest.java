@@ -23,9 +23,9 @@ class BytesMarshallableValueTest {
         }
     }
 
-    static class Value implements BytesMarshallable {
-        int x;
-        String foo;
+    public static class Value implements BytesMarshallable {
+        final int x;
+        final String foo;
 
         public Value(int x, String foo) {
             this.x = x;

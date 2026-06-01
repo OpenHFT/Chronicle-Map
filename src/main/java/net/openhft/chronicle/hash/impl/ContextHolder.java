@@ -9,7 +9,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
  * A simple wrapper of {@link ChainingInterface}, the ChainingInterface field could be set to null.
  * <h2>Motivation</h2>
  * <p>{@link net.openhft.chronicle.map.ChronicleMap}'s context objects are huge and reference their
- * own instances of key and value marshallers, which usually have buffers for serialization (e. g.
+ * own instances of key and value marshallers, which usually have buffers for serialization (e.g.
  * see {@link net.openhft.chronicle.hash.serialization.impl.SerializableDataAccess}). The contexts
  * are stored in {@link ThreadLocal}s, which are <i>instance</i> fields of ChronicleMap objects
  * (see {@link net.openhft.chronicle.map.VanillaChronicleMap#cxt}). We want the context objects to

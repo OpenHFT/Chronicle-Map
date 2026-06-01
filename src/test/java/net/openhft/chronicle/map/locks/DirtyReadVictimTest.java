@@ -35,7 +35,7 @@ class DirtyReadVictimTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp;
             System.out.println(
@@ -47,6 +47,7 @@ class DirtyReadVictimTest {
                             "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
+                Thread.yield();
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -75,8 +76,8 @@ class DirtyReadVictimTest {
                 Thread.sleep(20_000);
 
             } finally {
-                boolean r;
-                if ((r = offHeapLock.validate(stamp))) {
+                boolean r = offHeapLock.validate(stamp);
+                if (r) {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
                                     " DirtyReadVictim OPTIMISTICALLY_READ coupon=" +
@@ -125,7 +126,7 @@ class DirtyReadVictimTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;
             System.out.println(
@@ -137,6 +138,7 @@ class DirtyReadVictimTest {
                             + "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
+                Thread.yield();
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +

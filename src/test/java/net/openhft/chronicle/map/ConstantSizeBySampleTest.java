@@ -48,7 +48,7 @@ class ConstantSizeBySampleTest {
 
             value[42] = 1;
             map.put(1L, value);
-            assertTrue(Arrays.equals(map.get(1L), value));
+            assertArrayEquals(map.get(1L), value);
         }
     }
 
@@ -108,13 +108,13 @@ class ConstantSizeBySampleTest {
         }
 
         @Override
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+        public void readExternal(ObjectInput in) throws IOException {
             in.read(data = new byte[512 * 1024]);
         }
     }
 
     static final class SerializableData implements Serializable {
-        byte[] data = new byte[512 * 1024];
+        final byte[] data = new byte[512 * 1024];
 
         @Override
         public boolean equals(Object obj) {

@@ -29,13 +29,13 @@ class PointListSerializationTest {
                 .averageKeySize(4)
                 .averageValueSize(1000)
                 .create()) {
-            A obj_A = new A();
-            obj_A.str_ = "a";
-            obj_A.list_ = new ArrayList<>();
+            A objectA = new A();
+            objectA.value = "a";
+            objectA.items = new ArrayList<>();
             B b = new B();
-            b.str_ = "b";
-            obj_A.list_.add(b);
-            map.put("KEY1", obj_A);
+            b.text = "b";
+            objectA.items.add(b);
+            map.put("KEY1", objectA);
             map.get("KEY1");
         }
     }
@@ -49,12 +49,12 @@ class PointListSerializationTest {
 
         @Override
         public void write(Bytes<?> out, @NotNull A toWrite) {
-            out.writeUtf8(toWrite.str_);
-            if (toWrite.list_ != null) {
-                int size = toWrite.list_.size();
+            out.writeUtf8(toWrite.value);
+            if (toWrite.items != null) {
+                int size = toWrite.items.size();
                 out.writeStopBit(size);
                 for (int i = 0; i < size; i++) {
-                    toWrite.list_.get(i).writeMarshallable(out);
+                    toWrite.items.get(i).writeMarshallable(out);
                 }
             } else {
                 out.writeStopBit(-1);
@@ -66,24 +66,24 @@ class PointListSerializationTest {
         public A read(Bytes<?> in, A using) {
             if (using == null)
                 using = new A();
-            using.str_ = in.readUtf8();
+            using.value = in.readUtf8();
             int size = (int) in.readStopBit();
             if (size >= 0) {
-                if (using.list_ == null) {
-                    using.list_ = new ArrayList<>(size);
+                if (using.items == null) {
+                    using.items = new ArrayList<>(size);
                 } else {
-                    using.list_.clear();
-                    if (using.list_ instanceof ArrayList)
-                        ((ArrayList<?>) using.list_).ensureCapacity(size);
+                    using.items.clear();
+                    if (using.items instanceof ArrayList)
+                        ((ArrayList<?>) using.items).ensureCapacity(size);
                 }
                 for (int i = 0; i < size; i++) {
                     B b = new B();
                     b.readMarshallable(in);
-                    using.list_.add(b);
+                    using.items.add(b);
                 }
             } else {
                 assert size == -1;
-                using.list_ = null;
+                using.items = null;
             }
             return using;
         }
@@ -96,21 +96,21 @@ class PointListSerializationTest {
     }
 
     static class A {
-        String str_;
-        List<B> list_;
+        String value;
+        List<B> items;
     }
 
     static class B implements BytesMarshallable {
-        String str_;
+        String text;
 
         @Override
         public void readMarshallable(BytesIn<?> in) {
-            str_ = in.readUtf8();
+            text = in.readUtf8();
         }
 
         @Override
         public void writeMarshallable(BytesOut<?> out) {
-            out.writeUtf8(str_);
+            out.writeUtf8(text);
         }
     }
 }

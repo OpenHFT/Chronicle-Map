@@ -15,7 +15,7 @@ import net.openhft.chronicle.wire.Marshallable;
  * the same bytes store). Normal number storing (4 bytes for {@code int}, 8 bytes for {@code long}
  * is rather wasteful for marshalling purposes, when the number (size) to store is usually very
  * small, and 1-2 bytes could be enough to encode it (this is how {@link #stopBit()} marshaller
- * works). Also, this interface allows to generalize storing constantly-sized and variable-sized
+ * works). Also, this interface allows to generalise storing constantly-sized and variable-sized
  * blocks of data. Constantly-sized don't require to store the size actually, the corresponding
  * {@link #constant} {@code SizeMarshaller} consumes 0 bytes.
  * <p>

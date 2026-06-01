@@ -52,7 +52,7 @@ public abstract class InstanceCreatingMarshaller<T> implements Marshallable {
 
     /**
      * Creates a new {@code T} instance by calling {@link Class#newInstance()}. If you need
-     * different logic, i. e. calling a constructor with parameter, override this method in a
+     * different logic, i.e. calling a constructor with parameter, override this method in a
      * subclass of the specific {@link DataAccess} or {@link SizedReader} and configure in {@link
      * ChronicleMapBuilder}.
      *

@@ -37,33 +37,33 @@ class DirtyReadVictimIPCTest {
     void mainOptimisticNegative() throws IOException {
         try {
             System.out.println("\n*****   Optimistic (-) Test\n");
-//            ProcessBuilder pb = new ProcessBuilder(
-//                    "/usr/bin/mkdir -p "+
-//                    " C:\\Users\\buddy\\dev\\shm\\ "
-//            );
-
-//            Process p = pb.start();
-//            Scanner scan = new Scanner(p.getInputStream());
-//            while (scan.hasNext()) {
-//                System.out.println(
-//                        " ,,@t=" +
-//                                System.currentTimeMillis() +
-//                                " DirtyReadVictimTest CALLING [" +
-//                                scan.next() +
-//                                "]"
-//                );
-//            }
-//            Thread.sleep(1_000);
-//            p.destroyForcibly();
-//            System.out.println(
-//                    " ,,@t=" +
-//                            System.currentTimeMillis() +
-//                            " DirtyReadVictimTest called [\n" +
-//                            "mkdir -p " +
-//                            " C:\\Users\\buddy\\dev\\shm\\ " +
-//                            "\n" +
-//                            "]"
-//            );
+            //            ProcessBuilder pb = new ProcessBuilder(
+            //                    "/usr/bin/mkdir -p "+
+            //                    " C:\\Users\\buddy\\dev\\shm\\ "
+            //            );
+            //
+            //            Process p = pb.start();
+            //            Scanner scan = new Scanner(p.getInputStream());
+            //            while (scan.hasNext()) {
+            //                System.out.println(
+            //                        " ,,@t=" +
+            //                                System.currentTimeMillis() +
+            //                                " DirtyReadVictimTest CALLING [" +
+            //                                scan.next() +
+            //                                "]"
+            //                );
+            //            }
+            //            Thread.sleep(1_000);
+            //            p.destroyForcibly();
+            //            System.out.println(
+            //                    " ,,@t=" +
+            //                            System.currentTimeMillis() +
+            //                            " DirtyReadVictimTest called [\n" +
+            //                            "mkdir -p " +
+            //                            " C:\\Users\\buddy\\dev\\shm\\ " +
+            //                            "\n" +
+            //                            "]"
+            //            );
 
             /*
                ben.cotton@rutgers.edu   START
@@ -73,7 +73,7 @@ class DirtyReadVictimIPCTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp;
             System.out.println(
@@ -114,8 +114,8 @@ class DirtyReadVictimIPCTest {
                 Thread.sleep(20_000);
 
             } finally {
-                boolean r;
-                if ((r = offHeapLock.validate(stamp))) {
+                boolean r = offHeapLock.validate(stamp);
+                if (r) {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
                                     " DirtyReadVictim OPTIMISTICALLY_READ coupon=" +
@@ -162,7 +162,7 @@ class DirtyReadVictimIPCTest {
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
-            Double coupon = 0.00;
+            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             long stamp = 0;
             System.out.println(

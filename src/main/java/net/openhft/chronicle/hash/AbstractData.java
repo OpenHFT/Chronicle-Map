@@ -37,7 +37,7 @@ public abstract class AbstractData<T> implements Data<T> {
 
     /**
      * Delegates to {@code Data}'s <i>object</i> {@code toString()}. If deserialization fails with
-     * exception (e. g. if data bytes are corrupted, and represent not a valid serialized form of
+     * exception (e.g. if data bytes are corrupted, and represent not a valid serialized form of
      * an object), traces the data's bytes and the exception.
      * Delegates to {@link #dataToString()}.
      */

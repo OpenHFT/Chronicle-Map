@@ -330,12 +330,12 @@ class Issue63Test {
                 knownItemsBuilder.recoverPersistedTo(mapFile, true);
 
         assertEquals(5, knownItems2.size());
-       /* ids.forEach((id) -> {
-            System.out.println(knownItems2.get(id.subSequence(0, id.length())));
-        });*/
-//        knownItems2.forEach((id, list) -> {
-//            System.out.println(id + " : " + String.join(",", list));
-//        });
+        /* ids.forEach((id) -> {
+             System.out.println(knownItems2.get(id.subSequence(0, id.length())));
+         });*/
+        //        knownItems2.forEach((id, list) -> {
+        //            System.out.println(id + " : " + String.join(",", list));
+        //        });
 
     }
 }

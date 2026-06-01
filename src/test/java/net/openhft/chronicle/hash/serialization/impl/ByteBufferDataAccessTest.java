@@ -27,8 +27,8 @@ class ByteBufferDataAccessTest {
         Data<ByteBuffer> data1 = bbDataAccess.getData(bb1);
         ByteBuffer bb2 = ByteBuffer.allocate(2);
         data1.getUsing(bb2);
-        assertEquals(bb2.get(0), 3);
-        assertEquals(bb2.get(1), 4);
+        assertEquals(3, bb2.get(0));
+        assertEquals(4, bb2.get(1));
     }
 
     @Test

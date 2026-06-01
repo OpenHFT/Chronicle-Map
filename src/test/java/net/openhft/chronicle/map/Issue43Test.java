@@ -11,25 +11,25 @@ import net.openhft.chronicle.set.Builder;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 class Issue43Test {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         new Issue43Test().testIssue43();
     }
 
     @Test
-    void testIssue43() {
-        try {
-            ChronicleMap<Long, ValueWrapper> map = ChronicleMapBuilder
-                    .of(Long.class, ValueWrapper.class)
-                    .entries(512)
-                    .valueMarshaller(ArrayMarshaller.INSTANCE)
-                    .constantValueSizeBySample(new ValueWrapper(new double[128]))
-                    .createPersistedTo(Builder.getPersistenceFile());
-            //System.out.println("Created the monkey map ValueWrapper 128");
-        } catch (Throwable ex) {
-            System.out.println(ex);
-        }
+    void testIssue43() throws IOException {
+        ChronicleMap<Long, ValueWrapper> map = ChronicleMapBuilder
+                .of(Long.class, ValueWrapper.class)
+                .entries(512)
+                .valueMarshaller(ArrayMarshaller.INSTANCE)
+                .constantValueSizeBySample(new ValueWrapper(new double[128]))
+                .createPersistedTo(Builder.getPersistenceFile());
+        assertNotNull(map);
     }
 
     private static class ValueWrapper {

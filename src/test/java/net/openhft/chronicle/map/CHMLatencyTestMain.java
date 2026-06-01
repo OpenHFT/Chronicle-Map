@@ -59,7 +59,7 @@ class CHMLatencyTestMain {
     public static void main(String... ignored) throws IOException {
         AffinityLock lock = AffinityLock.acquireCore();
         File file = File.createTempFile("testCHMLatency", "deleteme");
-//        File file = new File("testCHMLatency.deleteme");
+        //        File file = new File("testCHMLatency.deleteme");
         file.delete();
         ChronicleMap<LongValue, LongValue> countersMap =
                 ChronicleMapBuilder.of(LongValue.class, LongValue.class)
@@ -75,7 +75,7 @@ class CHMLatencyTestMain {
             value.setValue(0);
         }
         System.out.println("Keys created");
-//        Monitor monitor = new Monitor();
+        //        Monitor monitor = new Monitor();
         LongValue value2 = Values.newNativeReference(LongValue.class);
         for (int t = 0; t < 5; t++) {
             for (int rate : new int[]{2 * 1000 * 1000, 1000 * 1000, 500 * 1000/*, 250 * 1000, 100 * 1000, 50 * 1000*/}) {
@@ -89,9 +89,9 @@ class CHMLatencyTestMain {
                     // the timed part
                     for (int i = 0; i < KEYS && u < RUN_TIME * rate; i += stride) {
                         // busy wait for next time.
-                        while (System.nanoTime() < next - 12) ;
-//                        monitor.sample = System.nanoTime();
-                        long start0 = next;
+                        while (System.nanoTime() < next - 12)
+                            Thread.yield();
+                        final long start0 = next;
 
                         // start the update.
                         key.setValue(i);
@@ -105,22 +105,22 @@ class CHMLatencyTestMain {
                         times.sample(elapse);
                         next += delay;
                     }
-//                    monitor.sample = Long.MAX_VALUE;
+                    //                    monitor.sample = Long.MAX_VALUE;
                 }
                 System.out.printf("run %d %,9d : ", t, rate);
                 times.printPercentiles(" micro-seconds.");
             }
             System.out.println();
         }
-//        monitor.running = false;
+        //        monitor.running = false;
         countersMap.close();
         file.delete();
     }
 
     static class Monitor implements Runnable {
         final Thread thread;
-        volatile boolean running = true;
-        volatile long sample;
+        final boolean running = true;
+        final long sample;
 
         Monitor() {
             this.thread = Thread.currentThread();

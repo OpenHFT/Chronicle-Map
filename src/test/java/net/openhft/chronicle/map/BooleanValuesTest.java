@@ -8,14 +8,13 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
-
 /**
  * @author Rob Austin.
  */
 class BooleanValuesTest {
 
     /**
-     * see issue <a href="http://stackoverflow.com/questions/26219313/strange-npe-from-chronicle-map-toy-code">here</a>
+     * see issue <a href="https://stackoverflow.com/questions/26219313/strange-npe-from-chronicle-map-toy-code">here</a>
      */
     @Test
     void testTestBooleanValues() throws IOException, InterruptedException {
