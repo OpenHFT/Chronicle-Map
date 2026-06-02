@@ -6,18 +6,11 @@ package net.openhft.chronicle.map.locks;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
 
 public class DirtyReadOffender_ReaderWriterTest {
-
-    @Before
-    public void longRunningStableOnLinux() {
-        assumeFalse(OS.isLinux());
-    }
 
     @Test(timeout = 60_000)
     public void main() {

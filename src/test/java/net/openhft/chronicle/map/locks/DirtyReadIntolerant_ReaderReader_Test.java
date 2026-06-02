@@ -6,11 +6,9 @@ package net.openhft.chronicle.map.locks;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
 
 /**
  * This Test efforts to ensure that a READERS-only set of requests to access the CSL
@@ -18,11 +16,6 @@ import static org.junit.Assume.assumeFalse;
  */
 
 public class DirtyReadIntolerant_ReaderReader_Test {
-
-    @Before
-    public void longRunningStableOnLinux() {
-        assumeFalse(OS.isLinux());
-    }
 
     @Test
     public void main() {

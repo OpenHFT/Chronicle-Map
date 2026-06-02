@@ -5,19 +5,12 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Before;
 
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
 
 class DirtyReadOffenderTest implements Runnable {
-
-    @Before
-    public void longRunningStableOnLinux() {
-        assumeFalse(OS.isLinux());
-    }
 
     public void run() {
 
