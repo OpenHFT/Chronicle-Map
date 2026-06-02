@@ -2175,7 +2175,21 @@ public class CHMUseCasesTest {
 
             // this may change due to alignment
             // assertEquals(16, entrySize(map));
-            assertEquals(1, ((VanillaChronicleMap<?, ?, ?>) map).maxChunksPerEntry);
+            final VanillaChronicleMap<?, ?, ?> vanillaMap = (VanillaChronicleMap<?, ?, ?>) map;
+            final int maxChunksPerEntry = vanillaMap.maxChunksPerEntry;
+            // TODO remove temporary CI diagnostic for Mac maxChunksPerEntry triage.
+            System.err.println("TODO remove: CHMUseCasesTest.testLongValueLongValueMap diagnostic " +
+                    "maxChunksPerEntry=" + maxChunksPerEntry +
+                    ", chunkSize=" + vanillaMap.chunkSize +
+                    ", actualChunksPerSegmentTier=" + vanillaMap.actualChunksPerSegmentTier +
+                    ", actualSegments=" + vanillaMap.actualSegments +
+                    ", tierHashLookupSlotSize=" + vanillaMap.tierHashLookupSlotSize +
+                    ", tierEntrySpaceInnerOffset=" + vanillaMap.tierEntrySpaceInnerOffset +
+                    ", java=" + System.getProperty("java.version") +
+                    ", os=" + System.getProperty("os.name") +
+                    ", arch=" + System.getProperty("os.arch"));
+            assertEquals("TODO remove: unexpected LongValue/LongValue maxChunksPerEntry; see diagnostic line above",
+                    1, maxChunksPerEntry);
 
             LongValue key1 = Values.newHeapInstance(LongValue.class);
             LongValue value1 = Values.newHeapInstance(LongValue.class);

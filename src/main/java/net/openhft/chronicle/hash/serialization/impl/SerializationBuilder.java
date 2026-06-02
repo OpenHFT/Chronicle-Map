@@ -6,6 +6,7 @@ package net.openhft.chronicle.hash.serialization.impl;
 import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesMarshallable;
 import net.openhft.chronicle.bytes.DynamicallySized;
+import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import org.jetbrains.annotations.NotNull;
 import net.openhft.chronicle.core.util.ReadResolvable;
@@ -52,6 +53,17 @@ public final class SerializationBuilder<T> implements Cloneable {
         }
     }
 
+    // TODO remove temporary CI diagnostic support for generated-value fallback triage.
+    private static String temporaryValueInterfaceDiagnostic(String message, Class<?> tClass) {
+        return "TODO remove: " + message +
+                ", tClass=" + tClass.getName() +
+                ", classLoader=" + tClass.getClassLoader() +
+                ", thread=" + Thread.currentThread().getName() +
+                ", java=" + System.getProperty("java.version") +
+                ", os=" + System.getProperty("os.name") +
+                ", arch=" + System.getProperty("os.arch");
+    }
+
     @SuppressWarnings("unchecked")
     private void configureByDefault(Class<T> tClass) {
         if (tClass.isPrimitive()) {
@@ -70,10 +82,15 @@ public final class SerializationBuilder<T> implements Cloneable {
                 sizeMarshaller(constant((long) valueModel.sizeInBytes()));
                 return;
             } catch (Exception e) {
+                // TODO remove temporary CI diagnostic for generated-value fallback triage.
+                Jvm.warn().on(SerializationBuilder.class, temporaryValueInterfaceDiagnostic("ValueModel.acquire failed", tClass), e);
                 try {
                     tClass = Values.nativeClassFor(tClass);
+                    // TODO remove temporary CI diagnostic for generated-value fallback triage.
+                    Jvm.warn().on(SerializationBuilder.class, temporaryValueInterfaceDiagnostic("Falling back to native class", tClass));
                 } catch (Exception ex) {
-                    // ignore, fall through
+                    // TODO remove temporary CI diagnostic for generated-value fallback triage.
+                    Jvm.warn().on(SerializationBuilder.class, temporaryValueInterfaceDiagnostic("Values.nativeClassFor failed", tClass), ex);
                 }
                 // ignore, fall through
             }

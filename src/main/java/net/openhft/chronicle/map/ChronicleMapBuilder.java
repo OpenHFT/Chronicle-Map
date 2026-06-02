@@ -717,6 +717,53 @@ public final class ChronicleMapBuilder<K, V> implements
         return Double.NaN;
     }
 
+    // TODO remove temporary CI diagnostic support for missing size configuration triage.
+    private <E> String temporaryMissingSizeDiagnostic(@NotNull final SerializationBuilder<E> builder,
+                                                      final double configuredAverageSize,
+                                                      @Nullable final E average,
+                                                      @Nullable final E sample,
+                                                      @NotNull final String dim) {
+        return "TODO remove: missing " + dim + " size diagnostic" +
+                ", failingType=" + builder.tClass.getName() +
+                ", configuredAverageSize=" + configuredAverageSize +
+                ", averageConfigured=" + (average != null) +
+                ", sampleConfigured=" + (sample != null) +
+                ", keyType=" + keyBuilder.tClass.getName() +
+                ", valueType=" + valueBuilder.tClass.getName() +
+                ", entries=" + entries +
+                ", replicated=" + replicated +
+                ", persisted=" + persisted +
+                ", checksumEntries=" + checksumEntries +
+                ", sparseFile=" + sparseFile +
+                ", actualSegments=" + actualSegments +
+                ", entriesPerSegment=" + entriesPerSegment +
+                ", actualChunksPerSegmentTier=" + actualChunksPerSegmentTier +
+                ", actualChunkSize=" + actualChunkSize +
+                ", alignment=" + alignment +
+                ", keyMarshaller=" + temporarySizeMarshallerDiagnostic(keyBuilder) +
+                ", valueMarshaller=" + temporarySizeMarshallerDiagnostic(valueBuilder) +
+                ", thread=" + Thread.currentThread().getName() +
+                ", java=" + System.getProperty("java.version") +
+                ", os=" + System.getProperty("os.name") +
+                ", arch=" + System.getProperty("os.arch");
+    }
+
+    // TODO remove temporary CI diagnostic support for missing size configuration triage.
+    private static String temporarySizeMarshallerDiagnostic(@NotNull final SerializationBuilder<?> builder) {
+        try {
+            final SizeMarshaller sizeMarshaller = builder.sizeMarshaller();
+            final boolean constantSizeMarshaller = builder.constantSizeMarshaller();
+            return sizeMarshaller.getClass().getName() +
+                    "[min=" + sizeMarshaller.minStorableSize() +
+                    ", max=" + sizeMarshaller.maxStorableSize() +
+                    ", constant=" + constantSizeMarshaller +
+                    (constantSizeMarshaller ? ", constantSize=" + builder.constantSize() : "") +
+                    "]";
+        } catch (RuntimeException e) {
+            return "diagnostic failed: " + e;
+        }
+    }
+
     /**
      *
      * @throws IllegalStateException is sizes of both keys and values of maps created by this
@@ -2007,10 +2054,13 @@ public final class ChronicleMapBuilder<K, V> implements
             if (!isNaN(result) || allLowLevelConfigurationsAreManual()) {
                 return result;
             } else {
-                throw new IllegalStateException(dim + " size in serialized form must " +
+                final String message = dim + " size in serialized form must " +
                         "be configured in ChronicleMap, at least approximately.\nUse builder" +
                         ".average" + dim + "()/.constant" + dim + "SizeBySample()/" +
-                        ".average" + dim + "Size() methods to configure the size");
+                        ".average" + dim + "Size() methods to configure the size";
+                // TODO remove temporary CI diagnostic for missing size configuration triage.
+                throw new IllegalStateException(message + "\n" +
+                        temporaryMissingSizeDiagnostic(builder, configuredAverageSize, average, sample, dim));
             }
         }
     }
