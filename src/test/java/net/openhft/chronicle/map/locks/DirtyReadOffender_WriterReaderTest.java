@@ -4,26 +4,22 @@
 package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
 
 public class DirtyReadOffender_WriterReaderTest {
-
-    @Before
-    public void longRunningStableOnLinux() {
-        assumeFalse(OS.isLinux());
-    }
 
     @Test
     public void main() {
         try {
             final long sleepT = Long.parseLong("8");
             long holdTime = Long.parseLong("20");
+
+            prewarmGeneratedValueClasses();
 
             Thread tooThread = new Thread(new WriterToo());
             tooThread.start();
@@ -139,5 +135,11 @@ public class DirtyReadOffender_WriterReaderTest {
                             " DirtyReadOffender COMMITTED"
             );
         }
+    }
+
+    private static void prewarmGeneratedValueClasses() {
+        newNativeReference(ChronicleStampedLockVOInterface.class);
+        newNativeReference(BondVOInterface.class);
+        newNativeReference(LongValue.class);
     }
 }
