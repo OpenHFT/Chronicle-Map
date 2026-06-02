@@ -6,26 +6,43 @@ package net.openhft.chronicle.map.locks;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 
+import java.util.concurrent.CountDownLatch;
+
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 class ReaderToo implements Runnable {
+    private final CountDownLatch readyLatch;
+    private final CountDownLatch startLatch;
+    private final CountDownLatch acquiredLatch;
+    private final CountDownLatch releaseLatch;
+
+    ReaderToo() {
+        this(null, null);
+    }
+
+    ReaderToo(CountDownLatch acquiredLatch, CountDownLatch releaseLatch) {
+        this(null, null, acquiredLatch, releaseLatch);
+    }
+
+    ReaderToo(CountDownLatch readyLatch,
+              CountDownLatch startLatch,
+              CountDownLatch acquiredLatch,
+              CountDownLatch releaseLatch) {
+        this.readyLatch = readyLatch;
+        this.startLatch = startLatch;
+        this.acquiredLatch = acquiredLatch;
+        this.releaseLatch = releaseLatch;
+    }
 
     @Override
     public void run() {
         try {
-            String isoLevel = "READER_TOO";
-            long sleepMock = Long.parseLong("0");
-            long holdTime = Long.parseLong("20");
-            /*
-               ben.cotton@rutgers.edu   START
-             */
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
                     );
             double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            //BondVOInterface cslMock = newNativeReference(BondVOInterface.class); //mock'd
             System.out.println(
                     "READER_TOO " +
                             " ,,@t=" + System.currentTimeMillis() +
@@ -36,17 +53,13 @@ class ReaderToo implements Runnable {
                             OS.getTarget() + "/shm-"
                                     + "OPERAND_ChronicleStampedLock"
                     );
-            System.out.println(
-                    "READER_TOO " +
-                            " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant sleeping " + sleepMock + " seconds"
-            );
-            Thread.sleep(sleepMock * 1_000);
+            DirtyReadTestSupport.signal(readyLatch);
+            DirtyReadTestSupport.awaitIfPresent(startLatch, "reader start");
             long stamp = 0;
-            while ((stamp = offHeapLock.tryReadLock()) < 0) {
+            while ((stamp = offHeapLock.tryReadLock()) == 0) {
                 Thread.yield();
             }
-            //Assert.assertEquals(Boolean.TRUE, true); // we passed
+            DirtyReadTestSupport.signal(acquiredLatch);
             System.out.println(
                     "READER_TOO " +
                             " ,,@t=" + System.currentTimeMillis() +
@@ -57,7 +70,6 @@ class ReaderToo implements Runnable {
             );
             try {
                 chm.acquireUsing("369604101", bond);
-                //chm.acquireUsing("Offender ", cslMock); //mock'd
                 System.out.println(
                         "READER_TOO " +
                                 " ,,@t=" + System.currentTimeMillis() +
@@ -73,10 +85,11 @@ class ReaderToo implements Runnable {
                 System.out.println(
                         "READER_TOO " +
                                 " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadIntolerant sleeping " + holdTime + " seconds"
+                                " DirtyReadIntolerant waiting up to " +
+                                DirtyReadTestSupport.AWAIT_MILLIS + " ms"
                 );
 
-                Thread.sleep(holdTime * 1_000);
+                DirtyReadTestSupport.awaitRelease(releaseLatch);
                 System.out.println(
                         "READER_TOO " +
                                 " ,,@t=" + System.currentTimeMillis() +
@@ -93,10 +106,6 @@ class ReaderToo implements Runnable {
                 );
 
             }
-            /*
-               ben.cotton@rutgers.edu   END
-             */
-
             System.out.println(
                     "READER_TOO " +
                             " ,,@t=" + System.currentTimeMillis() +

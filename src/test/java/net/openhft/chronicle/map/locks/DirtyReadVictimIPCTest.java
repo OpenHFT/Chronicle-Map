@@ -8,6 +8,8 @@ import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
+
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadVictimIPCTest {
@@ -21,219 +23,71 @@ public class DirtyReadVictimIPCTest {
      * operator bridge.
      * <p>
      * this belief is STRICTLY conjecture.
-     *
      */
 
-    @Test
-    public void mainOptimisticNegative() {
+    @Test(timeout = 5_000)
+    public void mainOptimisticNegative() throws Exception {
+        DirtyReadTestSupport.prewarmGeneratedValueClasses();
+
+        CountDownLatch writeComplete = new CountDownLatch(1);
+        CountDownLatch releaseWriter = new CountDownLatch(1);
+        Thread offendingWriter = new Thread(
+                new DirtyReadOffenderIPCTest(writeComplete, releaseWriter),
+                "dirty-offender-ipc"
+        );
+
+        ChronicleMap<String, BondVOInterface> chm =
+                DirtyReadTolerance.offHeap(
+                        OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
+                );
+        ChronicleStampedLock offHeapLock = new ChronicleStampedLock(
+                OS.getTarget() + "/shm-" +
+                        "OPERAND_ChronicleStampedLock"
+        );
         try {
-            System.out.println("\n*****   Optimistic (-) Test\n");
-            //            ProcessBuilder pb = new ProcessBuilder(
-            //                    "/usr/bin/mkdir -p "+
-            //                    " C:\\Users\\buddy\\dev\\shm\\ "
-            //            );
-            //
-            //            Process p = pb.start();
-            //            Scanner scan = new Scanner(p.getInputStream());
-            //            while (scan.hasNext()) {
-            //                System.out.println(
-            //                        " ,,@t=" +
-            //                                System.currentTimeMillis() +
-            //                                " DirtyReadVictimTest CALLING [" +
-            //                                scan.next() +
-            //                                "]"
-            //                );
-            //            }
-            //            Thread.sleep(1_000);
-            //            p.destroyForcibly();
-            //            System.out.println(
-            //                    " ,,@t=" +
-            //                            System.currentTimeMillis() +
-            //                            " DirtyReadVictimTest called [\n" +
-            //                            "mkdir -p " +
-            //                            " C:\\Users\\buddy\\dev\\shm\\ " +
-            //                            "\n" +
-            //                            "]"
-            //            );
-
-            /*
-               ben.cotton@rutgers.edu   START
-             */
-
-            ChronicleMap<String, BondVOInterface> chm =
-                    DirtyReadTolerance.offHeap(
-                            OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
-                    );
-            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            long stamp;
-            System.out.println(
-                    " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"
-            );
-            ChronicleStampedLock offHeapLock = new ChronicleStampedLock(
-                    OS.getTarget() + "/shm-" +
-                            "OPERAND_ChronicleStampedLock"
-            );
-            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-                // none
-            }
-            System.out.println(
-                    " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim CALLED offHeapLock.tryOptimisticRead()"
-            );
-            try {
-                chm.acquireUsing("369604101", bond);
-                System.out.println(
-                        " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim calling chm.get('369604101').getCoupon()"
-                );
-                bond = chm.get("369604101");
-                coupon = bond.getCoupon();
-                System.out.println(
-                        " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim coupon=[" + coupon + "] read."
-                );
-                System.out.println(
-                        " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim sleeping 20 seconds"
-                );
-                Thread offendingWriter = new Thread(
-                        new DirtyReadOffenderIPCTest()
-                );
-                offendingWriter.start();
-                Thread.sleep(20_000);
+            long stamp = offHeapLock.tryOptimisticRead();
+            chm.acquireUsing("369604101", bond);
+            bond = chm.get("369604101");
+            Assert.assertNotNull(bond);
 
-            } finally {
-                boolean r = offHeapLock.validate(stamp);
-                if (r) {
-                    System.out.println(
-                            " ,,@t=" + System.currentTimeMillis() +
-                                    " DirtyReadVictim OPTIMISTICALLY_READ coupon=" +
-                                    coupon + " "
-                    );
-                    // THIS Test will/must FAIL. i.e. OPTIMISM tested (-) in this case
-                    Assert.assertEquals(
-                            Boolean.FALSE,
-                            r
-                    );
-                } else {
-                    System.out.println(
-                            " ,,@t=" + System.currentTimeMillis() +
-                                    " DirtyReadVictim FAILED offHeapLock.validate(stamp) " +
-                                    " must apply PESSIMISTIC_POLICY (dirty read endured)" +
-                                    " coupon=[" + coupon + "] is *DIRTY*. "
-                    );
-                    Assert.assertNotEquals(
-                            Boolean.TRUE,
-                            r
-                    );
-                }
-                //offHeapLock.unlockWrite(writerStamp);
-            }
-            /*
-               ben.cotton@rutgers.edu   END
-             */
-            System.out.println(
-                    " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim got() coupon=" +
-                            coupon + " "
-            );
-            System.out.println(
-                    " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim COMMITTED"
-            );
-        } catch (Exception throwables) {
-            throwables.printStackTrace();
+            offendingWriter.start();
+            DirtyReadTestSupport.await(writeComplete, "IPC offender write");
+
+            boolean valid = offHeapLock.validate(stamp);
+            Assert.assertFalse("optimistic read should be invalidated by IPC writer", valid);
+        } finally {
+            releaseWriter.countDown();
+            DirtyReadTestSupport.join(offendingWriter);
+            chm.close();
+            offHeapLock.closeChronicle();
         }
     }
 
-    @Test
-    public void mainOptimisticPositive() {
-        System.out.println("\n*****   Optimistic (+) Test\n");
+    @Test(timeout = 2_000)
+    public void mainOptimisticPositive() throws Exception {
+        DirtyReadTestSupport.prewarmGeneratedValueClasses();
+
+        ChronicleMap<String, BondVOInterface> chm =
+                DirtyReadTolerance.offHeap(
+                        OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
+                );
+        ChronicleStampedLock offHeapLock = new ChronicleStampedLock(
+                OS.getTarget() + "/shm-"
+                        + "OPERAND_ChronicleStampedLock"
+        );
         try {
-            /*
-               ben.cotton@rutgers.edu   START
-             */
-            ChronicleMap<String, BondVOInterface> chm =
-                    DirtyReadTolerance.offHeap(
-                            OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
-                    );
-            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            long stamp = 0;
-            System.out.println(
-                    " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim CALLING offHeapLock.tryOptimisticRead()"
-            );
-            ChronicleStampedLock offHeapLock = new ChronicleStampedLock(
-                    OS.getTarget() + "/shm-"
-                            + "OPERAND_ChronicleStampedLock"
-            );
-            while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-                // none
-            }
-            System.out.println(
-                    " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim CALLED offHeapLock.tryOptimisticRead()"
-            );
-            try {
-                chm.acquireUsing("369604101", bond);
-                System.out.println(
-                        " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim calling chm.get('369604101').getCoupon()"
-                );
-                bond = chm.get("369604101");
-                coupon = bond.getCoupon();
-                System.out.println(
-                        " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim coupon=[" + coupon + "] read."
-                );
-                System.out.println(
-                        " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadVictim sleeping 2 seconds"
-                );
-                Thread.sleep(2_000);
-            } finally {
-                if (offHeapLock.validate(stamp)) {
-                    System.out.println(
-                            " ,,@t=" + System.currentTimeMillis() +
-                                    " DirtyReadVictim OPTIMISTICALLY_READ coupon=" +
-                                    coupon + " "
-                    );
-                    // THIS Test will pass when ChronicleStampedLock is GA
-                    Assert.assertEquals(
-                            Boolean.TRUE,
-                            true
-                    );
-                } else {
-                    System.out.println(
-                            " ,,@t=" + System.currentTimeMillis() +
-                                    " DirtyReadVictim FAILED offHeapLock.validate(stamp) " +
-                                    " must apply PESSIMISTIC_POLICY (dirty read endured)" +
-                                    " coupon=[" + coupon + "] is *DIRTY*. "
-                    );
-                    // THIS Test will execute pass when ChronicleStampedLock is GA
-                    Assert.assertNotEquals(
-                            Boolean.TRUE,
-                            false
-                    );
-                }
-            }
-            /*
-             *  ben.cotton@rutgers.edu   END
-             */
-            System.out.println(
-                    " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim got() coupon=" +
-                            coupon + " "
-            );
-            System.out.println(
-                    " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadVictim COMMITTED"
-            );
-        } catch (Exception throwables) {
-            throwables.printStackTrace();
+            long stamp = offHeapLock.tryOptimisticRead();
+            chm.acquireUsing("369604101", bond);
+            bond = chm.get("369604101");
+            Assert.assertNotNull(bond);
+
+            Assert.assertTrue("optimistic read should remain valid without an IPC writer",
+                    offHeapLock.validate(stamp));
+        } finally {
+            chm.close();
+            offHeapLock.closeChronicle();
         }
     }
 }

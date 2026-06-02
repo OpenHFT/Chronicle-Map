@@ -8,6 +8,8 @@ import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
+
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 /**
@@ -17,107 +19,57 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadIntolerant_ReaderReader_Test {
 
-    @Test
-    public void main() {
+    @Test(timeout = 5_000)
+    public void main() throws Exception {
+        DirtyReadTestSupport.prewarmGeneratedValueClasses();
+
+        CountDownLatch readerReady = new CountDownLatch(1);
+        CountDownLatch startReaders = new CountDownLatch(1);
+        CountDownLatch readerAcquired = new CountDownLatch(1);
+        CountDownLatch releaseReader = new CountDownLatch(1);
+        Thread tooThread = new Thread(
+                new ReaderToo(readerReady, startReaders, readerAcquired, releaseReader),
+                "dirty-reader-too"
+        );
+
+        ChronicleMap<String, BondVOInterface> chm =
+                DirtyReadTolerance.offHeap(
+                        OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
+                );
+        ChronicleStampedLock offHeapLock =
+                new ChronicleStampedLock(
+                        OS.getTarget() + "/shm-"
+                                + "OPERAND_ChronicleStampedLock"
+                );
+        long stamp = 0;
         try {
-            long sleepMock = Long.parseLong("5");
-            long holdTime = Long.parseLong("25");
-
-            Thread tooThread = new Thread(new ReaderToo());
-            tooThread.start();
-
-            ChronicleMap<String, BondVOInterface> chm =
-                    DirtyReadTolerance.offHeap(
-                            OS.getTarget() + "/shm-OPERAND_CHRONICLE_MAP"
-                    );
-            double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            //BondVOInterface cslMock = newNativeReference(BondVOInterface.class); //mock'd
-            System.out.println(
-                    "                             " +
-                            " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant ENTERING offHeapLock.readLock()"
-            );
-            ChronicleStampedLock offHeapLock =
-                    new ChronicleStampedLock(
-                            OS.getTarget() + "/shm-"
-                                    + "OPERAND_ChronicleStampedLock"
-                    );
-            System.out.println(
-                    "                             " +
-                            " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant sleeping " + sleepMock + " seconds"
-            );
-            Thread.sleep(sleepMock * 1_000);
-            long stamp = 0;
-            while ((stamp = offHeapLock.tryReadLock()) < 0) {
-                Assert.assertEquals(Boolean.TRUE, false); // we failed!
-            }
-            Assert.assertEquals(Boolean.TRUE, true); // we passed!
-            System.out.println(
-                    "                             " +
-                            " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant ENTERED offHeapLock.readLock() " +
-                            " stamp=[" +
-                            stamp +
-                            "]"
-            );
-            try {
-                chm.acquireUsing("369604101", bond);
-                //chm.acquireUsing("Offender ", cslMock); //mock'd
-                System.out.println(
-                        "                             " +
-                                " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadIntolerant calling chm.get('369604101').getCoupon()"
-                );
-                bond = chm.get("369604101");
-                coupon = bond.getCoupon();
-                System.out.println(
-                        "                             " +
-                                " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadIntolerant coupon=[" + coupon + "] read."
-                );
-                System.out.println(
-                        "                             " +
-                                " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadIntolerant sleeping " + holdTime + " seconds"
-                );
+            chm.acquireUsing("369604101", bond);
 
-                Thread.sleep(holdTime * 1_000);
-                System.out.println(
-                        "                             " +
-                                " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadIntolerant awakening"
-                );
+            tooThread.start();
+            DirtyReadTestSupport.await(readerReady, "reader helper ready");
+            startReaders.countDown();
 
-            } finally {
+            stamp = offHeapLock.tryReadLock();
+            Assert.assertTrue("reader should acquire while another reader is active", stamp > 0);
+            DirtyReadTestSupport.await(readerAcquired, "reader helper acquired read lock");
+
+            bond = chm.get("369604101");
+            Assert.assertNotNull(bond);
+            System.out.println(
+                    "                             " +
+                            " ,,@t=" + System.currentTimeMillis() +
+                            " DirtyReadIntolerant coupon=[" + bond.getCoupon() + "] read."
+            );
+        } finally {
+            startReaders.countDown();
+            if (stamp > 0) {
                 offHeapLock.unlockRead(stamp);
-                System.out.println(
-                        "                             " +
-                                " ,,@t=" + System.currentTimeMillis() +
-                                " DirtyReadIntolerant offHeapLock.unlockRead(" +
-                                stamp + ") completed."
-                );
-
             }
-            /*
-               ben.cotton@rutgers.edu   END
-             */
-            System.out.println(
-                    "                             " +
-                            " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant got() coupon=" +
-                            coupon + " "
-            );
-            System.out.println(
-                    "                             " +
-                            " ,,@t=" + System.currentTimeMillis() +
-                            " DirtyReadIntolerant COMMITTED"
-            );
+            releaseReader.countDown();
+            DirtyReadTestSupport.join(tooThread);
             chm.close();
             offHeapLock.closeChronicle();
-        } catch (Exception throwables) {
-            throwables.printStackTrace();
         }
     }
 }

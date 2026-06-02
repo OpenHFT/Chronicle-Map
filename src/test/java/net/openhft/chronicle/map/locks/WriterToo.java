@@ -7,16 +7,26 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Assert;
 
+import java.util.concurrent.CountDownLatch;
+
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 class WriterToo implements Runnable {
+    private final CountDownLatch acquiredLatch;
+    private final CountDownLatch releaseLatch;
+
+    WriterToo() {
+        this(null, null);
+    }
+
+    WriterToo(CountDownLatch acquiredLatch, CountDownLatch releaseLatch) {
+        this.acquiredLatch = acquiredLatch;
+        this.releaseLatch = releaseLatch;
+    }
 
     @Override
     public void run() {
         try {
-            final long sleepT = 0;
-            long holdTime = 20;
-
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-" +
@@ -33,36 +43,17 @@ class WriterToo implements Runnable {
             );
             Assert.assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
-            //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
-            //chm.acquireUsing("Offender ", cslMock); // mock ChronicleStampLock
-            System.out.println(
-                    "WRITER TOO" +
-                            " @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender sleeping " + sleepT + " seconds "
-            );
-            Thread.sleep(sleepT * 1_000);
-            System.out.println(
-                    "WRITER TOO" +
-                            " @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender awakening "
-            );
-            /*
-             *anticipate Chronicle (www.OpenHFT.net)
-             *  providing a j.u.c.l.StampedLock API for off-heap enthusiasts
-             *
-             *  START
-             *
-             */
-            long stamp = 0;
             System.out.println(
                     "WRITER TOO" +
                             " @t=" + System.currentTimeMillis() +
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
+            long stamp = 0;
             while ((stamp = offHeapLock.writeLock()) == 0) {
                 Thread.yield();
             }
+            DirtyReadTestSupport.signal(acquiredLatch);
             System.out.println(
                     "WRITER TOO" +
                             " @t=" + System.currentTimeMillis() +
@@ -78,8 +69,6 @@ class WriterToo implements Runnable {
                 );
                 bond.setCoupon(newCoupon);
                 chm.put("369604101", bond);
-                //cslMock.setEntryLockState(System.currentTimeMillis()); //mock'd
-                // chm.put("Offender ",cslMock); //mock'd
                 System.out.println(
                         "WRITER TOO" +
                                 " @t=" + System.currentTimeMillis() +
@@ -91,9 +80,10 @@ class WriterToo implements Runnable {
                 System.out.println(
                         "WRITER TOO" +
                                 " @t=" + System.currentTimeMillis() +
-                                " DirtyReadOffender sleeping " + holdTime + " seconds "
+                                " DirtyReadOffender waiting up to " +
+                                DirtyReadTestSupport.AWAIT_MILLIS + " ms"
                 );
-                Thread.sleep(holdTime * 1_000);
+                DirtyReadTestSupport.awaitRelease(releaseLatch);
                 offHeapLock.unlockWrite(stamp);
                 System.out.println(
                         "WRITER TOO" +
@@ -102,12 +92,6 @@ class WriterToo implements Runnable {
                                 "offHeapLock.unlockWrite(" + stamp + ");"
                 );
             }
-            /*
-               ben.cotton@rutgers.edu
-              <p>
-               END
-
-             */
             chm.close();
             offHeapLock.closeChronicle();
         } catch (Exception throwables) {

@@ -7,18 +7,27 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 import org.junit.Test;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
 
 public class DirtyReadOffenderIPCTest implements Runnable {
+    private final CountDownLatch writeCompleteLatch;
+    private final CountDownLatch releaseLatch;
+
+    public DirtyReadOffenderIPCTest() {
+        this(null, null);
+    }
+
+    DirtyReadOffenderIPCTest(CountDownLatch writeCompleteLatch, CountDownLatch releaseLatch) {
+        this.writeCompleteLatch = writeCompleteLatch;
+        this.releaseLatch = releaseLatch;
+    }
+
     @Test
     public void run() {
-
         try {
-            long sleepT = Long.parseLong("5");
-            long holdTime = Long.parseLong("10");
-
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/shm-"
@@ -35,22 +44,6 @@ public class DirtyReadOffenderIPCTest implements Runnable {
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
 
             chm.acquireUsing("369604101", bond);
-            System.out.println(
-                    "..... @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender sleeping " + sleepT + " seconds "
-            );
-            Thread.sleep(sleepT * 1_000);
-            System.out.println(
-                    "..... @t=" + System.currentTimeMillis() +
-                            " DirtyReadOffender awakening "
-            );
-            /*
-               ben.cotton@rutgers.edu  ... anticipate Chronicle (www.OpenHFT.net)
-               providing a j.u.c.l.StampedLock API for off-heap enthusiasts
-              <p>
-               START
-
-             */
             long stamp = 0;
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +
@@ -72,8 +65,7 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                 );
                 bond.setCoupon(newCoupon);
                 chm.put("369604101", bond);
-                //cslMock.setEntryLockState(System.currentTimeMillis()); //mock'd
-                // chm.put("Offender ",cslMock); //mock'd
+                DirtyReadTestSupport.signal(writeCompleteLatch);
                 System.out.println(
                         "..... @t=" + System.currentTimeMillis() +
                                 " DirtyReadOffender coupon=[" +
@@ -83,9 +75,10 @@ public class DirtyReadOffenderIPCTest implements Runnable {
             } finally {
                 System.out.println(
                         "..... @t=" + System.currentTimeMillis() +
-                                " DirtyReadOffender sleeping " + holdTime + " seconds "
+                                " DirtyReadOffender waiting up to " +
+                                DirtyReadTestSupport.AWAIT_MILLIS + " ms"
                 );
-                Thread.sleep(holdTime * 1_000);
+                DirtyReadTestSupport.awaitRelease(releaseLatch);
                 offHeapLock.unlockWrite(stamp);
                 System.out.println(
                         "..... @t=" + System.currentTimeMillis() +
@@ -93,12 +86,6 @@ public class DirtyReadOffenderIPCTest implements Runnable {
                                 "offHeapLock.unlockWrite(" + stamp + ");"
                 );
             }
-            /*
-               ben.cotton@rutgers.edu
-              <p>
-               END
-
-             */
         } catch (Exception throwables) {
             throwables.printStackTrace();
         } finally {

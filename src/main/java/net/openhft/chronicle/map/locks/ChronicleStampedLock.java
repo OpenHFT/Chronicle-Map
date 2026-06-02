@@ -27,6 +27,8 @@ import static net.openhft.chronicle.values.Values.newNativeReference;
  */
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
 public class ChronicleStampedLock extends StampedLock {
+    private static final long WAIT_MILLIS = 10L;
+
     ChronicleMap<String, ChronicleStampedLockVOInterface> chm;  //custody of StampedLock semantics
     ChronicleMap<String, LongValue> chmR;   //Chronicle AtomicLong re: Reader set custody
     ChronicleMap<String, LongValue> chmW;   //Chronicle AtomicLong re: Reader set custody
@@ -202,7 +204,7 @@ public class ChronicleStampedLock extends StampedLock {
             offHeapLock = chm.get("Stamp ");
             lockState = offHeapLock.getEntryLockState();
             try {
-                Thread.sleep((long) (1000 * Math.random()));
+                Thread.sleep(WAIT_MILLIS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
@@ -264,7 +266,7 @@ public class ChronicleStampedLock extends StampedLock {
             );
             l = (offHeapLock = chm.get("Stamp ")).getEntryLockState();
             try {
-                Thread.sleep(1000);
+                Thread.sleep(WAIT_MILLIS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
@@ -327,7 +329,7 @@ public class ChronicleStampedLock extends StampedLock {
             offHeapLock = chm.get("Stamp ");
             lockState = offHeapLock.getEntryLockState();
             try {
-                Thread.sleep((long) (1000 * Math.random()));
+                Thread.sleep(WAIT_MILLIS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
@@ -387,7 +389,7 @@ public class ChronicleStampedLock extends StampedLock {
             );
             lockState = (offHeapLock = chm.get("Stamp ")).getEntryLockState();
             try {
-                Thread.sleep(1000);
+                Thread.sleep(WAIT_MILLIS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
                 Thread.currentThread().interrupt();
