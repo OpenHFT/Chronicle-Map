@@ -103,6 +103,63 @@ See `ChronicleMapBuilder#entries()` in https://www.javadoc.io/doc/net.openhft/ch
 
 Once a `ChronicleMap` instance is created, its configurations are sealed and cannot be changed using the `ChronicleMapBuilder` instance.
 
+== Capacity is per segment: tiering and reclamation
+
+Chronicle Map divides its off-heap (or memory-mapped) region into fixed-size
+*segments*, and each segment stores entries in fixed-size *chunks*. When a
+segment cannot fit a new entry in its current chunks, Chronicle Map allocates an
+additional *tier* for that segment, unless segment tiering is disabled. The number
+of extra tiers is bounded by the map configuration.
+
+`entries()` sizes the map as a whole; it is not a hard insertability guarantee for
+every possible distribution of entries between segments. Entry and byte capacity
+are enforced per segment. Free capacity in one segment cannot satisfy an insertion
+routed by its key hash to another segment.
+
+This matters under partial churn. For example, repeatedly removing entries in map
+traversal order can drain one range of segments, while replacement keys are spread
+across all segments. Retained segments then accumulate entries. If tiering is
+disabled, one of those segments can reach its fixed per-tier entry limit while the
+map's total `size()` is still below `entries()`. A fixed-seed variant based on
+https://github.com/OpenHFT/Chronicle-Map/issues/400[#400], with segment tiering
+explicitly disabled, demonstrates this mechanism using exact, fixed key/value sizes.
+It does not establish the cause of the original tiering-enabled report. See
+`docs/research/chronicle-map-400-churn-matrix.md` for the executable comparison and
+its limitations.
+
+Allocated footprint is a separate concern. Removing entries does not truncate a
+persisted map file or release an in-memory map's reserved address space. The
+footprint therefore reflects an allocation high-water mark even when chunks can be
+used again by later insertions.
+
+When a segment runs out of tiers you will see:
+
+----
+java.lang.IllegalStateException: <map>: Attempt to allocate #N extra segment tier, M is maximum.
+----
+
+=== Workarounds
+
+- *Keep segment tiering enabled for churn workloads.* If a fixed footprint requires
+  `allowSegmentTiering(false)`, do not treat `entries()` as a hard capacity floor
+  under arbitrary per-segment occupancy. With tiering enabled, configure and monitor
+  `maxBloatFactor()` for the expected skew.
+- *Inspect per-segment pressure.* Use `segmentStats()`, `percentageFreeSpace()` and
+  `remainingAutoResizes()` to distinguish a full segment from global entry count.
+- *Configure actual sizes.* Accurate `averageKeySize()`/`averageValueSize()` remains
+  required, but it does not by itself prevent the fixed-size partial-churn failure in
+  the tiering-disabled #400 variant.
+- *Rebuild only during a controlled migration.* `newMap.putAll(oldMap)` is not a
+  consistent live migration while writers remain active. Quiesce writers (or capture
+  and replay every concurrent change), close all other JVM/process accessors, and
+  retain only one read-only migration accessor. Copy to a temporary file, validate
+  counts and application-level checksums, then close both maps. Preserve the old file
+  as a rollback copy and atomically rename the validated replacement on the same
+  filesystem before reopening access. Resume writers only after the replacement has
+  opened successfully; restore the old file if cutover fails.
+- *Persisted files do not auto-shrink.* Deleting entries does not reduce the file
+  on disk; use the rebuild approach above when disk reclamation is required.
+
 == Single `ChronicleMap` instance per JVM
 
 If you want to access a Chronicle Map data store concurrently within a Java process, you should not create a separate `ChronicleMap` instance for each thread.
