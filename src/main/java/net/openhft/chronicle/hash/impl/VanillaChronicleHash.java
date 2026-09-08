@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -425,7 +426,8 @@ public abstract class VanillaChronicleHash<K,
                     throw throwRecoveryOrReturnIOException(file, "truncated", recover);
                 }
             }
-            globalMutableStateBuffer.flip();
+            //! Keep the Java 8 Buffer descriptor when this reopening path is compiled on newer JDKs.
+            ((Buffer) globalMutableStateBuffer).flip();
             //noinspection unchecked
             globalMutableState.bytesStore(BytesStore.wrap(globalMutableStateBuffer), 0, globalMutableState.maxSize());
         }
