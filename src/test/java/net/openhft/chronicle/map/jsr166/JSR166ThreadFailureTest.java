@@ -67,7 +67,7 @@ public class JSR166ThreadFailureTest {
             // Observe the uncaught failure without recording it on the fixture's behalf.
             worker.setUncaughtExceptionHandler((thread, failure) -> workerFailure.set(failure));
             worker.start();
-            worker.join(5_000);
+            worker.join(LONG_DELAY_MS);
             assertFalse("worker did not terminate", worker.isAlive());
         }
     }
