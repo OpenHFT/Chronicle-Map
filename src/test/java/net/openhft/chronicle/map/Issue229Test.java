@@ -4,6 +4,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
 import org.junit.After;
 import org.junit.Assume;
@@ -46,13 +47,11 @@ public class Issue229Test {
                     .entries(10);
             AtomicReference<ChronicleMap<Long, Long>> unexpectedRecovery = new AtomicReference<>();
             try {
-                //! Only recovery may supply the expected failure; opening and cleanup must succeed independently.
+                //! Only recovery may supply the expected failure; opening and cleanup stay outside the assertion.
                 assertThrows(ChronicleHashRecoveryFailedException.class,
                         () -> unexpectedRecovery.set(recoveryBuilder.recoverPersistedTo(mapFile, true)));
             } finally {
-                ChronicleMap<Long, Long> recoveredMap = unexpectedRecovery.get();
-                if (recoveredMap != null)
-                    recoveredMap.close();
+                Closeable.closeQuietly(unexpectedRecovery.get());
             }
         }
     }
