@@ -357,10 +357,8 @@ public final class ChronicleMapBuilder<K, V> implements
                                          final int headerSize) throws IOException {
         //noinspection PointlessBitwiseExpression
         headerBuffer.putInt(SIZE_WORD_OFFSET, NOT_COMPLETE | DATA | headerSize);
-        final Buffer headerView = headerBuffer;
-        headerView.clear();
-        headerView.position(SIZE_WORD_OFFSET);
-        headerView.limit(SIZE_WORD_OFFSET + 4);
+        //! Buffer views preserve Java 8 call descriptors when compiling on newer JDKs.
+        ((Buffer) headerBuffer).clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
         writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
 
@@ -411,10 +409,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
         //noinspection PointlessBitwiseExpression
         headerBuffer.putInt(SIZE_WORD_OFFSET, READY | DATA | headerSize);
-        final Buffer headerView = headerBuffer;
-        headerView.clear();
-        headerView.position(SIZE_WORD_OFFSET);
-        headerView.limit(SIZE_WORD_OFFSET + 4);
+        ((Buffer) headerBuffer).clear().position(SIZE_WORD_OFFSET).limit(SIZE_WORD_OFFSET + 4);
         writeFully(fileChannel, SIZE_WORD_OFFSET, headerBuffer);
     }
 

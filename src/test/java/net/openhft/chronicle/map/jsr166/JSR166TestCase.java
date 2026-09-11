@@ -278,27 +278,28 @@ public class JSR166TestCase {
 
     /**
      * Just like fail(reason), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will fail.
      */
     public void threadFail(String reason) {
         try {
             fail(reason);
-        } catch (AssertionFailedError t) {
+            //! Record AssertionError so worker failures reach the owning test across assertion implementations.
+        } catch (AssertionError t) {
             threadRecordFailure(t);
-            fail(reason);
+            throw t;
         }
     }
 
     /**
      * Just like assertTrue(b), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will fail.
      */
     public void threadAssertTrue(boolean b) {
         try {
             assertTrue(b);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
@@ -306,13 +307,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertFalse(b), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will fail.
      */
     public void threadAssertFalse(boolean b) {
         try {
             assertFalse(b);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
@@ -320,13 +321,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertNull(x), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will fail.
      */
     public void threadAssertNull(Object x) {
         try {
             assertNull(x);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
@@ -334,13 +335,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertEquals(x, y), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will fail.
      */
     public void threadAssertEquals(long x, long y) {
         try {
             assertEquals(x, y);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
@@ -348,13 +349,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertEquals(x, y), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will fail.
      */
     public void threadAssertEquals(Object x, Object y) {
         try {
             assertEquals(x, y);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         } catch (Throwable t) {
@@ -364,13 +365,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertSame(x, y), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will fail.
      */
     public void threadAssertSame(Object x, Object y) {
         try {
             assertSame(x, y);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }

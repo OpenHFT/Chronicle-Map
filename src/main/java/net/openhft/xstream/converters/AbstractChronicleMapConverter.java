@@ -114,34 +114,42 @@ class AbstractChronicleMapConverter<K, V> implements Converter {
             return null;
         if (!"cmap".equals(reader.getNodeName()))
             throw new ConversionException("should be under 'cmap' node");
-        // Jettison exposes the aliased map as an extra nested "cmap" wrapper.
+        // XStream/Jettison versions differ: 1.4.20 exposes an extra nested "cmap" wrapper.
         reader.moveDown();
+        if ("cmap".equals(reader.getNodeName())) {
+            readEntries(reader, context);
+            reader.moveUp();
+        } else {
+            readEntry(reader, context);
+            reader.moveUp();
+            readEntries(reader, context);
+        }
+        return null;
+    }
+
+    private void readEntries(HierarchicalStreamReader reader, UnmarshallingContext context) {
         while (reader.hasMoreChildren()) {
             reader.moveDown();
-
-            final String nodeName0 = reader.getNodeName();
-
-            if (!nodeName0.equals("entry"))
-                throw new ConversionException("unable to convert node named=" + nodeName0);
-
-            final K k;
-            final V v;
-
-            reader.moveDown();
-            k = deserialize(context, reader);
-            reader.moveUp();
-
-            reader.moveDown();
-            v = deserialize(context, reader);
-            reader.moveUp();
-
-            if (k != null)
-                map.put(k, v);
-
+            readEntry(reader, context);
             reader.moveUp();
         }
-        // Balance the wrapper moveDown above; entry/key/value moves are balanced in the loop.
+    }
+
+    private void readEntry(HierarchicalStreamReader reader, UnmarshallingContext context) {
+        final String nodeName = reader.getNodeName();
+
+        if (!nodeName.equals("entry"))
+            throw new ConversionException("unable to convert node named=" + nodeName);
+
+        reader.moveDown();
+        final K k = deserialize(context, reader);
         reader.moveUp();
-        return null;
+
+        reader.moveDown();
+        final V v = deserialize(context, reader);
+        reader.moveUp();
+
+        if (k != null)
+            map.put(k, v);
     }
 }
