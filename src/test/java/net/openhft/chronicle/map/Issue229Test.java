@@ -4,6 +4,7 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
+import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
 import org.junit.After;
 import org.junit.Assume;
@@ -12,8 +13,10 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 
 public class Issue229Test {
 
@@ -29,7 +32,7 @@ public class Issue229Test {
         mapFile.delete();
     }
 
-    @Test(expected = ChronicleHashRecoveryFailedException.class)
+    @Test
     public void assureExclusiveAccess() throws IOException {
         Assume.assumeFalse(OS.isWindows());
 
@@ -39,13 +42,16 @@ public class Issue229Test {
                 .createPersistedTo(mapFile)) {
             assertNotNull(readMap);
 
-            // It shall not be possible to recover since the
-            // file is open by the readMap
-            try (ChronicleMap<Long, Long> recoverMap = ChronicleMap
+            ChronicleMapBuilder<Long, Long> recoveryBuilder = ChronicleMap
                     .of(Long.class, Long.class)
-                    .entries(10)
-                    .recoverPersistedTo(mapFile, true)) {
-                assertNotNull(recoverMap);
+                    .entries(10);
+            AtomicReference<ChronicleMap<Long, Long>> unexpectedRecovery = new AtomicReference<>();
+            try {
+                //! Only recovery may supply the expected failure; opening and cleanup stay outside the assertion.
+                assertThrows(ChronicleHashRecoveryFailedException.class,
+                        () -> unexpectedRecovery.set(recoveryBuilder.recoverPersistedTo(mapFile, true)));
+            } finally {
+                Closeable.closeQuietly(unexpectedRecovery.get());
             }
         }
     }

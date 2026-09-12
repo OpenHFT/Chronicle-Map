@@ -277,27 +277,28 @@ public class JSR166TestCase {
 
     /**
      * Just like Assert.fail(reason), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will Assert.fail.
      */
     public void threadFail(String reason) {
         try {
             Assert.fail(reason);
-        } catch (AssertionFailedError t) {
+            //! JUnit 4 throws AssertionError, which is not caught by the JUnit 3 AssertionFailedError subtype.
+        } catch (AssertionError t) {
             threadRecordFailure(t);
-            Assert.fail(reason);
+            throw t;
         }
     }
 
     /**
      * Just like Assert.assertTrue(b), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will Assert.fail.
      */
     public void threadAssertTrue(boolean b) {
         try {
             Assert.assertTrue(b);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
@@ -305,13 +306,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertFalse(b), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will Assert.fail.
      */
     public void threadAssertFalse(boolean b) {
         try {
             Assert.assertFalse(b);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
@@ -319,13 +320,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertNull(x), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will Assert.fail.
      */
     public void threadAssertNull(Object x) {
         try {
             Assert.assertNull(x);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
@@ -333,13 +334,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertEquals(x, y), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will Assert.fail.
      */
     public void threadAssertEquals(long x, long y) {
         try {
             Assert.assertEquals(x, y);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
@@ -347,13 +348,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertEquals(x, y), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will Assert.fail.
      */
     public void threadAssertEquals(Object x, Object y) {
         try {
             Assert.assertEquals(x, y);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         } catch (Throwable t) {
@@ -363,13 +364,13 @@ public class JSR166TestCase {
 
     /**
      * Just like assertSame(x, y), but additionally recording (using
-     * threadRecordFailure) any AssertionFailedError thrown, so that
+     * threadRecordFailure) any AssertionError thrown, so that
      * the current testcase will Assert.fail.
      */
     public void threadAssertSame(Object x, Object y) {
         try {
             Assert.assertSame(x, y);
-        } catch (AssertionFailedError t) {
+        } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
         }
