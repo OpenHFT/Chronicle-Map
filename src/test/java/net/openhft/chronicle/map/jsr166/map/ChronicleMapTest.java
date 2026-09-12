@@ -354,16 +354,15 @@ class ChronicleMapTest extends JSR166TestCase {
      */
     @Test
     @Timeout(5)
-    public void testRemove2
-    () throws IOException {
-   /*     try(   ChronicleMap map = map5(8076)) {
-        map.remove(five, "E");
-    assertEquals(4, map.size());
-        assertFalse(map.containsKey(five));
-        map.remove(four, "A");
-        assertEquals(4, map.size());
-        assertTrue(map.containsKey(four));
-   */
+    void testRemove2() throws IOException {
+        try (ChronicleMap<Integer, CharSequence> map = map5()) {
+            assertTrue(map.remove(five, "E"));
+            assertEquals(4, map.size());
+            assertFalse(map.containsKey(five));
+            assertFalse(map.remove(four, "A"));
+            assertEquals(4, map.size());
+            assertEquals("D", map.get(four).toString());
+        }
     }
 
     /**
