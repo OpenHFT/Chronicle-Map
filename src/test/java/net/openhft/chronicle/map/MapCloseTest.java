@@ -19,10 +19,14 @@ public class MapCloseTest {
 
     @Test
     public void closeInContextTest() {
-        ChronicleMap<Integer, Integer> map =
-                of(Integer.class, Integer.class).entries(1).create();
-        ExternalMapQueryContext<Integer, Integer, ?> cxt = map.queryContext(1);
-        map.close();
+        try (ChronicleMap<Integer, Integer> map = of(Integer.class, Integer.class).entries(1).create()) {
+            try (ExternalMapQueryContext<Integer, Integer, ?> cxt = map.queryContext(1)) {
+                cxt.readLock().lock();
+                Assert.assertThrows(IllegalStateException.class, map::close);
+                Assert.assertTrue(map.isOpen());
+            }
+            map.put(1, 2);
+        }
     }
 
     @Test(expected = ChronicleHashClosedException.class)
