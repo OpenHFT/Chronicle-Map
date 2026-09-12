@@ -6,6 +6,7 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.hash.ReplicatedHashSegmentContext;
+import net.openhft.chronicle.hash.impl.BigSegmentHeader;
 import net.openhft.chronicle.hash.replication.ReplicableEntry;
 
 import java.lang.ref.WeakReference;
@@ -44,11 +45,11 @@ class OldDeletedEntriesCleanupThread extends Thread
     private final int[] inverseSegmentsPermutation;
 
     /**
-     * This object is used to determine that this thread is parked from {@link #sleepMillis(long)}
-     * or {@link #sleepNanos(long)}, not somewhere inside ChronicleMap logic, to interrupt()
-     * selectively in {@link #close()}.
+     * Identifies parks performed by {@link #sleepMillis(long)} and {@link #sleepNanos(long)} in
+     * thread dumps and diagnostics.
      */
     private final Object cleanupSleepingHandle = new Object();
+    private final long closeJoinTimeoutNanos;
 
     private volatile boolean shutdown;
 
@@ -57,15 +58,31 @@ class OldDeletedEntriesCleanupThread extends Thread
     private final long startTime = System.currentTimeMillis();
 
     OldDeletedEntriesCleanupThread(ReplicatedChronicleMap<?, ?, ?> map) {
+        this(map, defaultCloseJoinTimeoutNanos(), TimeUnit.NANOSECONDS);
+    }
+
+    OldDeletedEntriesCleanupThread(ReplicatedChronicleMap<?, ?, ?> map,
+                                   long closeJoinTimeout,
+                                   TimeUnit closeJoinTimeoutUnit) {
         super("Cleanup Thread for " + map.toIdentityString());
+        if (closeJoinTimeout <= 0)
+            throw new IllegalArgumentException("closeJoinTimeout must be positive");
         setDaemon(true);
         this.mapRef = new WeakReference<>(map);
+        this.closeJoinTimeoutNanos = closeJoinTimeoutUnit.toNanos(closeJoinTimeout);
         cleanupTimeout = map.cleanupTimeout;
         cleanupTimeoutUnit = map.cleanupTimeoutUnit;
         segments = map.segments();
 
         segmentsPermutation = randomPermutation(map.segments());
         inverseSegmentsPermutation = inversePermutation(segmentsPermutation);
+    }
+
+    private static long defaultCloseJoinTimeoutNanos() {
+        // A cleaner already waiting for a segment lock uses this timeout. Give that acquisition a
+        // chance to report its own dead-lock failure, then stop waiting rather than hanging close.
+        final long lockTimeoutSeconds = Math.max(0L, BigSegmentHeader.LOCK_TIMEOUT_SECONDS);
+        return TimeUnit.SECONDS.toNanos(lockTimeoutSeconds + 1L);
     }
 
     private static int[] randomPermutation(int n) {
@@ -101,8 +118,15 @@ class OldDeletedEntriesCleanupThread extends Thread
     public void run() {
         throwExceptionIfClosed();
 
-        if (System.currentTimeMillis() - startTime < 1_000)
-            return;
+        // Delay the first cleanup pass by up to a second after construction (see "delayed cleaner").
+        // Historically this exited the thread outright when less than a second had elapsed, which -
+        // because the thread is started immediately after construction - meant the cleanup thread
+        // almost always terminated before removing a single old deleted entry, so tombstones were
+        // only ever reclaimed as a side effect of a later put()/replication event on the segment.
+        // Wait out the remaining delay instead, respecting shutdown, then run the cleanup loop.
+        long remainingStartupDelay = 1_000 - (System.currentTimeMillis() - startTime);
+        if (remainingStartupDelay > 0)
+            sleepMillis(remainingStartupDelay);
 
         while (!shutdown) {
             int nextSegmentIndex;
@@ -184,18 +208,42 @@ class OldDeletedEntriesCleanupThread extends Thread
             LockSupport.parkUntil(cleanupSleepingHandle, deadline);
     }
 
-    private void sleepNanos(long nanos) {
+    void sleepNanos(long nanos) {
         long deadline = System.nanoTime() + nanos;
-        while (System.nanoTime() < deadline && !shutdown)
-            LockSupport.parkNanos(cleanupSleepingHandle, deadline);
+        long remaining;
+        while ((remaining = deadline - System.nanoTime()) > 0 && !shutdown)
+            LockSupport.parkNanos(cleanupSleepingHandle, remaining);
     }
 
     @Override
     public void close() {
         shutdown = true;
-        // this means blocked in sleepMillis() or sleepNanos()
-        if (LockSupport.getBlocker(this) == cleanupSleepingHandle)
-            this.interrupt(); // unblock
+        // Unblock both our explicit sleeps and a segment-lock wait. Map resources, including the
+        // thread's iteration context, must not be released until run() has finished.
+        interrupt();
+        if (Thread.currentThread() == this)
+            return;
+
+        boolean interrupted = false;
+        final long deadline = System.nanoTime() + closeJoinTimeoutNanos;
+        while (isAlive()) {
+            final long remaining = deadline - System.nanoTime();
+            if (remaining <= 0) {
+                if (interrupted)
+                    Thread.currentThread().interrupt();
+                throw new IllegalStateException(
+                        "Cleanup thread did not stop within " +
+                                TimeUnit.NANOSECONDS.toMillis(closeJoinTimeoutNanos) +
+                                " milliseconds; Chronicle Map resources have not been released");
+            }
+            try {
+                TimeUnit.NANOSECONDS.timedJoin(this, remaining);
+            } catch (InterruptedException e) {
+                interrupted = true;
+            }
+        }
+        if (interrupted)
+            Thread.currentThread().interrupt();
     }
 
     private int nextSegmentIndex(int segmentIndex) {
