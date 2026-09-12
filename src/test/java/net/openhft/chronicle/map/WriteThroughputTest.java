@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.util.Time;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,10 +14,10 @@ import java.util.stream.IntStream;
 /**
  * Created by Peter Lawrey on 12/05/15.
  */
-public class WriteThroughputTest {
-    @Ignore("Long running")
+class WriteThroughputTest {
     @Test
-    public void bandwidthTest() throws IOException {
+    @Disabled("Long running")
+    void bandwidthTest() throws IOException {
         int count = 2000;
         int size = 50 << 10;
 
@@ -60,9 +60,9 @@ public class WriteThroughputTest {
         }
     }
 
-    @Ignore("TODO")
     @Test
-    public void bandwidthTestZ() throws IOException {
+    @Disabled("TODO")
+    void bandwidthTestZ() throws IOException {
         int count = 2 << 10;
         int size = 50 << 10;
 

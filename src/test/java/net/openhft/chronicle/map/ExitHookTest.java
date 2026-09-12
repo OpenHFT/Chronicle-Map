@@ -9,22 +9,22 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.impl.VanillaChronicleHash;
 import net.openhft.chronicle.testframework.process.JavaProcessBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assume;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
-public class ExitHookTest {
+class ExitHookTest {
 
     private static final int KEY = 1;
     private static final int JVM_STARTUP_WAIT_TIME_MS = 10_000;
@@ -35,8 +35,8 @@ public class ExitHookTest {
     private static final String LOCKED = "LOCKED";
     private static AtomicReference<ChronicleMap<Integer, Integer>> mapReference;
 
-    @Rule
-    public final TemporaryFolder folder = new TemporaryFolder();
+    @TempDir
+    Path folder;
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -112,12 +112,12 @@ public class ExitHookTest {
     }
 
     @Test
-    public void testExitHook() throws IOException, InterruptedException {
+    void testExitHook() throws IOException, InterruptedException {
         if (!OS.isLinux() && !OS.isMacOSX())
             return; // This test runs only in Unix-like OSes
-        File mapFile = folder.newFile();
-        File lockingConfirmationFile = folder.newFile();
-        File preShutdownActionExecutionConfirmationFile = folder.newFile();
+        File mapFile = newTempFile();
+        File lockingConfirmationFile = newTempFile();
+        File preShutdownActionExecutionConfirmationFile = newTempFile();
         // Create a process which opens the map, acquires the lock and "hangs" for 30 seconds
         Process process = startOtherProcess(mapFile, lockingConfirmationFile, preShutdownActionExecutionConfirmationFile, false);
         // Let the other process actually reach the moment when it locks the map
@@ -129,8 +129,8 @@ public class ExitHookTest {
         int actual = process.exitValue();
         if (actual != 0) // clean shutdown
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
-        ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
-        try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
+        try (ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
+             ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             // Test that we are able to lock the segment, i.e. the lock was released in other
             // process, thanks to default shutdown hook.
             c.writeLock().lock();
@@ -140,11 +140,11 @@ public class ExitHookTest {
     }
 
     @Test
-    public void testSkipExitHook() throws IOException, InterruptedException {
-        Assume.assumeTrue("This test runs only in Unix-like OSes", OS.isLinux() || OS.isMacOSX());
-        File mapFile = folder.newFile();
-        File lockingConfirmationFile = folder.newFile();
-        File shutdownActionConfirmationFile = folder.newFile();
+    void testSkipExitHook() throws IOException, InterruptedException {
+        assumeTrue(OS.isLinux() || OS.isMacOSX(), "This test runs only in Unix-like OSes");
+        File mapFile = newTempFile();
+        File lockingConfirmationFile = newTempFile();
+        File shutdownActionConfirmationFile = newTempFile();
         // Create a process which opens the map, acquires the lock and "hangs" for 30 seconds
         Process process = startOtherProcess(mapFile, lockingConfirmationFile, shutdownActionConfirmationFile, true);
         // Let the other process actually reach the moment when it locks the map
@@ -156,8 +156,8 @@ public class ExitHookTest {
         int actual = process.exitValue();
         if (actual != 0) // clean shutdown
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
-        ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
-        try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
+        try (ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
+             ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             // Test that we are able to lock the segment, i.e. the lock was released in other
             // process, thanks to user shutdown hook.
             c.writeLock().lock();
@@ -167,33 +167,37 @@ public class ExitHookTest {
     }
 
     @Test
-    public void testSerialization1() throws Exception {
-        File mapFile = folder.newFile();
-        ChronicleMap<Integer, Integer> expected = createMapBuilder()
+    void testSerialization1() throws Exception {
+        File mapFile = newTempFile();
+        try (ChronicleMap<Integer, Integer> expected = createMapBuilder()
                 .skipCloseOnExitHook(true)
                 .createPersistedTo(mapFile);
-        ChronicleMap<Integer, Integer> actual = createMapBuilder()
-                .createPersistedTo(mapFile);
-        Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
-        assertEquals(skipCloseOnExitHook.get(expected), skipCloseOnExitHook.get(actual));
+             ChronicleMap<Integer, Integer> actual = createMapBuilder().createPersistedTo(mapFile)) {
+            Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
+            assertEquals(skipCloseOnExitHook.get(expected), skipCloseOnExitHook.get(actual));
+        }
     }
 
     @Test
-    public void testSerialization2() throws Exception {
-        File mapFile = folder.newFile();
+    void testSerialization2() throws Exception {
+        File mapFile = newTempFile();
         ChronicleMap<Integer, Integer> expected = createMapBuilder()
                 .createPersistedTo(mapFile);
         expected.close();
-        ChronicleMap<Integer, Integer> actual = createMapBuilder()
-                .createPersistedTo(mapFile);
-        Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
-        assertEquals(false, skipCloseOnExitHook.get(actual));
+        try (ChronicleMap<Integer, Integer> actual = createMapBuilder().createPersistedTo(mapFile)) {
+            Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
+            assertEquals(false, skipCloseOnExitHook.get(actual));
+        }
     }
 
     private static @NotNull Field getPrivateField(Class<?> aClass, String fieldName) throws NoSuchFieldException {
         Field field = aClass.getDeclaredField(fieldName);
         field.setAccessible(true);
         return field;
+    }
+
+    private File newTempFile() throws IOException {
+        return Files.createTempFile(folder, "chronicle-map", ".tmp").toFile();
     }
 
     private void waitForLockingConfirmation(File lockingConfirmationFile) throws IOException {
@@ -236,8 +240,8 @@ public class ExitHookTest {
         return JavaProcessBuilder.create(ExitHookTest.class)
                 //.inheritingIO()
                 .withProgramArguments(mapFile.getAbsolutePath(),
-                    lockingFile.getAbsolutePath(),
-                    outputFile.getAbsolutePath(),
-                    String.valueOf(skipCloseOnExitHook)).start();
+                        lockingFile.getAbsolutePath(),
+                        outputFile.getAbsolutePath(),
+                        String.valueOf(skipCloseOnExitHook)).start();
     }
 }

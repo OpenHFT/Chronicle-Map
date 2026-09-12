@@ -6,12 +6,13 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.hash.ChronicleHashBuilderPrivateAPI;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /*
  * Originally written by Doug Lea with assistance from members of JCP JSR-166
@@ -21,14 +22,14 @@ import static org.junit.Assert.*;
  * Pat Fisher, Mike Judd. Then modified by the Open HFT team.
  */
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class ReplicatedChronicleMapTest extends JSR166TestCase {
+class ReplicatedChronicleMapTest extends JSR166TestCase {
     ChronicleMap<Integer, CharSequence> newShmIntString() {
         ChronicleMapBuilder<Integer, CharSequence> builder = ChronicleMap
                 .of(Integer.class, CharSequence.class)
                 .entries(1000)
                 .averageValueSize(20);
 
-        final ChronicleHashBuilderPrivateAPI<?, ?> privateAPI = Objects.requireNonNull(Jvm.getValue(builder,"privateAPI"));
+        final ChronicleHashBuilderPrivateAPI<?, ?> privateAPI = Objects.requireNonNull(Jvm.getValue(builder, "privateAPI"));
         privateAPI.replication((byte) 1);
         return builder.create();
     }
@@ -39,7 +40,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
                 .entries(1000)
                 .averageKeySize(20)
                 .averageValueSize(20);
-        final ChronicleHashBuilderPrivateAPI<?, ?> privateAPI = Objects.requireNonNull(Jvm.getValue(builder,"privateAPI"));
+        final ChronicleHashBuilderPrivateAPI<?, ?> privateAPI = Objects.requireNonNull(Jvm.getValue(builder, "privateAPI"));
         privateAPI.replication((byte) 1);
         return builder.create();
     }
@@ -64,7 +65,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * clear removes all pairs
      */
     @Test
-    public void testClear() {
+    void testClear() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.clear();
             assertEquals(0, map.size());
@@ -75,7 +76,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * Maps with same contents are equal
      */
     @Test
-    public void testEquals() {
+    void testEquals() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map1 = map5();
              ChronicleMap<Integer, CharSequence> map2 = map5()) {
             assertEquals(map1, map2);
@@ -90,7 +91,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * contains returns {@code true} for contained value
      */
     @Test
-    public void testContains() {
+    void testContains() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
 
             assertTrue(map.containsValue("A"));
@@ -102,7 +103,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * containsKey returns {@code true} for contained key
      */
     @Test
-    public void testContainsKey() {
+    void testContainsKey() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(map.containsKey(JSR166TestCase.one));
             assertFalse(map.containsKey(JSR166TestCase.zero));
@@ -113,7 +114,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * containsValue returns {@code true} for held values
      */
     @Test
-    public void testContainsValue() {
+    void testContainsValue() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(map.containsValue("A"));
             assertFalse(map.containsValue("Z"));
@@ -124,7 +125,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * Inserted elements that are subclasses of the same Comparable class are found.
      */
     @Test
-    @Ignore("TODO: port from JSR166 testComparableFamily")
+    @Disabled("TODO: port from JSR166 testComparableFamily")
     public void testComparableFamily() {
         // see git history pre-2026 for original body
     }
@@ -134,7 +135,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * can be inserted and found.
      */
     @Test
-    @Ignore("TODO: port from JSR166 testGenericComparable")
+    @Disabled("TODO: port from JSR166 testGenericComparable")
     public void testGenericComparable() {
         // see git history pre-2026 for original body
     }
@@ -144,7 +145,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * generic type parameters based on Comparable can be inserted and found.
      */
     @Test
-    @Ignore("TODO: port from JSR166 testGenericComparable2")
+    @Disabled("TODO: port from JSR166 testGenericComparable2")
     public void testGenericComparable2() {
         // see git history pre-2026 for original body
     }
@@ -153,7 +154,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * get returns the correct element at the given key, or null if not present
      */
     @Test
-    public void testGet() {
+    void testGet() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.get(JSR166TestCase.one).toString());
             ChronicleMap<Integer, CharSequence> empty = newShmIntString();
@@ -165,7 +166,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * isEmpty is {@code true} of empty map and {@code false} for non-empty
      */
     @Test
-    public void testIsEmpty() {
+    void testIsEmpty() {
         try (ChronicleMap<Integer, CharSequence> empty = newShmIntString();
              ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(empty.isEmpty());
@@ -177,7 +178,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * keySet returns a Set containing all the keys
      */
     @Test
-    public void testKeySet() {
+    void testKeySet() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.keySet();
             assertEquals(5, s.size());
@@ -193,7 +194,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * keySet.toArray returns contains all keys
      */
     @Test
-    public void testKeySetToArray() {
+    void testKeySetToArray() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.keySet();
             Object[] ar = s.toArray();
@@ -208,7 +209,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * Values.toArray contains all values
      */
     @Test
-    public void testValuesToArray() {
+    void testValuesToArray() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Collection v = map.values();
             ArrayList<CharSequence> s = new ArrayList<>(map.values());
@@ -225,7 +226,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * entrySet.toArray contains all entries
      */
     @Test
-    public void testEntrySetToArray() {
+    void testEntrySetToArray() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.entrySet();
             Object[] ar = s.toArray();
@@ -241,7 +242,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * values collection contains all values
      */
     @Test
-    public void testValues() {
+    void testValues() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Collection s = map.values();
             assertEquals(5, s.size());
@@ -257,7 +258,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * entrySet contains all pairs
      */
     @Test
-    public void testEntrySet() {
+    void testEntrySet() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.entrySet();
             assertEquals(5, s.size());
@@ -283,7 +284,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * putAll adds all key-value pairs from the given map
      */
     @Test
-    public void testPutAll() {
+    void testPutAll() {
         try (ChronicleMap<Integer, CharSequence> empty = newShmIntString()) {
             ChronicleMap<Integer, CharSequence> map = map5();
             empty.putAll(map);
@@ -300,7 +301,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * putIfAbsent works when the given key is not present
      */
     @Test
-    public void testPutIfAbsent() {
+    void testPutIfAbsent() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.putIfAbsent(JSR166TestCase.six, "Z");
             assertTrue(map.containsKey(JSR166TestCase.six));
@@ -311,7 +312,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * putIfAbsent does not add the §pair if the key is already present
      */
     @Test
-    public void testPutIfAbsent2() {
+    void testPutIfAbsent2() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.putIfAbsent(JSR166TestCase.one, "Z").toString());
         }
@@ -321,7 +322,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace fails when the given key is not present
      */
     @Test
-    public void testReplace() {
+    void testReplace() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertNull(map.replace(JSR166TestCase.six, "Z"));
             assertFalse(map.containsKey(JSR166TestCase.six));
@@ -332,7 +333,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace succeeds if the key is already present
      */
     @Test
-    public void testReplace2() {
+    void testReplace2() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertNotNull(map.replace(JSR166TestCase.one, "Z"));
             assertEquals("Z", map.get(JSR166TestCase.one).toString());
@@ -343,7 +344,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace value fails when the given key not mapped to expected value
      */
     @Test
-    public void testReplaceValue() {
+    void testReplaceValue() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.get(JSR166TestCase.one).toString());
             assertFalse(map.replace(JSR166TestCase.one, "Z", "Z"));
@@ -355,7 +356,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace value succeeds when the given key mapped to expected value
      */
     @Test
-    public void testReplaceValue2() {
+    void testReplaceValue2() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.get(JSR166TestCase.one).toString());
             assertTrue(map.replace(JSR166TestCase.one, "A", "Z"));
@@ -367,7 +368,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * remove removes the correct key-value pair from the map
      */
     @Test
-    public void testRemove() {
+    void testRemove() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.remove(JSR166TestCase.five);
             assertEquals(4, map.size());
@@ -379,7 +380,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * remove(key,value) removes only if pair present
      */
     @Test
-    public void testRemove2() {
+    void testRemove2() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.remove(JSR166TestCase.five, "E");
             assertEquals(4, map.size());
@@ -394,7 +395,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * size returns the correct values
      */
     @Test
-    public void testSize() {
+    void testSize() {
         try (ChronicleMap<Integer, CharSequence> map = map5();
              ChronicleMap<Integer, CharSequence> empty = newShmIntString()) {
             assertEquals(0, empty.size());
@@ -406,7 +407,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * toString contains toString of elements
      */
     @Test
-    public void testToString() {
+    void testToString() {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             String s = map.toString();
             for (int i = 1; i <= 5; ++i) {
@@ -419,8 +420,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * get(null) throws NPE
      */
     @Test
-    public void testGet_NullPointerException() {
-        try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
+    void testGet_NullPointerException() {
+        try (ChronicleMap<Integer, CharSequence> c = newShmIntString();) {
             c.get(null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
@@ -433,7 +434,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * containsKey(null) throws NPE
      */
     @Test
-    public void testContainsKey_NullPointerException() {
+    void testContainsKey_NullPointerException() {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
 
             c.containsKey(null);
@@ -448,8 +449,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * put(null,x) throws NPE
      */
     @Test
-    public void testPut1_NullPointerException() {
-        try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
+    void testPut1_NullPointerException() {
+        try (ChronicleMap<Integer, CharSequence> c = newShmIntString();) {
             c.put(null, "whatever");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
@@ -462,7 +463,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * put(x, null) throws NPE
      */
     @Test
-    public void testPut2_NullPointerException() {
+    void testPut2_NullPointerException() {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
             c.put(JSR166TestCase.notPresent, null);
             failExpectedException();
@@ -476,8 +477,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * putIfAbsent(null, x) throws NPE
      */
     @Test
-    public void testPutIfAbsent1_NullPointerException() {
-        try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
+    void testPutIfAbsent1_NullPointerException() {
+        try (ChronicleMap<Integer, CharSequence> c = newShmIntString();) {
             c.putIfAbsent(null, "whatever");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
@@ -490,7 +491,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace(null, x) throws NPE
      */
     @Test
-    public void testReplace_NullPointerException() {
+    void testReplace_NullPointerException() {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
             c.replace(null, "whatever");
             failExpectedException();
@@ -504,8 +505,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace(null, x, y) throws NPE
      */
     @Test
-    public void testReplaceValue_NullPointerException() {
-        try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
+    void testReplaceValue_NullPointerException() throws IOException {
+        try (ChronicleMap<Integer, CharSequence> c = newShmIntString();) {
             c.replace(null, "A", "whatever");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
@@ -518,7 +519,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * putIfAbsent(x, null) throws NPE
      */
     @Test
-    public void testPutIfAbsent2_NullPointerException() {
+    void testPutIfAbsent2_NullPointerException() {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
             c.putIfAbsent(JSR166TestCase.notPresent, null);
             failExpectedException();
@@ -532,8 +533,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace(x, null) throws NPE
      */
     @Test
-    public void testReplace2_NullPointerException() {
-        try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
+    void testReplace2_NullPointerException() {
+        try (ChronicleMap<Integer, CharSequence> c = newShmIntString();) {
             c.replace(JSR166TestCase.notPresent, null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
@@ -546,8 +547,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace(x, null, y) throws NPE
      */
     @Test
-    public void testReplaceValue2_NullPointerException() {
-        try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
+    void testReplaceValue2_NullPointerException() {
+        try (ChronicleMap<Integer, CharSequence> c = newShmIntString();) {
             c.replace(JSR166TestCase.notPresent, null, "A");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
@@ -560,7 +561,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * replace(x, y, null) throws NPE
      */
     @Test
-    public void testReplaceValue3_NullPointerException() {
+    void testReplaceValue3_NullPointerException() {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString()) {
             c.replace(JSR166TestCase.notPresent, "A", null);
             failExpectedException();
@@ -574,8 +575,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * remove(null) throws NPE
      */
     @Test
-    public void testRemove1_NullPointerException() {
-        try (ChronicleMap<CharSequence, CharSequence> c = newShmStringString()) {
+    void testRemove1_NullPointerException() {
+        try (ChronicleMap<CharSequence, CharSequence> c = newShmStringString();) {
             c.put("sadsdf", "asdads");
             c.remove(null);
             failExpectedException();
@@ -589,8 +590,8 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * remove(null, x) throws NPE
      */
     @Test
-    public void testRemove2_NullPointerException() {
-        try (ChronicleMap<CharSequence, CharSequence> c = newShmStringString()) {
+    void testRemove2_NullPointerException() {
+        try (ChronicleMap<CharSequence, CharSequence> c = newShmStringString();) {
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
             failExpectedException();
@@ -604,7 +605,7 @@ public class ReplicatedChronicleMapTest extends JSR166TestCase {
      * remove(x, null) returns false
      */
     @Test
-    public void testRemove3() {
+    void testRemove3() throws IOException {
         try (ChronicleMap<CharSequence, CharSequence> c = newShmStringString()) {
             c.put("sadsdf", "asdads");
             assertFalse(c.remove("sadsdf", null));

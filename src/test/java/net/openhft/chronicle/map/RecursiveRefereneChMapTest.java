@@ -5,19 +5,19 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.util.Time;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.util.Map;
 
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class RecursiveRefereneChMapTest {
     public static final String TMP = OS.getTarget();
 
     @Test
-    public void testRecursive() {
+    void testRecursive() throws IOException {
         File file = new File(TMP + "/test." + Time.uniqueId() + ".tmp");
         file.deleteOnExit();
         Map<String, StupidCycle> map = ChronicleMapBuilder.of(String.class, StupidCycle.class)

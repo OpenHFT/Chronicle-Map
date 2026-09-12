@@ -4,14 +4,14 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.set.Builder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class SimplePersistedMapOverflowTest {
+class SimplePersistedMapOverflowTest {
 
     @Test
-    public void simplePersistedMapOverflowTest() throws IOException {
+    void simplePersistedMapOverflowTest() throws IOException {
         try (ChronicleMap<Integer, Integer> map = ChronicleMap
                 .of(Integer.class, Integer.class)
                 .entries(1_000)

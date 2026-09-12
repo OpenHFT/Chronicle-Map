@@ -5,12 +5,12 @@ package eg;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.MapSegmentContext;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.LongSummaryStatistics;
 
-public class AverageValueSizeTest {
+class AverageValueSizeTest {
 
     public static <V> double averageValueSize(Class<V> valueClass, Iterable<V> values) {
         try (ChronicleMap<Integer, V> testMap = ChronicleMap.of(Integer.class, valueClass)
@@ -29,7 +29,7 @@ public class AverageValueSizeTest {
     }
 
     @Test
-    public void averageValueSizeTest() {
+    void averageValueSizeTest() {
         System.out.println(averageValueSize(String.class,
                 Arrays.asList("banana", "apple", "watermelon")));
     }

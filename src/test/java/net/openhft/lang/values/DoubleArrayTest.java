@@ -5,16 +5,15 @@ package net.openhft.lang.values;
 
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class DoubleArrayTest {
+class DoubleArrayTest {
 
     @Test
-    public void testSetData() {
+    void testSetData() {
         DoubleArray da = new DoubleArray(64);
         da.setData(new double[]{1, 2, 3, 4, 5, 6, 7, 8});
         assertEquals(8, da.length());
@@ -53,7 +52,7 @@ public class DoubleArrayTest {
     }
 
     @Test
-    public void addToAMap() {
+    void addToAMap() {
         DoubleArray a = new DoubleArray(10);
         a.setData(new double[]{1, 2, 3, 4, 5});
 
@@ -74,8 +73,8 @@ public class DoubleArrayTest {
     }
 
     @Test
-    @Ignore("TODO What is HACK???")
-    public void addToAMap2() {
+    @Disabled("TODO What is HACK???")
+    void addToAMap2() {
         DoubleArray.HACK = false;
         DoubleArray a = new DoubleArray(10);
         a.setData(new double[]{1, 2, 3, 4, 5});

@@ -6,14 +6,14 @@ package net.openhft.chronicle.map.jsr166.map;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.jsr166.JSR166TestCase;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Timeout;
 
 /*
  * Written by Doug Lea with assistance from members of JCP JSR-166
@@ -24,7 +24,7 @@ import static org.junit.Assert.*;
  */
 
 @SuppressWarnings({"rawtypes", "unchecked", "try"})
-public class ChronicleMapTest extends JSR166TestCase {
+class ChronicleMapTest extends JSR166TestCase {
 
     static ChronicleMap<Integer, CharSequence> newShmIntString(int size) {
         return ChronicleMapBuilder.of(Integer.class, CharSequence.class)
@@ -57,8 +57,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * clear removes all pairs
      */
-    @Test(timeout = 5000)
-    public void testClear() throws IOException {
+    @Test
+    @Timeout(5)
+    void testClear() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.clear();
             assertEquals(0, map.size());
@@ -68,8 +69,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * contains returns {@code true} for contained value
      */
-    @Test(timeout = 5000)
-    public void testContains() throws IOException {
+    @Test
+    @Timeout(5)
+    void testContains() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(map.containsValue("A"));
             assertFalse(map.containsValue("Z"));
@@ -79,8 +81,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * containsKey returns {@code true} for contained key
      */
-    @Test(timeout = 5000)
-    public void testContainsKey() throws IOException {
+    @Test
+    @Timeout(5)
+    void testContainsKey() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(map.containsKey(one));
             assertFalse(map.containsKey(zero));
@@ -90,8 +93,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * containsValue returns {@code true} for held values
      */
-    @Test(timeout = 5000)
-    public void testContainsValue() throws IOException {
+    @Test
+    @Timeout(5)
+    void testContainsValue() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertTrue(map.containsValue("A"));
             assertFalse(map.containsValue("Z"));
@@ -101,8 +105,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * get returns the correct element at the given key, or null if not present
      */
-    @Test(timeout = 5000)
-    public void testGet() throws IOException {
+    @Test
+    @Timeout(5)
+    void testGet() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.get(one).toString());
             try (ChronicleMap<CharSequence, CharSequence> empty = newStrStrMap(8078)) {
@@ -114,8 +119,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * isEmpty is {@code true} of empty map and {@code false} for non-empty
      */
-    @Test(timeout = 5000)
-    public void testIsEmpty() throws IOException {
+    @Test
+    @Timeout(5)
+    void testIsEmpty() throws IOException {
         try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8078)) {
             try (ChronicleMap<Integer, CharSequence> map = map5()) {
                 if (!empty.isEmpty()) {
@@ -130,8 +136,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * keySet returns a Set containing all the keys
      */
-    @Test(timeout = 5000)
-    public void testKeySet() throws IOException {
+    @Test
+    @Timeout(5)
+    void testKeySet() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.keySet();
             assertEquals(5, s.size());
@@ -146,8 +153,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * keySet.toArray returns contains all keys
      */
-    @Test(timeout = 5000)
-    public void testKeySetToArray() throws IOException {
+    @Test
+    @Timeout(5)
+    void testKeySetToArray() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.keySet();
             Object[] ar = s.toArray();
@@ -161,8 +169,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * Values.toArray contains all values
      */
-    @Test(timeout = 5000)
-    public void testValuesToArray() throws IOException {
+    @Test
+    @Timeout(5)
+    void testValuesToArray() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Collection<CharSequence> vs = map.values();
             ArrayList<CharSequence> s = new ArrayList<>(vs);
@@ -178,8 +187,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet.toArray contains all entries
      */
-    @Test(timeout = 5000)
-    public void testEntrySetToArray() throws IOException {
+    @Test
+    @Timeout(5)
+    void testEntrySetToArray() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set s = map.entrySet();
             Object[] ar = s.toArray();
@@ -194,8 +204,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * values collection contains all values
      */
-    @Test(timeout = 5000)
-    public void testValues() throws IOException {
+    @Test
+    @Timeout(5)
+    void testValues() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Collection s = map.values();
             assertEquals(5, s.size());
@@ -210,8 +221,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * entrySet contains all pairs
      */
-    @Test(timeout = 5000)
-    public void testEntrySet() throws IOException {
+    @Test
+    @Timeout(5)
+    void testEntrySet() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             Set<Entry<Integer, CharSequence>> s = map.entrySet();
             assertEquals(5, s.size());
@@ -230,8 +242,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * putAll adds all key-value pairs from the given map
      */
-    @Test(timeout = 5000)
-    public void testPutAll() throws IOException {
+    @Test
+    @Timeout(5)
+    void testPutAll() throws IOException {
 
         try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8076)) {
             try (ChronicleMap<Integer, CharSequence> map = map5()) {
@@ -249,8 +262,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * putIfAbsent works when the given key is not present
      */
-    @Test(timeout = 5000)
-    public void testPutIfAbsent() throws IOException {
+    @Test
+    @Timeout(5)
+    void testPutIfAbsent() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.putIfAbsent(six, "Z");
             assertTrue(map.containsKey(six));
@@ -260,8 +274,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * putIfAbsent does not add the pair if the key is already present
      */
-    @Test(timeout = 5000)
-    public void testPutIfAbsent2() throws IOException {
+    @Test
+    @Timeout(5)
+    void testPutIfAbsent2() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.putIfAbsent(one, "Z").toString());
         }
@@ -270,8 +285,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * replace fails when the given key is not present
      */
-    @Test(timeout = 5000)
-    public void testReplace() throws IOException {
+    @Test
+    @Timeout(5)
+    void testReplace() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertNull(map.replace(six, "Z"));
             assertFalse(map.containsKey(six));
@@ -281,8 +297,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * replace succeeds if the key is already present
      */
-    @Test(timeout = 5000)
-    public void testReplace2() throws
+    @Test
+    @Timeout(5)
+    void testReplace2() throws
             IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertNotNull(map.replace(one, "Z"));
@@ -293,8 +310,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * replace value fails when the given key not mapped to expected value
      */
-    @Test(timeout = 5000)
-    public void testReplaceValue() throws
+    @Test
+    @Timeout(5)
+    void testReplaceValue() throws
             IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.get(one).toString());
@@ -306,8 +324,10 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * replace value succeeds when the given key mapped to expected value
      */
-    @Test(timeout = 5000)
-    public void testReplaceValue2() throws IOException {
+    @Test
+    @Timeout(5)
+    public void testReplaceValue2
+    () throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             assertEquals("A", map.get(one).toString());
             assertTrue(map.replace(one, "A", "Z"));
@@ -318,8 +338,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * remove removes the correct key-value pair from the map
      */
-    @Test(timeout = 5000)
-    public void testRemove() throws
+    @Test
+    @Timeout(5)
+    void testRemove() throws
             IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             map.remove(five);
@@ -329,10 +350,27 @@ public class ChronicleMapTest extends JSR166TestCase {
     }
 
     /**
+     * remove(key,value) removes only if pair present
+     */
+    @Test
+    @Timeout(5)
+    void testRemove2() throws IOException {
+        try (ChronicleMap<Integer, CharSequence> map = map5()) {
+            assertTrue(map.remove(five, "E"));
+            assertEquals(4, map.size());
+            assertFalse(map.containsKey(five));
+            assertFalse(map.remove(four, "A"));
+            assertEquals(4, map.size());
+            assertEquals("D", map.get(four).toString());
+        }
+    }
+
+    /**
      * size returns the correct values
      */
-    @Test(timeout = 5000)
-    public void testSize() throws IOException {
+    @Test
+    @Timeout(5)
+    void testSize() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8078)) {
                 assertEquals(0, empty.size());
@@ -344,8 +382,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * size returns the correct values
      */
-    @Test(timeout = 10000)
-    public void testSize2() throws IOException {
+    @Test
+    @Timeout(10)
+    void testSize2() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8078)) {
                 assertEquals(0, empty.size());
@@ -357,8 +396,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * size returns the correct values
      */
-    @Test(timeout = 5000)
-    public void testSize3() throws IOException {
+    @Test
+    @Timeout(5)
+    void testSize3() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             try (ChronicleMap<Integer, CharSequence> empty = newShmIntString(8078)) {
                 assertEquals(0, empty.size());
@@ -370,8 +410,9 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * toString contains toString of elements
      */
-    @Test(timeout = 5000)
-    public void testToString() throws IOException {
+    @Test
+    @Timeout(5)
+    void testToString() throws IOException {
         try (ChronicleMap<Integer, CharSequence> map = map5()) {
             String s = map.toString();
             for (int i = 1; i <= 5; ++i) {
@@ -383,180 +424,199 @@ public class ChronicleMapTest extends JSR166TestCase {
     /**
      * get(null) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testGet_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    void testGet_NullPointerException() throws IOException {
 
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.get(null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * containsKey(null) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testContainsKey_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    void testContainsKey_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.containsKey(null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * put(null,x) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testPut1_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    void testPut1_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.put(null, "whatever");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * put(x, null) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testPut2_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    public void testPut2_NullPointerException
+    () throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.put(notPresent, null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * putIfAbsent(null, x) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testPutIfAbsent1_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    public void testPutIfAbsent1_NullPointerException
+    () throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.putIfAbsent(null, "whatever");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * replace(null, x) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testReplace_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    public void testReplace_NullPointerException
+    () throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(null, "whatever");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * replace(null, x, y) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testReplaceValue_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    public void testReplaceValue_NullPointerException
+    () throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(null, "A", "whatever");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * putIfAbsent(x, null) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testPutIfAbsent2_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    void testPutIfAbsent2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.putIfAbsent(notPresent, null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * replace(x, null) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testReplace2_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    void testReplace2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * replace(x, null, y) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testReplaceValue2_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    void testReplaceValue2_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, null, "A");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * replace(x, y, null) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testReplaceValue3_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    void testReplaceValue3_NullPointerException() throws IOException {
         try (ChronicleMap<Integer, CharSequence> c = newShmIntString(8076)) {
             c.replace(notPresent, "A", null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * remove(null) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testRemove1_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    void testRemove1_NullPointerException() throws IOException {
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8076)) {
             c.put("sadsdf", "asdads");
             c.remove(null);
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * remove(null, x) throws NPE
      */
-    @Test(timeout = 5000)
-    public void testRemove2_NullPointerException() throws IOException {
+    @Test
+    @Timeout(5)
+    public void testRemove2_NullPointerException
+    () throws IOException {
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8086)) {
             c.put("sadsdf", "asdads");
             c.remove(null, "whatever");
             failExpectedException();
         } catch (NullPointerException | IllegalArgumentException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         }
     }
 
     /**
      * remove(x, null) returns false
      */
-    @Test(timeout = 5000)
-    public void testRemove3() throws IOException {
+    @Test
+    @Timeout(5)
+    void testRemove3() throws IOException {
 
         try (ChronicleMap<CharSequence, CharSequence> c = newStrStrMap(8076)) {
             c.put("sadsdf", "asdads");
@@ -565,7 +625,7 @@ public class ChronicleMapTest extends JSR166TestCase {
     }
 
     @Test
-    public void testPercentageComplete() {
+    void testPercentageComplete() {
 
         try (ChronicleMap<Integer, Integer> map = ChronicleMap
                 .of(Integer.class, Integer.class)
@@ -583,8 +643,8 @@ public class ChronicleMapTest extends JSR166TestCase {
             }
             long remainingAutoResizes = map.remainingAutoResizes();
             short percentageFreeSpace = map.percentageFreeSpace();
-            Assert.assertEquals(0, (int) remainingAutoResizes);
-            Assert.assertTrue(percentageFreeSpace < 6);
+            assertEquals(0, (int) remainingAutoResizes);
+            assertTrue(percentageFreeSpace < 6);
             ChronicleMap.SegmentStats[] segmentStats = map.segmentStats();
             assertEquals(3, segmentStats.length);
             for (ChronicleMap.SegmentStats ss : segmentStats) {

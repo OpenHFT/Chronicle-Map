@@ -11,7 +11,7 @@ import net.openhft.chronicle.values.Values;
 import java.io.File;
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by peter.lawrey on 28/02/14.
@@ -50,7 +50,7 @@ import static org.junit.Assert.assertNotNull;
  * run 1 50000 : 50/90/99/99.9/99.99/worst: 0.7/3.3/10/16/22/155
  * </pre>
  */
-public class CHMLatencyTestMain {
+class CHMLatencyTestMain {
     static final int KEYS = 1000 * 1000;
     static final int RUN_TIME = 30;
     static final long START_TIME = System.currentTimeMillis();

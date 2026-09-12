@@ -13,15 +13,15 @@ import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PointListSerializationTest {
+class PointListSerializationTest {
 
     @Test
-    public void testComplexSerialization() {
+    void testComplexSerialization() {
         try (ChronicleMap<String, A> map = ChronicleMapBuilder
                 .of(String.class, A.class)
                 .valueMarshaller(AMarshaller.INSTANCE)

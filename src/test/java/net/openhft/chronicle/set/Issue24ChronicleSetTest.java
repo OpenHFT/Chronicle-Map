@@ -6,7 +6,7 @@ package net.openhft.chronicle.set;
 import net.openhft.chronicle.hash.ChronicleHash;
 import net.openhft.chronicle.hash.ChronicleHashBuilder;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.concurrent.Executors;
 
 import static com.samskivert.util.CollectionUtil.selectRandomSubset;
 
-public class Issue24ChronicleSetTest {
+class Issue24ChronicleSetTest {
 
     public static <K, H extends ChronicleHash<K, ?, ?, ?>, B extends ChronicleHashBuilder<K, H, B>>
     H init(B builder, int entrySize, int averageKeySize) throws IOException {
@@ -40,7 +40,7 @@ public class Issue24ChronicleSetTest {
     }
 
     @Test
-    public void issue24ChronicleSetTest() throws IOException {
+    void issue24ChronicleSetTest() throws IOException {
         ChronicleSet<String> set = initSet(String.class, 1_000_000, 30);
         ExecutorService executor = Executors.newFixedThreadPool(5,
                 new NamedThreadFactory("test"));
@@ -56,7 +56,7 @@ public class Issue24ChronicleSetTest {
 
     }
 
-    public static class WorkerThread implements Runnable {
+    static class WorkerThread implements Runnable {
         private final ChronicleSet<String> set;
 
         public WorkerThread(ChronicleSet<String> set) {

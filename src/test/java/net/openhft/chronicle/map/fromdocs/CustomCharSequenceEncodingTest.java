@@ -4,16 +4,17 @@
 package net.openhft.chronicle.map.fromdocs;
 
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class CustomCharSequenceEncodingTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class CustomCharSequenceEncodingTest {
 
     @Test
-    public void customCharSequenceEncodingTest() {
+    void customCharSequenceEncodingTest() {
         Charset charset = StandardCharsets.UTF_8;
         int charBufferSize = 4;
         int bytesBufferSize = 8;
@@ -34,7 +35,7 @@ public class CustomCharSequenceEncodingTest {
     }
 
     @Test
-    public void gbkCharSequenceEncodingTest() {
+    void gbkCharSequenceEncodingTest() {
         Charset charset = Charset.forName("GBK");
         int charBufferSize = 100;
         int bytesBufferSize = 200;
@@ -52,8 +53,8 @@ public class CustomCharSequenceEncodingTest {
             englishToChinese.put("hello", "你好");
             englishToChinese.put("bye", "再见");
 
-            Assert.assertEquals("你好", englishToChinese.get("hello").toString());
-            Assert.assertEquals("再见", englishToChinese.get("bye").toString());
+            assertEquals("你好", englishToChinese.get("hello").toString());
+            assertEquals("再见", englishToChinese.get("bye").toString());
         }
     }
 }

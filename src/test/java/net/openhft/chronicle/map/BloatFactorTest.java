@@ -5,13 +5,14 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.map.example.StringArrayExampleTest;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-public class BloatFactorTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class BloatFactorTest {
 
     private static final int EXPECTED_MAX_BLOAT_FACTOR = 100;
 
@@ -21,7 +22,7 @@ public class BloatFactorTest {
      * @throws IOException IOException
      */
     @Test
-    public void bloatFactorTest() throws IOException {
+    void bloatFactorTest() throws IOException {
 
         File cmap = File.createTempFile("chron", "cmap");
 
@@ -31,7 +32,7 @@ public class BloatFactorTest {
                 .createPersistedTo(cmap)) {
 
             double maxBloatFactor = Jvm.getValue(map, "maxBloatFactor");
-            Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
+            assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
 
         }
 
@@ -42,7 +43,7 @@ public class BloatFactorTest {
                 .createPersistedTo(cmap)) {
 
             double maxBloatFactor = Jvm.getValue(map, "maxBloatFactor");
-            Assert.assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
+            assertEquals(EXPECTED_MAX_BLOAT_FACTOR, maxBloatFactor, 0.0);
 
         }
     }

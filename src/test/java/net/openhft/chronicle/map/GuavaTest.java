@@ -13,7 +13,6 @@ import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import net.openhft.chronicle.hash.Data;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.util.HashMap;
 import java.util.List;
@@ -117,7 +116,7 @@ public class GuavaTest extends TestCase {
             builder.entryOperations(new MapEntryOperations<String, String, Void>() {
                 @Override
                 public Void remove(@NotNull MapEntry<String, String> entry) {
-                    Assert.assertEquals(m, entry.context().map());
+                    assertEquals(m, entry.context().map());
                     m.remove(entry.key().get());
                     return MapEntryOperations.super.remove(entry);
                 }
@@ -125,7 +124,7 @@ public class GuavaTest extends TestCase {
                 @Override
                 public Void replaceValue(@NotNull MapEntry<String, String> entry,
                                          net.openhft.chronicle.hash.Data<String> newValue) {
-                    Assert.assertEquals(m, entry.context().map());
+                    assertEquals(m, entry.context().map());
                     m.put(entry.key().get(), newValue.get());
                     return MapEntryOperations.super.replaceValue(entry, newValue);
                 }
@@ -133,7 +132,7 @@ public class GuavaTest extends TestCase {
                 @Override
                 public Void insert(@NotNull MapAbsentEntry<String, String> absentEntry,
                                    Data<String> value) {
-                    Assert.assertEquals(m, absentEntry.context().map());
+                    assertEquals(m, absentEntry.context().map());
                     m.put(absentEntry.absentKey().get(), value.get());
                     return MapEntryOperations.super.insert(absentEntry, value);
                 }

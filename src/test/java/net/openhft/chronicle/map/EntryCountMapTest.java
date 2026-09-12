@@ -5,8 +5,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,10 +19,9 @@ import java.util.concurrent.*;
 import static java.lang.Math.log10;
 import static java.lang.Math.round;
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class EntryCountMapTest {
+class EntryCountMapTest {
     static final int ecmTests = Integer.getInteger("ecm.tests", 5);
     double score = 0;
     int scoreCount = 0;
@@ -48,9 +47,9 @@ public class EntryCountMapTest {
         return maxSize * 14 / 10 + 300;
     }
 
-    @Ignore("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
     @Test
-    public void testVerySmall() throws IOException {
+    @Disabled("HCOLL-279 fix net.openhft.chronicle.map.EntryCountMapTest#testVerySmall")
+    void testVerySmall() throws IOException {
         System.out.print("testVerySmall seeds");
         for (int t = 0; t < ecmTests; t++) {
             System.out.print(".");
@@ -100,7 +99,7 @@ public class EntryCountMapTest {
     }
 
     @Test
-    public void testSmall() throws IOException, ExecutionException, InterruptedException {
+    void testSmall() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testSmall seeds");
         int procs = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
@@ -142,9 +141,9 @@ public class EntryCountMapTest {
         System.out.printf(" Score: %.2f%n", scoreCount / score);
     }
 
-    @Ignore("Long running, large tests test")
     @Test
-    public void testMedium() throws IOException, ExecutionException, InterruptedException {
+    @Disabled("Long running, large tests test")
+    void testMedium() throws IOException, ExecutionException, InterruptedException {
         System.out.print("testMedium seeds");
         int procs = Runtime.getRuntime().availableProcessors();
         ExecutorService es = Executors.newFixedThreadPool(procs, new NamedThreadFactory("test"));
@@ -240,8 +239,8 @@ public class EntryCountMapTest {
             boolean condition = minSize <= map.size() && map.size() <= minSize * 2 + 8;
             if (!condition) {
                 dumpMapStats(segments, minSize, map);
-                assertTrue("stride: " + stride + ", seg: " + segments + ", min: " + minSize +
-                        ", size: " + map.size(), condition);
+                assertTrue(condition, "stride: " + stride + ", seg: " + segments + ", min: " + minSize +
+                        ", size: " + map.size());
             } else if (map.size() > maxSize)
                 System.err.println(" warning, larger than expected, stride: " + stride +
                         ", seg: " + segments + ", min: " + minSize +

@@ -1,0 +1,77 @@
+= JUnit 5 Migration Qualification
+:toc:
+:lang: en-GB
+
+This records the Linux qualification of PR #588 on 12 September 2026. PR #617 remains a separately
+reviewable production prerequisite; its rejected-close repair is included by ancestry, not supplied
+by the JUnit conversion. The migration must not be described as wholly test-only until that
+prerequisite has landed and the remaining diff has been checked again.
+
+== Discovery and outcomes
+
+The comparison used #617 at `c5c51cce237f903b43a819cdc5d4a850a7d6af3e` and #588 at
+`81e40017318424534e20658a23821d1c7213ec53` with the `testRemove2` and narrow lock-assertion
+corrections in this revision. Both contain `develop` at
+`ec649062438ef6f706a493945608d44dbb3df3dc`.
+
+An observing JUnit Platform `TestExecutionListener` recorded discovered and dynamically registered
+identities, source methods, display names, engines, terminal outcomes and skip reasons during the
+actual Maven Surefire executions. It also expanded skipped containers to their discovered leaves.
+This avoids treating repeated Guava suite XML filenames, which overwrite earlier files, as a
+complete execution manifest.
+
+[cols="2,1,1"]
+|===
+|Outcome |#617 control |Corrected #588
+|Discovered or registered test cases |1329 |1330
+|Successful |1247 |1248
+|Disabled, including leaves of disabled containers |71 |71
+|Aborted by assumptions |11 |11
+|Failed |0 |0
+|===
+
+No existing source method lost an invocation or changed its outcome count. The sole additional
+case is `jsr166.map.ChronicleMapTest.testRemove2`, now exercising matching and non-matching
+conditional removal with a closed map fixture.
+
+The manifests retain concrete parameter names and values: the two `CHMUseCasesTest` map modes,
+eight `MemoryLeaksTest` combinations, six `ValueAlignmentRelocationTest` layouts, and five
+`ParallelStartupTest` repetitions. The constructor parameters and method-source arguments were
+also compared in source; a similar total alone would not establish parameter parity.
+
+Both engines actually executed. The control recorded 1238 successful Vintage cases and nine
+successful Jupiter cases; the migration recorded 880 and 368 respectively. All eight variants of
+the legacy `JSR166ThreadFailureTest` executed, including its embedded JUnit 4 owner-failure checks.
+Surefire can resolve engines from the available APIs, so engine presence must be checked in
+execution rather than inferred from a direct POM declaration.
+
+The runs used Maven 3.9.11, Surefire 3.1.2, JUnit Platform 1.10.0, Jupiter/Vintage 5.10.0,
+OpenJDK 21.0.12 on Linux x86-64 and zero test retries. Dependency identities and full invocations
+are retained in the PR's qualification receipt. These results do not qualify Windows or Mac.
+
+== Timeout and failure semantics
+
+A JUnit 4 `@Test(timeout=...)` runs its method on another thread from the fixture methods.
+Jupiter's default `@Timeout` uses the same thread unless configuration overrides the thread mode.
+An external qualification probe exercised both forms and the actual migrated `JSR166TestCase`
+fixture: setup and teardown ran, the Jupiter method shared their thread, and an assertion from a
+worker failed its owning Jupiter invocation with the original throwable. This qualifies that
+fixture and configuration; it is not a claim that the annotations have identical semantics.
+
+`TrickyContextCasesTest` now completes setup before asserting the specific nested removal or
+worker write failure. The worker must finish with an `ExecutionException` whose cause is exactly
+`InterProcessDeadLockException`. A `Future.get` timeout or an unrelated setup/worker exception
+cannot satisfy that assertion. Context release precedes bounded worker termination, and map close
+follows termination; cleanup failures are suppressed on an existing assertion failure.
+
+Relocation currently publishes a new entry before acquiring its write lock. Qualification observed
+that a lock-timeout rejection can therefore follow publication of the new value. This migration
+does not add a transactional rollback guarantee or change that production ordering. Any such
+contract change needs its own accepted runtime correction and regression.
+
+Fresh platform CI, strict temporary-directory cleanup and the restored memory-release assertions
+remain acceptance requirements. A queued build is not a passing result.
+
+References: https://maven.apache.org/surefire/maven-surefire-plugin/examples/junit-platform.html[Surefire engine resolution],
+https://junit.org/junit4/javadoc/4.13.2/org/junit/Test.html[JUnit 4 timeouts],
+https://docs.junit.org/5.10.0/api/org.junit.jupiter.api/org/junit/jupiter/api/Timeout.html[Jupiter timeouts].

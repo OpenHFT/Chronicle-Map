@@ -11,8 +11,7 @@ import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
 import net.openhft.chronicle.values.Values;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,18 +19,18 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Rob Austin.
  */
 @SuppressWarnings({"rawtypes", "unchecked", "try"})
-public class ChronicleMapImportExportTest {
+class ChronicleMapImportExportTest {
 
     public static final String TMP = OS.getTarget();
 
     @Test
-    public void test() throws IOException {
+    void test() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -48,7 +47,7 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<String, String> actual = builder.create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                assertEquals(expected, actual);
             }
         } finally {
             file.delete();
@@ -56,7 +55,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithMapValue() throws IOException {
+    void testWithMapValue() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -77,7 +76,7 @@ public class ChronicleMapImportExportTest {
             try (ChronicleMap<String, Map> actual = builder.create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                assertEquals(expected, actual);
             }
         } finally {
             file.delete();
@@ -85,7 +84,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithMapOfMapValue() throws IOException {
+    void testWithMapOfMapValue() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -107,7 +106,7 @@ public class ChronicleMapImportExportTest {
                     .create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                assertEquals(expected, actual);
             }
         } finally {
             file.delete();
@@ -115,7 +114,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithIntegerAndDouble() throws IOException {
+    void testWithIntegerAndDouble() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -130,7 +129,7 @@ public class ChronicleMapImportExportTest {
                     .entries(1).create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                assertEquals(expected, actual);
             }
         } finally {
             file.delete();
@@ -138,7 +137,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testWithCharSeq() throws IOException {
+    void testWithCharSeq() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -158,7 +157,7 @@ public class ChronicleMapImportExportTest {
                     .create()) {
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                assertEquals(expected, actual);
             }
         } finally {
             file.delete();
@@ -166,7 +165,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testFromHashMap() throws IOException {
+    void testFromHashMap() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         System.out.println(file.getCanonicalFile());
@@ -195,16 +194,16 @@ public class ChronicleMapImportExportTest {
             expected.getAll(file2);
             expected.putAll(file2);
 
-            Assert.assertEquals(2, expected.size());
-            Assert.assertEquals("one", expected.get(1));
-            Assert.assertEquals("two", expected.get(2));
+            assertEquals(2, expected.size());
+            assertEquals("one", expected.get(1));
+            assertEquals("two", expected.get(2));
         }
 
         file.deleteOnExit();
     }
 
     @Test
-    public void testWithLongValue() throws IOException {
+    void testWithLongValue() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         //file.deleteOnExit();
@@ -230,7 +229,7 @@ public class ChronicleMapImportExportTest {
 
                 actual.putAll(file);
 
-                Assert.assertEquals(expected, actual);
+                assertEquals(expected, actual);
             }
         } finally {
             file.delete();
@@ -238,7 +237,7 @@ public class ChronicleMapImportExportTest {
     }
 
     @Test
-    public void testBondVOInterface() throws IOException {
+    void testBondVOInterface() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chronicle-map-" + Time.uniqueId() + ".json");
         file.deleteOnExit();
@@ -267,8 +266,7 @@ public class ChronicleMapImportExportTest {
 
                 actual.putAll(file);
 
-                Assert.assertEquals(expected.get("one").getCoupon(),
-                        actual.get("one").getCoupon(), 0);
+                assertEquals(expected.get("one").getCoupon(), actual.get("one").getCoupon(), 0);
             }
         } finally {
             file.delete();
