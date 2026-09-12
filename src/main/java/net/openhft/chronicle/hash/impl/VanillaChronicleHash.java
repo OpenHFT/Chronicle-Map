@@ -13,6 +13,7 @@ import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.AbstractCloseable;
 import net.openhft.chronicle.core.io.ReferenceOwner;
 import net.openhft.chronicle.hash.*;
+import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
 import net.openhft.chronicle.hash.impl.util.CleanerUtils;
@@ -686,6 +687,12 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     protected void assertCloseable() {
+        // Reject before AbstractCloseable changes state: this thread cannot finish its own
+        // active context during close, and a partially closed map cannot be closed again.
+        if (openContexts().anyMatch(context -> context.owner() == Thread.currentThread() && context.preventClose())) {
+            throw new IllegalStateException(toIdentityString() +
+                    ": Attempt to close a Chronicle Hash in the context of not yet finished query or iteration");
+        }
         // Make a best-effort making sure there are no outstanding write-locks before closing
         final long deadlineNs = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
         while (openContextsThatAreWriteLocked().findAny().isPresent()) {
@@ -706,19 +713,26 @@ public abstract class VanillaChronicleHash<K,
 
     // This method can only take a snapshot of the current situation so, it is not strictly thread-safe.
     private Stream<InterProcessReadWriteUpdateLock> openContextsThatAreWriteLocked() {
+        return openContexts()
+                .filter(InterProcessReadWriteUpdateLock.class::isInstance)
+                .map(InterProcessReadWriteUpdateLock.class::cast)
+                .filter(l -> l.writeLock().isHeld());
+    }
+
+    private Stream<ChainingInterface> openContexts() {
         return Stream.of(resources)
+                .filter(Objects::nonNull)
                 .map(ChronicleHashResources::contexts)
                 // if context() is null, we have no contexts
                 .filter(Objects::nonNull)
                 .map(ArrayList::new) // take a copy in case it changes
                 .flatMap(List::stream)
+                .filter(Objects::nonNull)
                 .map(WeakReference::get)
                 // WeakReference may return null if the object was collected so, we need to eliminate these
                 .filter(Objects::nonNull)
                 .map(ContextHolder::get)
-                .filter(InterProcessReadWriteUpdateLock.class::isInstance)
-                .map(InterProcessReadWriteUpdateLock.class::cast)
-                .filter(l -> l.writeLock().isHeld());
+                .filter(Objects::nonNull);
     }
 
     protected void cleanupOnClose() {

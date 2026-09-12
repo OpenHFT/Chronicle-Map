@@ -22,11 +22,11 @@ class Issue354bTest {
     void build_toFile() throws IOException {
         String baseDirectory = testFolder.toString();
         File file = new File(baseDirectory, "chronicle.dat");
-        ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder.of(LongValue.class, LongValue.class)
+        try (ChronicleMap<LongValue, LongValue> map = ChronicleMapBuilder.of(LongValue.class, LongValue.class)
                 .name("test")
                 .entries(5)
-                .createPersistedTo(file);
-
-        assertTrue(file.isFile());
+                .createPersistedTo(file)) {
+            assertTrue(map.file().isFile());
+        }
     }
 }

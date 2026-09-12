@@ -129,8 +129,8 @@ class ExitHookTest {
         int actual = process.exitValue();
         if (actual != 0) // clean shutdown
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
-        ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
-        try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
+        try (ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
+             ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             // Test that we are able to lock the segment, i.e. the lock was released in other
             // process, thanks to default shutdown hook.
             c.writeLock().lock();
@@ -156,8 +156,8 @@ class ExitHookTest {
         int actual = process.exitValue();
         if (actual != 0) // clean shutdown
             assertEquals(130, actual); // 130 is exit code for SIGINT (interruption).
-        ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
-        try (ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
+        try (ChronicleMap<Integer, Integer> map = createMapBuilder().createPersistedTo(mapFile);
+             ExternalMapQueryContext<Integer, Integer, ?> c = map.queryContext(KEY)) {
             // Test that we are able to lock the segment, i.e. the lock was released in other
             // process, thanks to user shutdown hook.
             c.writeLock().lock();
@@ -169,13 +169,13 @@ class ExitHookTest {
     @Test
     void testSerialization1() throws Exception {
         File mapFile = newTempFile();
-        ChronicleMap<Integer, Integer> expected = createMapBuilder()
+        try (ChronicleMap<Integer, Integer> expected = createMapBuilder()
                 .skipCloseOnExitHook(true)
                 .createPersistedTo(mapFile);
-        ChronicleMap<Integer, Integer> actual = createMapBuilder()
-                .createPersistedTo(mapFile);
-        Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
-        assertEquals(skipCloseOnExitHook.get(expected), skipCloseOnExitHook.get(actual));
+             ChronicleMap<Integer, Integer> actual = createMapBuilder().createPersistedTo(mapFile)) {
+            Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
+            assertEquals(skipCloseOnExitHook.get(expected), skipCloseOnExitHook.get(actual));
+        }
     }
 
     @Test
@@ -184,10 +184,10 @@ class ExitHookTest {
         ChronicleMap<Integer, Integer> expected = createMapBuilder()
                 .createPersistedTo(mapFile);
         expected.close();
-        ChronicleMap<Integer, Integer> actual = createMapBuilder()
-                .createPersistedTo(mapFile);
-        Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
-        assertEquals(false, skipCloseOnExitHook.get(actual));
+        try (ChronicleMap<Integer, Integer> actual = createMapBuilder().createPersistedTo(mapFile)) {
+            Field skipCloseOnExitHook = getPrivateField(VanillaChronicleHash.class, "skipCloseOnExitHook");
+            assertEquals(false, skipCloseOnExitHook.get(actual));
+        }
     }
 
     private static @NotNull Field getPrivateField(Class<?> aClass, String fieldName) throws NoSuchFieldException {

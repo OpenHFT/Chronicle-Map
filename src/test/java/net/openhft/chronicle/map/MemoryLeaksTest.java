@@ -176,14 +176,9 @@ class MemoryLeaksTest {
                 Closeable.closeQuietly(map);
             }
 
-            if (closeWithinContext) {
-                // Fails because of https://github.com/OpenHFT/Chronicle-Map/issues/153
-                return;
-            } else {
-                long actual = nativeMemoryUsed(persisted);
-                if (!withinAllowedDelta(nativeMemoryUsedBeforeMap, actual))
-                    assertEquals(nativeMemoryUsedBeforeMap, actual);
-            }
+            long actual = nativeMemoryUsed(persisted);
+            if (!withinAllowedDelta(nativeMemoryUsedBeforeMap, actual))
+                assertEquals(nativeMemoryUsedBeforeMap, actual);
         }
         // Wait until chronicle map context (hence serializers) is collected by the GC
         long end = System.currentTimeMillis() + 6_000;
