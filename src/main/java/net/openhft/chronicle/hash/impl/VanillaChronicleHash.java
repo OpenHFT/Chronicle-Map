@@ -866,7 +866,12 @@ public abstract class VanillaChronicleHash<K,
                         " - same regarding other sizing Chronicle Hash configurations, most " +
                         "likely maxBloatFactor(), averageKeySize(), or averageValueSize()\n" +
                         " - keys, inserted into the ChronicleHash, are distributed suspiciously " +
-                        "bad. This might be a DOS attack");
+                        "bad. This might be a DOS attack\n" +
+                        "Capacity and entry limits are enforced per segment; free capacity in " +
+                        "other segments cannot satisfy this insertion. Inspect segmentStats(), " +
+                        "allowSegmentTiering() and maxBloatFactor(). See the \"Capacity is per " +
+                        "segment: tiering and reclamation\" section of the Chronicle Map tutorial " +
+                        "and issue #400.");
             }
             long firstFreeTierIndex = globalMutableState.getFirstFreeTierIndex();
             if (firstFreeTierIndex < 0) {
