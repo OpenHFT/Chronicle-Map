@@ -5,22 +5,22 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
-public class DirtyReadOffender_WriterReaderTest {
+class DirtyReadOffender_WriterReaderTest {
 
-    @Before
-    public void longRunningStableOnLinux() {
+    @BeforeEach
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
     @Test
-    public void main() {
+    void main() {
         try {
             final long sleepT = Long.parseLong("8");
             long holdTime = Long.parseLong("20");
@@ -42,7 +42,7 @@ public class DirtyReadOffender_WriterReaderTest {
                     OS.getTarget() + "/shm-"
                             + "OPERAND_ChronicleStampedLock"
             );
-            Assert.assertNotEquals(null, offHeapLock);
+            assertNotEquals(null, offHeapLock);
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
             //BondVOInterface cslMock = newNativeReference(BondVOInterface.class);
             chm.acquireUsing("369604101", bond);
@@ -82,7 +82,7 @@ public class DirtyReadOffender_WriterReaderTest {
                 );
 
             }
-            Assert.assertNotEquals(0, blockedByHoldingWriterCount);
+            assertNotEquals(0, blockedByHoldingWriterCount);
             System.out.println(
                     "                             " +
                             " @t=" + System.currentTimeMillis() +

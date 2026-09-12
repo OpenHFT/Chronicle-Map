@@ -4,8 +4,8 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.beans.XMLEncoder;
 import java.io.ByteArrayOutputStream;
@@ -14,18 +14,20 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Created by peter.lawrey on 06/12/14.
  */
-public class LargeEntriesTest {
+class LargeEntriesTest {
 
     static final int ENTRIES = 250;
     static final int ENTRY_SIZE = 100 * 1024;
 
     @Test
-    public void testLargeStrings() throws ExecutionException, InterruptedException, IOException {
+    void testLargeStrings() throws ExecutionException, InterruptedException, IOException {
+        final int ENTRIES = 250;
+        final int ENTRY_SIZE = 100 * 1024;
 
         File file = File.createTempFile("largeEntries" + System.currentTimeMillis(), ".deleteme");
         file.deleteOnExit();
@@ -84,8 +86,8 @@ public class LargeEntriesTest {
     }
 
     @Test
-    @Ignore("Performance Test")
-    public void testLargeStringsPerf() throws ExecutionException, InterruptedException, IOException {
+    @Disabled("Performance Test")
+    void testLargeStringsPerf() throws ExecutionException, InterruptedException, IOException {
         doLargeEntryPerf(10000, 100 * 1024);
         doLargeEntryPerf(1000000, 1024);
         doLargeEntryPerf(100000, 10 * 1024);
@@ -168,10 +170,10 @@ public class LargeEntriesTest {
 
             map.put(key, value);
             object = map.get(key);
-            assertTrue(key, map.containsKey(key));
+            assertTrue(map.containsKey(key), key);
 
-            assertNotNull(key, object);
-            assertEquals(key, entrySize, object.length());
+            assertNotNull(object, key);
+            assertEquals(entrySize, object.length(), key);
         }
         //        monitor.interrupt();
 
@@ -181,8 +183,8 @@ public class LargeEntriesTest {
 
             String object = map.get(key);
 
-            assertNotNull(key, object);
-            assertEquals(key, entrySize, object.length());
+            assertNotNull(object, key);
+            assertEquals(entrySize, object.length(), key);
         }
     }
 

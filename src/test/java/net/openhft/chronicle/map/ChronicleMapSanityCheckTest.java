@@ -7,7 +7,7 @@ import net.openhft.chronicle.core.Jvm;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.threads.NamedThreadFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,10 +21,10 @@ import java.util.concurrent.locks.LockSupport;
 /**
  * Created by Borislav Ivanov on 5/29/15.
  */
-public class ChronicleMapSanityCheckTest {
+class ChronicleMapSanityCheckTest {
 
     @Test
-    public void testSanity1() throws IOException {
+    void testSanity1() throws IOException, InterruptedException {
 
         String tmp = OS.getTarget();
 

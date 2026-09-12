@@ -6,9 +6,9 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.hash.ChronicleFileLockException;
 import net.openhft.chronicle.hash.impl.util.CanonicalRandomAccessFiles;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,15 +16,15 @@ import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class FileLockUtilTest {
+class FileLockUtilTest {
 
     private File canonicalFile;
     private FileChannel fileChannel;
 
-    @Before
-    public void setUp() throws IOException {
+    @BeforeEach
+    void setUp() throws IOException {
         canonicalFile = new File("file.lock").getCanonicalFile();
         canonicalFile.delete();
         canonicalFile.createNewFile();
@@ -32,14 +32,14 @@ public class FileLockUtilTest {
         fileChannel = raf.getChannel();
     }
 
-    @After
-    public void cleanup() throws IOException {
+    @AfterEach
+    void cleanup() throws IOException {
         fileChannel.close();
         CanonicalRandomAccessFiles.release(canonicalFile);
     }
 
     @Test
-    public void testShared() {
+    void testShared() {
         if (!OS.isWindows()) {
             CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
             CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
@@ -49,7 +49,7 @@ public class FileLockUtilTest {
     }
 
     @Test
-    public void testExclusiveNormalCase() {
+    void testExclusiveNormalCase() {
         CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
         CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
         CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
@@ -57,7 +57,7 @@ public class FileLockUtilTest {
     }
 
     @Test
-    public void testTryExclusiveButWasShared() {
+    void testTryExclusiveButWasShared() {
         if (!OS.isWindows()) {
             CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
             try {
@@ -71,7 +71,7 @@ public class FileLockUtilTest {
     }
 
     @Test
-    public void testTrySharedButWasExclusive() {
+    void testTrySharedButWasExclusive() {
         if (!OS.isWindows()) {
             CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
             try {
@@ -85,7 +85,7 @@ public class FileLockUtilTest {
     }
 
     @Test
-    public void testComplicated() {
+    void testComplicated() {
         if (!OS.isWindows()) {
             CanonicalRandomAccessFiles.acquireExclusiveFileLock(canonicalFile, fileChannel);
             CanonicalRandomAccessFiles.releaseExclusiveFileLock(canonicalFile);
@@ -99,14 +99,14 @@ public class FileLockUtilTest {
     }
 
     @Test
-    public void testRunExclusively() {
+    void testRunExclusively() {
         final AtomicInteger cnt = new AtomicInteger();
         CanonicalRandomAccessFiles.runExclusively(canonicalFile, fileChannel, cnt::incrementAndGet);
         assertEquals(1, cnt.get());
     }
 
     @Test
-    public void testRunExclusivelyButUsed() {
+    void testRunExclusivelyButUsed() {
         if (!OS.isWindows()) {
             CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
             try {
@@ -121,7 +121,7 @@ public class FileLockUtilTest {
     }
 
     @Test
-    public void testTryRunExclusively() {
+    void testTryRunExclusively() {
         if (!OS.isWindows()) {
             CanonicalRandomAccessFiles.acquireSharedFileLock(canonicalFile, fileChannel);
 

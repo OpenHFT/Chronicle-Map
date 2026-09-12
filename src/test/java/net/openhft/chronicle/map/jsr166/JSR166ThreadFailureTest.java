@@ -61,6 +61,17 @@ public class JSR166ThreadFailureTest {
         private Consumer<JSR166TestCase> assertion;
         private final AtomicReference<Throwable> workerFailure = new AtomicReference<>();
 
+        // The embedded JUnit 4 runner needs adapters for the base fixture's Jupiter lifecycle.
+        @org.junit.Before
+        public void setUpWorkerFixture() {
+            super.setUp();
+        }
+
+        @org.junit.After
+        public void tearDownWorkerFixture() throws Exception {
+            super.tearDown();
+        }
+
         @Test
         public void runWorkerAssertion() throws InterruptedException {
             Thread worker = new Thread(() -> assertion.accept(this), "jsr166-assertion-worker");

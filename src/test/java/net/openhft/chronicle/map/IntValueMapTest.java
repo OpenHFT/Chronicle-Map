@@ -7,17 +7,19 @@ import net.openhft.chronicle.bytes.Byteable;
 import net.openhft.chronicle.bytes.BytesStore;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Rob Austin.
  */
-public class IntValueMapTest {
+class IntValueMapTest {
 
     @Test
-    public void test() {
+    void test() throws IOException {
 
         try (final ChronicleMap<IntValue, CharSequence> map = ChronicleMapBuilder
                 .of(IntValue.class, CharSequence.class)

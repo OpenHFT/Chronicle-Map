@@ -10,7 +10,7 @@ import net.openhft.chronicle.hash.serialization.ListMarshaller;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesReader;
 import net.openhft.chronicle.hash.serialization.impl.CharSequenceBytesWriter;
 import net.openhft.chronicle.set.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,11 +23,10 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class Issue63Test {
+class Issue63Test {
 
     // Right now no corresponding "knownUsers" object
     private ChronicleMap<CharSequence, List<CharSequence>> knownItems;
@@ -76,7 +75,7 @@ public class Issue63Test {
     }
 
     @Test
-    public void issue63test() throws IOException {
+    void issue63test() throws IOException {
         Path path = Paths.get(OS.getTarget() + "/test-vectors1-" + Time.uniqueId() + ".dat");
         if (Files.exists(path)) Files.delete(path);
         File mapFile = path.toFile();
@@ -296,7 +295,7 @@ public class Issue63Test {
     }
 
     @Test
-    public void testKnownItems() throws IOException {
+    void testKnownItems() throws IOException {
 
         ArrayList<CharSequence> averageKnownItems = new ArrayList<>();
         for (int i = 0; i < 100; i++) {

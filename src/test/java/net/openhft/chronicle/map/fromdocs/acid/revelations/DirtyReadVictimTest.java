@@ -6,26 +6,26 @@ package net.openhft.chronicle.map.fromdocs.acid.revelations;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.fromdocs.BondVOInterface;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class DirtyReadVictimTest {
+class DirtyReadVictimTest {
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() throws Exception {
     }
 
-    @After
-    public void tearDown() {
+    @AfterEach
+    void tearDown() throws Exception {
     }
 
     @Test
-    public void main() {
+    void main() {
         try {
             /*
              *  ben.cotton@rutgers.edu   START
@@ -33,6 +33,7 @@ public class DirtyReadVictimTest {
             ChronicleMap<String, BondVOInterface> chm =
                     DirtyReadTolerance.offHeap(
                             OS.getTarget() + "/OPERAND_CHRONICLE_MAP"
+
                     );
             double coupon = 0.00;
             BondVOInterface bond = newNativeReference(BondVOInterface.class);
@@ -77,7 +78,7 @@ public class DirtyReadVictimTest {
                                     coupon + " "
                     );
                     // THIS Test will pass when ChronicleStampedLock is GA
-                    Assert.assertEquals(
+                    assertEquals(
                             0L,
                             offHeapLock.chmW.get("WriterCount ").getVolatileValue()
                     );
@@ -89,10 +90,7 @@ public class DirtyReadVictimTest {
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
                     // THIS Test will execute pass when ChronicleStampedLock is GA
-                    Assert.assertNotEquals(
-                            stamp,
-                            offHeapLock.lastWriterT.getEntryLockState()
-                    );
+                    assertNotEquals(stamp, offHeapLock.lastWriterT.getEntryLockState());
                 }
             }
             /*

@@ -3,15 +3,15 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Created by peter.lawrey on 28/02/14.
  */
-public class HistogramTest {
+class HistogramTest {
 
     @Test
-    public void testHistogram() {
+    void testHistogram() {
         Histogram hist = new Histogram();
         hist.sample(1);
         hist.sample(10);

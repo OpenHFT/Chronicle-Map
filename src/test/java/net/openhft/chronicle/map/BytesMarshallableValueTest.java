@@ -4,20 +4,21 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.bytes.BytesMarshallable;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class BytesMarshallableValueTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class BytesMarshallableValueTest {
 
     @Test
-    public void bytesMarshallableValueTest() {
+    void bytesMarshallableValueTest() {
         try (ChronicleMap<Integer, Value> map = ChronicleMap
                 .of(Integer.class, Value.class)
                 .averageValue(new Value(1, "foo"))
                 .entries(10)
                 .create()) {
             map.put(1, new Value(1, "bar"));
-            Assert.assertEquals("bar", map.replace(1, new Value(2, "baz")).foo);
+            assertEquals("bar", map.replace(1, new Value(2, "baz")).foo);
             map.remove(1);
         }
     }

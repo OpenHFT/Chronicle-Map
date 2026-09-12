@@ -6,15 +6,14 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.values.MaxUtf8Length;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 interface DemoOrderVOInterface {
     CharSequence getSymbol();
@@ -30,10 +29,10 @@ interface DemoOrderVOInterface {
 
 }
 
-public class DemoChronicleMapTest {
+class DemoChronicleMapTest {
 
     @Test
-    public void testMap() throws IOException {
+    void testMap() throws IOException {
         File file = File.createTempFile("DummyOrders" + System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
@@ -76,7 +75,7 @@ public class DemoChronicleMapTest {
     }
 
     @Test
-    public void testMapLocked() throws IOException {
+    void testMapLocked() throws IOException {
         File file = File.createTempFile("DummyOrders-" + System.currentTimeMillis(), ".test");
         file.deleteOnExit();
         int maxEntries = 1000;
@@ -122,13 +121,13 @@ public class DemoChronicleMapTest {
         file.delete();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testNegativeIllegalAlignment() {
-        ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(-1);
+    @Test
+    void testNegativeIllegalAlignment() {
+        assertThrows(IllegalArgumentException.class, () -> ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(-1));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testNotPowerOfTwoIllegalAlignment() {
-        ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13);
+    @Test
+    void testNotPowerOfTwoIllegalAlignment() {
+        assertThrows(IllegalArgumentException.class, () -> ChronicleMapBuilder.of(IntValue.class, DemoOrderVOInterface.class).entryAndValueOffsetAlignment(13));
     }
 }

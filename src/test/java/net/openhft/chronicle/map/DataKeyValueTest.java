@@ -6,14 +6,14 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.values.IntValue;
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class DataKeyValueTest {
+class DataKeyValueTest {
 
     @Test
-    public void dataKeyValueTest() {
+    void dataKeyValueTest() {
         ChronicleMap<IntValue, LongValue> map =
                 ChronicleMapBuilder.of(IntValue.class, LongValue.class)
                         .entries(1000).create();

@@ -6,25 +6,24 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.impl.TypedMarshallableReaderWriter;
 import net.openhft.chronicle.wire.Marshallable;
 import net.openhft.chronicle.wire.SelfDescribingMarshallable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public final class AbstractMarshallableKeyValueTest {
+final class AbstractMarshallableKeyValueTest {
 
     @Test
-    public void shouldAcceptAbstractMarshallableComponents() {
+    void shouldAcceptAbstractMarshallableComponents() throws Exception {
         final ChronicleMap<Key, Value> map = ChronicleMapBuilder.of(Key.class, Value.class).entries(10).
                 averageKey(new Key()).averageValue(new Value()).create();
 
         map.put(new Key(), new Value());
 
-        assertThat(map.get(new Key()).number, is(new Value().number));
+        assertEquals(new Value().number, map.get(new Key()).number);
     }
 
     @Test
-    public void shouldAcceptAbstractMarshallableComponents2() {
+    void shouldAcceptAbstractMarshallableComponents2() throws Exception {
         final ChronicleMap<Key, Marshallable> map = ChronicleMapBuilder.of(Key.class, Marshallable.class).entries(10)
                 .averageKey(new Key()).averageValue(new Value())
                 .valueMarshaller(new TypedMarshallableReaderWriter<>(Marshallable.class))
@@ -33,7 +32,7 @@ public final class AbstractMarshallableKeyValueTest {
         map.put(new Key(), new Value());
 
         Value value = (Value) map.get(new Key());
-        assertThat(value.number, is(new Value().number));
+        assertEquals(new Value().number, value.number);
     }
 
     private static final class Key extends SelfDescribingMarshallable {

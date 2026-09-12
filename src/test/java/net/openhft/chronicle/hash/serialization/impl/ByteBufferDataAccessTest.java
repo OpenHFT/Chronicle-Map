@@ -6,21 +6,24 @@ package net.openhft.chronicle.hash.serialization.impl;
 import net.openhft.chronicle.hash.Data;
 import org.junit.jupiter.api.Test;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ByteBufferDataAccessTest {
+class ByteBufferDataAccessTest {
 
     @Test
-    public void getUsingTest() {
+    void getUsingTest() {
         ByteBufferDataAccess bbDataAccess = new ByteBufferDataAccess();
         ByteBuffer bb1 = ByteBuffer.allocate(10);
         for (int i = 0; i < 10; i++) {
             bb1.put((byte) i);
         }
-        bb1.position(3).limit(5);
+        Buffer bb1View = bb1;
+        bb1View.position(3);
+        bb1View.limit(5);
         Data<ByteBuffer> data1 = bbDataAccess.getData(bb1);
         ByteBuffer bb2 = ByteBuffer.allocate(2);
         data1.getUsing(bb2);
@@ -29,7 +32,7 @@ public class ByteBufferDataAccessTest {
     }
 
     @Test
-    public void shouldKeepOriginalOrder() {
+    void shouldKeepOriginalOrder() {
         ByteBufferDataAccess da = new ByteBufferDataAccess();
         ByteBuffer bb = ByteBuffer.allocateDirect(Long.BYTES);
         ByteOrder originalOrder = bb.order();
@@ -37,7 +40,7 @@ public class ByteBufferDataAccessTest {
         bb.putLong(1L);
         Data<ByteBuffer> data = da.getData(bb);
 
-        assertEquals(originalOrder, data.get().order());
+        assertSame(originalOrder, data.get().order());
         assertEquals(1L, data.get().getLong(0));
     }
 }

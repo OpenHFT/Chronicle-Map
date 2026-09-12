@@ -3,13 +3,14 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class DeletedSearchStateTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class DeletedSearchStateTest {
 
     @Test
-    public void deletedSearchStateTest() {
+    void deletedSearchStateTest() {
         ChronicleMap<Integer, Integer> map =
                 ChronicleMapBuilder.of(Integer.class, Integer.class).entries(100).create();
 
@@ -20,6 +21,6 @@ public class DeletedSearchStateTest {
             q.insert(q.absentEntry(), q.wrapValueAsData(2));
         }
 
-        Assert.assertEquals((Integer) 2, map.get(42));
+        assertEquals((Integer) 2, map.get(42));
     }
 }

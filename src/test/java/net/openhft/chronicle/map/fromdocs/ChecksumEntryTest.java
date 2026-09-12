@@ -10,16 +10,17 @@ import net.openhft.chronicle.map.ExternalMapQueryContext;
 import net.openhft.chronicle.map.MapEntry;
 import net.openhft.chronicle.set.Builder;
 import net.openhft.chronicle.values.Values;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-public class ChecksumEntryTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class ChecksumEntryTest {
 
     @Test
-    public void testChecksumEntriesWithValueInterface() throws IOException {
+    void testChecksumEntriesWithValueInterface() throws IOException {
         File file = Builder.getPersistenceFile();
 
         try (ChronicleMap<Integer, LongValue> map = ChronicleMap
@@ -37,9 +38,9 @@ public class ChecksumEntryTest {
                 // Update lock required for calling ChecksumEntry.checkSum()
                 c.updateLock().lock();
                 MapEntry<Integer, LongValue> entry = c.entry();
-                Assert.assertNotNull(entry);
+                assertNotNull(entry);
                 ChecksumEntry checksumEntry = (ChecksumEntry) entry;
-                Assert.assertTrue(checksumEntry.checkSum());
+                assertTrue(checksumEntry.checkSum());
 
                 // to access off-heap bytes, should call value().getUsing() with Native value
                 // provided. Simple get() return Heap value by default
@@ -48,11 +49,11 @@ public class ChecksumEntryTest {
                 // This value bytes update bypass Chronicle Map internals, so checksum is not
                 // updated automatically
                 nativeValue.setValue(43);
-                Assert.assertFalse(checksumEntry.checkSum());
+                assertFalse(checksumEntry.checkSum());
 
                 // Restore correct checksum
                 checksumEntry.updateChecksum();
-                Assert.assertTrue(checksumEntry.checkSum());
+                assertTrue(checksumEntry.checkSum());
             }
         }
     }

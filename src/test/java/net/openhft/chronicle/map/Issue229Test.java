@@ -6,35 +6,32 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.core.io.Closeable;
 import net.openhft.chronicle.hash.ChronicleHashRecoveryFailedException;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
-public class Issue229Test {
+class Issue229Test {
 
     private File mapFile;
 
-    @Before
-    public void setup() {
+    @BeforeEach
+    void setup() {
         mapFile = new File("test_map");
     }
 
-    @After
-    public void cleanup() {
+    @AfterEach
+    void cleanup() {
         mapFile.delete();
     }
 
     @Test
-    public void assureExclusiveAccess() throws IOException {
-        Assume.assumeFalse(OS.isWindows());
+    void assureExclusiveAccess() throws IOException {
+        assumeFalse(OS.isWindows());
 
         try (ChronicleMap<Long, Long> readMap = ChronicleMap
                 .of(Long.class, Long.class)

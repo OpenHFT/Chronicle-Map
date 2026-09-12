@@ -5,17 +5,17 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.util.concurrent.locks.StampedLock;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assumptions.*;
 
 class DirtyReadOffenderTest implements Runnable {
 
-    @Before
-    public void longRunningStableOnLinux() {
+    @BeforeEach
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
@@ -63,7 +63,7 @@ class DirtyReadOffenderTest implements Runnable {
                             " DirtyReadOffender ACQUIRING offHeapLock.writeLock();"
             );
             while ((stamp = offHeapLock.writeLock()) == 0) {
-                // none
+                ; // none
             }
             System.out.println(
                     "..... @t=" + System.currentTimeMillis() +

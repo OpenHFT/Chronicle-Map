@@ -5,61 +5,71 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.ChronicleHashClosedException;
 import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Semaphore;
 
 import static net.openhft.chronicle.hash.impl.BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
 import static net.openhft.chronicle.map.ChronicleMap.of;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class MapCloseTest {
+class MapCloseTest {
 
     @Test
-    public void closeInContextTest() {
-        ChronicleMap<Integer, Integer> map =
-                of(Integer.class, Integer.class).entries(1).create();
-        ExternalMapQueryContext<Integer, Integer, ?> cxt = map.queryContext(1);
-        map.close();
+    void closeInContextTest() {
+        try (ChronicleMap<Integer, Integer> map = of(Integer.class, Integer.class).entries(1).create()) {
+            try (ExternalMapQueryContext<Integer, Integer, ?> cxt = map.queryContext(1)) {
+                cxt.readLock().lock();
+                assertThrows(IllegalStateException.class, map::close);
+                assertTrue(map.isOpen());
+            }
+            map.put(1, 2);
+        }
     }
 
-    @Test(expected = ChronicleHashClosedException.class)
-    public void testGetAfterCloseThrowsChronicleHashClosedException() throws InterruptedException {
-        ChronicleMap<Integer, Integer> map =
-                of(Integer.class, Integer.class).entries(1).create();
-        Thread t = new Thread(map::close);
-        t.start();
-        t.join();
-        map.get(1);
-    }
-
-    @Test(expected = ChronicleHashClosedException.class)
-    public void testIterationAfterCloseThrowsChronicleHashClosedException()
-            throws InterruptedException {
-        ChronicleMap<Integer, Integer> map =
-                of(Integer.class, Integer.class).entries(1).create();
-        Thread t = new Thread(map::close);
-        t.start();
-        t.join();
-        map.forEach((k, v) -> {
+    @Test
+    void testGetAfterCloseThrowsChronicleHashClosedException() throws InterruptedException {
+        assertThrows(ChronicleHashClosedException.class, () -> {
+            ChronicleMap<Integer, Integer> map =
+                    of(Integer.class, Integer.class).entries(1).create();
+            Thread t = new Thread(map::close);
+            t.start();
+            t.join();
+            map.get(1);
         });
     }
 
-    @Test(expected = ChronicleHashClosedException.class)
-    public void testSizeAfterCloseThrowsChronicleHashClosedException()
+    @Test
+    void testIterationAfterCloseThrowsChronicleHashClosedException()
             throws InterruptedException {
-        ChronicleMap<Integer, Integer> map =
-                of(Integer.class, Integer.class).entries(1).create();
-        Thread t = new Thread(map::close);
-        t.start();
-        t.join();
-        map.size();
+        assertThrows(ChronicleHashClosedException.class, () -> {
+            ChronicleMap<Integer, Integer> map =
+                    of(Integer.class, Integer.class).entries(1).create();
+            Thread t = new Thread(map::close);
+            t.start();
+            t.join();
+            map.forEach((k, v) -> {
+            });
+        });
     }
 
     @Test
-    public void closeWithContextInAnotherThreadTest() throws InterruptedException {
+    void testSizeAfterCloseThrowsChronicleHashClosedException()
+            throws InterruptedException {
+        assertThrows(ChronicleHashClosedException.class, () -> {
+            ChronicleMap<Integer, Integer> map =
+                    of(Integer.class, Integer.class).entries(1).create();
+            Thread t = new Thread(map::close);
+            t.start();
+            t.join();
+            map.size();
+        });
+    }
+
+    @Test
+    void closeWithContextInAnotherThreadTest() throws InterruptedException {
         LOCK_TIMEOUT_SECONDS = 2;
         ChronicleMap<Integer, Integer> map =
                 of(Integer.class, Integer.class).entries(1).create();
@@ -86,15 +96,17 @@ public class MapCloseTest {
         LOCK_TIMEOUT_SECONDS = 60;
     }
 
-    @Test(expected = ChronicleHashClosedException.class)
-    public void testRemainingAutoResizesAfterClose() {
-        ChronicleMap<Integer, Integer> map = of(Integer.class, Integer.class).entries(1).create();
-        map.close();
-        map.remainingAutoResizes();
+    @Test
+    void testRemainingAutoResizesAfterClose() {
+        assertThrows(ChronicleHashClosedException.class, () -> {
+            ChronicleMap<Integer, Integer> map = of(Integer.class, Integer.class).entries(1).create();
+            map.close();
+            map.remainingAutoResizes();
+        });
     }
 
     @Test
-    public void vanillaChronicleHashAllContextsExpungeTest() throws InterruptedException {
+    void vanillaChronicleHashAllContextsExpungeTest() throws InterruptedException {
         VanillaChronicleMap<Integer, Integer, Void> map =
                 (VanillaChronicleMap<Integer, Integer, Void>)
                         of(Integer.class, Integer.class).entries(1).create();
@@ -117,14 +129,14 @@ public class MapCloseTest {
         t1.start();
         t2.start();
         latch.await();
-        Assert.assertEquals(2, map.allContexts().size());
+        assertEquals(2, map.allContexts().size());
         semaphore.release(2);
         t1.join();
         t2.join();
 
         map.get(1);
-        Assert.assertEquals(1, map.allContexts().size());
+        assertEquals(1, map.allContexts().size());
         ChainingInterface cxt = map.allContexts().get(0).get().get();
-        Assert.assertSame(cxt, map.queryContext(1));
+        assertTrue(cxt == map.queryContext(1));
     }
 }

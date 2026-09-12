@@ -5,7 +5,7 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.LongValue;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.stream.IntStream;
 
@@ -13,14 +13,14 @@ import java.util.stream.IntStream;
  * @author ges
  * @since 3/2/16.
  */
-public class ValueInterfaceWithEnumTest {
+class ValueInterfaceWithEnumTest {
 
     /**
      * This test will throw an {@link ArrayIndexOutOfBoundsException}. This seems to occur only with Enums having even number of
      * values
      */
     @Test
-    public void testValueInterface() {
+    void testValueInterface() {
         LongValue longValue = Values.newHeapInstance(LongValue.class);
         SimpleValueInterface simpleValueInterface = Values.newHeapInstance(SimpleValueInterface.class);
 
