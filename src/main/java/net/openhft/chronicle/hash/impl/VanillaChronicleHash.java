@@ -687,8 +687,11 @@ public abstract class VanillaChronicleHash<K,
 
     @Override
     protected void assertCloseable() {
-        // Reject before AbstractCloseable changes state: this thread cannot finish its own
-        // active context during close, and a partially closed map cannot be closed again.
+        //! Reject before AbstractCloseable changes state: this thread cannot finish its own active
+        //! context during close. Rejection during resource release would leave the map closed but mapped.
+        //! Regressions: CloseInContextResourceTest.rejectedQueryCloseCanReleasePersistedMap,
+        //! rejectedQueryCloseCanReleaseReplicatedPersistedMap, rejectedIterationCloseCanReleasePersistedMap
+        //! and rejectedIterationCloseCanReleaseReplicatedPersistedMap retain usability and allow a later close.
         if (openContexts().anyMatch(context -> context.owner() == Thread.currentThread() && context.preventClose())) {
             throw new IllegalStateException(toIdentityString() +
                     ": Attempt to close a Chronicle Hash in the context of not yet finished query or iteration");
@@ -720,6 +723,10 @@ public abstract class VanillaChronicleHash<K,
     }
 
     private Stream<ChainingInterface> openContexts() {
+        //! Deserialization may fail before resources are initialized; earlier cleanup can leave null slots
+        //! or cleared holders. Both close checks must inspect live contexts without failing on absent ones.
+        //! Regressions: CloseContextSnapshotTest.closeWithoutInitialisedResources,
+        //! closeIgnoresReleasedContextSlots and closeIgnoresClearedContextHolders.
         return Stream.of(resources)
                 .filter(Objects::nonNull)
                 .map(ChronicleHashResources::contexts)

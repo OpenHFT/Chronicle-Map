@@ -99,36 +99,40 @@ public class MapCloseTest {
 
     @Test
     public void vanillaChronicleHashAllContextsExpungeTest() throws InterruptedException {
-        VanillaChronicleMap<Integer, Integer, Void> map =
+        try (VanillaChronicleMap<Integer, Integer, Void> map =
                 (VanillaChronicleMap<Integer, Integer, Void>)
-                        of(Integer.class, Integer.class).entries(1).create();
-        Semaphore semaphore = new Semaphore(0);
-        CountDownLatch latch = new CountDownLatch(2);
-        class MapAccessThread extends Thread {
-            @Override
-            public void run() {
-                map.get(1);
-                latch.countDown();
-                try {
-                    semaphore.acquire();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                        of(Integer.class, Integer.class).entries(1).create()) {
+            Semaphore semaphore = new Semaphore(0);
+            CountDownLatch latch = new CountDownLatch(2);
+            class MapAccessThread extends Thread {
+                @Override
+                public void run() {
+                    map.get(1);
+                    latch.countDown();
+                    try {
+                        semaphore.acquire();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
-        }
-        MapAccessThread t1 = new MapAccessThread();
-        MapAccessThread t2 = new MapAccessThread();
-        t1.start();
-        t2.start();
-        latch.await();
-        Assert.assertEquals(2, map.allContexts().size());
-        semaphore.release(2);
-        t1.join();
-        t2.join();
+            MapAccessThread t1 = new MapAccessThread();
+            MapAccessThread t2 = new MapAccessThread();
+            t1.start();
+            t2.start();
+            latch.await();
+            Assert.assertEquals(2, map.allContexts().size());
+            semaphore.release(2);
+            t1.join();
+            t2.join();
 
-        map.get(1);
-        Assert.assertEquals(1, map.allContexts().size());
-        ChainingInterface cxt = map.allContexts().get(0).get().get();
-        Assert.assertSame(cxt, map.queryContext(1));
+            map.get(1);
+            Assert.assertEquals(1, map.allContexts().size());
+            ChainingInterface cxt = map.allContexts().get(0).get().get();
+            // Release the query on its owner thread before map close or the shutdown hook runs.
+            try (ExternalMapQueryContext<Integer, Integer, ?> query = map.queryContext(1)) {
+                Assert.assertSame(cxt, query);
+            }
+        }
     }
 }
