@@ -15,10 +15,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 public class ParallelStartupTest {
 
     @RepeatedTest(5)
-    public void test() throws IOException {
+    public void test() {
         final File file = IOTools.createTempFile("issue342");
         final long started = System.nanoTime();
         final Thread[] workers = new Thread[16];
@@ -89,7 +91,7 @@ public class ParallelStartupTest {
                 if (workers[i].isAlive())
                     workers[i].interrupt();
             }
-            throw error;
+            fail(error.getMessage(), error);
         }
     }
 
