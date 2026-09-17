@@ -49,7 +49,8 @@ public final class CanonicalRandomAccessFiles {
         return CANONICAL_RAFS.compute(file, (f, ref) -> {
             while (ref != null) {
                 try {
-                    ref.raf.length();
+                    // Java 8 RandomAccessFile.length() moves the shared file pointer.
+                    ref.raf.getChannel().size();
                 } catch (IOException e) {
                     // File is closed by interrupt;
                     break;

@@ -422,10 +422,11 @@ public final class ChronicleMapBuilder<K, V> implements
                                                           final boolean recover,
                                                           @Nullable final ChronicleHashCorruption.Listener corruptionListener,
                                                           @Nullable final ChronicleHashCorruptionImpl corruption) throws IOException {
-        if (raf.length() < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
+        final long fileSize = raf.getChannel().size();
+        if (fileSize < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
             throw throwRecoveryOrReturnIOException(file,
                     "The file is shorter than the header size: " + headerSize +
-                            ", file size: " + raf.length(), recover);
+                            ", file size: " + fileSize, recover);
         }
         final FileChannel fileChannel = raf.getChannel();
         final ByteBuffer headerBuffer = ByteBuffer.allocate(SELF_BOOTSTRAPPING_HEADER_OFFSET + headerSize);
@@ -1705,7 +1706,7 @@ public final class ChronicleMapBuilder<K, V> implements
         final ChronicleHashResources resources = new PersistedChronicleHashResources(canonicalFile);
         try {
             VanillaChronicleMap<K, V, ?> result;
-            if (raf.length() > 0) {
+            if (raf.getChannel().size() > 0) {
                 result = openWithExistingFile(canonicalFile, raf, resources, recover, overrideBuilderConfig, corruptionListener);
             } else {
                 // Atomic* allows lambda modification
@@ -1716,10 +1717,10 @@ public final class ChronicleMapBuilder<K, V> implements
 
                 TimingPauser pauser = Pauser.balanced();
 
-                while (raf.length() == 0) {
+                while (fileChannel.size() == 0) {
                     final boolean locked = CanonicalRandomAccessFiles.tryRunExclusively(canonicalFile, fileChannel, () -> {
                         // Double-checked locking
-                        if (raf.length() == 0) {
+                        if (fileChannel.size() == 0) {
                             map.set(newMap());
                             headerBuffer.set(writeHeader(fileChannel, map.get()));
                             newFile.set(true);
@@ -1790,7 +1791,7 @@ public final class ChronicleMapBuilder<K, V> implements
         final int attempts = 60 * 10;
         int lastReadHeaderSize = -1;
         for (int attempt = 0; attempt < attempts; attempt++) {
-            if (raf.length() >= SELF_BOOTSTRAPPING_HEADER_OFFSET) {
+            if (fileChannel.size() >= SELF_BOOTSTRAPPING_HEADER_OFFSET) {
 
                 ((Buffer) sizeWordBuffer).clear();
                 readFully(fileChannel, SIZE_WORD_OFFSET, sizeWordBuffer);
@@ -1874,7 +1875,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
             if (MAP_CREATION_DEBUG) {
                 Jvm.warn().on(getClass(), "<map creation debug> Using existing file [canonizedMapDataFile=" + file.getAbsolutePath() +
-                        ", size=" + raf.length() + ", headerCorrect=" + headerCorrect + "] for map creation");
+                        ", size=" + fileChannel.size() + ", headerCorrect=" + headerCorrect + "] for map creation");
             }
 
             boolean headerWritten = false;
@@ -1904,7 +1905,7 @@ public final class ChronicleMapBuilder<K, V> implements
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
 
             final long dataStoreSize = map.globalMutableState().getDataStoreSize();
-            long fileLength = raf.length();
+            long fileLength = fileChannel.size();
             if (!recover && dataStoreSize > fileLength) {
                 throw new IOException("The file " + file + " the map is serialized from " +
                         "has unexpected length " + fileLength + ", probably corrupted. " +

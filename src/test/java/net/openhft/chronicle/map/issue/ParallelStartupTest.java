@@ -15,12 +15,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class ParallelStartupTest {
 
     @RepeatedTest(5)
-    void test() {
+    void test() throws IOException {
         final File file = IOTools.createTempFile("issue342");
         final long started = System.nanoTime();
         final Thread[] workers = new Thread[16];
@@ -92,6 +93,14 @@ class ParallelStartupTest {
                     workers[i].interrupt();
             }
             fail(error.getMessage(), error);
+        }
+
+        try (ChronicleMap<Integer, CharSequence> reopened = ChronicleMapBuilder
+                .of(Integer.class, CharSequence.class)
+                .entries(100).averageValueSize(100).createPersistedTo(file)) {
+            assertEquals(workers.length, reopened.size(), "All workers' entries must survive reopening");
+            for (int i = 0; i < workers.length; i++)
+                assertEquals(workers[i].getName(), reopened.get(i).toString(), "Persisted entry " + i);
         }
     }
 

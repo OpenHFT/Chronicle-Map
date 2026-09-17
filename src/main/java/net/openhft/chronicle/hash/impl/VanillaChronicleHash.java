@@ -17,6 +17,7 @@ import net.openhft.chronicle.hash.impl.stage.hash.ChainingInterface;
 import net.openhft.chronicle.hash.impl.util.BuildVersion;
 import net.openhft.chronicle.hash.impl.util.Cleaner;
 import net.openhft.chronicle.hash.impl.util.CleanerUtils;
+import net.openhft.chronicle.hash.impl.util.FileIOUtils;
 import net.openhft.chronicle.hash.impl.util.jna.PosixFallocate;
 import net.openhft.chronicle.hash.locks.InterProcessReadWriteUpdateLock;
 import net.openhft.chronicle.hash.serialization.DataAccess;
@@ -420,13 +421,10 @@ public abstract class VanillaChronicleHash<K,
             // After the mapping globalMutableState value's bytes are reassigned
             final ByteBuffer globalMutableStateBuffer = ByteBuffer.allocate((int) globalMutableState.maxSize());
             final FileChannel fileChannel = raf.getChannel();
-            while (globalMutableStateBuffer.remaining() > 0) {
-                if (fileChannel.read(globalMutableStateBuffer,
-                        this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET +
-                                globalMutableStateBuffer.position()) == -1) {
-                    throw throwRecoveryOrReturnIOException(file, "truncated", recover);
-                }
-            }
+            FileIOUtils.readFully(fileChannel,
+                    this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET, globalMutableStateBuffer);
+            if (globalMutableStateBuffer.hasRemaining())
+                throw throwRecoveryOrReturnIOException(file, "truncated", recover);
             //! Keep the Java 8 Buffer descriptor when this reopening path is compiled on newer JDKs.
             ((Buffer) globalMutableStateBuffer).flip();
             //noinspection unchecked
@@ -1087,14 +1085,12 @@ public abstract class VanillaChronicleHash<K,
         mapSize = pageAlign(mapSize, pageSize);
         final long minFileSize = mappingOffsetInFile + mapSize;
         final FileChannel fileChannel = raf.getChannel();
-        if (fileChannel.size() < minFileSize) {
+        if (FileIOUtils.growFile(raf, minFileSize)) {
             // In MappedFile#acquireByteStore(), this is wrapped with fileLock(), to avoid race
             // condition between processes. This map() method is called either when a new tier is
             // allocated (in this case concurrent access is mutually excluded by
             // globalMutableStateLock), or on map creation, when race condition should be excluded
             // by self-bootstrapping header spec
-            raf.setLength(minFileSize);
-
             // RandomAccessFile#setLength() only calls ftruncate,
             // which will not preallocate space on XFS filesystem of Linux.
             // And writing that file will create a sparse file with a large number of extents.
