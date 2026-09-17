@@ -9,20 +9,20 @@ import net.openhft.chronicle.hash.serialization.BytesWriter;
 import net.openhft.chronicle.hash.serialization.impl.EnumMarshallable;
 import net.openhft.chronicle.set.Builder;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class Issue43Test {
+class Issue43Test {
 
     public static void main(String[] args) throws IOException {
         new Issue43Test().testIssue43();
     }
 
     @Test
-    public void testIssue43() throws IOException {
+    void testIssue43() throws IOException {
         ChronicleMap<Long, ValueWrapper> map = ChronicleMapBuilder
                 .of(Long.class, ValueWrapper.class)
                 .entries(512)

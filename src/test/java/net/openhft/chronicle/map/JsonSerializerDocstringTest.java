@@ -5,7 +5,7 @@ package net.openhft.chronicle.map;
 
 import com.thoughtworks.xstream.XStream;
 import org.codehaus.jettison.mapped.MappedXMLStreamReader;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,9 +15,9 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Pins the dependency versions advertised in
@@ -30,7 +30,7 @@ import static org.junit.Assert.assertTrue;
  * pin a stale (potentially vulnerable) version. These tests fail loudly on
  * such drift.
  */
-public class JsonSerializerDocstringTest {
+class JsonSerializerDocstringTest {
 
     private static final Pattern XSTREAM_VERSION =
             Pattern.compile("xstream</artifactId>\\s*<version>([^<]+)</version>");
@@ -40,15 +40,15 @@ public class JsonSerializerDocstringTest {
     private static String docstring() throws Exception {
         Field f = JsonSerializer.class.getDeclaredField("LOG_ERROR_SUGGEST_X_STREAM");
         f.setAccessible(true);
-        assertTrue("docstring constant should be static",
-                Modifier.isStatic(f.getModifiers()));
+        assertTrue(Modifier.isStatic(f.getModifiers()),
+                "docstring constant should be static");
         Object v = f.get(null);
         assertNotNull(v);
         return v.toString();
     }
 
     @Test
-    public void xstreamVersionInDocstringMatchesClasspath() throws Exception {
+    void xstreamVersionInDocstringMatchesClasspath() throws Exception {
         String advertised = extract(XSTREAM_VERSION, docstring());
         // XStream exposes its version as a public static field.
         String actual = XStream.class.getPackage().getImplementationVersion();
@@ -59,13 +59,13 @@ public class JsonSerializerDocstringTest {
                     XStream.class,
                     "META-INF/maven/com.thoughtworks.xstream/xstream/pom.properties");
         }
-        assertNotNull("could not determine xstream classpath version", actual);
-        assertEquals("docstring xstream version drifted from classpath",
-                actual, advertised);
+        assertNotNull(actual, "could not determine xstream classpath version");
+        assertEquals(actual, advertised,
+                "docstring xstream version drifted from classpath");
     }
 
     @Test
-    public void jettisonVersionInDocstringMatchesClasspath() throws Exception {
+    void jettisonVersionInDocstringMatchesClasspath() throws Exception {
         String advertised = extract(JETTISON_VERSION, docstring());
         String actual = MappedXMLStreamReader.class.getPackage().getImplementationVersion();
         if (actual == null) {
@@ -73,24 +73,24 @@ public class JsonSerializerDocstringTest {
                     MappedXMLStreamReader.class,
                     "META-INF/maven/org.codehaus.jettison/jettison/pom.properties");
         }
-        assertNotNull("could not determine jettison classpath version", actual);
-        assertEquals("docstring jettison version drifted from classpath. "
+        assertNotNull(actual, "could not determine jettison classpath version");
+        assertEquals(actual, advertised,
+                "docstring jettison version drifted from classpath. "
                         + "JsonSerializer.LOG_ERROR_SUGGEST_X_STREAM tells users to "
-                        + "pin " + advertised + " but the classpath resolves to " + actual,
-                actual, advertised);
+                        + "pin " + advertised + " but the classpath resolves to " + actual);
     }
 
     @Test
-    public void xstreamGroupIdIsCorrectInDocstring() throws Exception {
+    void xstreamGroupIdIsCorrectInDocstring() throws Exception {
         String s = docstring();
-        assertTrue("docstring must reference the correct xstream groupId; "
-                        + "the original snippet had a bare 'xstream' which is wrong: " + s,
-                s.contains("<groupId>com.thoughtworks.xstream</groupId>"));
+        assertTrue(s.contains("<groupId>com.thoughtworks.xstream</groupId>"),
+                "docstring must reference the correct xstream groupId; "
+                        + "the original snippet had a bare 'xstream' which is wrong: " + s);
     }
 
     private static String extract(Pattern p, String haystack) {
         Matcher m = p.matcher(haystack);
-        assertTrue("pattern " + p + " did not match docstring: " + haystack, m.find());
+        assertTrue(m.find(), "pattern " + p + " did not match docstring: " + haystack);
         return m.group(1).trim();
     }
 

@@ -1270,8 +1270,8 @@ public final class ChronicleMapBuilder<K, V> implements
      * previous mapped value on {@code putIfAbsent()} calls and does not change the supplied value.
      *
      * @param putIfAbsentUsingValue {@code true} if you want {@link ChronicleMap#putIfAbsent(Object, Object)
-     *                       ChronicleMap.putIfAbsent()} to not return the value that was replaced but
-     *                       instead return {@code null}
+     *                              ChronicleMap.putIfAbsent()} to not return the value that was replaced but
+     *                              instead return {@code null}
      * @return this builder back
      * @see #putReturnsNull(boolean)
      */
@@ -1979,7 +1979,7 @@ public final class ChronicleMapBuilder<K, V> implements
                 return (VanillaChronicleMap<K, V, ?>) Class.forName(replicatedMapClassName).
                         getDeclaredConstructor(getClass()).newInstance(this);
             } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
-                    InvocationTargetException | ClassNotFoundException e) {
+                     InvocationTargetException | ClassNotFoundException e) {
                 throw new IllegalStateException("Cannot load specified implementation class: " + replicatedMapClassName,
                         e);
             }

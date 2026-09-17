@@ -3,42 +3,42 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class CloseInContextResourceTest {
-    @Rule
-    public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+class CloseInContextResourceTest {
+    @TempDir
+    Path temporaryFolder;
 
     @Test
-    public void rejectedQueryCloseCanReleasePersistedMap() throws IOException {
+    void rejectedQueryCloseCanReleasePersistedMap() throws IOException {
         assertRejectedClose(false, false);
     }
 
     @Test
-    public void rejectedQueryCloseCanReleaseReplicatedPersistedMap() throws IOException {
+    void rejectedQueryCloseCanReleaseReplicatedPersistedMap() throws IOException {
         assertRejectedClose(true, false);
     }
 
     @Test
-    public void rejectedIterationCloseCanReleasePersistedMap() throws IOException {
+    void rejectedIterationCloseCanReleasePersistedMap() throws IOException {
         assertRejectedClose(false, true);
     }
 
     @Test
-    public void rejectedIterationCloseCanReleaseReplicatedPersistedMap() throws IOException {
+    void rejectedIterationCloseCanReleaseReplicatedPersistedMap() throws IOException {
         assertRejectedClose(true, true);
     }
 
     private void assertRejectedClose(boolean replicated, boolean iteration) throws IOException {
-        File file = temporaryFolder.newFile();
+        File file = Files.createTempFile(temporaryFolder, "chronicle-map", ".tmp").toFile();
         ChronicleMapBuilder<Integer, Integer> builder = ChronicleMap
                 .of(Integer.class, Integer.class).entries(1);
         if (replicated)
@@ -66,6 +66,6 @@ public class CloseInContextResourceTest {
     private static void assertRejected(ChronicleMap<Integer, Integer> map) {
         IllegalStateException error = assertThrows(IllegalStateException.class, map::close);
         assertTrue(error.getMessage().contains("not yet finished query or iteration"));
-        assertTrue("Rejected close must leave the map open", map.isOpen());
+        assertTrue(map.isOpen(), "Rejected close must leave the map open");
     }
 }

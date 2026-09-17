@@ -4,13 +4,16 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.OS;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class Issue42Test {
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class Issue42Test {
 
     @Test
-    public void crashJVMWindowsTest() {
+    void crashJVMWindowsTest() throws IOException {
 
         if (!OS.isWindows())
             return;
@@ -27,7 +30,7 @@ public class Issue42Test {
 
             for (int i = 0; i < 1000000; ++i) {
                 String s = String.valueOf(i);
-                Assert.assertEquals(s, map.get(s).toString());
+                assertEquals(s, map.get(s).toString());
             }
         }
     }

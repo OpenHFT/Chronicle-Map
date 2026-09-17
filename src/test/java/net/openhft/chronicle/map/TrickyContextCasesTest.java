@@ -4,72 +4,95 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.values.IntValue;
+import net.openhft.chronicle.hash.impl.BigSegmentHeader;
+import net.openhft.chronicle.hash.locks.InterProcessDeadLockException;
 import net.openhft.chronicle.threads.NamedThreadFactory;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 import static java.nio.ByteOrder.LITTLE_ENDIAN;
 import static net.openhft.chronicle.algo.hashing.LongHashFunction.xx_r39;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class TrickyContextCasesTest {
+class TrickyContextCasesTest {
 
-    @Test(expected = IllegalStateException.class)
-    public void nestedContextsSameKeyTest() {
-        ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
-                .of(Integer.class, IntValue.class)
-                .entries(1).create();
-
-        IntValue v = Values.newHeapInstance(IntValue.class);
-        v.setValue(2);
-        map.put(1, v);
-        try (ExternalMapQueryContext<Integer, IntValue, ?> q = map.queryContext(1)) {
-            q.writeLock().lock();
-            // assume the value is 2
-            final IntValue v2 = q.entry().value().get();
-            // this call should throw ISE, as accessing the key 1 in a nested context, but if not...
-            map.remove(1);
-            v.setValue(3);
-            map.put(2, v);
-            // prints 3
-            System.out.println(v2.getValue());
-        }
-    }
-
-    @Test(expected = Exception.class)
-    public void testPutShouldBeWriteLocked() throws ExecutionException, InterruptedException {
-        ChronicleMap<Integer, byte[]> map = ChronicleMapBuilder
-                .of(Integer.class, byte[].class)
-                .averageValue(new byte[1])
-                .entries(100).actualSegments(1).create();
-        map.put(1, new byte[]{1});
-        map.put(2, new byte[]{2});
-        try (ExternalMapQueryContext<Integer, byte[], ?> q = map.queryContext(1)) {
-            MapEntry<Integer, byte[]> entry = q.entry(); // acquires read lock implicitly
-            assertNotNull(entry);
-            Executors.newFixedThreadPool(1,
-                    new NamedThreadFactory("test"))
-                    .submit(() -> {
-                        // this call should try to acquire write lock, that should lead to dead lock
-                        // but if not...
-                        // relocates the entry for the key 1 after the entry for 2, under update lock
-                        map.put(1, new byte[]{1, 2, 3, 4, 5});
-                        // puts the entry for 3 at the place of the entry for the key 1, under update lock
-                        map.put(3, new byte[]{3});
-                    }).get();
-            // prints [3]
-            System.out.println(Arrays.toString(entry.value().get()));
+    @Test
+    void nestedContextsSameKeyTest() {
+        try (ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
+                .of(Integer.class, IntValue.class).entries(1).create()) {
+            IntValue v = Values.newHeapInstance(IntValue.class);
+            v.setValue(2);
+            map.put(1, v);
+            try (ExternalMapQueryContext<Integer, IntValue, ?> q = map.queryContext(1)) {
+                q.writeLock().lock();
+                IntValue v2 = q.entry().value().get();
+                assertEquals(2, v2.getValue());
+                IllegalStateException failure = assertThrows(IllegalStateException.class, () -> map.remove(1));
+                assertTrue(failure.getMessage().contains("Nested same-thread contexts cannot access the same key"));
+                assertEquals(2, v2.getValue());
+            }
+            assertEquals(1, map.size());
+            assertEquals(2, map.get(1).getValue());
         }
     }
 
     @Test
-    public void testHashCollision() {
+    @SuppressWarnings("try") // The resource exists only to order worker termination and map close.
+    void testPutShouldBeWriteLocked() throws Exception {
+        ChronicleMap<Integer, byte[]> map = ChronicleMapBuilder
+                .of(Integer.class, byte[].class)
+                .averageValue(new byte[1])
+                .entries(100).actualSegments(1).create();
+        ExecutorService executor = Executors.newSingleThreadExecutor(new NamedThreadFactory("write-lock-test"));
+        // Close contexts first, then join the worker before releasing its mapped memory.
+        // try-with-resources retains any assertion failure if worker cleanup also fails.
+        try (AutoCloseable cleanup = () -> {
+            stopWorker(executor);
+            map.close();
+        }) {
+            map.put(1, new byte[]{1});
+            map.put(2, new byte[]{2});
+            try (ExternalMapQueryContext<Integer, byte[], ?> q = map.queryContext(1)) {
+                MapEntry<Integer, byte[]> entry = q.entry(); // acquires read lock implicitly
+                assertNotNull(entry);
+                Future<?> write = executor.submit(() -> map.put(1, new byte[]{1, 2, 3, 4, 5}));
+                ExecutionException failure = assertThrows(ExecutionException.class,
+                        () -> write.get(BigSegmentHeader.LOCK_TIMEOUT_SECONDS + 10L, TimeUnit.SECONDS));
+                assertEquals(InterProcessDeadLockException.class, failure.getCause().getClass());
+                assertTrue(q.readLock().isHeldByCurrentThread());
+            }
+            // Relocation publishes its new entry before acquiring the write lock.
+            // Lock rejection does not establish rollback of the attempted value change.
+            assertArrayEquals(new byte[]{2}, map.get(2));
+            assertEquals(2, map.size());
+        }
+    }
+
+    private static void stopWorker(ExecutorService executor) {
+        boolean interrupted = Thread.interrupted();
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        try {
+            executor.shutdownNow();
+            while (!executor.isTerminated()) {
+                long remaining = deadline - System.nanoTime();
+                assertTrue(remaining > 0, "Write-lock worker did not terminate; its map has not been closed");
+                try {
+                    executor.awaitTermination(remaining, TimeUnit.NANOSECONDS);
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                }
+            }
+        } finally {
+            if (interrupted)
+                Thread.currentThread().interrupt();
+        }
+    }
+
+    @Test
+    void testHashCollision() {
         try (ChronicleMap<ByteBuffer, Integer> map = ChronicleMap
                 .of(ByteBuffer.class, Integer.class)
                 .constantKeySizeBySample(ByteBuffer.allocate(128))

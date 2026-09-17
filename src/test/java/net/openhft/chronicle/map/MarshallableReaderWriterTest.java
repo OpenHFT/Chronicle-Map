@@ -9,14 +9,16 @@ import net.openhft.chronicle.wire.SelfDescribingMarshallable;
 import net.openhft.chronicle.wire.WireOut;
 import net.openhft.chronicle.wire.Wires;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.util.Objects;
 
-public class MarshallableReaderWriterTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class MarshallableReaderWriterTest {
     @Test
-    public void test() {
+    void test() throws IOException {
         ClassAliasPool.CLASS_ALIASES.addAlias(MyOrder.class);
 
         try (ChronicleMap<CharSequence, MyOrder> map = ChronicleMap
@@ -35,14 +37,14 @@ public class MarshallableReaderWriterTest {
             map.put("1", myOrder);
 
             MyOrder retrieved = map.get("1");
-            Assert.assertEquals(myOrder, retrieved);
+            assertEquals(myOrder, retrieved);
 
             retrieved = map.get("1");
-            Assert.assertEquals(myOrder, retrieved);
+            assertEquals(myOrder, retrieved);
         }
     }
 
-    public static class MyOrder extends SelfDescribingMarshallable {
+    static class MyOrder extends SelfDescribingMarshallable {
         private String instrument;
         private String orderId;
 

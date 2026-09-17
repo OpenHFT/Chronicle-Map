@@ -3,12 +3,12 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class HColl423Test {
+class HColl423Test {
 
     @Test
-    public void hColl423Test() {
+    void hColl423Test() {
         try {
             ChronicleMap<String, Integer> map = ChronicleMap
                     .of(String.class, Integer.class)

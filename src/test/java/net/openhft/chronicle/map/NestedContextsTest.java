@@ -5,7 +5,7 @@ package net.openhft.chronicle.map;
 
 import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,11 +13,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadLocalRandom;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class NestedContextsTest {
+class NestedContextsTest {
 
     private static void verifyGraphConsistent(ChronicleMap<Integer, Set<Integer>> graph) {
         graph.forEach((node, neighbours) ->
@@ -151,7 +150,7 @@ public class NestedContextsTest {
     }
 
     @Test
-    public void nestedContextsTest() throws ExecutionException, InterruptedException {
+    void nestedContextsTest() throws ExecutionException, InterruptedException {
         HashSet<Integer> averageValue = new HashSet<>();
         for (int i = 0; i < 5; i++) {
             averageValue.add(i);
@@ -195,8 +194,8 @@ public class NestedContextsTest {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void negativeEntriesTest() {
-        ChronicleMap.of(Integer.class, Set.class).entries(-1L).create();
+    @Test
+    void negativeEntriesTest() {
+        assertThrows(IllegalArgumentException.class, () -> ChronicleMap.of(Integer.class, Set.class).entries(-1L).create());
     }
 }

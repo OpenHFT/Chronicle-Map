@@ -5,23 +5,25 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class DirtyReadVictimTest {
+class DirtyReadVictimTest {
 
-    @Before
-    public void longRunningStableOnLinux() {
+    @BeforeEach
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
     @Test
-    public void mainOptimisticNegative() {
+    void mainOptimisticNegative() throws IOException {
         try {
             System.out.println("\n*****   Optimistic (-) Test\n");
 
@@ -82,10 +84,7 @@ public class DirtyReadVictimTest {
                                     coupon + " "
                     );
                     // THIS Test will/must FAIL. i.e. OPTIMISM tested (-) in this case
-                    Assert.assertEquals(
-                            Boolean.FALSE,
-                            r
-                    );
+                    assertEquals(Boolean.FALSE, r);
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
@@ -93,10 +92,7 @@ public class DirtyReadVictimTest {
                                     " must apply PESSIMISTIC_POLICY (dirty read endured)" +
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
-                    Assert.assertNotEquals(
-                            Boolean.TRUE,
-                            r
-                    );
+                    assertNotEquals(Boolean.TRUE, r);
                 }
                 //offHeapLock.unlockWrite(writerStamp);
             }
@@ -120,7 +116,7 @@ public class DirtyReadVictimTest {
     }
 
     @Test
-    public void mainOptimisticPositive() {
+    void mainOptimisticPositive() {
         System.out.println("\n*****   Optimistic (+) Test\n");
         try {
             /*
@@ -173,10 +169,7 @@ public class DirtyReadVictimTest {
                                     coupon + " "
                     );
                     // THIS Test will pass when ChronicleStampedLock is GA
-                    Assert.assertEquals(
-                            Boolean.TRUE,
-                            true
-                    );
+                    assertEquals(Boolean.TRUE, true);
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
@@ -185,10 +178,7 @@ public class DirtyReadVictimTest {
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
                     // THIS Test will execute pass when ChronicleStampedLock is GA
-                    Assert.assertNotEquals(
-                            Boolean.TRUE,
-                            false
-                    );
+                    assertNotEquals(Boolean.TRUE, false);
                 }
             }
             /*

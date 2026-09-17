@@ -12,5 +12,4 @@ public final class MapFileAnalyzer {
     public static void main(String[] args) throws IOException {
         InternalMapFileAnalyzer.main(args);
     }
-
 }

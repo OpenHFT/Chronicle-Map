@@ -3,16 +3,19 @@
  */
 package net.openhft.chronicle.map;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
-public class BitUnitTest extends TestCase {
+class BitUnitTest {
 
-    public void testToBits() {
+    @Test
+    void testToBits() {
     }
 
-    public void testToMegaBits() {
+    @Test
+    void testToMegaBits() {
     }
 
-    public void testToGigaBits() {
+    @Test
+    void testToGigaBits() {
     }
 }
