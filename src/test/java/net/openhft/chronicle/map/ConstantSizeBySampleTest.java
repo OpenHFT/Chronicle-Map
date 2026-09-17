@@ -6,20 +6,19 @@ package net.openhft.chronicle.map;
 import net.openhft.chronicle.hash.serialization.DataAccess;
 import net.openhft.chronicle.hash.serialization.impl.ExternalizableDataAccess;
 import net.openhft.chronicle.hash.serialization.impl.ExternalizableReader;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings({"rawtypes", "unchecked", "serial"})
-public class ConstantSizeBySampleTest {
+class ConstantSizeBySampleTest {
 
     @Test
-    public void testConstantKeys() {
+    void testConstantKeys() {
         try (ChronicleMap<byte[], Long> map = ChronicleMapBuilder.of(byte[].class, Long.class)
                 .constantKeySizeBySample(new byte[8])
                 .entries(100)
@@ -39,7 +38,7 @@ public class ConstantSizeBySampleTest {
     }
 
     @Test
-    public void testUnexpectedlyLongConstantByteArrayValues() {
+    void testUnexpectedlyLongConstantByteArrayValues() throws IOException {
         try (ChronicleMap<Long, byte[]> map = ChronicleMapBuilder.of(Long.class, byte[].class)
                 .constantValueSizeBySample(new byte[512 * 1024])
                 .entries(100)
@@ -49,12 +48,12 @@ public class ConstantSizeBySampleTest {
 
             value[42] = 1;
             map.put(1L, value);
-            Assert.assertArrayEquals(map.get(1L), value);
+            assertArrayEquals(map.get(1L), value);
         }
     }
 
     @Test
-    public void testUnexpectedlyLongConstantExternalizableValues() {
+    void testUnexpectedlyLongConstantExternalizableValues() throws IOException {
         try (ChronicleMap<Long, ExternalizableData> map =
                      ChronicleMapBuilder.of(Long.class, ExternalizableData.class)
                              .valueReaderAndDataAccess(new ExternalizableDataReader(),
@@ -66,12 +65,12 @@ public class ConstantSizeBySampleTest {
             ExternalizableData value = new ExternalizableData();
             value.data[42] = 1;
             map.put(1L, value);
-            Assert.assertEquals(map.get(1L), value);
+            assertEquals(map.get(1L), value);
         }
     }
 
     @Test
-    public void testUnexpectedlyLongConstantSerializableValues() {
+    void testUnexpectedlyLongConstantSerializableValues() throws IOException {
         try (ChronicleMap<Long, SerializableData> map =
                      ChronicleMapBuilder.of(Long.class, SerializableData.class)
                              .constantValueSizeBySample(new SerializableData())
@@ -81,7 +80,7 @@ public class ConstantSizeBySampleTest {
             SerializableData value = new SerializableData();
             value.data[42] = 1;
             map.put(1L, value);
-            Assert.assertEquals(map.get(1L), value);
+            assertEquals(map.get(1L), value);
         }
     }
 

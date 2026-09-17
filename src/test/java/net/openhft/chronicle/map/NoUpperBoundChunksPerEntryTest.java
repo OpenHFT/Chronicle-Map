@@ -3,13 +3,14 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class NoUpperBoundChunksPerEntryTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class NoUpperBoundChunksPerEntryTest {
 
     @Test
-    public void noUpperBoundChunksPerEntryTest() {
+    void noUpperBoundChunksPerEntryTest() {
         ChronicleMap<Integer, CharSequence> map =
                 ChronicleMapBuilder.of(Integer.class, CharSequence.class)
                         .averageValueSize(2).entries(10000L).actualSegments(1).create();
@@ -18,6 +19,6 @@ public class NoUpperBoundChunksPerEntryTest {
             ultraLargeValue += "Hello";
         }
         map.put(1, ultraLargeValue);
-        Assert.assertEquals(ultraLargeValue, map.get(1).toString());
+        assertEquals(ultraLargeValue, map.get(1).toString());
     }
 }

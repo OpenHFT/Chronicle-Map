@@ -5,10 +5,10 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.hash.serialization.SizeMarshaller;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,20 +20,8 @@ import java.util.Random;
 
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
-@RunWith(Parameterized.class)
-public class ValueAlignmentRelocationTest {
+class ValueAlignmentRelocationTest {
 
-    private final boolean persisted;
-    private final int alignment;
-    private final int chunk;
-
-    public ValueAlignmentRelocationTest(String name, boolean persisted, int alignment, int chunk) {
-        this.persisted = persisted;
-        this.alignment = alignment;
-        this.chunk = chunk;
-    }
-
-    @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {"Volatile a=1, c=1", false, 1, 1},
@@ -50,8 +38,9 @@ public class ValueAlignmentRelocationTest {
         return new String(value, StandardCharsets.UTF_8);
     }
 
-    @Test
-    public void testValueAlignmentRelocation() throws IOException {
+    @ParameterizedTest
+    @MethodSource("data")
+    void testValueAlignmentRelocation(String name, boolean persisted, int alignment, int chunk) throws IOException {
 
         File file = Files.createTempFile("test", ".cm3").toFile();
         file.deleteOnExit();
@@ -93,14 +82,15 @@ public class ValueAlignmentRelocationTest {
                     map.put(("Hello" + i).getBytes(), "world".getBytes());
                 }
                 //                System.out.println("firstKeySize=" + firstKeySize + ",second key=" + secondKeySize);
-                Assert.assertEquals(Arrays.toString(map.get(firstKey)), Arrays.toString(thirdValue));
-                Assert.assertArrayEquals(map.get(firstKey), thirdValue);
+                assertEquals(Arrays.toString(map.get(firstKey)), Arrays.toString(thirdValue));
+                assertArrayEquals(map.get(firstKey), thirdValue);
             }
         }
     }
 
-    @Test
-    public void testValueAlignmentRelocationNoRandomTest() throws IOException {
+    @ParameterizedTest
+    @MethodSource("data")
+    void testValueAlignmentRelocationNoRandomTest(String name, boolean persisted, int alignment, int chunk) throws IOException {
         File file = Files.createTempFile("test", ".cm3").toFile();
         file.deleteOnExit();
 
@@ -135,13 +125,13 @@ public class ValueAlignmentRelocationTest {
 
                     map.put(prefix, longer);
                     String actual0 = toString(map.get(prefix));
-                    Assert.assertEquals(expected, actual0);
+                    assertEquals(expected, actual0);
 
                     map.put(hello, world);
                     String actual = toString(map.get(prefix));
 
                     if (expected.equals(actual))
-                        Assert.assertEquals(expected, actual);
+                        assertEquals(expected, actual);
                     else
                         System.out.println("k= " + k + ", i= " + i + ", j=" + j);
                 }

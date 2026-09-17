@@ -5,17 +5,19 @@ package net.openhft.chronicle.map.locks;
 
 import net.openhft.chronicle.core.OS;
 import net.openhft.chronicle.map.ChronicleMap;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
 
 import static net.openhft.chronicle.values.Values.newNativeReference;
-import static org.junit.Assume.assumeFalse;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.*;
 
-public class DirtyReadVictimIPCTest {
+class DirtyReadVictimIPCTest {
 
-    @Before
-    public void longRunningStableOnLinux() {
+    @BeforeEach
+    void longRunningStableOnLinux() {
         assumeFalse(OS.isLinux());
     }
 
@@ -32,7 +34,7 @@ public class DirtyReadVictimIPCTest {
      */
 
     @Test
-    public void mainOptimisticNegative() {
+    void mainOptimisticNegative() throws IOException {
         try {
             System.out.println("\n*****   Optimistic (-) Test\n");
             //            ProcessBuilder pb = new ProcessBuilder(
@@ -83,7 +85,7 @@ public class DirtyReadVictimIPCTest {
                             "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-                // none
+                ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -120,10 +122,7 @@ public class DirtyReadVictimIPCTest {
                                     coupon + " "
                     );
                     // THIS Test will/must FAIL. i.e. OPTIMISM tested (-) in this case
-                    Assert.assertEquals(
-                            Boolean.FALSE,
-                            r
-                    );
+                    assertEquals(Boolean.FALSE, r);
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
@@ -131,10 +130,7 @@ public class DirtyReadVictimIPCTest {
                                     " must apply PESSIMISTIC_POLICY (dirty read endured)" +
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
-                    Assert.assertNotEquals(
-                            Boolean.TRUE,
-                            r
-                    );
+                    assertNotEquals(Boolean.TRUE, r);
                 }
                 //offHeapLock.unlockWrite(writerStamp);
             }
@@ -156,7 +152,7 @@ public class DirtyReadVictimIPCTest {
     }
 
     @Test
-    public void mainOptimisticPositive() {
+    void mainOptimisticPositive() {
         System.out.println("\n*****   Optimistic (+) Test\n");
         try {
             /*
@@ -178,7 +174,7 @@ public class DirtyReadVictimIPCTest {
                             + "OPERAND_ChronicleStampedLock"
             );
             while ((stamp = offHeapLock.tryOptimisticRead()) == 0) {
-                // none
+                ; // none
             }
             System.out.println(
                     " ,,@t=" + System.currentTimeMillis() +
@@ -209,10 +205,7 @@ public class DirtyReadVictimIPCTest {
                                     coupon + " "
                     );
                     // THIS Test will pass when ChronicleStampedLock is GA
-                    Assert.assertEquals(
-                            Boolean.TRUE,
-                            true
-                    );
+                    assertEquals(Boolean.TRUE, true);
                 } else {
                     System.out.println(
                             " ,,@t=" + System.currentTimeMillis() +
@@ -221,10 +214,7 @@ public class DirtyReadVictimIPCTest {
                                     " coupon=[" + coupon + "] is *DIRTY*. "
                     );
                     // THIS Test will execute pass when ChronicleStampedLock is GA
-                    Assert.assertNotEquals(
-                            Boolean.TRUE,
-                            false
-                    );
+                    assertNotEquals(Boolean.TRUE, false);
                 }
             }
             /*

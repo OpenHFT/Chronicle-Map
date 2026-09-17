@@ -3,15 +3,15 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-public class WarnOnWindowsTest {
+class WarnOnWindowsTest {
 
     @Test
     // TODO this does not emit a proper warning, there are TODOs in ChronicleMapBuilder/VanillaHash
-    @Ignore("This test results to OOM/jvm crash, run manually to verify warning output")
-    public void warnOnWindowsTest() {
+    @Disabled("This test results to OOM/jvm crash, run manually to verify warning output")
+    void warnOnWindowsTest() {
         ChronicleMapBuilder.of(Long.class, Long.class)
                 .entries(1_000_000_000).create();
     }

@@ -4,23 +4,24 @@
 package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.core.Jvm;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-public class AutoResizeTest {
+import static org.junit.jupiter.api.Assertions.*;
 
-    @BeforeClass
-    public static void setup() {
+class AutoResizeTest {
+
+    @BeforeAll
+    static void setup() {
         Jvm.setExceptionHandlers(null, null, null);
     }
 
-    @AfterClass
-    public static void reset() {
+    @AfterAll
+    static void reset() {
         Jvm.resetExceptionHandlers();
     }
 
@@ -30,7 +31,7 @@ public class AutoResizeTest {
      * @throws IOException IOException
      */
     @Test
-    public void testAutoResizeNotZeroUponRestart() throws IOException {
+    void testAutoResizeNotZeroUponRestart() throws IOException {
 
         File cmap = File.createTempFile("chron", "cmap");
 
@@ -41,7 +42,7 @@ public class AutoResizeTest {
                 .createPersistedTo(cmap)) {
 
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0, actual);
+            assertNotEquals(0, actual);
         }
 
         // if the file already exists  it will reuse the existing settings, set above
@@ -50,12 +51,12 @@ public class AutoResizeTest {
                 .of(String.class, String.class)
                 .createPersistedTo(cmap)) {
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0, actual);
+            assertNotEquals(0, actual);
         }
     }
 
     @Test
-    public void testAutoResizeNotZeroUponRestart2() {
+    void testAutoResizeNotZeroUponRestart2() {
 
         try (ChronicleMap<String, String> map = ChronicleMapBuilder
                 .of(String.class, String.class)
@@ -64,12 +65,14 @@ public class AutoResizeTest {
                 .create()) {
 
             int actual = map.remainingAutoResizes();
-            Assert.assertNotEquals(0, actual);
+            assertNotEquals(0, actual);
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testNegativeReplication() {
-        ChronicleMapBuilder.of(String.class, String.class).replication((byte) -1);
+    @Test
+    void testNegativeReplication() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            ChronicleMapBuilder.of(String.class, String.class).replication((byte) -1);
+        });
     }
 }
