@@ -9,19 +9,18 @@ import net.openhft.chronicle.core.util.Time;
 import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import org.json.JSONException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.File;
 import java.io.IOException;
 
-import static junit.framework.TestCase.assertSame;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class ArrayTest {
+class ArrayTest {
 
     @Test
-    public void test0() throws IOException, JSONException {
+    void test0() throws IOException, JSONException {
         ClassAliasPool.CLASS_ALIASES.addAlias(MovingAverageArray.class);
 
         File file = new File(OS.getTarget() + "/pf-PosistionsAndClose-" + Time.uniqueId());

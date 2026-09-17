@@ -3,11 +3,11 @@
  */
 package net.openhft.chronicle.map.jsr166;
 
-import junit.framework.AssertionFailedError;
+import org.opentest4j.AssertionFailedError;
 import net.openhft.chronicle.core.Jvm;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.security.*;
 import java.util.*;
@@ -16,26 +16,27 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Base class for JSR166 Junit TCK tests.  Defines some constants,
  * utility methods and classes, as well as a simple framework for
- * helping to make sure that assertions Assert.failing in generated threads
- * cause the associated test that generated them to itself Assert.fail (which
+ * helping to make sure that assertions failing in generated threads
+ * cause the associated test that generated them to itself fail (which
  * JUnit does not otherwise arrange).  The rules for creating such
  * tests are:
  * <ol>
  * <li> All assertions in code running in generated threads must use
  * the forms {@link #threadFail}, {@link #threadAssertTrue}, {@link
  * #threadAssertEquals}, or {@link #threadAssertNull}, (not
- * {@code Assert.fail}, {@code Assert.assertTrue}, etc.) It is OK (but not
+ * {@code fail}, {@code assertTrue}, etc.) It is OK (but not
  * particularly recommended) for other code to use these forms too.
  * Only the most typically used JUnit assertion methods are defined
  * this way, but enough to live with.</li>
  * <li> If you override {@link #setUp} or {@link #tearDown}, make sure
  * to invoke {@code super.setUp} and {@code super.tearDown} within
  * them. These methods are used to clear and check for thread
- * assertion Assert.failures.</li>
+ * assertion failures.</li>
  * <li>All delays and timeouts must use one of the constants {@code
  * SHORT_DELAY_MS}, {@code SMALL_DELAY_MS}, {@code MEDIUM_DELAY_MS},
  * {@code LONG_DELAY_MS}. The idea here is that a SHORT is always
@@ -47,7 +48,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * but even so, if there is ever any doubt, they can all be increased
  * in one spot to rerun tests on slower platforms.</li>
  * <li> All threads generated must be joined inside each test case
- * method (or {@code Assert.fail} to do so) before returning from the
+ * method (or {@code fail} to do so) before returning from the
  * method. The {@code joinPool} method can be used to do this when
  * using Executors.</li>
  * </ol>
@@ -110,7 +111,7 @@ public class JSR166TestCase {
     public static long MEDIUM_DELAY_MS;
     public static long LONG_DELAY_MS;
     /**
-     * The first exception encountered if any threadAssertXXX method Assert.fails.
+     * The first exception encountered if any threadAssertXXX method fails.
      */
     private final AtomicReference<Throwable> threadFailure
             = new AtomicReference<Throwable>(null);
@@ -206,16 +207,16 @@ public class JSR166TestCase {
 
     /**
      * Records an exception so that it can be rethrown later in the test
-     * harness thread, triggering a test case Assert.failure.  Only the first
-     * Assert.failure is recorded; subsequent calls to this method from within
+     * harness thread, triggering a test case failure.  Only the first
+     * failure is recorded; subsequent calls to this method from within
      * the same test have no effect.
      */
     public void threadRecordFailure(Throwable t) {
         threadFailure.compareAndSet(null, t);
     }
 
-    @Before
-    public void setUp() {
+    @BeforeEach
+    void setUp() {
         setDelays();
     }
 
@@ -224,14 +225,14 @@ public class JSR166TestCase {
     /**
      * Extra checks that get done for all test cases.
      * <p>
-     * Triggers test case Assert.failure if any thread assertions have Assert.failed,
+     * Triggers test case failure if any thread assertions have failed,
      * by rethrowing, in the test harness thread, any exception recorded
      * earlier by threadRecordFailure.
      * <p>
-     * Triggers test case Assert.failure if interrupt status is set in the main thread.
+     * Triggers test case failure if interrupt status is set in the main thread.
      */
-    @After
-    public void tearDown() throws InterruptedException {
+    @AfterEach
+    void tearDown() throws InterruptedException {
         Throwable t = threadFailure.getAndSet(null);
         if (t != null) {
             if (t instanceof Error)
@@ -276,14 +277,14 @@ public class JSR166TestCase {
     }
 
     /**
-     * Just like Assert.fail(reason), but additionally recording (using
+     * Just like fail(reason), but additionally recording (using
      * threadRecordFailure) any AssertionError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadFail(String reason) {
         try {
-            Assert.fail(reason);
-            //! JUnit 4 throws AssertionError, which is not caught by the JUnit 3 AssertionFailedError subtype.
+            fail(reason);
+            //! Record AssertionError so worker failures reach the owning test across assertion implementations.
         } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
@@ -291,13 +292,13 @@ public class JSR166TestCase {
     }
 
     /**
-     * Just like Assert.assertTrue(b), but additionally recording (using
+     * Just like assertTrue(b), but additionally recording (using
      * threadRecordFailure) any AssertionError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertTrue(boolean b) {
         try {
-            Assert.assertTrue(b);
+            assertTrue(b);
         } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
@@ -307,11 +308,11 @@ public class JSR166TestCase {
     /**
      * Just like assertFalse(b), but additionally recording (using
      * threadRecordFailure) any AssertionError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertFalse(boolean b) {
         try {
-            Assert.assertFalse(b);
+            assertFalse(b);
         } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
@@ -321,11 +322,11 @@ public class JSR166TestCase {
     /**
      * Just like assertNull(x), but additionally recording (using
      * threadRecordFailure) any AssertionError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertNull(Object x) {
         try {
-            Assert.assertNull(x);
+            assertNull(x);
         } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
@@ -335,11 +336,11 @@ public class JSR166TestCase {
     /**
      * Just like assertEquals(x, y), but additionally recording (using
      * threadRecordFailure) any AssertionError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertEquals(long x, long y) {
         try {
-            Assert.assertEquals(x, y);
+            assertEquals(x, y);
         } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
@@ -349,11 +350,11 @@ public class JSR166TestCase {
     /**
      * Just like assertEquals(x, y), but additionally recording (using
      * threadRecordFailure) any AssertionError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertEquals(Object x, Object y) {
         try {
-            Assert.assertEquals(x, y);
+            assertEquals(x, y);
         } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
@@ -365,11 +366,11 @@ public class JSR166TestCase {
     /**
      * Just like assertSame(x, y), but additionally recording (using
      * threadRecordFailure) any AssertionError thrown, so that
-     * the current testcase will Assert.fail.
+     * the current testcase will fail.
      */
     public void threadAssertSame(Object x, Object y) {
         try {
-            Assert.assertSame(x, y);
+            assertSame(x, y);
         } catch (AssertionError t) {
             threadRecordFailure(t);
             throw t;
@@ -411,17 +412,16 @@ public class JSR166TestCase {
     }
 
     /**
-     * Waits out termination of a thread pool or Assert.fails doing so.
+     * Waits out termination of a thread pool or fails doing so.
      */
     protected void joinPool(ExecutorService exec) {
         try {
             exec.shutdown();
-            Assert.assertTrue("ExecutorService did not terminate in a timely manner",
-                    exec.awaitTermination(2 * LONG_DELAY_MS, MILLISECONDS));
+            assertTrue(exec.awaitTermination(2 * LONG_DELAY_MS, MILLISECONDS), "ExecutorService did not terminate in a timely manner");
         } catch (SecurityException ok) {
             // Allowed in case test doesn't have privs
         } catch (InterruptedException ie) {
-            Assert.fail("Unexpected InterruptedException");
+            fail("Unexpected InterruptedException");
         }
     }
 
@@ -437,9 +437,9 @@ public class JSR166TestCase {
      * Checks that thread does not terminate within the given millisecond delay.
      */
     void assertThreadStaysAlive(Thread thread, long millis) {
-        // No need to optimize the Assert.failing case via Thread.join.
+        // No need to optimize the failing case via Thread.join.
         delay(millis);
-        Assert.assertTrue(thread.isAlive());
+        assertTrue(thread.isAlive());
     }
 
     /**
@@ -454,10 +454,10 @@ public class JSR166TestCase {
      * Checks that the threads do not terminate within the given millisecond delay.
      */
     void assertThreadsStayAlive(long millis, Thread... threads) {
-        // No need to optimize the Assert.failing case via Thread.join.
+        // No need to optimize the failing case via Thread.join.
         delay(millis);
         for (Thread thread : threads)
-            Assert.assertTrue(thread.isAlive());
+            assertTrue(thread.isAlive());
     }
 
     /**
@@ -477,20 +477,20 @@ public class JSR166TestCase {
             future.get(timeoutMillis, MILLISECONDS);
             failExpectedException();
         } catch (TimeoutException success) {
-            Assert.assertNotNull(success);
+            assertNotNull(success);
         } catch (Exception e) {
             threadUnexpectedException(e);
         } finally {
             future.cancel(true);
         }
-        Assert.assertTrue(millisElapsedSince(startTime) >= timeoutMillis);
+        assertTrue(millisElapsedSince(startTime) >= timeoutMillis);
     }
 
     /**
      * Fails with message "should throw exception".
      */
     public void failExpectedException() {
-        Assert.fail("Should throw exception");
+        fail("Should throw exception");
     }
     /**
      * android-changed
@@ -514,7 +514,7 @@ public class JSR166TestCase {
                     s == Thread.State.TIMED_WAITING)
                 return;
             else if (s == Thread.State.TERMINATED)
-                Assert.fail("Unexpected thread termination");
+                fail("Unexpected thread termination");
             else if (millisElapsedSince(startTime) > timeoutMillis) {
                 threadAssertTrue(thread.isAlive());
                 return;
@@ -541,7 +541,7 @@ public class JSR166TestCase {
      * A security policy where new permissions can be dynamically added
      * or all cleared.
      */
-    public static class AdjustablePolicy extends java.security.Policy {
+    static class AdjustablePolicy extends java.security.Policy {
         Permissions perms = new Permissions();
 
         AdjustablePolicy(Permission... permissions) {
@@ -579,4 +579,5 @@ public class JSR166TestCase {
             return "AdjustablePolicy with permissions " + ps;
         }
     }
+
 }

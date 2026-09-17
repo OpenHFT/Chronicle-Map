@@ -17,10 +17,10 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class ParallelStartupTest {
+class ParallelStartupTest {
 
     @RepeatedTest(5)
-    public void test() {
+    void test() {
         final File file = IOTools.createTempFile("issue342");
         final long started = System.nanoTime();
         final Thread[] workers = new Thread[16];

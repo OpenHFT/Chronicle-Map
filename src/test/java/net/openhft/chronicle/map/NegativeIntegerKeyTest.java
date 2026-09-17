@@ -3,16 +3,17 @@
  */
 package net.openhft.chronicle.map;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-public class NegativeIntegerKeyTest {
+import static org.junit.jupiter.api.Assertions.*;
+
+class NegativeIntegerKeyTest {
 
     @Test
-    public void testNegativeIntegerKey() throws IOException {
+    void testNegativeIntegerKey() throws IOException {
         File file = ChronicleMapTest.getPersistenceFile();
         try (ChronicleMap<Integer, Integer> map = ChronicleMap
                 .of(Integer.class, Integer.class)
@@ -24,7 +25,7 @@ public class NegativeIntegerKeyTest {
                 .of(Integer.class, Integer.class)
                 .entries(1)
                 .recoverPersistedTo(file, true)) {
-            Assert.assertEquals(Integer.valueOf(-1), map.get(-1));
+            assertEquals(Integer.valueOf(-1), map.get(-1));
         }
     }
 }

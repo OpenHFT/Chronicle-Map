@@ -8,16 +8,16 @@ import net.openhft.chronicle.hash.Data;
 import net.openhft.chronicle.map.*;
 import net.openhft.chronicle.values.Values;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingDefaultValueProvider.simpleLoggingDefaultValueProvider;
 import static net.openhft.chronicle.map.example.SimpleMapOperationsListeningTest.SimpleLoggingMapEntryOperations.simpleLoggingMapEntryOperations;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
-public class SimpleMapOperationsListeningTest {
+class SimpleMapOperationsListeningTest {
 
     @Test
-    public void simpleLoggingTest() {
+    void simpleLoggingTest() {
         ChronicleMap<Integer, IntValue> map = ChronicleMapBuilder
                 .of(Integer.class, IntValue.class)
                 .entries(100)

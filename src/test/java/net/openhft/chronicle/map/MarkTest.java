@@ -5,8 +5,8 @@ package net.openhft.chronicle.map;
 
 import net.openhft.chronicle.algo.MemoryUnit;
 import net.openhft.chronicle.core.OS;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,9 +15,10 @@ import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Timeout;
 
-public class MarkTest {
+class MarkTest {
 
     static final int ENTRIES = 25_000_000;
 
@@ -41,15 +42,17 @@ public class MarkTest {
         System.out.println(System.currentTimeMillis() - ms);
     }
 
-    @Ignore("often out of time, that is a parf issue, not a bug")
-    @Test(timeout = 25000)
-    public void inMemoryTest() {
+    @Test
+    @Disabled("often out of time, that is a parf issue, not a bug")
+    @Timeout(25)
+    void inMemoryTest() {
         test(ChronicleMapBuilder::create);
     }
 
-    @Ignore("ignored because it take too long and times out")
-    @Test(timeout = 25000)
-    public void persistedTest() {
+    @Test
+    @Disabled("ignored because it take too long and times out")
+    @Timeout(25)
+    void persistedTest() {
         int rnd = new Random().nextInt();
         final File db = Paths.get(OS.getTarget(), "mark" + rnd).toFile();
         if (db.exists())
@@ -63,15 +66,16 @@ public class MarkTest {
                 }
             });
             System.out.println(MemoryUnit.BYTES.toMegabytes(db.length()) + " MB");
-            assertTrue("ChronicleMap of 25 million int-int entries should be lesser than 400MB",
-                    db.length() < MemoryUnit.MEGABYTES.toBytes(400));
+            assertTrue(db.length() < MemoryUnit.MEGABYTES.toBytes(400), "ChronicleMap of 25 million int-int entries should be lesser than 400MB");
         } finally {
             db.delete();
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testNegativeEntriesPerSegment() {
-        ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
+    @Test
+    void testNegativeEntriesPerSegment() {
+        assertThrows(IllegalArgumentException.class, () -> {
+            ChronicleMapBuilder.of(Integer.class, Integer.class).entriesPerSegment(-1);
+        });
     }
 }

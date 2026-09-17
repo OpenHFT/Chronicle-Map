@@ -9,7 +9,7 @@ import net.openhft.chronicle.map.ChronicleMap;
 import net.openhft.chronicle.map.ChronicleMapBuilder;
 import net.openhft.chronicle.map.ExternalMapQueryContext;
 import net.openhft.chronicle.values.Values;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.Closeable;
 import java.io.File;
@@ -17,8 +17,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * These code fragments will appear in an article on OpenHFT. These tests to ensure that the examples compile
@@ -38,7 +37,7 @@ public class OpenJDKAndHashMapExamplesTest {
     }
 
     @Test
-    public void bondExample() throws IOException {
+    void bondExample() throws IOException, InterruptedException {
 
         File file = new File(TMP + "/chm-myBondPortfolioCHM-" + Time.uniqueId());
         file.deleteOnExit();
