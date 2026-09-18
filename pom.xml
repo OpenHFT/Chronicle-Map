@@ -478,8 +478,24 @@
         </profile>
         <profile>
             <id>sonar</id>
+            <properties>
+                <!-- //! Sonar must import the XML produced by this build, not infer coverage from test success.
+                     Validation: clean verify -Psonar produces target/site/jacoco/jacoco.xml. -->
+                <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+            </properties>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <!-- //! The inherited early substitution discarded JaCoCo's agent and silently
+                                 skipped report/check with no execution data. Resolve its property at test launch.
+                                 Preserves the inherited JVM options and coverage-mode fixture behavior.
+                                 Validation: clean verify -Psonar; SharedFileChannelTest and ParallelStartupTest. -->
+                            <argLine>@{surefireArgLine} ${jvm.requiredArgs} -Djvm.coverage=true</argLine>
+                        </configuration>
+                    </plugin>
                     <plugin>
                         <groupId>org.sonarsource.scanner.maven</groupId>
                         <artifactId>sonar-maven-plugin</artifactId>
@@ -489,6 +505,8 @@
                         <artifactId>jacoco-maven-plugin</artifactId>
                         <executions>
                             <execution>
+                                <!-- Reuse the inherited agent execution and its exclusions/propertyName. -->
+                                <id>prepare-agent</id>
                                 <goals>
                                     <goal>prepare-agent</goal>
                                 </goals>
@@ -499,6 +517,48 @@
                                 <goals>
                                     <goal>report</goal>
                                 </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>reset-coverage-data</id>
+                                <phase>process-test-classes</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <!-- //! CI runs verify without clean; stale coverage must not satisfy
+                                             the missing-report guard after tests or instrumentation are skipped.
+                                             Clear before tests, after the phases revisited by source:jar's fork.
+                                             Validation: verify -Psonar -Djacoco.skip=true fails even after a covered build. -->
+                                        <delete file="${project.build.directory}/jacoco.exec" />
+                                        <delete file="${project.build.directory}/site/jacoco/jacoco.xml" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>require-coverage-report</id>
+                                <phase>verify</phase>
+                                <goals><goal>run</goal></goals>
+                                <configuration>
+                                    <target>
+                                        <!-- //! JaCoCo skips report/check when its agent never ran. Missing data
+                                             must fail coverage validation instead of producing a green build.
+                                             Validation: clean verify -Psonar passes; -Djacoco.skip=true fails. -->
+                                        <fail message="Coverage data/report missing: run tests with the JaCoCo agent before Sonar analysis.">
+                                            <condition>
+                                                <or>
+                                                    <not><available file="${project.build.directory}/jacoco.exec" /></not>
+                                                    <not><available file="${project.build.directory}/site/jacoco/jacoco.xml" /></not>
+                                                </or>
+                                            </condition>
+                                        </fail>
+                                    </target>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
