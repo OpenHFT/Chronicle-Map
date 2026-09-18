@@ -422,6 +422,8 @@ public final class ChronicleMapBuilder<K, V> implements
                                                           final boolean recover,
                                                           @Nullable final ChronicleHashCorruption.Listener corruptionListener,
                                                           @Nullable final ChronicleHashCorruptionImpl corruption) throws IOException {
+        //! Read size without moving the shared Windows Java 8 file pointer, and report the same sampled size.
+        //! Regression: ParallelStartupTest.test detects wrong-offset headers during concurrent persisted opens.
         final long fileSize = raf.getChannel().size();
         if (fileSize < headerSize + SELF_BOOTSTRAPPING_HEADER_OFFSET) {
             throw throwRecoveryOrReturnIOException(file,
@@ -1706,6 +1708,9 @@ public final class ChronicleMapBuilder<K, V> implements
         final ChronicleHashResources resources = new PersistedChronicleHashResources(canonicalFile);
         try {
             VanillaChronicleMap<K, V, ?> result;
+            //! All size probes in this opening/empty-file loop use the channel: RandomAccessFile.length() can
+            //! reposition a concurrent header read on Windows Java 8. ParallelStartupTest.test requires every
+            //! worker to open/write/close successfully and verifies all sixteen entries after reopening.
             if (raf.getChannel().size() > 0) {
                 result = openWithExistingFile(canonicalFile, raf, resources, recover, overrideBuilderConfig, corruptionListener);
             } else {
@@ -1791,6 +1796,8 @@ public final class ChronicleMapBuilder<K, V> implements
         final int attempts = 60 * 10;
         int lastReadHeaderSize = -1;
         for (int attempt = 0; attempt < attempts; attempt++) {
+            //! Polling readiness must not move another opener's shared file pointer on Windows Java 8.
+            //! Regression: ParallelStartupTest.test previously failed after checksum bytes became the size word.
             if (fileChannel.size() >= SELF_BOOTSTRAPPING_HEADER_OFFSET) {
 
                 ((Buffer) sizeWordBuffer).clear();
@@ -1874,6 +1881,8 @@ public final class ChronicleMapBuilder<K, V> implements
             final boolean headerCorrect = checkSumSelfBootstrappingHeader(headerBuffer, headerSize);
 
             if (MAP_CREATION_DEBUG) {
+                //! Logging must not reintroduce the shared-pointer race via RandomAccessFile.length().
+                //! Exercise ParallelStartupTest.test with -Dchronicle.map.creation.debug=true for this path.
                 Jvm.warn().on(getClass(), "<map creation debug> Using existing file [canonizedMapDataFile=" + file.getAbsolutePath() +
                         ", size=" + fileChannel.size() + ", headerCorrect=" + headerCorrect + "] for map creation");
             }
@@ -1905,6 +1914,8 @@ public final class ChronicleMapBuilder<K, V> implements
             map.initBeforeMapping(file, raf, headerBuffer.limit(), recover);
 
             final long dataStoreSize = map.globalMutableState().getDataStoreSize();
+            //! The reopened map still shares its handle with other readers; size checks must preserve their offsets.
+            //! Regression: ParallelStartupTest.test verifies persisted entries after concurrent opens and reopening.
             long fileLength = fileChannel.size();
             if (!recover && dataStoreSize > fileLength) {
                 throw new IOException("The file " + file + " the map is serialized from " +

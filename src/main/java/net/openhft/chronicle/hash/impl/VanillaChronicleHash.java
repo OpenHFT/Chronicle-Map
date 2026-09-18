@@ -421,6 +421,9 @@ public abstract class VanillaChronicleHash<K,
             // After the mapping globalMutableState value's bytes are reassigned
             final ByteBuffer globalMutableStateBuffer = ByteBuffer.allocate((int) globalMutableState.maxSize());
             final FileChannel fileChannel = raf.getChannel();
+            //! Reopening must coordinate this positional read with file growth on the shared channel.
+            //! Regression: ParallelStartupTest.test verifies all entries after reopening; the concurrent I/O
+            //! contract is covered by SharedFileChannelTest.fileGrowthPreservesConcurrentPositionalReadsAndWrites.
             FileIOUtils.readFully(fileChannel,
                     this.headerSize + GLOBAL_MUTABLE_STATE_VALUE_OFFSET, globalMutableStateBuffer);
             if (globalMutableStateBuffer.hasRemaining())
@@ -1085,21 +1088,22 @@ public abstract class VanillaChronicleHash<K,
         mapSize = pageAlign(mapSize, pageSize);
         final long minFileSize = mappingOffsetInFile + mapSize;
         final FileChannel fileChannel = raf.getChannel();
-        if (FileIOUtils.growFile(raf, minFileSize)) {
-            // In MappedFile#acquireByteStore(), this is wrapped with fileLock(), to avoid race
-            // condition between processes. This map() method is called either when a new tier is
-            // allocated (in this case concurrent access is mutually excluded by
-            // globalMutableStateLock), or on map creation, when race condition should be excluded
-            // by self-bootstrapping header spec
-            // RandomAccessFile#setLength() only calls ftruncate,
-            // which will not preallocate space on XFS filesystem of Linux.
-            // And writing that file will create a sparse file with a large number of extents.
-            // This kind of fragmented file may hang the program and cause dmesg reports
-            // "XFS: ... possible memory allocation deadlock size ... in kmem_alloc (mode:0x250)".
-            // We can fix this by trying calling posix_fallocate to preallocate the space.
-            if (OS.isLinux() && !sparseFile) {
-                fallocate(mappingOffsetInFile, minFileSize - mappingOffsetInFile);
-            }
+        //! Grow under the shared channel monitor before mapping, and evaluate growth on every OS, before the
+        //! Linux-only allocation condition. SharedFileChannelTest.fileGrowthPreservesConcurrentPositionalReadsAndWrites
+        //! catches offset corruption; SimplePersistedMapOverflowTest.simplePersistedMapOverflowTest covers tier growth.
+        // In MappedFile#acquireByteStore(), this is wrapped with fileLock(), to avoid race
+        // condition between processes. This map() method is called either when a new tier is
+        // allocated (in this case concurrent access is mutually excluded by
+        // globalMutableStateLock), or on map creation, when race condition should be excluded
+        // by self-bootstrapping header spec
+        // RandomAccessFile#setLength() only calls ftruncate,
+        // which will not preallocate space on XFS filesystem of Linux.
+        // And writing that file will create a sparse file with a large number of extents.
+        // This kind of fragmented file may hang the program and cause dmesg reports
+        // "XFS: ... possible memory allocation deadlock size ... in kmem_alloc (mode:0x250)".
+        // We can fix this by trying calling posix_fallocate to preallocate the space.
+        if (FileIOUtils.growFile(raf, minFileSize) && OS.isLinux() && !sparseFile) {
+            fallocate(mappingOffsetInFile, minFileSize - mappingOffsetInFile);
         }
         final long address = OS.map(fileChannel, READ_WRITE, mappingOffsetInFile, mapSize, pageSize);
         resources.addMemoryResource(address, mapSize);

@@ -25,6 +25,9 @@ public final class FileIOUtils {
      */
     public static boolean growFile(RandomAccessFile file, long minimumSize) throws IOException {
         FileChannel channel = file.getChannel();
+        //! Serialize extension with positional I/O on this channel: Windows Java 8 setLength moves its file pointer.
+        //! Regression: SharedFileChannelTest.fileGrowthPreservesConcurrentPositionalReadsAndWrites detects
+        //! misplaced header/data bytes without this monitor and verifies that smaller requests never truncate.
         synchronized (channel) {
             if (channel.size() >= minimumSize)
                 return false;
@@ -33,6 +36,11 @@ public final class FileIOUtils {
         }
     }
 
+    //! The shared channel is deliberately the lock identity used by growFile and writeFully; a per-call lock
+    //! would not coordinate users of the same handle. This is an intentional exception to Sonar S2445.
+    //! Regression: SharedFileChannelTest.fileGrowthPreservesConcurrentPositionalReadsAndWrites checks offsets
+    //! and header bytes while another thread grows the file on Windows Java 8.
+    @SuppressWarnings("java:S2445")
     public static void readFully(FileChannel fileChannel, long filePosition, ByteBuffer buffer)
             throws IOException {
         synchronized (fileChannel) {
@@ -58,6 +66,11 @@ public final class FileIOUtils {
         }
     }
 
+    //! Use the same shared-channel monitor as growFile/readFully so extension cannot redirect a positional write.
+    //! An independent lock would break that contract; suppress Sonar S2445 only for this cooperating I/O helper.
+    //! Regression: SharedFileChannelTest.fileGrowthPreservesConcurrentPositionalReadsAndWrites verifies the
+    //! written value at its requested offset after concurrent growth, as well as the unchanged header.
+    @SuppressWarnings("java:S2445")
     public static void writeFully(FileChannel fileChannel, long filePosition, ByteBuffer buffer)
             throws IOException {
         synchronized (fileChannel) {
