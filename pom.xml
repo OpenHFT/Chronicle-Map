@@ -646,6 +646,31 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <!-- Bound Mac concurrency while the shared-file lock failures in build 1365865 are qualified. -->
+            <id>test-single-fork-mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-test</id>
+                                <configuration>
+                                    <forkCount>1</forkCount>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <scm>
