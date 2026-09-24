@@ -97,6 +97,7 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     public transient boolean cleanupRemovedEntries;
     public transient long cleanupTimeout;
     public transient TimeUnit cleanupTimeoutUnit;
+    private transient OldDeletedEntriesCleanupThread oldDeletedEntriesCleanupThread;
     public transient MapRemoteOperations<K, V, R> remoteOperations;
     transient BitSetFrame tierModIterFrame;
     private long tierModIterBitSetSizeInBits;
@@ -216,6 +217,20 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
         cleanupRemovedEntries = builder.cleanupRemovedEntries;
         cleanupTimeout = builder.cleanupTimeout;
         cleanupTimeoutUnit = builder.cleanupTimeoutUnit;
+    }
+
+    void oldDeletedEntriesCleanupThread(OldDeletedEntriesCleanupThread cleanupThread) {
+        this.oldDeletedEntriesCleanupThread = cleanupThread;
+    }
+
+    @Override
+    protected void assertCloseable() {
+        // The cleaner owns a Chronicle Map iteration context. Stop it before the base close path
+        // inspects and closes contexts; otherwise close can race an in-progress segment scan and
+        // release or mutate the cleaner's context underneath it.
+        if (oldDeletedEntriesCleanupThread != null)
+            oldDeletedEntriesCleanupThread.close();
+        super.assertCloseable();
     }
 
     private long computeTierModIterBitSetSizeInBits() {
