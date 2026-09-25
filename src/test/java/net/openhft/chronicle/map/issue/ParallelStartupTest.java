@@ -64,7 +64,6 @@ class ParallelStartupTest {
             }
         } catch (InterruptedException e) {
             interrupted = true;
-            Thread.currentThread().interrupt();
         }
 
         if (interrupted || successes.get() != workers.length) {
@@ -86,11 +85,10 @@ class ParallelStartupTest {
                     detail.append("\n    at ").append(frame);
             }
             AssertionError error = new AssertionError(detail.toString());
+            interruptAndJoin(workers, error, TimeUnit.SECONDS.toNanos(5), interrupted);
             for (int i = 0; i < workers.length; i++) {
                 if (failures.get(i) != null)
                     error.addSuppressed(failures.get(i));
-                if (workers[i].isAlive())
-                    workers[i].interrupt();
             }
             fail(error.getMessage(), error);
         }
@@ -101,6 +99,36 @@ class ParallelStartupTest {
             assertEquals(workers.length, reopened.size(), "All workers' entries must survive reopening");
             for (int i = 0; i < workers.length; i++)
                 assertEquals(workers[i].getName(), reopened.get(i).toString(), "Persisted entry " + i);
+        }
+    }
+
+    static void interruptAndJoin(Thread[] workers, AssertionError primary,
+                                 long timeoutNanos, boolean interrupted) {
+        boolean restoreInterrupt = Thread.interrupted() || interrupted;
+        final long deadline = System.nanoTime() + timeoutNanos;
+        try {
+            for (Thread worker : workers)
+                if (worker.isAlive())
+                    worker.interrupt();
+            for (Thread worker : workers) {
+                while (worker.isAlive()) {
+                    long remaining = deadline - System.nanoTime();
+                    if (remaining <= 0)
+                        break;
+                    try {
+                        worker.join(Math.max(1, TimeUnit.NANOSECONDS.toMillis(remaining)));
+                    } catch (InterruptedException cleanupInterrupted) {
+                        restoreInterrupt = true;
+                        primary.addSuppressed(cleanupInterrupted);
+                    }
+                }
+                if (worker.isAlive())
+                    primary.addSuppressed(new AssertionError(worker.getName()
+                            + " remains alive after bounded cleanup; state=" + worker.getState()));
+            }
+        } finally {
+            if (restoreInterrupt)
+                Thread.currentThread().interrupt();
         }
     }
 
