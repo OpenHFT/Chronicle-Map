@@ -49,7 +49,10 @@ public final class CanonicalRandomAccessFiles {
         return CANONICAL_RAFS.compute(file, (f, ref) -> {
             while (ref != null) {
                 try {
-                    ref.raf.length();
+                    //! The liveness probe must not move the shared Windows Java 8 file pointer during header I/O.
+                    //! Regression: SharedFileChannelTest.canonicalAcquisitionPreservesConcurrentHeaderReads
+                    //! detects a wrong-offset size word when this is changed back to RandomAccessFile.length().
+                    ref.raf.getChannel().size();
                 } catch (IOException e) {
                     // File is closed by interrupt;
                     break;
