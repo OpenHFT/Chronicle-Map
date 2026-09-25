@@ -28,6 +28,8 @@
         <!-- Coverage thresholds aligned to observed ratios (rounded down) -->
         <jacoco.line.coverage>0.50</jacoco.line.coverage>
         <jacoco.branch.coverage>0.30</jacoco.branch.coverage>
+        <chronicle.test.forkCount>8</chronicle.test.forkCount>
+        <chronicle.test.reuseForks>true</chronicle.test.reuseForks>
     </properties>
 
     <dependencyManagement>
@@ -248,6 +250,14 @@
 
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <suppressionsLocation>${project.basedir}/checkstyle-suppressions.xml</suppressionsLocation>
+                    <suppressionsFileExpression>org.checkstyle.sun.suppressionfilter.config</suppressionsFileExpression>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>net.openhft</groupId>
                 <artifactId>binary-compatibility-enforcer-plugin</artifactId>
                 <executions>
@@ -270,6 +280,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <trimStackTrace>false</trimStackTrace>
+                    <forkCount>1</forkCount>
+                    <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>
 
@@ -451,6 +463,28 @@
             </plugin>
 
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <executions>
+                        <execution>
+                            <id>attach-sources</id>
+                            <phase>none</phase>
+                        </execution>
+                        <!-- The package lifecycle has already generated sources; avoid repeating its earlier phases. -->
+                        <execution>
+                            <id>attach-sources-no-fork</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>jar-no-fork</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
     <profiles>
         <profile>
@@ -550,6 +584,97 @@
                             </properties>
                             <streamLogs>true</streamLogs>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <!-- Use -T1: forkCount is a limit per execution, not across reactor modules. -->
+            <id>chronicle-eight-default</id>
+            <activation>
+                <property>
+                    <name>!test</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-test</id>
+                                <configuration>
+                                    <forkCount>${chronicle.test.forkCount}</forkCount>
+                                    <reuseForks>${chronicle.test.reuseForks}</reuseForks>
+                                    <excludes>
+                                        <exclude>**/*$*</exclude>
+                                    </excludes>
+                                    <excludesFile>${project.basedir}/.mvn/serial-tests.txt</excludesFile>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>serial-tests</id>
+                                <phase>test</phase>
+                                <goals>
+                                    <goal>test</goal>
+                                </goals>
+                                <configuration>
+                                    <forkCount>1</forkCount>
+                                    <reuseForks>false</reuseForks>
+                                    <!-- An empty list must select nothing, not Surefire's defaults. -->
+                                    <includes combine.self="override">
+                                        <include>%regex[^$]</include>
+                                    </includes>
+                                    <includesFile>${project.basedir}/.mvn/serial-tests.txt</includesFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>test-serial</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-test</id>
+                                <configuration>
+                                    <forkCount>1</forkCount>
+                                    <reuseForks>false</reuseForks>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <!-- Bound Mac concurrency while the shared-file lock failures in build 1365865 are qualified. -->
+            <id>test-single-fork-mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>default-test</id>
+                                <configuration>
+                                    <forkCount>1</forkCount>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
