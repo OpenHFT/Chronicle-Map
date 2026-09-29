@@ -93,10 +93,23 @@ For example, on `Linux` it is as easy as placing your file in `/dev/shm` directo
 
 == Configure entries
 
-You must configure .entries(entries) -- to support the maximum number of entries in the Chronicle Map.
-Try to configure the entries so that the created Chronicle Map is going to serve about 99% of the requests.
+Configure `.entries(entries)` for the largest number of entries that the map must accommodate.
 
-You should not put additional margin over the actual target number of entries.
+`entries` is a target size, but Chronicle Map does not rehash into a larger set of segments when
+that target is exceeded. With segment tiering enabled (the default), full segments can grow by
+adding tiers from a finite budget shared across the map.
+The default `maxBloatFactor(1.0)` allows limited extra tiers to handle uneven key distribution;
+it does not promise that the map can hold an arbitrary number of entries beyond `entries`.
+If exceptional bursts can exceed the target, configure `maxBloatFactor` when creating the map.
+For example, `.entries(1_000_000).maxBloatFactor(3.0)` permits more extra tiers than the default,
+but does not guarantee room for at least three million entries.
+With `allowSegmentTiering(false)`, no extra tiers can be allocated, regardless of `maxBloatFactor`.
+
+An insertion that needs another tier after the budget is exhausted throws `IllegalStateException`.
+The number of entries that fit before the extra-tier budget is exhausted depends on key distribution
+and serialized key and value sizes. A persisted map keeps its original sizing configuration when reopened.
+
+You should not add an arbitrary load-factor margin over the actual target number of entries.
 This bad practice was popularized by `new HashMap(capacity)` and `new HashSet(capacity)` constructors, which accept capacity, that should be multiplied by load factor to obtain the actual maximum expected number of entries in the container. `ChronicleMap` and `ChronicleSet` do not have a notion of a load factor.
 
 See `ChronicleMapBuilder#entries()` in https://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs] for more information.

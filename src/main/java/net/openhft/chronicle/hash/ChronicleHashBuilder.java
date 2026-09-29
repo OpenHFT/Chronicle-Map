@@ -231,19 +231,21 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B maxChunksPerEntry(int maxChunksPerEntry);
 
     /**
-     * Configures the target number of entries, that is going be inserted into the hash containers,
-     * created by this builder. If {@link #maxBloatFactor(double)} is configured to {@code 1.0}
-     * (and this is by default), this number of entries is also the maximum. If you try to insert
-     * more entries, than the configured {@code maxBloatFactor}, multiplied by the given number of
-     * {@code entries}, {@link IllegalStateException} <i>might</i> be thrown.
+     * Configures the target number of entries in the hash containers created by this builder.
+     * With {@linkplain #allowSegmentTiering(boolean) segment tiering} enabled (the default),
+     * full segments can allocate extra tiers from a finite budget shared by all segments.
+     * {@link #maxBloatFactor(double)} controls this budget; its default value of {@code 1.0}
+     * allows limited extra tiers to handle uneven segment filling. The hash container does not
+     * rehash into a larger set of segments.
      * <p>
-     * This configuration should represent the expected maximum number of entries in a stable
-     * state, {@link #maxBloatFactor(double) maxBloatFactor} - the maximum bloat up coefficient,
-     * during exceptional bursts.
+     * An insertion that needs another tier after the budget is exhausted throws
+     * {@link IllegalStateException}. The number of entries that fit before the extra-tier budget
+     * is exhausted depends on key distribution and serialized key and value sizes, so the budget
+     * does not define an exact entry-count limit.
      * <p>
-     * To be more precise - try to configure the {@code entries} so, that the created hash
-     * container is going to serve about 99% requests being less or equal than this number
-     * of entries in size.
+     * Configure {@code entries} for the largest number of entries that the container must
+     * accommodate. Use {@link #maxBloatFactor(double) maxBloatFactor} to allow additional tiers
+     * for exceptional bursts beyond that target.
      * <p>
      * <b>You shouldn't put additional margin over the actual target number of entries.</b>
      * This bad practice was popularized by {@link HashMap#HashMap(int)} and {@link
@@ -267,6 +269,12 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * {@link #entries(long)} should represent the expected maximum number of entries in a stable
      * state, {@code maxBloatFactor} - the maximum bloat up coefficient, during exceptional bursts.
+     * With {@linkplain #allowSegmentTiering(boolean) segment tiering} enabled (the default),
+     * growth uses extra segment tiers from a finite budget shared by all segments. When
+     * {@code allowSegmentTiering(false)} is configured, no extra tiers can be allocated and
+     * {@code maxBloatFactor} has no effect. Configure this before creating a map if the number of
+     * entries can exceed {@code entries}; an existing persisted map retains the sizing
+     * configuration with which it was created.
      * <p>
      * This configuration should be used for self-checking. Even if you configure impossibly
      * large {@code maxBloatFactor}, the created {@code ChronicleHash}, of cause, will be still
