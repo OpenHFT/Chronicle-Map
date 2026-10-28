@@ -377,7 +377,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
     }
 
     private long _MapEntryStages_sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return (((this.m().keySizeMarshaller.storingLength(keySize)) + keySize) + (checksumStrategy.extraEntryBytes())) + (this.m().valueSizeMarshaller.storingLength(valueSize));
+        return ((this.m().keySizeMarshaller.storingLength(keySize)) + keySize) + (this.m().valueSizeMarshaller.storingLength(valueSize));
     }
 
     public CompiledReplicatedMapQueryContext(ChainingInterface rootContextInThisThread ,VanillaChronicleMap map) {
@@ -3734,7 +3734,7 @@ public class CompiledReplicatedMapQueryContext<K, V, R> extends ChainingInterfac
             sizeOfEverythingBeforeValue += this.m().worstAlignment;
 
         int alignment = this.m().alignment;
-        return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize, alignment));
+        return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize + (checksumStrategy.extraEntryBytes()), alignment));
     }
 
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
