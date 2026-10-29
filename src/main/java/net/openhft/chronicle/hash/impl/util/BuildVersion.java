@@ -4,10 +4,10 @@
 package net.openhft.chronicle.hash.impl.util;
 
 import net.openhft.chronicle.map.ChronicleMapBuilder;
-import shaded.org.apache.maven.model.Model;
-import shaded.org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -56,9 +56,7 @@ public final class BuildVersion {
             return version;
         }
 
-        // as a fall back for development, we will read the version from the pom file
-        version = getVersionFromPom();
-        return version;
+        return null;
     }
 
     /**
@@ -68,34 +66,5 @@ public final class BuildVersion {
      */
     private static String getVersionFromManifest() {
         return ChronicleMapBuilder.class.getPackage().getImplementationVersion();
-    }
-
-    /**
-     * reads the pom file to get this version, only to be used for development or within the IDE.
-     *
-     * @return gets the version from the pom.xml
-     */
-    private static String getVersionFromPom() {
-
-        final String absolutePath = new File(BuildVersion.class.getResource(BuildVersion.class
-                .getSimpleName() + ".class").getPath())
-                .getParentFile().getParentFile().getParentFile().getParentFile().getParentFile()
-                .getParentFile().getParentFile().getAbsolutePath();
-
-        final File file = new File(absolutePath + "/pom.xml");
-
-        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8)) {
-
-            final MavenXpp3Reader xpp3Reader = new MavenXpp3Reader();
-            Model model = xpp3Reader.read(reader);
-            return model.getVersion();
-
-        } catch (NoClassDefFoundError e) {
-            // if you want to get the version possibly in development add in to your pom
-            // pax-url-aether.jar
-            return null;
-        } catch (Exception e) {
-            return null;
-        }
     }
 }
