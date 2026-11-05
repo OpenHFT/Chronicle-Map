@@ -2300,7 +2300,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
     }
 
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return (((this.m().keySizeMarshaller.storingLength(keySize)) + keySize) + (checksumStrategy.extraEntryBytes())) + (this.m().valueSizeMarshaller.storingLength(valueSize));
+        return ((this.m().keySizeMarshaller.storingLength(keySize)) + keySize) + (this.m().valueSizeMarshaller.storingLength(valueSize));
     }
 
     public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
@@ -2308,7 +2308,7 @@ public class CompiledMapIterationContext<K, V, R> extends ChainingInterface impl
             sizeOfEverythingBeforeValue += this.m().worstAlignment;
 
         int alignment = this.m().alignment;
-        return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize, alignment));
+        return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize + (checksumStrategy.extraEntryBytes()), alignment));
     }
 
     public final long entrySize(long keySize, long valueSize) {

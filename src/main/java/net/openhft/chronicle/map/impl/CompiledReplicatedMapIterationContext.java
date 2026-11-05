@@ -352,7 +352,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
     }
 
     private long _MapEntryStages_sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return (((this.m().keySizeMarshaller.storingLength(keySize)) + keySize) + (checksumStrategy.extraEntryBytes())) + (this.m().valueSizeMarshaller.storingLength(valueSize));
+        return ((this.m().keySizeMarshaller.storingLength(keySize)) + keySize) + (this.m().valueSizeMarshaller.storingLength(valueSize));
     }
 
     public CompiledReplicatedMapIterationContext(ChainingInterface rootContextInThisThread ,VanillaChronicleMap map) {
@@ -3516,7 +3516,7 @@ public class CompiledReplicatedMapIterationContext<K, V, R> extends ChainingInte
             sizeOfEverythingBeforeValue += this.m().worstAlignment;
 
         int alignment = this.m().alignment;
-        return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize, alignment));
+        return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize + (checksumStrategy.extraEntryBytes()), alignment));
     }
 
     @Override
