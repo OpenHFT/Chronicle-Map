@@ -11,7 +11,7 @@
     <parent>
         <groupId>net.openhft</groupId>
         <artifactId>java-parent-pom</artifactId>
-        <version>2026.0</version>
+        <version>2026.0.1-sonar-SNAPSHOT</version>
         <relativePath />
     </parent>
 
@@ -495,7 +495,7 @@
                             </execution>
                             <execution>
                                 <id>report</id>
-                                <phase>prepare-package</phase>
+                                <phase>verify</phase>
                                 <goals>
                                     <goal>report</goal>
                                 </goals>
