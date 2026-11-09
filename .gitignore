@@ -1,7 +1,7 @@
 ### How to update
 # This is copied from OpenHFT/.gitignore
 # update the original and run OpenHFT/update_gitignore.sh
-data/
+/data/
 perfmap/
 
 ### Compiled class file
