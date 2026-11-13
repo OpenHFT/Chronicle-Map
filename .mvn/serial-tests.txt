@@ -1,0 +1,12 @@
+# FIX-292: serial/fresh exceptions supported by new-head platform CI evidence.
+# These lock tests share target/shm-OPERAND_CHRONICLE_MAP and its stamped-lock file.
+# Mac/Windows failures: TeamCity 1365865 / 1365866; Linux skips these test bodies.
+net/openhft/chronicle/map/locks/DirtyReadIntolerant_ReaderReader_Test.java
+net/openhft/chronicle/map/locks/DirtyReadOffenderIPCTest.java
+net/openhft/chronicle/map/locks/DirtyReadOffender_ReaderWriterTest.java
+net/openhft/chronicle/map/locks/DirtyReadOffender_WriterReaderTest.java
+net/openhft/chronicle/map/locks/DirtyReadOffender_WriterWriterTest.java
+net/openhft/chronicle/map/locks/DirtyReadVictimIPCTest.java
+net/openhft/chronicle/map/locks/DirtyReadVictimTest.java
+# Lock-timeout assertion failed on Zing 8 and 11 (1365892 / 1365893).
+net/openhft/chronicle/map/TrickyContextCasesTest.java
