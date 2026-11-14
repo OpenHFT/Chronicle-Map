@@ -153,7 +153,6 @@ public final class ChronicleMapBuilder<K, V> implements
     private static final int MAX_BOOTSTRAPPING_HEADER_SIZE = (int) MemoryUnit.KILOBYTES.toBytes(16);
     private static final boolean MAP_CREATION_DEBUG = Jvm.getBoolean("chronicle.map.creation.debug");
     private static final int FILE_LOCK_TIMEOUT = Jvm.getInteger("chronicle.map.file.lock.timeout.secs", 10);
-
     SerializationBuilder<K> keyBuilder;
     SerializationBuilder<V> valueBuilder;
     K averageKey;
@@ -207,6 +206,8 @@ public final class ChronicleMapBuilder<K, V> implements
     private boolean persisted;
     private String replicatedMapClassName = ReplicatedChronicleMap.class.getName();
     private boolean sparseFile = Jvm.getBoolean("chronicle.map.sparseFile");
+    private boolean strictSerializedKeyIdentity =
+            Jvm.getBoolean("chronicle.map.strictSerializedKeyIdentity");
 
     ChronicleMapBuilder(@NotNull final Class<K> keyClass, @NotNull final Class<V> valueClass) {
         keyBuilder = new SerializationBuilder<>(keyClass);
@@ -511,6 +512,36 @@ public final class ChronicleMapBuilder<K, V> implements
 
     String name() {
         return this.name;
+    }
+
+    /**
+     * Controls how {@link #create()} reacts when the configured key type would be stored using
+     * default Java serialization. Java serialization does not guarantee a canonical byte form for
+     * {@code equals()}-equal objects: object graph sharing, collection ordering, and serialized
+     * fields ignored by {@code equals()} can all produce different byte streams.
+     *
+     * <p>Chronicle Map identifies keys purely by their serialized bytes. If equal keys serialize to
+     * different bytes, they are stored and looked up as <em>distinct</em> keys. By default a key
+     * using fallback Java serialization produces a warning at build time; enabling strict mode
+     * makes {@link #create()} throw {@link IllegalArgumentException} instead.
+     *
+     * <p>The remedy in either case is to supply a custom, canonical serialized form via {@link
+     * #keyReaderAndDataAccess(SizedReader, DataAccess)}. Strict mode can also be enabled globally
+     * with the {@code
+     * chronicle.map.strictSerializedKeyIdentity} system property.
+     *
+     * <p>This option guards specifically against Chronicle Map's automatic fallback to Java
+     * serialization. An explicitly supplied {@link DataAccess} is trusted and is not inspected for
+     * canonical output; the caller must ensure that it emits identical bytes for equal keys.
+     * Leaving this option disabled preserves compatibility by warning and proceeding, so it does
+     * not make a fallback-Java-serialized key safe.
+     *
+     * @param strict {@code true} to fail fast, {@code false} (default) to only warn
+     * @return this builder back, for chaining
+     */
+    public ChronicleMapBuilder<K, V> strictSerializedKeyIdentity(final boolean strict) {
+        this.strictSerializedKeyIdentity = strict;
+        return this;
     }
 
     /**
@@ -2021,6 +2052,36 @@ public final class ChronicleMapBuilder<K, V> implements
     private void stateChecks() {
         checkActualChunksPerSegmentTierIsConfiguredOnlyIfOtherLowLevelConfigsAreManual();
         checkActualChunksPerSegmentGreaterOrEqualToEntries();
+        checkSerializedKeyIdentity();
+    }
+
+    /**
+     * Chronicle Map identifies keys by their serialized bytes. A key type stored with default Java
+     * serialization (the fallback when no more specific marshaller applies and the user configured
+     * no custom {@link DataAccess}) is not guaranteed to serialize equal instances to identical
+     * bytes. Object graph sharing, collection ordering, and serialized fields ignored by
+     * {@code equals()} can all break that assumption. Warn for every fallback Java-serialized key
+     * type by default; fail fast for every such type when strict mode is enabled. Explicitly
+     * configured serialization is trusted rather than inspected and must be canonical by contract.
+     *
+     * @see #strictSerializedKeyIdentity(boolean)
+     */
+    private void checkSerializedKeyIdentity() {
+        final Class<K> keyClass = keyBuilder.tClass;
+        if (keyBuilder.usesDefaultJavaSerialization()) {
+            final String message = "Key type " + keyClass.getName() + " is stored with fallback " +
+                    "Java serialization. Chronicle Map identifies keys by their serialized bytes, " +
+                    "but Java serialization does not guarantee identical bytes for equals()-equal " +
+                    "objects (for example, object graph sharing, collection ordering, or fields " +
+                    "ignored by equals() can change the stream). Such keys can therefore be stored " +
+                    "and looked up as distinct keys. Provide a canonical serialized form with " +
+                    "keyReaderAndDataAccess(SizedReader, DataAccess). Set system property " +
+                    "'chronicle.map.strictSerializedKeyIdentity' or call " +
+                    "strictSerializedKeyIdentity(true) to fail fast instead of warning.";
+            if (strictSerializedKeyIdentity)
+                throw new IllegalArgumentException(message);
+            Jvm.warn().on(getClass(), message);
+        }
     }
 
     private boolean allLowLevelConfigurationsAreManual() {

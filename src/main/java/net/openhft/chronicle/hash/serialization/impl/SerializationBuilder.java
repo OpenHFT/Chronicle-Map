@@ -29,6 +29,7 @@ public final class SerializationBuilder<T> implements Cloneable {
     private SizeMarshaller sizeMarshaller = stopBit();
     private SizedReader<T> reader;
     private DataAccess<T> dataAccess;
+    private boolean defaultJavaSerialization;
 
     @SuppressWarnings("unchecked")
     public SerializationBuilder(Class<T> tClass) {
@@ -123,6 +124,7 @@ public final class SerializationBuilder<T> implements Cloneable {
         } else {
             reader((SizedReader<T>) new SerializableReader<>());
             dataAccess((DataAccess<T>) new SerializableDataAccess<>());
+            defaultJavaSerialization = true;
         }
     }
 
@@ -152,10 +154,25 @@ public final class SerializationBuilder<T> implements Cloneable {
     public void dataAccess(DataAccess<T> dataAccess) {
         checkNonMarshallableEnum(dataAccess.getClass());
         this.dataAccess = dataAccess;
+        defaultJavaSerialization = false;
     }
 
     public DataAccess<T> dataAccess() {
         return dataAccess.copy();
+    }
+
+    /**
+     * Returns {@code true} if this type falls back to default Java serialization (the {@link
+     * SerializableDataAccess} chosen when no more specific marshaller applies and the user has not
+     * configured a custom {@link DataAccess}). Such a serialized form is not guaranteed to be
+     * canonical: object graph sharing, collection ordering, or fields ignored by {@code equals()}
+     * can make equal objects serialize to differing bytes. This is used at builder time to detect
+     * risky key types - see Chronicle-Map issue #462. An explicitly configured {@code DataAccess}
+     * is not inspected or certified as canonical; its byte-identity contract remains the caller's
+     * responsibility.
+     */
+    public boolean usesDefaultJavaSerialization() {
+        return defaultJavaSerialization;
     }
 
     public void writer(SizedWriter<? super T> writer) {
