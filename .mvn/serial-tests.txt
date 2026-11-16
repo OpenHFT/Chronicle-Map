@@ -10,3 +10,5 @@ net/openhft/chronicle/map/locks/DirtyReadVictimIPCTest.java
 net/openhft/chronicle/map/locks/DirtyReadVictimTest.java
 # Lock-timeout assertion failed on Zing 8 and 11 (1365892 / 1365893).
 net/openhft/chronicle/map/TrickyContextCasesTest.java
+# Child-JVM startup and SIGINT checks must not compete with parallel test forks.
+net/openhft/chronicle/map/ExitHookTest.java
