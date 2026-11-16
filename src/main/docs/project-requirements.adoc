@@ -79,3 +79,10 @@ Future work should:
 * expand the requirements catalogue as additional behaviours are formalised;
 * align existing `CM_*` documentation with the `MAP-*` identifiers above and add further `MAP-NF-S-*` and `MAP-NF-O-*` entries for security and operability;
 * keep the mapping between `MAP-*` requirements and representative tests in sync with the evolving test suite.
+
+=== Version resource ownership (FIX-292)
+
+Version discovery closes the `map.version` resource after successful reads,
+empty input and read failures. `BuildVersionResourceTest` verifies closure with
+an isolated class loader and verifies that a resolved version is cached.
+The existing manifest and development POM fallbacks remain in place.
