@@ -87,6 +87,9 @@ The Chronicle Map documentation comprises:
 
 Linked documentation is contained in the `docs` folder.
 
+For partial-removal capacity investigations, see
+link:docs/issue-400-churn.adoc[the bounded per-segment churn diagnostic].
+
 == Chronicle Software Release Notes
 
 https://chronicle.software/release-notes[Leave your e-mail] to get information about the latest releases and patches to stay up-to-date.
