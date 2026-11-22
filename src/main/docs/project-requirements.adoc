@@ -95,3 +95,10 @@ no additional 256-byte alignment is assumed. Each analysis releases its checksum
 and its read-only file mapping, including when parsing fails.
 `AnalyzerBoundaryTest` covers one, two and sixteen segments and truncated-file cleanup.
 The analyser's existing restriction to supported key encodings and files below 2 GiB remains.
+
+== Canonical file-handle ownership (FIX-292)
+
+A rejected file-lock acquisition does not retain a reference to the canonical handle.
+Exclusive callbacks release their temporary reference after success; exceptions leave
+the caller's original reference intact. `CanonicalHandleFailureTest` checks successful
+and throwing callbacks, rejected acquisition and successful retry after a callback failure.
