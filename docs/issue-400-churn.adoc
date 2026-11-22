@@ -1,0 +1,18 @@
+= Investigating capacity under partial churn
+:sectnums:
+
+`entries()` sizes the map as a whole. Entries and storage are allocated per segment, so free space in one segment cannot satisfy an insertion into another. Removing entries does not shrink a persisted file or release the map's reserved address space.
+
+The bounded `Issue400ChurnHarness` records per-segment occupancy, free chunks, tiers and failed insertions. It uses deterministic bytes, fixed 500-byte keys and 5,120-byte values, removes the first 7,000 encountered entries and refills towards 61,500 entries. The caller chooses segment count, tiering and a positive number of rounds. It stops after at most ten insertion failures.
+
+Run `Issue400ChurnHarness.main` from the test classpath with:
+
+----
+<version-label> <true|false> <segments|auto> <rounds> <output.csv>
+----
+
+For example: `current false 16 2 target/churn.csv`. Compare with `current true 16 2 target/churn-tiering.csv`. `Issue400ChurnHarnessTest` executes both modes and checks that the observations and bounded input contract are maintained.
+
+This is an investigation tool for https://github.com/OpenHFT/Chronicle-Map/issues/400[issue 400], not an allocator correction or a guarantee of insertability. Traversal-order removal can concentrate retained entries in some segments while new keys spread across all segments. Disabled tiering makes that imbalance more visible. This variant does not establish the cause of the original tiering-enabled report.
+
+Keep tiering enabled for churn workloads unless a fixed allocation is required. Inspect `segmentStats()`, `percentageFreeSpace()` and `remainingAutoResizes()` alongside total size. Rebuilding a persisted map requires quiescing writers and validating a separate replacement; this tool performs no migration or live-file truncation.
