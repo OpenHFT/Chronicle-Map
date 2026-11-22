@@ -86,3 +86,12 @@ Version discovery closes the `map.version` resource after successful reads,
 empty input and read failures. `BuildVersionResourceTest` verifies closure with
 an isolated class loader and verifies that a resolved version is cached.
 The existing manifest and development POM fallbacks remain in place.
+
+== File analyser layout and ownership (FIX-292)
+
+The file analyser reads global mutable state through the same generated value layout
+used by the map. The first tier starts immediately after the configured segment headers;
+no additional 256-byte alignment is assumed. Each analysis releases its checksum buffer
+and its read-only file mapping, including when parsing fails.
+`AnalyzerBoundaryTest` covers one, two and sixteen segments and truncated-file cleanup.
+The analyser's existing restriction to supported key encodings and files below 2 GiB remains.

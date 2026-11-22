@@ -4,6 +4,10 @@
 package net.openhft.chronicle.hash.impl;
 
 import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.BytesStore;
+import net.openhft.chronicle.core.io.IOTools;
+import net.openhft.chronicle.hash.VanillaGlobalMutableState;
+import net.openhft.chronicle.values.Values;
 import net.openhft.chronicle.bytes.algo.XxHash;
 import net.openhft.chronicle.core.pool.ClassAliasPool;
 import net.openhft.chronicle.hash.serialization.impl.BytesMarshallableDataAccess;
@@ -55,166 +59,171 @@ public final class InternalMapFileAnalyzer {
 
         try (FileChannel fileChannel = (FileChannel) Files.newByteChannel(path, EnumSet.of(StandardOpenOption.READ))) {
             final MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, 0, fileChannel.size());
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
-
-            header("Self bootstrapping header");
-
-            final long hashCode = buffer.getLong();
-            final int len = buffer.getInt();
-            final byte[] headerData = new byte[len];
-            buffer.get(headerData);
-            final String header = new String(headerData, StandardCharsets.UTF_8);
-
-            final Bytes<Void> bytes = Bytes.allocateDirect(Integer.BYTES + (long) len);
-            bytes.writeInt(len);
-            bytes.write(headerData);
-            final long expectedHashCode = new XxHash(0).applyAsLong(bytes.bytesStore());
-
-            output(0, "hashcode (" + (hashCode == expectedHashCode ? "CORRECT" : "INCORRECT!") + ")", hashCode);
-            output(8, "length", len);
-            output(12, len, "header", header);
-
-            final VanillaChronicleMap<?, ?, ?> map = (VanillaChronicleMap<?, ?, ?>) TextWire.from(header).objectInput().readObject();
-
-            final Map<String, Object> props = parseProperties(map);
-
-            align(buffer, 64);
-
-            // Undocumented hole in the layout
-            buffer.position(buffer.position() + 16);
-
-            header("Global Mutable State");
-
-            output64(buffer, "lock");
-            output24u(buffer, "allocatedExtraTierBulks");
-            output40u(buffer, "firstFreeTierIndex");
-            output40u(buffer, "extraTiersInUse");
-            final int segmentHeadersOffsetFromHeader =
-                    Math.toIntExact(output32u(buffer, "segmentHeadersOffset"));
-            output64(buffer, "dataStoreSize");
-            output64(buffer, "currentCleanupSegmentIndex(r)");
-            output8(buffer, "modificationIteratorsCount(r)");
-            align(buffer, 2);
-            output64(buffer, "modificationIteratorInitAt(r)0");
-            output64(buffer, "modificationIteratorInitAt(r)1");
-
-            header("Segment Headers Area");
-            int segmentHeadersOffset = segmentHeadersOffsetFromHeader;
-            if (segmentHeadersOffset <= 0) {
-                System.out.println(
-                        "invalid segmentHeadersOffset (" + segmentHeadersOffsetFromHeader + "), using fallback 0x005c1000");
-                segmentHeadersOffset = 0x005c1000; // Fallback until layout bug is fixed.
+            try {
+                analyse(buffer);
+            } finally {
+                IOTools.clean(buffer);
             }
-            buffer.position(segmentHeadersOffset);
-            final int actualSegments = (int) props.get("actualSegments");
-            System.out.println("actualSegments = " + actualSegments);
-            final int segmentHeaderSize = (int) props.get("segmentHeaderSize");
-            System.out.println("segmentHeaderSize = " + segmentHeaderSize);
-
-            for (int segment = 0; segment < actualSegments; segment++) {
-                buffer.position(segmentHeadersOffset + segment * segmentHeaderSize);
-                if (segment != 0) {
-                    System.out.println();
-                }
-                output64(buffer, "lock " + segment);
-                output32u(buffer, "entries");
-                output32u(buffer, "smallestIndexPossiblyFree");
-                output64(buffer, "nextSegmentTier");
-                output64(buffer, "deletedOffset");
-            }
-
-            header("Main Segments Area");
-            align(buffer, 256); // According to doc, it is not aligned
-            final int mainSegmentAreaStart = buffer.position();
-            final long tierSize = (long) props.get("tierSize");
-            System.out.println("tierSize = " + tierSize);
-            final long tierHashLookupCapacity = (long) props.get("tierHashLookupCapacity");
-            System.out.println("tierHashLookupCapacity = " + tierHashLookupCapacity);
-            final int tierHashLookupSlotSize = (int) props.get("tierHashLookupSlotSize");
-            System.out.println("tierHashLookupSlotSize = " + tierHashLookupSlotSize);
-            final int tierHashLookupKeyBits = (int) props.get("tierHashLookupKeyBits");
-            System.out.println("tierHashLookupKeyBits = " + tierHashLookupKeyBits);
-            final long tierHashLookupOuterSize = (long) props.get("tierHashLookupOuterSize");
-            System.out.println("tierHashLookupOuterSize = " + tierHashLookupOuterSize);
-            final int actualChunksPerSegmentTier = Math.toIntExact((long) props.get("actualChunksPerSegmentTier"));
-            System.out.println("actualChunksPerSegmentTier = " + actualChunksPerSegmentTier);
-            final int tierFreeListOuterSize = Math.toIntExact((long) props.get("tierFreeListOuterSize"));
-            System.out.println("tierFreeListOuterSize = " + tierFreeListOuterSize);
-            final int tierEntrySpaceInnerOffset = (int) props.get("tierEntrySpaceInnerOffset");
-            System.out.println("tierEntrySpaceInnerOffset = " + tierEntrySpaceInnerOffset);
-            final int chunkSize = Math.toIntExact((long) props.get("chunkSize"));
-            System.out.println("chunkSize = " + chunkSize);
-
-            final List<Integer> cardinalities = new ArrayList<>();
-            long oldPos = buffer.position();
-            for (int segment = 0; segment < actualSegments; segment++) {
-
-                header("Segment Tier Structure " + segment);
-                buffer.position((int) (oldPos + segment * tierSize));
-                header("Hash Lookup " + segment);
-
-                final int entrySpacePos = (int) (oldPos + segment * tierSize + tierHashLookupOuterSize + 64 + tierFreeListOuterSize + tierEntrySpaceInnerOffset);
-
-                int usedSlots = 0;
-                for (int hl = 0; hl < tierHashLookupCapacity; hl++) {
-                    final int pos = buffer.position();
-                    final long hlv = unsignedValue(buffer, tierHashLookupSlotSize);
-                    if (hlv != 0) {
-                        usedSlots++;
-                        final long hashLookupKey = hlv & ((1L << tierHashLookupKeyBits) - 1);
-                        final long hashLookupValue = hlv >> tierHashLookupKeyBits;
-                        final int chunkAddress = (int) (entrySpacePos + hashLookupValue * chunkSize);
-                        final byte keySize = buffer.get(chunkAddress); // Assume stop-bit todo: Use the configured reader
-                        final String keyText;
-                        if (keySize > 0) {
-                            keyText = read8Bit(buffer, chunkAddress + 1, keySize);
-                        } else {
-                            keyText = "";
-                        }
-                        System.out.format("%08X - %08X  %010X %010X %010X -> %08X %s %n",
-                                pos, pos + tierHashLookupSlotSize - 1, hl,
-                                hashLookupKey, hashLookupValue, chunkAddress, keyText);
-                    } else {
-                        System.out.format("%08X - %08X  %010X%n", pos, pos + tierHashLookupSlotSize - 1, hl);
-                    }
-                }
-                cardinalities.add(usedSlots);
-                System.out.format("%d cardinality (%.2f%% used)) %n", usedSlots, 100.00d * ((double) usedSlots) / actualChunksPerSegmentTier);
-
-                header("Segment Tier Counters Area " + segment);
-                buffer.position((int) (oldPos + segment * tierSize + tierHashLookupOuterSize));
-                output64(buffer, "nextTierIndex(x)");
-                output64(buffer, "previousTierIndex(x)");
-                output64(buffer, "lowestPossiblyFreeChunk(x)");
-                output32u(buffer, "segmentIndex(x)"); //
-                output32u(buffer, "tier(x)"); //
-                output32u(buffer, "entries(x)"); //
-                output32u(buffer, "deleted(x)"); //
-
-                header("Free List " + segment);
-                final int freeListPos = (int) (oldPos + segment * tierSize + tierHashLookupOuterSize + 64);
-                buffer.position(freeListPos);
-                final byte[] bits = new byte[actualChunksPerSegmentTier / 8];
-                buffer.get(bits);
-                final int cardinality = cardinality(bits);
-                System.out.format("%08X - %08X  BITMAP (%d bytes, %d bits, %d cardinality (%.2f%% used)) %n", freeListPos, freeListPos + bits.length - 1, bits.length, actualChunksPerSegmentTier, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
-
-                header("Entry Space " + segment);
-                buffer.position(entrySpacePos);
-                final int chunksBytes = actualChunksPerSegmentTier * chunkSize;
-                System.out.format("%08X - %08X  CHUNKS (%d bytes)%n", entrySpacePos, entrySpacePos + chunksBytes, chunksBytes);
-
-                // break;
-            }
-
-            header("Allocation overview");
-            for (int segment = 0; segment < cardinalities.size(); segment++) {
-                final int cardinality = cardinalities.get(segment);
-                System.out.format("%3d %10d (%2.2f%%)%n", segment, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
-            }
-
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void analyse(MappedByteBuffer buffer) throws IOException, ClassNotFoundException {
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+
+        header("Self bootstrapping header");
+
+        final long hashCode = buffer.getLong();
+        final int len = buffer.getInt();
+        final byte[] headerData = new byte[len];
+        buffer.get(headerData);
+        final String header = new String(headerData, StandardCharsets.UTF_8);
+
+        final Bytes<Void> bytes = Bytes.allocateDirect(Integer.BYTES + (long) len);
+        final long expectedHashCode;
+        try {
+            bytes.writeInt(len);
+            bytes.write(headerData);
+            expectedHashCode = new XxHash(0).applyAsLong(bytes.bytesStore());
+        } finally {
+            bytes.releaseLast();
+        }
+
+        output(0, "hashcode (" + (hashCode == expectedHashCode ? "CORRECT" : "INCORRECT!") + ")", hashCode);
+        output(8, "length", len);
+        output(12, len, "header", header);
+
+        final VanillaChronicleMap<?, ?, ?> map = (VanillaChronicleMap<?, ?, ?>) TextWire.from(header).objectInput().readObject();
+
+        final Map<String, Object> props = parseProperties(map);
+
+        align(buffer, 64);
+
+        header("Global Mutable State");
+        output64(buffer, "lock");
+        // Read the generated value layout used by Map instead of assuming packed field widths.
+        VanillaGlobalMutableState state = Values.newNativeReference(VanillaGlobalMutableState.class);
+        ByteBuffer stateBuffer = ByteBuffer.allocate((int) state.maxSize());
+        ByteBuffer source = buffer.duplicate();
+        source.limit(source.position() + stateBuffer.capacity());
+        stateBuffer.put(source);
+        ((java.nio.Buffer) stateBuffer).flip();
+        BytesStore<?, ?> stateBytes = BytesStore.wrap(stateBuffer);
+        final int segmentHeadersOffset;
+        try {
+            state.bytesStore(stateBytes, 0, state.maxSize());
+            segmentHeadersOffset = Math.toIntExact(state.getSegmentHeadersOffset());
+            System.out.println("allocatedExtraTierBulks = " + state.getAllocatedExtraTierBulks());
+            System.out.println("firstFreeTierIndex = " + state.getFirstFreeTierIndex());
+            System.out.println("extraTiersInUse = " + state.getExtraTiersInUse());
+            System.out.println("segmentHeadersOffset = " + segmentHeadersOffset);
+            System.out.println("dataStoreSize = " + state.getDataStoreSize());
+        } finally {
+            stateBytes.releaseLast();
+        }
+        header("Segment Headers Area");
+        buffer.position(segmentHeadersOffset);
+        final int actualSegments = (int) props.get("actualSegments");
+        System.out.println("actualSegments = " + actualSegments);
+        final int segmentHeaderSize = (int) props.get("segmentHeaderSize");
+        System.out.println("segmentHeaderSize = " + segmentHeaderSize);
+
+        for (int segment = 0; segment < actualSegments; segment++) {
+            buffer.position(segmentHeadersOffset + segment * segmentHeaderSize);
+            if (segment != 0) {
+                System.out.println();
+            }
+            output64(buffer, "lock " + segment);
+            output32u(buffer, "entries");
+            output32u(buffer, "smallestIndexPossiblyFree");
+            output64(buffer, "nextSegmentTier");
+            output64(buffer, "deletedOffset");
+        }
+
+        header("Main Segments Area");
+        buffer.position(segmentHeadersOffset + actualSegments * segmentHeaderSize);
+        final int mainSegmentAreaStart = buffer.position();
+        final long tierSize = (long) props.get("tierSize");
+        System.out.println("tierSize = " + tierSize);
+        final long tierHashLookupCapacity = (long) props.get("tierHashLookupCapacity");
+        System.out.println("tierHashLookupCapacity = " + tierHashLookupCapacity);
+        final int tierHashLookupSlotSize = (int) props.get("tierHashLookupSlotSize");
+        System.out.println("tierHashLookupSlotSize = " + tierHashLookupSlotSize);
+        final int tierHashLookupKeyBits = (int) props.get("tierHashLookupKeyBits");
+        System.out.println("tierHashLookupKeyBits = " + tierHashLookupKeyBits);
+        final long tierHashLookupOuterSize = (long) props.get("tierHashLookupOuterSize");
+        System.out.println("tierHashLookupOuterSize = " + tierHashLookupOuterSize);
+        final int actualChunksPerSegmentTier = Math.toIntExact((long) props.get("actualChunksPerSegmentTier"));
+        System.out.println("actualChunksPerSegmentTier = " + actualChunksPerSegmentTier);
+        final int tierFreeListOuterSize = Math.toIntExact((long) props.get("tierFreeListOuterSize"));
+        System.out.println("tierFreeListOuterSize = " + tierFreeListOuterSize);
+        final int tierEntrySpaceInnerOffset = (int) props.get("tierEntrySpaceInnerOffset");
+        System.out.println("tierEntrySpaceInnerOffset = " + tierEntrySpaceInnerOffset);
+        final int chunkSize = Math.toIntExact((long) props.get("chunkSize"));
+        System.out.println("chunkSize = " + chunkSize);
+
+        final List<Integer> cardinalities = new ArrayList<>();
+        long oldPos = buffer.position();
+        for (int segment = 0; segment < actualSegments; segment++) {
+
+            header("Segment Tier Structure " + segment);
+            buffer.position((int) (oldPos + segment * tierSize));
+            header("Hash Lookup " + segment);
+
+            final int entrySpacePos = (int) (oldPos + segment * tierSize + tierHashLookupOuterSize + 64 + tierFreeListOuterSize + tierEntrySpaceInnerOffset);
+
+            int usedSlots = 0;
+            for (int hl = 0; hl < tierHashLookupCapacity; hl++) {
+                final int pos = buffer.position();
+                final long hlv = unsignedValue(buffer, tierHashLookupSlotSize);
+                if (hlv != 0) {
+                    usedSlots++;
+                    final long hashLookupKey = hlv & ((1L << tierHashLookupKeyBits) - 1);
+                    final long hashLookupValue = hlv >> tierHashLookupKeyBits;
+                    final int chunkAddress = (int) (entrySpacePos + hashLookupValue * chunkSize);
+                    final byte keySize = buffer.get(chunkAddress); // Assume stop-bit todo: Use the configured reader
+                    final String keyText = keySize > 0 ? read8Bit(buffer, chunkAddress + 1, keySize) : "";
+                    System.out.format("%08X - %08X  %010X %010X %010X -> %08X %s %n",
+                            pos, pos + tierHashLookupSlotSize - 1, hl,
+                            hashLookupKey, hashLookupValue, chunkAddress, keyText);
+                } else {
+                    System.out.format("%08X - %08X  %010X%n", pos, pos + tierHashLookupSlotSize - 1, hl);
+                }
+            }
+            cardinalities.add(usedSlots);
+            System.out.format("%d cardinality (%.2f%% used)) %n", usedSlots, 100.00d * ((double) usedSlots) / actualChunksPerSegmentTier);
+
+            header("Segment Tier Counters Area " + segment);
+            buffer.position((int) (oldPos + segment * tierSize + tierHashLookupOuterSize));
+            output64(buffer, "nextTierIndex(x)");
+            output64(buffer, "previousTierIndex(x)");
+            output64(buffer, "lowestPossiblyFreeChunk(x)");
+            output32u(buffer, "segmentIndex(x)"); //
+            output32u(buffer, "tier(x)"); //
+            output32u(buffer, "entries(x)"); //
+            output32u(buffer, "deleted(x)"); //
+
+            header("Free List " + segment);
+            final int freeListPos = (int) (oldPos + segment * tierSize + tierHashLookupOuterSize + 64);
+            buffer.position(freeListPos);
+            final byte[] bits = new byte[actualChunksPerSegmentTier / 8];
+            buffer.get(bits);
+            final int cardinality = cardinality(bits);
+            System.out.format("%08X - %08X  BITMAP (%d bytes, %d bits, %d cardinality (%.2f%% used)) %n", freeListPos, freeListPos + bits.length - 1, bits.length, actualChunksPerSegmentTier, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
+
+            header("Entry Space " + segment);
+            buffer.position(entrySpacePos);
+            final int chunksBytes = actualChunksPerSegmentTier * chunkSize;
+            System.out.format("%08X - %08X  CHUNKS (%d bytes)%n", entrySpacePos, entrySpacePos + chunksBytes, chunksBytes);
+
+            // break;
+        }
+
+        header("Allocation overview");
+        for (int segment = 0; segment < cardinalities.size(); segment++) {
+            final int cardinality = cardinalities.get(segment);
+            System.out.format("%3d %10d (%2.2f%%)%n", segment, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
         }
     }
 
