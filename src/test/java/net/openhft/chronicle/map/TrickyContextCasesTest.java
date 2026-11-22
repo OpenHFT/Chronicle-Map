@@ -47,6 +47,7 @@ class TrickyContextCasesTest {
                 .averageValue(new byte[1])
                 .entries(100).actualSegments(1).create();
         ExecutorService executor = Executors.newSingleThreadExecutor(new NamedThreadFactory("write-lock-test"));
+        int originalLockTimeout = BigSegmentHeader.LOCK_TIMEOUT_SECONDS;
         // Close contexts first, then join the worker before releasing its mapped memory.
         // try-with-resources retains any assertion failure if worker cleanup also fails.
         try (AutoCloseable cleanup = () -> {
@@ -58,9 +59,12 @@ class TrickyContextCasesTest {
             try (ExternalMapQueryContext<Integer, byte[], ?> q = map.queryContext(1)) {
                 MapEntry<Integer, byte[]> entry = q.entry(); // acquires read lock implicitly
                 assertNotNull(entry);
+                // Test lock rejection, not the contention timer. Its millisecond clock-change
+                // budget can intentionally exceed wall time, especially on Windows.
+                BigSegmentHeader.LOCK_TIMEOUT_SECONDS = 0;
                 Future<?> write = executor.submit(() -> map.put(1, new byte[]{1, 2, 3, 4, 5}));
                 ExecutionException failure = assertThrows(ExecutionException.class,
-                        () -> write.get(BigSegmentHeader.LOCK_TIMEOUT_SECONDS + 10L, TimeUnit.SECONDS));
+                        () -> write.get(10, TimeUnit.SECONDS));
                 assertEquals(InterProcessDeadLockException.class, failure.getCause().getClass());
                 assertTrue(q.readLock().isHeldByCurrentThread());
             }
@@ -68,6 +72,8 @@ class TrickyContextCasesTest {
             // Lock rejection does not establish rollback of the attempted value change.
             assertArrayEquals(new byte[]{2}, map.get(2));
             assertEquals(2, map.size());
+        } finally {
+            BigSegmentHeader.LOCK_TIMEOUT_SECONDS = originalLockTimeout;
         }
     }
 
