@@ -2726,7 +2726,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
     }
 
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
-        return (((this.m().keySizeMarshaller.storingLength(keySize)) + keySize) + (checksumStrategy.extraEntryBytes())) + (this.m().valueSizeMarshaller.storingLength(valueSize));
+        return ((this.m().keySizeMarshaller.storingLength(keySize)) + keySize) + (this.m().valueSizeMarshaller.storingLength(valueSize));
     }
 
     public long innerEntrySize(long sizeOfEverythingBeforeValue, long valueSize) {
@@ -2734,7 +2734,7 @@ public class CompiledMapQueryContext<K, V, R> extends ChainingInterface implemen
             sizeOfEverythingBeforeValue += this.m().worstAlignment;
 
         int alignment = this.m().alignment;
-        return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize, alignment));
+        return (VanillaChronicleMap.alignAddr(sizeOfEverythingBeforeValue, alignment)) + (VanillaChronicleMap.alignAddr(valueSize + (checksumStrategy.extraEntryBytes()), alignment));
     }
 
     @Override

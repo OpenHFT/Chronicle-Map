@@ -214,12 +214,11 @@ public abstract class MapEntryStages<K, V> extends HashEntryStages<K>
             sizeOfEverythingBeforeValue += mh.m().worstAlignment;
         int alignment = mh.m().alignment;
         return alignAddr(sizeOfEverythingBeforeValue, alignment) +
-                alignAddr(valueSize, alignment);
+                alignAddr(valueSize + checksumStrategy.extraEntryBytes(), alignment);
     }
 
     long sizeOfEverythingBeforeValue(long keySize, long valueSize) {
         return mh.m().keySizeMarshaller.storingLength(keySize) + keySize +
-                checksumStrategy.extraEntryBytes() +
                 mh.m().valueSizeMarshaller.storingLength(valueSize);
     }
 
