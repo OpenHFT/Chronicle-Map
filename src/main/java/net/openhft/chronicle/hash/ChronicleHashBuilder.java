@@ -271,8 +271,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * state, {@code maxBloatFactor} - the maximum bloat up coefficient, during exceptional bursts.
      * With {@linkplain #allowSegmentTiering(boolean) segment tiering} enabled (the default),
      * growth uses extra segment tiers from a finite budget shared by all segments. When
-     * {@code allowSegmentTiering(false)} is configured, no extra tiers can be allocated and
-     * {@code maxBloatFactor} has no effect. Configure this before creating a map if the number of
+     * {@code allowSegmentTiering(false)} is configured, no extra tiers can be allocated. This
+     * does not disable the use of {@code maxBloatFactor} when calculating the initial segment
+     * size for a sparse-file map. Configure this before creating a map if the number of
      * entries can exceed {@code entries}; an existing persisted map retains the sizing
      * configuration with which it was created.
      * <p>
@@ -312,8 +313,10 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * Default is {@code true}, segments are allowed to tier.
      * <p>
-     * When configured to {@code false}, {@link #maxBloatFactor(double)} configuration becomes
-     * irrelevant, because effectively no bloat is allowed.
+     * When configured to {@code false}, no additional segment tiers are allowed. The
+     * {@link #maxBloatFactor(double)} setting can still affect initial segment sizing when
+     * sparse-file mode is enabled; it does not enable later tier allocation. Initial sizing
+     * alone does not guarantee a particular entry capacity or physical disk allocation.
      *
      * @param allowSegmentTiering if {@code true}, when a segment overflows a next tier
      *                            is allocated to accommodate new entries
