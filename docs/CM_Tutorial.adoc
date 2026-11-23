@@ -104,6 +104,10 @@ If exceptional bursts can exceed the target, configure `maxBloatFactor` when cre
 For example, `.entries(1_000_000).maxBloatFactor(3.0)` permits more extra tiers than the default,
 but does not guarantee room for at least three million entries.
 With `allowSegmentTiering(false)`, no extra tiers can be allocated, regardless of `maxBloatFactor`.
+When `sparseFile(true)` is also configured, `maxBloatFactor` can still increase the initial
+segment sizing; disabling tiering does not disable that sizing calculation.
+This is distinct from allocating additional tiers later, and does not by itself guarantee
+a particular entry capacity or amount of physically allocated disk space.
 
 An insertion that needs another tier after the budget is exhausted throws `IllegalStateException`.
 The number of entries that fit before the extra-tier budget is exhausted depends on key distribution
