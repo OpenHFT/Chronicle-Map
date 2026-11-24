@@ -216,6 +216,8 @@ class OldDeletedEntriesCleanupThread extends Thread
     }
 
     @Override
+    // Defer restoring interruption until the worker stops; freeing its mapped memory early is unsafe.
+    @SuppressWarnings("java:S2142")
     public void close() {
         shutdown = true;
         // Unblock both our explicit sleeps and a segment-lock wait. Map resources, including the

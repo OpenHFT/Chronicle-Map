@@ -97,6 +97,8 @@ public class ReplicatedChronicleMap<K, V, R> extends VanillaChronicleMap<K, V, R
     public transient boolean cleanupRemovedEntries;
     public transient long cleanupTimeout;
     public transient TimeUnit cleanupTimeoutUnit;
+    // Chronicle Wire also honours transient: a live cleanup thread is not persisted map state.
+    @SuppressWarnings("java:S2065")
     private transient OldDeletedEntriesCleanupThread oldDeletedEntriesCleanupThread;
     public transient MapRemoteOperations<K, V, R> remoteOperations;
     transient BitSetFrame tierModIterFrame;

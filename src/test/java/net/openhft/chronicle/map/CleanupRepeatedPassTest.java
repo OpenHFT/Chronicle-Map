@@ -21,7 +21,7 @@ class CleanupRepeatedPassTest {
             for (int batch = 0; batch < 2; batch++) {
                 for (int i = 0; i < 8; i++) { int key = batch * 10 + i; map.put(key, key); map.remove(key); }
                 long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-                while (replicableCount(map) > 0 && System.nanoTime() < deadline) Thread.sleep(10);
+                while (replicableCount(map) > 0 && System.nanoTime() < deadline) Jvm.pause(10);
                 assertEquals(0, replicableCount(map), "background cleanup must process every batch");
             }
         }
