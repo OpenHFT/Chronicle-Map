@@ -100,21 +100,26 @@ that target is exceeded. With segment tiering enabled (the default), full segmen
 adding tiers from a finite budget shared across the map.
 The default `maxBloatFactor(1.0)` allows limited extra tiers to handle uneven key distribution;
 it does not promise that the map can hold an arbitrary number of entries beyond `entries`.
-If exceptional bursts can exceed the target, configure `maxBloatFactor` when creating the map.
+For exceptional bursts beyond that target, configure `maxBloatFactor` when creating the map,
+without relying on it to guarantee capacity for those bursts.
 For example, `.entries(1_000_000).maxBloatFactor(3.0)` permits more extra tiers than the default,
 but does not guarantee room for at least three million entries.
 With `allowSegmentTiering(false)`, no extra tiers can be allocated, regardless of `maxBloatFactor`.
-When `sparseFile(true)` is also configured, `maxBloatFactor` can still increase the initial
-segment sizing; disabling tiering does not disable that sizing calculation.
+When `sparseFile(true)` is also configured, `maxBloatFactor` can still increase the automatically
+calculated initial segment size; disabling tiering does not disable that sizing calculation.
+Explicitly configuring `entriesPerSegment` bypasses this automatic calculation.
 This is distinct from allocating additional tiers later, and does not by itself guarantee
 a particular entry capacity or amount of physically allocated disk space.
 
 An insertion that needs another tier after the budget is exhausted throws `IllegalStateException`.
 The number of entries that fit before the extra-tier budget is exhausted depends on key distribution
-and serialized key and value sizes. A persisted map keeps its original sizing configuration when reopened.
+and serialized key and value sizes. Normal reopening of an existing persisted map uses its stored
+sizing, rather than new builder sizing settings; this does not describe corrupted-header recovery.
 
 You should not add an arbitrary load-factor margin over the actual target number of entries.
-This bad practice was popularized by `new HashMap(capacity)` and `new HashSet(capacity)` constructors, which accept capacity, that should be multiplied by load factor to obtain the actual maximum expected number of entries in the container. `ChronicleMap` and `ChronicleSet` do not have a notion of a load factor.
+Unlike the capacity argument to `new HashMap(capacity)` or `new HashSet(capacity)`, `entries` is
+already the target entry count. Callers do not need to apply a HashMap-style load-factor adjustment;
+Chronicle Map and Chronicle Set handle internal hash-lookup sizing themselves.
 
 See `ChronicleMapBuilder#entries()` in https://www.javadoc.io/doc/net.openhft/chronicle-map/[Javadocs] for more information.
 

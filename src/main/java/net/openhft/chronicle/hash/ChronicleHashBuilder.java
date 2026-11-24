@@ -245,13 +245,15 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * <p>
      * Configure {@code entries} for the largest number of entries that the container must
      * accommodate. Use {@link #maxBloatFactor(double) maxBloatFactor} to allow additional tiers
-     * for exceptional bursts beyond that target.
+     * for exceptional bursts beyond that target, without guaranteeing their entry capacity.
      * <p>
      * <b>You shouldn't put additional margin over the actual target number of entries.</b>
      * This bad practice was popularized by {@link HashMap#HashMap(int)} and {@link
      * HashSet#HashSet(int)} constructors, which accept <i>capacity</i>, that should be multiplied
      * by <i>load factor</i> to obtain the actual maximum expected number of entries.
-     * {@code ChronicleMap} and {@code ChronicleSet} don't have a notion of load factor.
+     * Callers do not need to apply this load-factor adjustment to {@code entries} for
+     * {@code ChronicleMap} or {@code ChronicleSet}; internal hash-lookup sizing is handled by
+     * the builder.
      * <p>
      * The default target number of entries is 2^20 (~ 1 million).
      *
@@ -263,39 +265,39 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
     B entries(long entries);
 
     /**
-     * Configures the maximum number of times, the hash containers, created by this builder,
-     * are allowed to grow in size beyond the configured {@linkplain #entries(long) target number
-     * of entries}.
+     * Controls the finite budget of extra segment tiers shared by all segments in the hash
+     * containers created by this builder. This is not an exact multiplier of the
+     * {@linkplain #entries(long) target number of entries}: capacity also depends on key
+     * distribution and serialized key and value sizes.
      * <p>
-     * {@link #entries(long)} should represent the expected maximum number of entries in a stable
-     * state, {@code maxBloatFactor} - the maximum bloat up coefficient, during exceptional bursts.
+     * Configure {@link #entries(long)} for the largest number of entries that the container must
+     * accommodate. Use {@code maxBloatFactor} to allow additional tiers for exceptional bursts
+     * beyond that target, without guaranteeing their entry capacity.
      * With {@linkplain #allowSegmentTiering(boolean) segment tiering} enabled (the default),
      * growth uses extra segment tiers from a finite budget shared by all segments. When
      * {@code allowSegmentTiering(false)} is configured, no extra tiers can be allocated. This
-     * does not disable the use of {@code maxBloatFactor} when calculating the initial segment
-     * size for a sparse-file map. Configure this before creating a map if the number of
-     * entries can exceed {@code entries}; an existing persisted map retains the sizing
-     * configuration with which it was created.
+     * does not disable the use of {@code maxBloatFactor} when automatically calculating the
+     * initial segment size for a sparse-file map; explicitly configuring
+     * {@link #entriesPerSegment(long)} bypasses that calculation. Configure sizing before
+     * creating a map. Normal reopening of an existing persisted map uses its stored sizing,
+     * rather than new builder sizing settings; this does not describe corrupted-header recovery.
      * <p>
-     * This configuration should be used for self-checking. Even if you configure impossibly
-     * large {@code maxBloatFactor}, the created {@code ChronicleHash}, of cause, will be still
-     * operational, and even won't allocate any extra resources before they are actually needed.
-     * But when the {@code ChronicleHash} grows beyond the configured {@link #entries(long)}, it
-     * could start to serve requests progressively slower. If you insert new entries into
-     * {@code ChronicleHash} infinitely, due to a bug in your business logic code, or the
-     * ChronicleHash configuration, and if you configure the ChronicleHash to grow infinitely, you
-     * will have a terribly slow and fat, but operational application, instead of a fail with
-     * {@code IllegalStateException}, which will quickly show you, that there is a bug in you
-     * application.
+     * Extra-tier storage is allocated on demand, in bulks. Increasing {@code maxBloatFactor}
+     * can, however, increase the automatically calculated initial segment size in sparse-file
+     * mode, so it is not a general promise of unchanged initial resource use. Growth beyond
+     * {@link #entries(long)} can reduce performance. Choose a budget appropriate for
+     * the application so that unexpected growth fails with {@link IllegalStateException} when
+     * an insertion needs another tier after the budget is exhausted.
      * <p>
-     * The default maximum bloat factor factor is {@code 1.0} - i.e. "no bloat is expected".
+     * The default maximum bloat factor is {@code 1.0}. With segment tiering enabled, this still
+     * permits limited extra tiers to handle uneven segment filling; it does not disable growth.
      * <p>
      * It is strongly advised not to configure {@code maxBloatFactor} to more than {@code 10.0},
      * almost certainly, you either should configure {@code ChronicleHash}es completely differently,
      * or this data store doesn't fit to your case.
      *
-     * @param maxBloatFactor the maximum number ot times, the created hash container is supposed
-     *                       to bloat up beyond the {@link #entries(long)}
+     * @param maxBloatFactor factor controlling the extra-tier budget and, in sparse-file mode,
+     *                       automatic initial segment sizing; not an entry-count multiplier
      * @return this builder back
      * @throws IllegalArgumentException if the given {@code maxBloatFactor} is NaN, lesser than 1.0
      *                                  or greater than 1000.0 (one thousand)
@@ -314,8 +316,9 @@ public interface ChronicleHashBuilder<K, H extends ChronicleHash<K, ?, ?, ?>,
      * Default is {@code true}, segments are allowed to tier.
      * <p>
      * When configured to {@code false}, no additional segment tiers are allowed. The
-     * {@link #maxBloatFactor(double)} setting can still affect initial segment sizing when
-     * sparse-file mode is enabled; it does not enable later tier allocation. Initial sizing
+     * {@link #maxBloatFactor(double)} setting can still affect automatic initial segment sizing
+     * when sparse-file mode is enabled, unless {@link #entriesPerSegment(long)} is explicitly
+     * configured; it does not enable later tier allocation. Initial sizing
      * alone does not guarantee a particular entry capacity or physical disk allocation.
      *
      * @param allowSegmentTiering if {@code true}, when a segment overflows a next tier
