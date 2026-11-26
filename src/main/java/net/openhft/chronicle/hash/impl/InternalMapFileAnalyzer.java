@@ -95,6 +95,9 @@ public final class InternalMapFileAnalyzer {
         output(12, len, "header", header);
 
         final VanillaChronicleMap<?, ?, ?> map = (VanillaChronicleMap<?, ?, ?>) TextWire.from(header).objectInput().readObject();
+        if (map == null) {
+            throw new IOException("Map header must not be null");
+        }
 
         final Map<String, Object> props = parseProperties(map);
 
