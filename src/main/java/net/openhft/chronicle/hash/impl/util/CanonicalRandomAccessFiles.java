@@ -179,16 +179,20 @@ public final class CanonicalRandomAccessFiles {
                 action.fileIOAction();
                 return true;
             }
-            try (FileLock lock = channel.tryLock()) {
-                if (lock == null)
-                    return false;
-                action.fileIOAction();
-                return true;
-            } catch (OverlappingFileLockException ignored) {
-                return false;
-            }
+            return tryLockedFileIOAction(channel, action);
         } catch (IOException e) {
             throw Jvm.rethrow(e);
+        }
+    }
+
+    private static boolean tryLockedFileIOAction(FileChannel channel, FileIOAction action) throws IOException {
+        try (FileLock lock = channel.tryLock()) {
+            if (lock == null)
+                return false;
+            action.fileIOAction();
+            return true;
+        } catch (OverlappingFileLockException ignored) {
+            return false;
         }
     }
 
