@@ -3,12 +3,17 @@
  */
 package net.openhft.chronicle.map;
 
+import net.openhft.chronicle.bytes.Bytes;
+import net.openhft.chronicle.bytes.algo.XxHash;
 import net.openhft.chronicle.hash.impl.InternalMapFileAnalyzer;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import java.io.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,6 +40,28 @@ class AnalyzerBoundaryTest {
             // Permit baseline cleanup after detecting a leaked mapping.
             System.gc();
         }
+    }
+
+    @Test
+    void nullMapHeaderIsRejectedAndMappingReleased() throws Exception {
+        Path file = directory.resolve("null-header.map");
+        byte[] header = "!!null \"\"".getBytes(StandardCharsets.UTF_8);
+        Bytes<?> headerBytes = Bytes.allocateElasticOnHeap();
+        try {
+            headerBytes.writeInt(header.length);
+            headerBytes.write(header);
+            long hash = new XxHash(0).applyAsLong(headerBytes);
+            ByteBuffer contents = ByteBuffer.allocate(Long.BYTES + Integer.BYTES + header.length)
+                    .order(ByteOrder.LITTLE_ENDIAN);
+            contents.putLong(hash).putInt(header.length).put(header);
+            Files.write(file, contents.array());
+        } finally {
+            headerBytes.releaseLast();
+        }
+        String[] args = {file.toString()};
+        IOException failure = assertThrows(IOException.class, () -> InternalMapFileAnalyzer.main(args));
+        assertEquals("Map header must not be null", failure.getMessage());
+        Files.delete(file);
     }
 
     @Test
