@@ -33,11 +33,9 @@ public final class BuildVersion {
             return version;
         }
 
-        try {
-            // the best way to get the version is to read the map.version file
-            InputStream resource = BuildVersion.class.getClassLoader().getResourceAsStream("map" +
-                    ".version");
-            BufferedReader in = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8));
+        // the best way to get the version is to read the map.version file
+        try (InputStream resource = BuildVersion.class.getClassLoader().getResourceAsStream("map.version");
+             BufferedReader in = new BufferedReader(new InputStreamReader(resource, StandardCharsets.UTF_8))) {
 
             version = in.readLine().trim();
             if (!"${project.version}".equals(version()))
