@@ -79,3 +79,10 @@ Future work should:
 * expand the requirements catalogue as additional behaviours are formalised;
 * align existing `CM_*` documentation with the `MAP-*` identifiers above and add further `MAP-NF-S-*` and `MAP-NF-O-*` entries for security and operability;
 * keep the mapping between `MAP-*` requirements and representative tests in sync with the evolving test suite.
+
+== Canonical file-handle ownership (FIX-292)
+
+A rejected file-lock acquisition does not retain a reference to the canonical handle.
+Exclusive callbacks release their temporary reference after success; exceptions leave
+the caller's original reference intact. `CanonicalHandleFailureTest` checks successful
+and throwing callbacks, rejected acquisition and successful retry after a callback failure.
