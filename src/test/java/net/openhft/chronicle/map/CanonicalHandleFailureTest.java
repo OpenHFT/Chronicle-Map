@@ -42,8 +42,9 @@ class CanonicalHandleFailureTest {
         RandomAccessFile raf = CanonicalRandomAccessFiles.acquire(file);
         try {
             CanonicalRandomAccessFiles.acquireExclusiveFileLock(file, raf.getChannel());
+            java.nio.channels.FileChannel channel = raf.getChannel();
             assertThrows(RuntimeException.class, () ->
-                    CanonicalRandomAccessFiles.acquireExclusiveFileLock(file, raf.getChannel()));
+                    CanonicalRandomAccessFiles.acquireExclusiveFileLock(file, channel));
             CanonicalRandomAccessFiles.releaseExclusiveFileLock(file);
             CanonicalRandomAccessFiles.release(file);
             assertFalse(raf.getChannel().isOpen(), "rejected lock must not increment the file reference count");

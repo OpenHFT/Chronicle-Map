@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class BuildVersionResourceTest {
     @Test
-    public void closesVersionResourceAndCachesResult() throws Exception {
+    void closesVersionResourceAndCachesResult() throws Exception {
         VersionLoader loader = new VersionLoader(" 2026.99\n", false);
         Class<?> type = loader.loadClass(BuildVersion.class.getName());
         assertEquals("2026.99", type.getMethod("version").invoke(null));
@@ -25,14 +25,14 @@ public class BuildVersionResourceTest {
     }
 
     @Test
-    public void closesEmptyVersionResource() throws Exception {
+    void closesEmptyVersionResource() throws Exception {
         VersionLoader loader = new VersionLoader("", false);
         loader.loadClass(BuildVersion.class.getName()).getMethod("version").invoke(null);
         assertTrue(loader.closed, "Empty version resource was not closed");
     }
 
     @Test
-    public void closesVersionResourceAfterReadFailure() throws Exception {
+    void closesVersionResourceAfterReadFailure() throws Exception {
         VersionLoader loader = new VersionLoader("unused", true);
         loader.loadClass(BuildVersion.class.getName()).getMethod("version").invoke(null);
         assertTrue(loader.closed, "Failed version resource was not closed");

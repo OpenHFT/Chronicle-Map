@@ -102,26 +102,7 @@ public final class InternalMapFileAnalyzer {
 
         header("Global Mutable State");
         output64(buffer, "lock");
-        // Read the generated value layout used by Map instead of assuming packed field widths.
-        VanillaGlobalMutableState state = Values.newNativeReference(VanillaGlobalMutableState.class);
-        ByteBuffer stateBuffer = ByteBuffer.allocate((int) state.maxSize());
-        ByteBuffer source = buffer.duplicate();
-        source.limit(source.position() + stateBuffer.capacity());
-        stateBuffer.put(source);
-        ((java.nio.Buffer) stateBuffer).flip();
-        BytesStore<?, ?> stateBytes = BytesStore.wrap(stateBuffer);
-        final int segmentHeadersOffset;
-        try {
-            state.bytesStore(stateBytes, 0, state.maxSize());
-            segmentHeadersOffset = Math.toIntExact(state.getSegmentHeadersOffset());
-            System.out.println("allocatedExtraTierBulks = " + state.getAllocatedExtraTierBulks());
-            System.out.println("firstFreeTierIndex = " + state.getFirstFreeTierIndex());
-            System.out.println("extraTiersInUse = " + state.getExtraTiersInUse());
-            System.out.println("segmentHeadersOffset = " + segmentHeadersOffset);
-            System.out.println("dataStoreSize = " + state.getDataStoreSize());
-        } finally {
-            stateBytes.releaseLast();
-        }
+        final int segmentHeadersOffset = readGlobalMutableState(buffer);
         header("Segment Headers Area");
         buffer.position(segmentHeadersOffset);
         final int actualSegments = (int) props.get("actualSegments");
@@ -129,17 +110,7 @@ public final class InternalMapFileAnalyzer {
         final int segmentHeaderSize = (int) props.get("segmentHeaderSize");
         System.out.println("segmentHeaderSize = " + segmentHeaderSize);
 
-        for (int segment = 0; segment < actualSegments; segment++) {
-            buffer.position(segmentHeadersOffset + segment * segmentHeaderSize);
-            if (segment != 0) {
-                System.out.println();
-            }
-            output64(buffer, "lock " + segment);
-            output32u(buffer, "entries");
-            output32u(buffer, "smallestIndexPossiblyFree");
-            output64(buffer, "nextSegmentTier");
-            output64(buffer, "deletedOffset");
-        }
+        readSegmentHeaders(buffer, segmentHeadersOffset, actualSegments, segmentHeaderSize);
 
         header("Main Segments Area");
         buffer.position(segmentHeadersOffset + actualSegments * segmentHeaderSize);
@@ -224,6 +195,49 @@ public final class InternalMapFileAnalyzer {
         for (int segment = 0; segment < cardinalities.size(); segment++) {
             final int cardinality = cardinalities.get(segment);
             System.out.format("%3d %10d (%2.2f%%)%n", segment, cardinality, 100.00d * ((double) cardinality) / actualChunksPerSegmentTier);
+        }
+    }
+
+    // This command-line analyser's public output is the decoded layout on standard output.
+    @SuppressWarnings("java:S106")
+    private static int readGlobalMutableState(ByteBuffer buffer) {
+        // Read the generated value layout used by Map instead of assuming packed field widths.
+        VanillaGlobalMutableState state = Values.newNativeReference(VanillaGlobalMutableState.class);
+        ByteBuffer stateBuffer = ByteBuffer.allocate((int) state.maxSize());
+        ByteBuffer source = buffer.duplicate();
+        source.limit(source.position() + stateBuffer.capacity());
+        stateBuffer.put(source);
+        java.nio.Buffer cursor = stateBuffer;
+        cursor.flip();
+        BytesStore<?, ?> stateBytes = BytesStore.wrap(stateBuffer);
+        final int segmentHeadersOffset;
+        try {
+            state.bytesStore(stateBytes, 0, state.maxSize());
+            segmentHeadersOffset = Math.toIntExact(state.getSegmentHeadersOffset());
+            System.out.println("allocatedExtraTierBulks = " + state.getAllocatedExtraTierBulks());
+            System.out.println("firstFreeTierIndex = " + state.getFirstFreeTierIndex());
+            System.out.println("extraTiersInUse = " + state.getExtraTiersInUse());
+            System.out.println("segmentHeadersOffset = " + segmentHeadersOffset);
+            System.out.println("dataStoreSize = " + state.getDataStoreSize());
+        } finally {
+            stateBytes.releaseLast();
+        }
+        return segmentHeadersOffset;
+    }
+
+    @SuppressWarnings("java:S106") // Preserve the command-line report's segment separators.
+    private static void readSegmentHeaders(ByteBuffer buffer, int segmentHeadersOffset,
+                                           int actualSegments, int segmentHeaderSize) {
+        for (int segment = 0; segment < actualSegments; segment++) {
+            buffer.position(segmentHeadersOffset + segment * segmentHeaderSize);
+            if (segment != 0) {
+                System.out.println();
+            }
+            output64(buffer, "lock " + segment);
+            output32u(buffer, "entries");
+            output32u(buffer, "smallestIndexPossiblyFree");
+            output64(buffer, "nextSegmentTier");
+            output64(buffer, "deletedOffset");
         }
     }
 

@@ -25,8 +25,8 @@ class AnalyzerBoundaryTest {
         }
         PrintStream original = System.out;
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        try {
-            System.setOut(new PrintStream(output));
+        try (PrintStream captured = new PrintStream(output)) {
+            System.setOut(captured);
             InternalMapFileAnalyzer.main(new String[]{file.toString()});
             assertTrue(output.toString().contains("sample"), output.toString());
             Files.delete(file);
