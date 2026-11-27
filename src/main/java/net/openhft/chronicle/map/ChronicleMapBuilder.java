@@ -2051,6 +2051,7 @@ public final class ChronicleMapBuilder<K, V> implements
 
     private void establishCleanupThread(@NotNull final ReplicatedChronicleMap map) {
         final OldDeletedEntriesCleanupThread cleanupThread = new OldDeletedEntriesCleanupThread(map);
+        map.oldDeletedEntriesCleanupThread(cleanupThread);
         map.addCloseable(cleanupThread);
         cleanupThread.start();
     }
