@@ -64,6 +64,13 @@ worker write failure. The worker must finish with an `ExecutionException` whose 
 cannot satisfy that assertion. Context release precedes bounded worker termination, and map close
 follows termination; cleanup failures are suppressed on an existing assertion failure.
 
+The write-lock rejection probe temporarily sets the lock timeout to zero and restores
+it after worker cleanup. This makes contention fail immediately while the reader is
+held. The bounded `Future.get` remains a worker-completion guard, rather than a deadline
+for the production timer: that timer counts millisecond clock changes and deliberately
+discounts pauses, so it can exceed wall time on Windows. The exact exception assertion
+is unchanged (FIX-292).
+
 Relocation currently publishes a new entry before acquiring its write lock. Qualification observed
 that a lock-timeout rejection can therefore follow publication of the new value. This migration
 does not add a transactional rollback guarantee or change that production ordering. Any such

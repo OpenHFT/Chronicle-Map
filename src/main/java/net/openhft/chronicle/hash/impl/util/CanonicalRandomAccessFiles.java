@@ -49,14 +49,18 @@ public final class CanonicalRandomAccessFiles {
         return CANONICAL_RAFS.compute(file, (f, ref) -> {
             while (ref != null) {
                 try {
-                    ref.raf.length();
+                    //! The liveness probe must not move the shared Windows Java 8 file pointer during header I/O.
+                    //! Regression: SharedFileChannelTest.canonicalAcquisitionPreservesConcurrentHeaderReads
+                    //! detects a wrong-offset size word when this is changed back to RandomAccessFile.length().
+                    ref.raf.getChannel().size();
                 } catch (IOException e) {
                     // File is closed by interrupt;
                     break;
                 }
 
-                ref.refCount++;
+                // A rejected action must not leave an extra reference to the shared handle.
                 action.accept(ref);
+                ref.refCount++;
                 return ref;
             }
 
@@ -164,42 +168,35 @@ public final class CanonicalRandomAccessFiles {
                                             @NotNull final FileIOAction fileIOAction) {
         AtomicBoolean locked = new AtomicBoolean(false);
 
-        try {
-            acquire0(canonicalFile, (rafReference) -> {
-                        if (rafReference.lockRef != null)
-                            return;
-
-                        try {
-                            if (USE_EXCLUSIVE_LOCKING) {
-                                try (FileLock lock = fileChannel.tryLock()) {
-                                    if (lock == null) {
-                                        rafReference.lockRef = null;
-                                        return;
-                                    }
-
-                                    fileIOAction.fileIOAction();
-
-                                    locked.set(true);
-                                } catch (OverlappingFileLockException ignored) {
-                                    // File lock is being held by this JVM, unsuccessful attempt.
-                                }
-                            } else {
-                                fileIOAction.fileIOAction();
-
-                                locked.set(true);
-                            }
-
-                            rafReference.lockRef = null;
-                        } catch (Exception e) {
-                            throw Jvm.rethrow(e);
-                        }
-                    }
-            );
-        } finally {
-            release(canonicalFile);
-        }
-
+        acquire0(canonicalFile, reference -> {
+            if (reference.lockRef == null)
+                locked.set(tryFileIOAction(fileChannel, fileIOAction));
+        });
+        release(canonicalFile);
         return locked.get();
+    }
+
+    private static boolean tryFileIOAction(FileChannel channel, FileIOAction action) {
+        try {
+            if (!USE_EXCLUSIVE_LOCKING) {
+                action.fileIOAction();
+                return true;
+            }
+            return tryLockedFileIOAction(channel, action);
+        } catch (IOException e) {
+            throw Jvm.rethrow(e);
+        }
+    }
+
+    private static boolean tryLockedFileIOAction(FileChannel channel, FileIOAction action) throws IOException {
+        try (FileLock lock = channel.tryLock()) {
+            if (lock == null)
+                return false;
+            action.fileIOAction();
+            return true;
+        } catch (OverlappingFileLockException ignored) {
+            return false;
+        }
     }
 
     /**
@@ -228,6 +225,7 @@ public final class CanonicalRandomAccessFiles {
                 throw Jvm.rethrow(e);
             }
         });
+        release(canonicalFile);
     }
 
     static void dump() {
